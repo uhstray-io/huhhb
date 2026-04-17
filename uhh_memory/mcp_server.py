@@ -154,13 +154,17 @@ def run_stdio_server() -> None:
         if not line:
             continue
         req = None
+        resp = None
         try:
             req = json.loads(line)
             method = req.get("method", "")
+            is_notification = "id" not in req
             req_id = req.get("id")
 
             if method == "initialize":
                 resp = {"jsonrpc": "2.0", "id": req_id, "result": {"protocolVersion": "2024-11-05", "capabilities": {"tools": {}}, "serverInfo": {"name": "uhh-memory", "version": "0.1.0"}}}
+            elif method == "ping":
+                resp = {"jsonrpc": "2.0", "id": req_id, "result": {}}
             elif method == "tools/list":
                 tools_list = [{"name": n, "description": t["description"], "inputSchema": t["input_schema"]} for n, t in TOOLS.items()]
                 resp = {"jsonrpc": "2.0", "id": req_id, "result": {"tools": tools_list}}
@@ -169,13 +173,16 @@ def run_stdio_server() -> None:
                 args = req["params"].get("arguments", {})
                 result = handle_tool_call(name, args, nexus=nexus)
                 resp = {"jsonrpc": "2.0", "id": req_id, "result": {"content": [{"type": "text", "text": json.dumps(result)}]}}
-            else:
+            elif not is_notification:
                 resp = {"jsonrpc": "2.0", "id": req_id, "error": {"code": -32601, "message": f"Method not found: {method}"}}
         except Exception as exc:
+            if isinstance(req, dict) and "id" not in req:
+                continue
             req_id_safe = req.get("id") if isinstance(req, dict) else None
             resp = {"jsonrpc": "2.0", "id": req_id_safe, "error": {"code": -32603, "message": str(exc)}}
 
-        print(json.dumps(resp), flush=True)
+        if resp is not None:
+            print(json.dumps(resp), flush=True)
 
 
 if __name__ == "__main__":

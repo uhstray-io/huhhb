@@ -4,10 +4,11 @@
       "command": "uv",
       "args": [
         "run",
-        "--with", "chromadb>=0.5.0",
-        "--with", "sentence-transformers>=3.0.0",
-        "--with", "click>=8.1.0",
-        "${CLAUDE_PLUGIN_ROOT}/uhh_memory/mcp_server.py"
+        "--directory",
+        "${CLAUDE_PLUGIN_ROOT}",
+        "python",
+        "-m",
+        "uhh_memory.mcp_server"
       ]
     }
   }

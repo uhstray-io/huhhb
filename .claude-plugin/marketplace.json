@@ -1,8 +1,17 @@
 {
-  "publisher": "uhstray-io",
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "huhhb",
-  "source": "./.claude-plugin",
-  "version": "0.1.0",
-  "tool_count": 10,
-  "features": ["uhh:memory", "skills-marketplace", "auto-save-hooks"]
+  "description": "Uhstray.io's curated Claude Code skills marketplace — workflows, memory palace, and automation for engineering teams.",
+  "owner": {
+    "name": "Uhstray.io",
+    "url": "https://github.com/uhstray-io"
+  },
+  "plugins": [
+    {
+      "name": "huhhb",
+      "description": "Uhstray.io skills hub — uhh:memory palace, team workflows, and Claude Code automation.",
+      "source": "./",
+      "category": "productivity"
+    }
+  ]
 }

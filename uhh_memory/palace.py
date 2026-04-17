@@ -36,8 +36,15 @@ class Palace:
     def delete_drawer(self, *, drawer_id: str) -> None:
         self._storage.delete(ids=[drawer_id])
 
+    def get_drawer(self, *, drawer_id: str) -> dict | None:
+        result = self._storage.get(ids=[drawer_id])
+        if not result["ids"]:
+            return None
+        meta = result["metadatas"][0] or {} if result.get("metadatas") else {}
+        return {"id": result["ids"][0], "content": result["documents"][0], **meta}
+
     def list_wings(self) -> list[str]:
-        result = self._storage._col.get()
+        result = self._storage.get_all()
         wings = {m["wing"] for m in (result.get("metadatas") or []) if m and "wing" in m}
         return sorted(wings)
 

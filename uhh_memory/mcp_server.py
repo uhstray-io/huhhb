@@ -115,10 +115,10 @@ def handle_tool_call(name: str, args: dict, *, palace: Palace) -> dict:
         return {"drawers": drawers, "count": len(drawers)}
 
     if name == "uhh_get_drawer":
-        result = palace._storage.get(ids=[args["drawer_id"]])
-        if not result["ids"]:
+        drawer = palace.get_drawer(drawer_id=args["drawer_id"])
+        if drawer is None:
             return {"error": "not found"}
-        return {"id": result["ids"][0], "content": result["documents"][0], **(result["metadatas"][0] or {})}
+        return drawer
 
     if name == "uhh_delete_drawer":
         palace.delete_drawer(drawer_id=args["drawer_id"])

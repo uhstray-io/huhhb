@@ -30,5 +30,8 @@ class PalaceStorage:
     def count(self) -> int:
         return self._col.count()
 
+    def get_all(self) -> dict:
+        return self._col.get()
+
     def list_by_wing(self, wing: str) -> dict:
         return self._col.get(where={"wing": wing})

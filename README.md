@@ -4,6 +4,23 @@
 
 > Name is a play on "hub" (a place for skills) + "uhh" (Uhstray). Say it fast.
 
+## Prerequisites
+
+`uhh:memory` uses [`uv`](https://docs.astral.sh/uv/) to manage Python dependencies automatically — no `pip install` needed after first run.
+
+**Install uv once:**
+
+```bash
+# macOS / Linux
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Windows (PowerShell)
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+
+# Or via pip (any platform)
+pip install uv
+```
+
 ## Quick Install
 
 ```bash

@@ -10,6 +10,21 @@ triggers:
 
 You've installed **huhhb** — Uhstray.io's skills marketplace for Claude Code.
 
+## Prerequisite: uv
+
+`uhh:memory` requires [`uv`](https://docs.astral.sh/uv/) to auto-manage Python dependencies. If you don't have it:
+
+```bash
+# macOS / Linux
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Windows (PowerShell)
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+
+# Any platform via pip
+pip install uv
+```
+
 ## What Are Skills?
 
 Skills extend Claude Code with reusable workflows. Invoke them with a slash command:

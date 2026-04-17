@@ -153,6 +153,7 @@ def run_stdio_server() -> None:
         line = line.strip()
         if not line:
             continue
+        req = None
         try:
             req = json.loads(line)
             method = req.get("method", "")
@@ -171,7 +172,8 @@ def run_stdio_server() -> None:
             else:
                 resp = {"jsonrpc": "2.0", "id": req_id, "error": {"code": -32601, "message": f"Method not found: {method}"}}
         except Exception as exc:
-            resp = {"jsonrpc": "2.0", "id": req.get("id"), "error": {"code": -32603, "message": str(exc)}}
+            req_id_safe = req.get("id") if isinstance(req, dict) else None
+            resp = {"jsonrpc": "2.0", "id": req_id_safe, "error": {"code": -32603, "message": str(exc)}}
 
         print(json.dumps(resp), flush=True)
 

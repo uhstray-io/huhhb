@@ -14,7 +14,7 @@ claude plugin install --scope user huhhb
 
 ## Skill Structure
 
-Each skill lives in `skills/<skill-name>/skill.md`. Skills are markdown files with YAML frontmatter:
+Each skill lives in `skills/<skill-name>/SKILL.md`. Skills are markdown files with YAML frontmatter:
 
 ```markdown
 ---
@@ -37,7 +37,7 @@ Skill categories live in subdirectories: `skills/dev/`, `skills/ops/`, `skills/r
 
 ## Adding a Skill
 
-1. Create `skills/<category>/<skill-name>/skill.md` with frontmatter
+1. Create `skills/<skill-name>/SKILL.md` with frontmatter
 2. Add entry to `marketplace.json`
 3. If the skill has supporting scripts, place them alongside `skill.md`
 4. Update `onboarding/skills-list.md` so new users discover it

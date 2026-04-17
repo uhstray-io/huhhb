@@ -9,7 +9,7 @@
   "skills": [
     {
       "name": "uhh-memory",
-      "path": "skills/memory/uhh-memory/skill.md",
+      "path": "skills/uhh-memory/SKILL.md",
       "description": "Access, search, and manage Uhstray.io team memory palace.",
       "category": "memory",
       "tags": ["memory", "ai", "context", "rag"],
@@ -17,7 +17,7 @@
     },
     {
       "name": "uhh-memory-search",
-      "path": "skills/memory/uhh-memory-search/skill.md",
+      "path": "skills/uhh-memory-search/SKILL.md",
       "description": "Search the uhh:memory palace for relevant team knowledge.",
       "category": "memory",
       "tags": ["memory", "search", "semantic"],
@@ -25,7 +25,7 @@
     },
     {
       "name": "uhh-memory-mine",
-      "path": "skills/memory/uhh-memory-mine/skill.md",
+      "path": "skills/uhh-memory-mine/SKILL.md",
       "description": "Mine a project directory or text into the memory palace.",
       "category": "memory",
       "tags": ["memory", "mining", "indexing"],
@@ -33,7 +33,7 @@
     },
     {
       "name": "uhh-memory-status",
-      "path": "skills/memory/uhh-memory-status/skill.md",
+      "path": "skills/uhh-memory-status/SKILL.md",
       "description": "Show uhh:memory palace statistics.",
       "category": "memory",
       "tags": ["memory", "status"],

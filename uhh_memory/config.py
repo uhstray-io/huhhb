@@ -3,9 +3,9 @@ import os
 from pathlib import Path
 from typing import Any
 
-DEFAULT_PALACE_PATH = Path.home() / ".uhh-memory" / "palace"
+DEFAULT_NEXUS_PATH = Path.home() / ".uhh-memory" / "nexus"
 DEFAULT_CONFIG: dict[str, Any] = {
-    "palace_path": str(DEFAULT_PALACE_PATH),
+    "nexus_path": str(DEFAULT_NEXUS_PATH),
     "collection_name": "uhh_drawers",
     "embedding_model": "all-MiniLM-L6-v2",
     "auto_save_interval": 15,
@@ -17,6 +17,6 @@ def load_config() -> dict[str, Any]:
     if Path(config_path).exists():
         with open(config_path) as f:
             cfg.update(json.load(f))
-    if palace_env := os.environ.get("UHH_PALACE_PATH"):
-        cfg["palace_path"] = palace_env
+    if nexus_env := os.environ.get("UHH_NEXUS_PATH"):
+        cfg["nexus_path"] = nexus_env
     return cfg

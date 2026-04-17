@@ -1,14 +1,14 @@
 import hashlib
 import time
-from uhh_memory.storage import PalaceStorage
+from uhh_memory.storage import NexusStorage
 from uhh_memory.config import load_config
 
-class Palace:
-    def __init__(self, *, palace_path: str | None = None):
+class Nexus:
+    def __init__(self, *, nexus_path: str | None = None):
         cfg = load_config()
-        self._path = palace_path or cfg["palace_path"]
-        self._storage = PalaceStorage(
-            palace_path=self._path,
+        self._path = nexus_path or cfg["nexus_path"]
+        self._storage = NexusStorage(
+            nexus_path=self._path,
             collection_name=cfg["collection_name"],
         )
 

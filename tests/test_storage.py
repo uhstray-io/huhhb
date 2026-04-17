@@ -1,9 +1,9 @@
 import pytest
-from uhh_memory.storage import PalaceStorage
+from uhh_memory.storage import NexusStorage
 
 @pytest.fixture
 def storage(tmp_path):
-    return PalaceStorage(palace_path=str(tmp_path), collection_name="test_col")
+    return NexusStorage(nexus_path=str(tmp_path), collection_name="test_col")
 
 def test_add_and_get_drawer(storage):
     storage.add(ids=["d1"], documents=["hello world"], metadatas=[{"wing": "work", "room": "auth"}])
@@ -20,7 +20,6 @@ def test_delete_removes_drawer(storage):
     storage.add(ids=["d1"], documents=["to be deleted"], metadatas=[{"wing": "work"}])
     storage.delete(ids=["d1"])
     result = storage.get(ids=["d1"])
-    # ChromaDB returns [] (empty list) for documents when the id no longer exists
     assert result["documents"] == [] or result["documents"] == [None]
 
 def test_count_reflects_added_items(storage):

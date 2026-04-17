@@ -1,6 +1,6 @@
 ---
 name: uhh-memory
-description: Access, search, and manage Uhstray.io team memory palace. Auto-triggers at session start to load context.
+description: Access, search, and manage Uhstray.io team memory nexus. Auto-triggers at session start to load context.
 triggers:
   - remember this
   - save to memory
@@ -11,7 +11,7 @@ triggers:
 
 # uhh:memory
 
-Uhstray.io's team memory palace. Organized as wings → rooms → drawers.
+Uhstray.io's team memory nexus. Organized as wings → rooms → drawers.
 
 ## Session Start
 Call `uhh_wake_up` at the start of every session to load team context.
@@ -31,6 +31,6 @@ Use `uhh_add_drawer` with appropriate wing and room.
 - `team` — shared team knowledge, onboarding
 
 ## Sub-Skills
-- `/uhh-memory-search` — search the palace
+- `/uhh-memory-search` — search the nexus
 - `/uhh-memory-mine` — mine a project directory
-- `/uhh-memory-status` — palace stats
+- `/uhh-memory-status` — nexus stats

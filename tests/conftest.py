@@ -1,11 +1,11 @@
 import pytest
-from uhh_memory.storage import PalaceStorage
-from uhh_memory.palace import Palace
+from uhh_memory.storage import NexusStorage
+from uhh_memory.nexus import Nexus
 
 @pytest.fixture
 def storage(tmp_path):
-    return PalaceStorage(palace_path=str(tmp_path), collection_name="test_col")
+    return NexusStorage(nexus_path=str(tmp_path), collection_name="test_col")
 
 @pytest.fixture
-def palace(tmp_path):
-    return Palace(palace_path=str(tmp_path))
+def nexus(tmp_path):
+    return Nexus(nexus_path=str(tmp_path))

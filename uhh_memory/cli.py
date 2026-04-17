@@ -1,46 +1,46 @@
 import click
 from pathlib import Path
-from uhh_memory.palace import Palace
+from uhh_memory.nexus import Nexus
 from uhh_memory.miner import mine_directory
 from uhh_memory.layers import assemble_context
 from uhh_memory.config import load_config
 
 @click.group()
 def main():
-    """uhh:memory — Uhstray.io AI memory palace."""
+    """uhh:memory — Uhstray.io AI memory nexus."""
 
 @main.command()
-@click.option("--palace", "palace_path", default=None, help="Custom palace path")
-def init(palace_path):
-    """Initialize the memory palace."""
+@click.option("--nexus", "nexus_path", default=None, help="Custom nexus path")
+def init(nexus_path):
+    """Initialize the memory nexus."""
     cfg = load_config()
-    path = palace_path or cfg["palace_path"]
+    path = nexus_path or cfg["nexus_path"]
     Path(path).mkdir(parents=True, exist_ok=True)
-    palace = Palace(palace_path=path)
-    click.echo(f"Palace initialized at {path}")
-    click.echo(f"Drawers: {palace.count()}")
+    nexus = Nexus(nexus_path=path)
+    click.echo(f"Nexus initialized at {path}")
+    click.echo(f"Drawers: {nexus.count()}")
 
 @main.command()
 @click.argument("path")
 @click.option("--wing", required=True, help="Wing to mine into")
-@click.option("--palace", "palace_path", default=None)
-def mine(path, wing, palace_path):
-    """Mine a directory into the palace."""
+@click.option("--nexus", "nexus_path", default=None)
+def mine(path, wing, nexus_path):
+    """Mine a directory into the nexus."""
     cfg = load_config()
-    palace = Palace(palace_path=palace_path or cfg["palace_path"])
-    count = mine_directory(palace=palace, path=path, wing=wing)
+    nexus = Nexus(nexus_path=nexus_path or cfg["nexus_path"])
+    count = mine_directory(nexus=nexus, path=path, wing=wing)
     click.echo(f"Mined {count} drawers into wing '{wing}'")
 
 @main.command()
 @click.argument("query")
 @click.option("--wing", default=None)
 @click.option("--results", "n_results", default=5)
-@click.option("--palace", "palace_path", default=None)
-def search(query, wing, n_results, palace_path):
-    """Search the palace."""
+@click.option("--nexus", "nexus_path", default=None)
+def search(query, wing, n_results, nexus_path):
+    """Search the nexus."""
     cfg = load_config()
-    palace = Palace(palace_path=palace_path or cfg["palace_path"])
-    results = palace.search(query=query, wing=wing, n_results=n_results)
+    nexus = Nexus(nexus_path=nexus_path or cfg["nexus_path"])
+    results = nexus.search(query=query, wing=wing, n_results=n_results)
     if not results:
         click.echo("No results found.")
         return
@@ -49,23 +49,23 @@ def search(query, wing, n_results, palace_path):
         click.echo(r["content"][:300])
 
 @main.command()
-@click.option("--palace", "palace_path", default=None)
-def status(palace_path):
-    """Show palace status."""
+@click.option("--nexus", "nexus_path", default=None)
+def status(nexus_path):
+    """Show nexus status."""
     cfg = load_config()
-    palace = Palace(palace_path=palace_path or cfg["palace_path"])
-    click.echo(f"Drawers: {palace.count()}")
-    wings = palace.list_wings()
+    nexus = Nexus(nexus_path=nexus_path or cfg["nexus_path"])
+    click.echo(f"Drawers: {nexus.count()}")
+    wings = nexus.list_wings()
     click.echo(f"Wings: {', '.join(wings) if wings else 'none'}")
 
 @main.command("wake-up")
 @click.option("--wing", default=None)
-@click.option("--palace", "palace_path", default=None)
-def wake_up(wing, palace_path):
+@click.option("--nexus", "nexus_path", default=None)
+def wake_up(wing, nexus_path):
     """Print L0+L1 context for session start."""
     cfg = load_config()
-    palace = Palace(palace_path=palace_path or cfg["palace_path"])
-    ctx = assemble_context(palace=palace, wing=wing)
+    nexus = Nexus(nexus_path=nexus_path or cfg["nexus_path"])
+    ctx = assemble_context(nexus=nexus, wing=wing)
     click.echo("=== L0: Identity ===")
     click.echo(ctx["l0"])
     click.echo(f"\n=== L1: Recent ({len(ctx['l1'])} drawers) ===")

@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from uhh_memory.palace import Palace
+from uhh_memory.nexus import Nexus
 
 SKIP_EXTENSIONS = {".png", ".jpg", ".jpeg", ".gif", ".pdf", ".zip", ".exe", ".bin", ".pyc"}
 ROOM_KEYWORDS = {
@@ -29,7 +29,7 @@ def chunk_text(text: str, max_chars: int = 800, overlap: int = 100) -> list[str]
             chunks.append(block)
     return chunks
 
-def mine_directory(*, palace: Palace, path: str, wing: str) -> int:
+def mine_directory(*, nexus: Nexus, path: str, wing: str) -> int:
     added = 0
     for root, _dirs, files in os.walk(path):
         for fname in files:
@@ -44,6 +44,6 @@ def mine_directory(*, palace: Palace, path: str, wing: str) -> int:
                 continue
             room = infer_room(fname)
             for chunk in chunk_text(content):
-                palace.add_drawer(wing=wing, room=room, content=chunk)
+                nexus.add_drawer(wing=wing, room=room, content=chunk)
                 added += 1
     return added

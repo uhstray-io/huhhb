@@ -2,7 +2,10 @@
   "name": "huhhb",
   "version": "0.1.0",
   "description": "Uhstray.io skills marketplace — curated Claude Code skills including uhh:memory.",
-  "author": "uhstray-io",
+  "author": {
+    "name": "Uhstray.io",
+    "url": "https://github.com/uhstray-io"
+  },
   "license": "MIT",
   "mcp_server": {
     "command": "uv",

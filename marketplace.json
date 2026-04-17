@@ -3,8 +3,57 @@
   "publisher": "uhstray-io",
   "displayName": "Uhstray Skills Hub",
   "description": "Uhstray.io's curated Claude Code skills marketplace — workflows and automation for engineering teams.",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "homepage": "https://github.com/uhstray-io/huhhb",
   "license": "MIT",
-  "skills": []
+  "skills": [
+    {
+      "name": "uhh-memory",
+      "path": "skills/memory/uhh-memory/skill.md",
+      "description": "Access, search, and manage Uhstray.io team memory palace.",
+      "category": "memory",
+      "tags": ["memory", "ai", "context", "rag"],
+      "version": "0.1.0"
+    },
+    {
+      "name": "uhh-memory-search",
+      "path": "skills/memory/uhh-memory-search/skill.md",
+      "description": "Search the uhh:memory palace for relevant team knowledge.",
+      "category": "memory",
+      "tags": ["memory", "search", "semantic"],
+      "version": "0.1.0"
+    },
+    {
+      "name": "uhh-memory-mine",
+      "path": "skills/memory/uhh-memory-mine/skill.md",
+      "description": "Mine a project directory or text into the memory palace.",
+      "category": "memory",
+      "tags": ["memory", "mining", "indexing"],
+      "version": "0.1.0"
+    },
+    {
+      "name": "uhh-memory-status",
+      "path": "skills/memory/uhh-memory-status/skill.md",
+      "description": "Show uhh:memory palace statistics.",
+      "category": "memory",
+      "tags": ["memory", "status"],
+      "version": "0.1.0"
+    },
+    {
+      "name": "huhhb-welcome",
+      "path": "onboarding/welcome.md",
+      "description": "First-run tour of huhhb skills.",
+      "category": "onboarding",
+      "tags": ["onboarding"],
+      "version": "0.1.0"
+    },
+    {
+      "name": "huhhb-skills",
+      "path": "onboarding/skills-list.md",
+      "description": "List all available huhhb skills.",
+      "category": "onboarding",
+      "tags": ["onboarding", "discovery"],
+      "version": "0.1.0"
+    }
+  ]
 }

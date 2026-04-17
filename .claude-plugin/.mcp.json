@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "uhh-memory": {
+      "command": "python3",
+      "args": ["-m", "uhh_memory.mcp_server"]
+    }
+  }
+}

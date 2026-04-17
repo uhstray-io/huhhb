@@ -1,0 +1,8 @@
+{
+  "publisher": "uhstray-io",
+  "name": "huhhb",
+  "source": "./.claude-plugin",
+  "version": "0.1.0",
+  "tool_count": 10,
+  "features": ["uhh:memory", "skills-marketplace", "auto-save-hooks"]
+}

@@ -1,6 +1,6 @@
 ---
-name: uhh-memory-status
-description: Show uhh:memory palace statistics — drawer count, wings, rooms.
+name: memory-status
+description: Show memory palace statistics — drawer count, wings, rooms.
 triggers:
   - memory status
   - palace stats
@@ -8,7 +8,7 @@ triggers:
   - what wings exist
 ---
 
-# uhh:memory-status
+# memory-status
 
 Show palace statistics and structure.
 

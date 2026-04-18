@@ -1,6 +1,6 @@
 ---
-name: uhh-memory-search
-description: Search the uhh:memory palace for relevant team knowledge, decisions, or context.
+name: memory-search
+description: Search the memory palace for relevant team knowledge, decisions, or context.
 triggers:
   - search memory
   - find in memory
@@ -8,7 +8,7 @@ triggers:
   - what do we know about X
 ---
 
-# uhh:memory-search
+# memory-search
 
 Search team memory palace for relevant context.
 

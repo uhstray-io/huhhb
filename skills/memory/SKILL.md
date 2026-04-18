@@ -1,5 +1,5 @@
 ---
-name: uhh-memory
+name: memory
 description: Access, search, and manage Uhstray.io team memory nexus. Auto-triggers at session start to load context.
 triggers:
   - remember this
@@ -9,7 +9,7 @@ triggers:
   - recall
 ---
 
-# uhh:memory
+# memory
 
 Uhstray.io's team memory nexus. Organized as wings → rooms → drawers.
 
@@ -31,6 +31,6 @@ Use `uhh_add_drawer` with appropriate wing and room.
 - `team` — shared team knowledge, onboarding
 
 ## Sub-Skills
-- `/uhh-memory-search` — search the nexus
-- `/uhh-memory-mine` — mine a project directory
-- `/uhh-memory-status` — nexus stats
+- `/memory-search` — search the nexus
+- `/memory-mine` — mine a project directory
+- `/memory-status` — nexus stats

@@ -1,6 +1,6 @@
 ---
-name: uhh-memory-mine
-description: Mine a project directory or raw text into the uhh:memory palace for future recall.
+name: memory-mine
+description: Mine a project directory or raw text into the memory palace for future recall.
 triggers:
   - mine this project
   - index this directory
@@ -8,7 +8,7 @@ triggers:
   - mine into memory
 ---
 
-# uhh:memory-mine
+# memory-mine
 
 Ingest project files or raw text into the memory palace.
 

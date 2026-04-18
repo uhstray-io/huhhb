@@ -8,33 +8,33 @@
   "license": "MIT",
   "skills": [
     {
-      "name": "uhh-memory",
-      "path": "skills/uhh-memory/SKILL.md",
+      "name": "memory",
+      "path": "skills/memory/SKILL.md",
       "description": "Access, search, and manage Uhstray.io team memory palace.",
       "category": "memory",
       "tags": ["memory", "ai", "context", "rag"],
       "version": "0.1.0"
     },
     {
-      "name": "uhh-memory-search",
-      "path": "skills/uhh-memory-search/SKILL.md",
-      "description": "Search the uhh:memory palace for relevant team knowledge.",
+      "name": "memory-search",
+      "path": "skills/memory-search/SKILL.md",
+      "description": "Search the memory palace for relevant team knowledge.",
       "category": "memory",
       "tags": ["memory", "search", "semantic"],
       "version": "0.1.0"
     },
     {
-      "name": "uhh-memory-mine",
-      "path": "skills/uhh-memory-mine/SKILL.md",
+      "name": "memory-mine",
+      "path": "skills/memory-mine/SKILL.md",
       "description": "Mine a project directory or text into the memory palace.",
       "category": "memory",
       "tags": ["memory", "mining", "indexing"],
       "version": "0.1.0"
     },
     {
-      "name": "uhh-memory-status",
-      "path": "skills/uhh-memory-status/SKILL.md",
-      "description": "Show uhh:memory palace statistics.",
+      "name": "memory-status",
+      "path": "skills/memory-status/SKILL.md",
+      "description": "Show memory palace statistics.",
       "category": "memory",
       "tags": ["memory", "status"],
       "version": "0.1.0"

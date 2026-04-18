@@ -19,7 +19,7 @@ claude plugin install --scope user huhhb
 claude plugin install --scope project huhhb
 ```
 
-> **`uhh:memory` requires [`uv`](https://docs.astral.sh/uv/getting-started/installation/) for its MCP server.**
+> **`memory` requires [`uv`](https://docs.astral.sh/uv/getting-started/installation/) for its MCP server.**
 > The plugin auto-resolves Python deps via `uv run` — no manual `pip install` needed.
 >
 > ```bash
@@ -82,10 +82,10 @@ triggers:
 
 | Skill | Trigger | Purpose |
 |-------|---------|---------|
-| `uhh:memory` | `/uhh-memory` | Team memory nexus — store and recall project context |
-| `uhh:memory-search` | `/uhh-memory-search` | Semantic search across the nexus |
-| `uhh:memory-mine` | `/uhh-memory-mine` | Ingest a project directory into the nexus |
-| `uhh:memory-status` | `/uhh-memory-status` | Nexus stats — drawer count, wings, rooms |
+| `memory` | `/memory` | Team memory nexus — store and recall project context |
+| `memory-search` | `/memory-search` | Semantic search across the nexus |
+| `memory-mine` | `/memory-mine` | Ingest a project directory into the nexus |
+| `memory-status` | `/memory-status` | Nexus stats — drawer count, wings, rooms |
 
 ### Dev Workflows (via [superpowers](https://github.com/obra/superpowers))
 

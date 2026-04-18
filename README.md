@@ -8,32 +8,19 @@
 
 ## Install
 
-### 1. Add the marketplace and install skills
-
 ```bash
-# Add the marketplace
+# 1. Add the marketplace
 claude plugin marketplace add uhstray-io/huhhb
 
-# Install skills (user scope — available in all your projects)
+# 2. Install (user scope — available in all projects)
 claude plugin install --scope user huhhb
 
 # Or project-scoped — only in this repo
 claude plugin install --scope project huhhb
 ```
 
-### 2. Install the `uhh:memory` Python package
-
-`uhh:memory` requires the Python package for its MCP server:
-
-```bash
-# From the repo root
-pip install -e .
-
-# Or with dev tools
-pip install -e ".[dev]"
-```
-
-> **Using `uv`?** (Recommended — no manual pip needed after first run)
+> **`uhh:memory` requires [`uv`](https://docs.astral.sh/uv/getting-started/installation/) for its MCP server.**
+> The plugin auto-resolves Python deps via `uv run` — no manual `pip install` needed.
 >
 > ```bash
 > # macOS / Linux
@@ -42,59 +29,17 @@ pip install -e ".[dev]"
 > # Windows (PowerShell)
 > powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
 > ```
->
-> Once installed, the plugin auto-resolves deps via `uv run`.
-
-### 3. Wire the MCP server into Claude Code
-
-Add this to your project's `.mcp.json` (or `~/.claude/mcp.json` for user-wide):
-
-```json
-{
-  "mcpServers": {
-    "uhh-memory": {
-      "command": "python",
-      "args": ["-m", "uhh_memory.mcp_server"]
-    }
-  }
-}
-```
-
-With `uv` (no prior install needed):
-
-```json
-{
-  "mcpServers": {
-    "uhh-memory": {
-      "command": "uv",
-      "args": [
-        "run",
-        "--with", "chromadb>=0.5.0",
-        "--with", "sentence-transformers>=3.0.0",
-        "--with", "click>=8.1.0",
-        "--with", "rich>=13.0.0",
-        "-m", "uhh_memory.mcp_server"
-      ]
-    }
-  }
-}
-```
-
-Restart Claude Code after editing `.mcp.json`.
 
 ---
 
 ## Update
 
 ```bash
-# Pull latest skills and package changes
-git pull
+# Fetch latest from all marketplaces
+claude plugin marketplace update
 
-# Re-install package if dependencies changed
-pip install -e .
-
-# Update the Claude Code plugin
-claude plugin update huhhb
+# Re-install to apply updates
+claude plugin install --scope user huhhb
 ```
 
 ---
@@ -133,6 +78,8 @@ triggers:
 
 ## What's Inside
 
+### Memory
+
 | Skill | Trigger | Purpose |
 |-------|---------|---------|
 | `uhh:memory` | `/uhh-memory` | Team memory nexus — store and recall project context |
@@ -140,13 +87,36 @@ triggers:
 | `uhh:memory-mine` | `/uhh-memory-mine` | Ingest a project directory into the nexus |
 | `uhh:memory-status` | `/uhh-memory-status` | Nexus stats — drawer count, wings, rooms |
 
+### Dev Workflows (via [superpowers](https://github.com/obra/superpowers))
+
+| Skill | Trigger | Purpose |
+|-------|---------|---------|
+| `brainstorming` | `/brainstorming` | Explore intent and design before any implementation |
+| `writing-plans` | `/writing-plans` | Write a structured implementation plan from a spec |
+| `executing-plans` | `/executing-plans` | Execute a written plan with review checkpoints |
+| `test-driven-development` | `/test-driven-development` | Write tests before implementation code |
+| `systematic-debugging` | `/systematic-debugging` | Root-cause bugs before proposing fixes |
+| `verification-before-completion` | `/verification-before-completion` | Verify work passes before claiming done |
+| `subagent-driven-development` | `/subagent-driven-development` | Execute plans via parallel subagents |
+| `dispatching-parallel-agents` | `/dispatching-parallel-agents` | Split independent tasks across agents |
+| `using-git-worktrees` | `/using-git-worktrees` | Isolate feature work in git worktrees |
+| `finishing-a-development-branch` | `/finishing-a-development-branch` | Structured options for merge, PR, or cleanup |
+| `writing-skills` | `/writing-skills` | Create and validate new skills |
+
+### Review
+
+| Skill | Trigger | Purpose |
+|-------|---------|---------|
+| `requesting-code-review` | `/requesting-code-review` | Verify work before merging |
+| `receiving-code-review` | `/receiving-code-review` | Process review feedback with technical rigor |
+
 Browse the full manifest: [`marketplace.json`](./marketplace.json)
 
 ---
 
 ## CLI Reference (`uhh-mem`)
 
-After `pip install -e .`:
+Requires `uv` installed. Run from the plugin cache directory or any directory with the package:
 
 ```bash
 uhh-mem init              # Initialize the nexus

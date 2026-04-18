@@ -54,6 +54,110 @@
       "category": "onboarding",
       "tags": ["onboarding", "discovery"],
       "version": "0.1.0"
+    },
+    {
+      "name": "brainstorming",
+      "path": "skills/dev/brainstorming/SKILL.md",
+      "description": "You MUST use this before any creative work - creating features, building components, adding functionality, or modifying behavior. Explores user intent, requirements and design before implementation.",
+      "category": "dev",
+      "tags": ["superpowers", "design"],
+      "version": "0.1.0"
+    },
+    {
+      "name": "dispatching-parallel-agents",
+      "path": "skills/dev/dispatching-parallel-agents/SKILL.md",
+      "description": "Use when facing 2+ independent tasks that can be worked on without shared state or sequential dependencies",
+      "category": "dev",
+      "tags": ["superpowers", "agents"],
+      "version": "0.1.0"
+    },
+    {
+      "name": "executing-plans",
+      "path": "skills/dev/executing-plans/SKILL.md",
+      "description": "Use when you have a written implementation plan to execute in a separate session with review checkpoints",
+      "category": "dev",
+      "tags": ["superpowers", "planning"],
+      "version": "0.1.0"
+    },
+    {
+      "name": "finishing-a-development-branch",
+      "path": "skills/dev/finishing-a-development-branch/SKILL.md",
+      "description": "Use when implementation is complete, all tests pass, and you need to decide how to integrate the work - guides completion of development work by presenting structured options for merge, PR, or cleanup",
+      "category": "dev",
+      "tags": ["superpowers", "git"],
+      "version": "0.1.0"
+    },
+    {
+      "name": "subagent-driven-development",
+      "path": "skills/dev/subagent-driven-development/SKILL.md",
+      "description": "Use when executing implementation plans with independent tasks in the current session",
+      "category": "dev",
+      "tags": ["superpowers", "agents"],
+      "version": "0.1.0"
+    },
+    {
+      "name": "systematic-debugging",
+      "path": "skills/dev/systematic-debugging/SKILL.md",
+      "description": "Use when encountering any bug, test failure, or unexpected behavior, before proposing fixes",
+      "category": "dev",
+      "tags": ["superpowers", "debugging"],
+      "version": "0.1.0"
+    },
+    {
+      "name": "test-driven-development",
+      "path": "skills/dev/test-driven-development/SKILL.md",
+      "description": "Use when implementing any feature or bugfix, before writing implementation code",
+      "category": "dev",
+      "tags": ["superpowers", "testing"],
+      "version": "0.1.0"
+    },
+    {
+      "name": "using-git-worktrees",
+      "path": "skills/dev/using-git-worktrees/SKILL.md",
+      "description": "Use when starting feature work that needs isolation from current workspace or before executing implementation plans - creates isolated git worktrees with smart directory selection and safety verification",
+      "category": "dev",
+      "tags": ["superpowers", "git"],
+      "version": "0.1.0"
+    },
+    {
+      "name": "verification-before-completion",
+      "path": "skills/dev/verification-before-completion/SKILL.md",
+      "description": "Use when about to claim work is complete, fixed, or passing, before committing or creating PRs - requires running verification commands and confirming output before making any success claims; evidence before assertions always",
+      "category": "dev",
+      "tags": ["superpowers", "quality"],
+      "version": "0.1.0"
+    },
+    {
+      "name": "writing-plans",
+      "path": "skills/dev/writing-plans/SKILL.md",
+      "description": "Use when you have a spec or requirements for a multi-step task, before touching code",
+      "category": "dev",
+      "tags": ["superpowers", "planning"],
+      "version": "0.1.0"
+    },
+    {
+      "name": "writing-skills",
+      "path": "skills/dev/writing-skills/SKILL.md",
+      "description": "Use when creating new skills, editing existing skills, or verifying skills work before deployment",
+      "category": "dev",
+      "tags": ["superpowers", "skills"],
+      "version": "0.1.0"
+    },
+    {
+      "name": "receiving-code-review",
+      "path": "skills/review/receiving-code-review/SKILL.md",
+      "description": "Use when receiving code review feedback, before implementing suggestions, especially if feedback seems unclear or technically questionable - requires technical rigor and verification, not performative agreement or blind implementation",
+      "category": "review",
+      "tags": ["superpowers", "review"],
+      "version": "0.1.0"
+    },
+    {
+      "name": "requesting-code-review",
+      "path": "skills/review/requesting-code-review/SKILL.md",
+      "description": "Use when completing tasks, implementing major features, or before merging to verify work meets requirements",
+      "category": "review",
+      "tags": ["superpowers", "review"],
+      "version": "0.1.0"
     }
   ]
 }

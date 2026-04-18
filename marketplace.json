@@ -166,6 +166,46 @@
       "category": "review",
       "tags": ["superpowers", "review"],
       "version": "0.1.0"
+    },
+    {
+      "name": "unga-bunga",
+      "path": "skills/unga-bunga/SKILL.md",
+      "description": "Ultra-compressed communication mode (Unga Bunga persona). Cuts token usage ~75% while keeping full technical accuracy. Supports lite, full, ultra, and wenyan intensity levels.",
+      "category": "persona",
+      "tags": ["unga-bunga", "tokens", "compression"],
+      "version": "0.1.0"
+    },
+    {
+      "name": "unga-bunga-commit",
+      "path": "skills/unga-bunga-commit/SKILL.md",
+      "description": "Ultra-compressed commit message generator. Conventional Commits format, subject ≤50 chars, body only when why isn't obvious.",
+      "category": "persona",
+      "tags": ["unga-bunga", "git", "commits"],
+      "version": "0.1.0"
+    },
+    {
+      "name": "unga-bunga-review",
+      "path": "skills/unga-bunga-review/SKILL.md",
+      "description": "Ultra-compressed code review comments. One line per finding: location, problem, fix. No throat-clearing.",
+      "category": "persona",
+      "tags": ["unga-bunga", "review"],
+      "version": "0.1.0"
+    },
+    {
+      "name": "unga-bunga-compress",
+      "path": "skills/unga-bunga-compress/SKILL.md",
+      "description": "Compress natural language memory files (CLAUDE.md, todos) into Unga Bunga format to save input tokens. Preserves all technical substance.",
+      "category": "persona",
+      "tags": ["unga-bunga", "compression", "memory"],
+      "version": "0.1.0"
+    },
+    {
+      "name": "unga-bunga-help",
+      "path": "skills/unga-bunga-help/SKILL.md",
+      "description": "Quick-reference card for all Unga Bunga modes, skills, and commands.",
+      "category": "persona",
+      "tags": ["unga-bunga", "help"],
+      "version": "0.1.0"
     }
   ]
 }

@@ -111,6 +111,16 @@ triggers:
 | `requesting-code-review` | `/requesting-code-review` | Verify work before merging |
 | `receiving-code-review` | `/receiving-code-review` | Process review feedback with technical rigor |
 
+### Unga Bunga (Persona)
+
+| Skill | Trigger | Purpose |
+|-------|---------|---------|
+| `unga-bunga` | `/unga-bunga` | Ultra-compressed mode — ~75% fewer tokens, full technical accuracy |
+| `unga-bunga-commit` | `/unga-bunga-commit` | Terse Conventional Commits, subject ≤50 chars |
+| `unga-bunga-review` | `/unga-bunga-review` | One-line PR comments: location, problem, fix |
+| `unga-bunga-compress` | `/unga-bunga:compress <file>` | Compress memory files to save input tokens |
+| `unga-bunga-help` | `/unga-bunga-help` | Quick-reference for all Unga Bunga modes |
+
 Browse the full manifest: [`marketplace.json`](./marketplace.json)
 
 ---

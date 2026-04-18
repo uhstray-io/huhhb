@@ -91,6 +91,7 @@ triggers:
 
 | Skill | Trigger | Purpose |
 |-------|---------|---------|
+| `using-superpowers` | `/using-superpowers` | Session start — how to find and invoke skills correctly |
 | `brainstorming` | `/brainstorming` | Explore intent and design before any implementation |
 | `writing-plans` | `/writing-plans` | Write a structured implementation plan from a spec |
 | `executing-plans` | `/executing-plans` | Execute a written plan with review checkpoints |

@@ -56,6 +56,14 @@
       "version": "0.1.0"
     },
     {
+      "name": "using-superpowers",
+      "path": "skills/using-superpowers/SKILL.md",
+      "description": "Use when starting any conversation - establishes how to find and use skills, requiring Skill tool invocation before ANY response including clarifying questions",
+      "category": "dev",
+      "tags": ["superpowers", "meta"],
+      "version": "0.1.0"
+    },
+    {
       "name": "brainstorming",
       "path": "skills/brainstorming/SKILL.md",
       "description": "You MUST use this before any creative work - creating features, building components, adding functionality, or modifying behavior. Explores user intent, requirements and design before implementation.",

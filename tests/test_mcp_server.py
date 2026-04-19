@@ -1,5 +1,5 @@
 import pytest
-from uhh_memory.mcp_server import handle_tool_call, TOOLS
+from memory.mcp_server import handle_tool_call, TOOLS
 
 def test_all_tools_registered():
     expected = {

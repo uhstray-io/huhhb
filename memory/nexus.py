@@ -1,7 +1,7 @@
 import hashlib
 import time
-from uhh_memory.storage import NexusStorage
-from uhh_memory.config import load_config
+from memory.storage import NexusStorage
+from memory.config import load_config
 
 class Nexus:
     def __init__(self, *, nexus_path: str | None = None):

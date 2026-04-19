@@ -2,7 +2,7 @@
 import json
 import io
 import pytest
-from uhh_memory.mcp_server import handle_tool_call, run_stdio_server, TOOLS
+from memory.mcp_server import handle_tool_call, run_stdio_server, TOOLS
 
 
 def test_uhh_get_drawers(nexus):
@@ -93,26 +93,26 @@ def test_stdio_server_initialize(nexus, monkeypatch, capsys):
     import sys
     import io
     monkeypatch.setattr("sys.stdin", io.StringIO(req + "\n"))
-    monkeypatch.setattr("uhh_memory.mcp_server.load_config", lambda: {
+    monkeypatch.setattr("memory.mcp_server.load_config", lambda: {
         "nexus_path": str(nexus._path),
-        "collection_name": "uhh_memory",
+        "collection_name": "memory",
     })
-    import uhh_memory.mcp_server as mcp_mod
+    import memory.mcp_server as mcp_mod
     monkeypatch.setattr(mcp_mod, "Nexus", lambda nexus_path: nexus)
     captured_output = []
     monkeypatch.setattr("builtins.print", lambda msg, flush=False: captured_output.append(msg))
     run_stdio_server()
     assert len(captured_output) == 1
     resp = json.loads(captured_output[0])
-    assert resp["result"]["serverInfo"]["name"] == "uhh-memory"
+    assert resp["result"]["serverInfo"]["name"] == "memory"
 
 
 def test_stdio_server_tools_list(nexus, monkeypatch):
     req = json.dumps({"jsonrpc": "2.0", "id": 2, "method": "tools/list", "params": {}})
     import sys, io
-    import uhh_memory.mcp_server as mcp_mod
+    import memory.mcp_server as mcp_mod
     monkeypatch.setattr("sys.stdin", io.StringIO(req + "\n"))
-    monkeypatch.setattr(mcp_mod, "load_config", lambda: {"nexus_path": str(nexus._path), "collection_name": "uhh_memory"})
+    monkeypatch.setattr(mcp_mod, "load_config", lambda: {"nexus_path": str(nexus._path), "collection_name": "memory"})
     monkeypatch.setattr(mcp_mod, "Nexus", lambda nexus_path: nexus)
     captured_output = []
     monkeypatch.setattr("builtins.print", lambda msg, flush=False: captured_output.append(msg))
@@ -128,9 +128,9 @@ def test_stdio_server_tools_call(nexus, monkeypatch):
         "params": {"name": "uhh_status", "arguments": {}}
     })
     import sys, io
-    import uhh_memory.mcp_server as mcp_mod
+    import memory.mcp_server as mcp_mod
     monkeypatch.setattr("sys.stdin", io.StringIO(req + "\n"))
-    monkeypatch.setattr(mcp_mod, "load_config", lambda: {"nexus_path": str(nexus._path), "collection_name": "uhh_memory"})
+    monkeypatch.setattr(mcp_mod, "load_config", lambda: {"nexus_path": str(nexus._path), "collection_name": "memory"})
     monkeypatch.setattr(mcp_mod, "Nexus", lambda nexus_path: nexus)
     captured_output = []
     monkeypatch.setattr("builtins.print", lambda msg, flush=False: captured_output.append(msg))
@@ -142,9 +142,9 @@ def test_stdio_server_tools_call(nexus, monkeypatch):
 def test_stdio_server_unknown_method(nexus, monkeypatch):
     req = json.dumps({"jsonrpc": "2.0", "id": 4, "method": "unknown/method", "params": {}})
     import sys, io
-    import uhh_memory.mcp_server as mcp_mod
+    import memory.mcp_server as mcp_mod
     monkeypatch.setattr("sys.stdin", io.StringIO(req + "\n"))
-    monkeypatch.setattr(mcp_mod, "load_config", lambda: {"nexus_path": str(nexus._path), "collection_name": "uhh_memory"})
+    monkeypatch.setattr(mcp_mod, "load_config", lambda: {"nexus_path": str(nexus._path), "collection_name": "memory"})
     monkeypatch.setattr(mcp_mod, "Nexus", lambda nexus_path: nexus)
     captured_output = []
     monkeypatch.setattr("builtins.print", lambda msg, flush=False: captured_output.append(msg))
@@ -155,9 +155,9 @@ def test_stdio_server_unknown_method(nexus, monkeypatch):
 
 def test_stdio_server_empty_lines_skipped(nexus, monkeypatch):
     import sys, io
-    import uhh_memory.mcp_server as mcp_mod
+    import memory.mcp_server as mcp_mod
     monkeypatch.setattr("sys.stdin", io.StringIO("\n   \n"))
-    monkeypatch.setattr(mcp_mod, "load_config", lambda: {"nexus_path": str(nexus._path), "collection_name": "uhh_memory"})
+    monkeypatch.setattr(mcp_mod, "load_config", lambda: {"nexus_path": str(nexus._path), "collection_name": "memory"})
     monkeypatch.setattr(mcp_mod, "Nexus", lambda nexus_path: nexus)
     captured_output = []
     monkeypatch.setattr("builtins.print", lambda msg, flush=False: captured_output.append(msg))
@@ -167,9 +167,9 @@ def test_stdio_server_empty_lines_skipped(nexus, monkeypatch):
 
 def test_stdio_server_invalid_json(nexus, monkeypatch):
     import sys, io
-    import uhh_memory.mcp_server as mcp_mod
+    import memory.mcp_server as mcp_mod
     monkeypatch.setattr("sys.stdin", io.StringIO("not valid json\n"))
-    monkeypatch.setattr(mcp_mod, "load_config", lambda: {"nexus_path": str(nexus._path), "collection_name": "uhh_memory"})
+    monkeypatch.setattr(mcp_mod, "load_config", lambda: {"nexus_path": str(nexus._path), "collection_name": "memory"})
     monkeypatch.setattr(mcp_mod, "Nexus", lambda nexus_path: nexus)
     captured_output = []
     monkeypatch.setattr("builtins.print", lambda msg, flush=False: captured_output.append(msg))

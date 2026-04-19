@@ -1,9 +1,9 @@
 import json
 import sys
-from uhh_memory.nexus import Nexus
-from uhh_memory.miner import chunk_text
-from uhh_memory.layers import assemble_context
-from uhh_memory.config import load_config
+from memory.nexus import Nexus
+from memory.miner import chunk_text
+from memory.layers import assemble_context
+from memory.config import load_config
 
 TOOLS: dict[str, dict] = {
     "uhh_status": {
@@ -162,7 +162,7 @@ def run_stdio_server() -> None:
             req_id = req.get("id")
 
             if method == "initialize":
-                resp = {"jsonrpc": "2.0", "id": req_id, "result": {"protocolVersion": "2024-11-05", "capabilities": {"tools": {}}, "serverInfo": {"name": "uhh-memory", "version": "0.1.0"}}}
+                resp = {"jsonrpc": "2.0", "id": req_id, "result": {"protocolVersion": "2024-11-05", "capabilities": {"tools": {}}, "serverInfo": {"name": "memory", "version": "0.1.0"}}}
             elif method == "ping":
                 resp = {"jsonrpc": "2.0", "id": req_id, "result": {}}
             elif method == "tools/list":

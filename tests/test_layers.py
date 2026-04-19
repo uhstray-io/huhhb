@@ -1,5 +1,5 @@
 import pytest
-from uhh_memory.layers import assemble_context
+from memory.layers import assemble_context
 
 def test_l0_always_included(nexus):
     ctx = assemble_context(nexus=nexus, query=None)

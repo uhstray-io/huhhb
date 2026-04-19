@@ -1,6 +1,6 @@
 import pytest
-from uhh_memory.storage import NexusStorage
-from uhh_memory.nexus import Nexus
+from memory.storage import NexusStorage
+from memory.nexus import Nexus
 
 @pytest.fixture
 def storage(tmp_path):

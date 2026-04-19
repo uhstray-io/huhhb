@@ -1,9 +1,9 @@
 import click
 from pathlib import Path
-from uhh_memory.nexus import Nexus
-from uhh_memory.miner import mine_directory
-from uhh_memory.layers import assemble_context
-from uhh_memory.config import load_config
+from memory.nexus import Nexus
+from memory.miner import mine_directory
+from memory.layers import assemble_context
+from memory.config import load_config
 
 @click.group()
 def main():

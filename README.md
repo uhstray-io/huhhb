@@ -125,16 +125,16 @@ Browse the full manifest: [`marketplace.json`](./marketplace.json)
 
 ---
 
-## CLI Reference (`uhh-mem`)
+## CLI Reference (`mem`)
 
 Requires `uv` installed. Run from the plugin cache directory or any directory with the package:
 
 ```bash
-uhh-mem init              # Initialize the nexus
-uhh-mem status            # Show drawer count and wings
-uhh-mem mine <path> --wing work   # Ingest a directory
-uhh-mem search "query"    # Semantic search
-uhh-mem wake-up           # Print L0+L1 session context
+mem init              # Initialize the nexus
+mem status            # Show drawer count and wings
+mem mine <path> --wing work   # Ingest a directory
+mem search "query"    # Semantic search
+mem wake-up           # Print L0+L1 session context
 ```
 
 ---

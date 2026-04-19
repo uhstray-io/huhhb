@@ -1,6 +1,6 @@
 import pytest
 from pathlib import Path
-from uhh_memory.miner import mine_directory, chunk_text
+from memory.miner import mine_directory, chunk_text
 
 def test_chunk_text_splits_on_double_newline():
     text = "Block one.\n\nBlock two.\n\nBlock three."

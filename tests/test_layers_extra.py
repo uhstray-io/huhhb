@@ -1,5 +1,5 @@
 """Extra layer tests covering previously uncovered branches."""
-from uhh_memory.layers import assemble_context
+from memory.layers import assemble_context
 
 
 def test_wing_filter_excludes_other_wings(nexus):

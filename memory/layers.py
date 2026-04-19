@@ -1,4 +1,4 @@
-from uhh_memory.nexus import Nexus
+from memory.nexus import Nexus
 
 L0_TEMPLATE = (
     "You have access to uhh:memory — Uhstray.io's team memory nexus. "

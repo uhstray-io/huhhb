@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from uhh_memory.nexus import Nexus
+from memory.nexus import Nexus
 
 SKIP_EXTENSIONS = {".png", ".jpg", ".jpeg", ".gif", ".pdf", ".zip", ".exe", ".bin", ".pyc"}
 ROOM_KEYWORDS = {

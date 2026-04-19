@@ -13,7 +13,7 @@ triggers:
 Ingest project files or raw text into the memory palace.
 
 ## Mine a Directory
-Use CLI: `uhh-mem mine <path> --wing <wing-name>`
+Use CLI: `mem mine <path> --wing <wing-name>`
 Or call `uhh_mine_text` with extracted content.
 
 ## Mine Raw Text

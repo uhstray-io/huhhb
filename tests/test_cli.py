@@ -1,7 +1,7 @@
 """CLI smoke tests using Click's test runner."""
 import pytest
 from click.testing import CliRunner
-from uhh_memory.cli import main
+from memory.cli import main
 
 
 @pytest.fixture
@@ -27,7 +27,7 @@ def test_cli_init(runner, nexus_dir):
 
 
 def test_cli_init_default_path(runner, tmp_path, monkeypatch):
-    monkeypatch.setenv("UHH_NEXUS_PATH", str(tmp_path / "default_nexus"))
+    monkeypatch.setenv("MEMORY_NEXUS_PATH", str(tmp_path / "default_nexus"))
     result = runner.invoke(main, ["init"])
     assert result.exit_code == 0
 

@@ -8,7 +8,7 @@
   },
   "license": "MIT",
   "mcpServers": {
-    "uhh-memory": {
+    "memory": {
       "command": "uv",
       "args": [
         "run",
@@ -16,7 +16,7 @@
         "${CLAUDE_PLUGIN_ROOT}",
         "python",
         "-m",
-        "uhh_memory.mcp_server"
+        "memory.mcp_server"
       ]
     }
   },

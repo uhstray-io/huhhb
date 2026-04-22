@@ -56,6 +56,14 @@
       "version": "0.1.0"
     },
     {
+      "name": "onboarding",
+      "path": "skills/onboarding/SKILL.md",
+      "description": "Use when setting up Claude Code for the first time, configuring auto mode, enabling agent teams, or when user says set up Claude or onboard me",
+      "category": "onboarding",
+      "tags": ["onboarding", "setup", "auto-mode", "agent-teams"],
+      "version": "0.1.0"
+    },
+    {
       "name": "using-superpowers",
       "path": "skills/using-superpowers/SKILL.md",
       "description": "Use when starting any conversation - establishes how to find and use skills, requiring Skill tool invocation before ANY response including clarifying questions",

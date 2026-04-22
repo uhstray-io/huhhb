@@ -17,6 +17,7 @@ All available skills in the Uhstray.io marketplace.
 |-------|---------|-------------|
 | huhhb-welcome | `/huhhb-welcome` | First-run tour of huhhb |
 | huhhb-skills | `/huhhb-skills` | This list |
+| onboarding | `/onboarding` | Interactive wizard to configure Auto Mode and Agent Teams |
 
 ## Dev Skills
 

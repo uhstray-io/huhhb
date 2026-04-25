@@ -35,6 +35,13 @@ All available skills in the Uhstray.io marketplace.
 | writing-plans | `/writing-plans` | Use when you have a spec or requirements for a multi-step task, before touching code |
 | writing-skills | `/writing-skills` | Use when creating new skills, editing existing skills, or verifying skills work before deployment |
 
+## Persona Skills
+
+| Skill | Command | Description |
+|-------|---------|-------------|
+| training | `/training` | Socratic teaching mode — guides you through problems without writing code. Describes approaches, names APIs, links docs, asks questions. Off with "stop training". |
+| unga-bunga | `/unga-bunga` | Ultra-compressed communication. Cuts token usage ~75%. Modes: lite, full, ultra, wenyan. Off with "stop unga-bunga". |
+
 ## Review Skills
 
 | Skill | Command | Description |

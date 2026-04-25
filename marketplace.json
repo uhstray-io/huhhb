@@ -3,7 +3,7 @@
   "publisher": "uhstray-io",
   "displayName": "Uhstray Skills Hub",
   "description": "Uhstray.io's curated Claude Code skills marketplace — workflows and automation for engineering teams.",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "homepage": "https://github.com/uhstray-io/huhhb",
   "license": "MIT",
   "skills": [
@@ -173,6 +173,14 @@
       "description": "Use when completing tasks, implementing major features, or before merging to verify work meets requirements",
       "category": "review",
       "tags": ["superpowers", "review"],
+      "version": "0.1.0"
+    },
+    {
+      "name": "training",
+      "path": "skills/training/SKILL.md",
+      "description": "Socratic teaching mode (Sensei). Never writes new code — guides users through problems by describing approaches, naming APIs, linking docs, and asking questions that lead to the answer.",
+      "category": "persona",
+      "tags": ["training", "learning", "teaching", "sensei"],
       "version": "0.1.0"
     },
     {

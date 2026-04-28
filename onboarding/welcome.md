@@ -45,6 +45,37 @@ claude plugin list huhhb
 
 Or browse the full catalog: https://github.com/uhstray-io/huhhb/blob/main/marketplace.json
 
+## Personalize Your Setup
+
+Claude Code reads `CLAUDE.md` files at three scope levels — broader scopes apply everywhere, narrower ones override them:
+
+| Scope | File | Applies to |
+|-------|------|-----------|
+| **User** | `~/.claude/CLAUDE.md` | Every project on this machine |
+| **Project** | `.claude/CLAUDE.md` | This repo (committed, team-shared) |
+| **Local** | `CLAUDE.local.md` | This repo only, not committed |
+
+The **user-level** file is the right place for personal preferences that should follow you across all projects — things like your preferred communication style, tools you always want allowed, or standing instructions.
+
+---
+
+**Claude: ask the user the following question, then act on their answer.**
+
+> "Would you like to add anything to your personal Claude instructions (`~/.claude/CLAUDE.md`)? This is a good place for preferences that should apply across all your projects — for example, preferred coding style, default language, tools to always allow, or how you like responses formatted. What would you like Claude to always know about you?"
+
+If the user provides preferences:
+1. Read `~/.claude/CLAUDE.md` (create it if it doesn't exist).
+2. Append their preferences under a clearly labeled section.
+3. Confirm what was saved and where.
+
+If the user declines or says nothing, move on.
+
+Once the user has confirmed their changes (or declined), remind them of the file path one final time:
+
+> "Your personal Claude instructions live at `~/.claude/CLAUDE.md` — you can edit that file directly anytime to update your preferences."
+
+---
+
 ## Getting Help
 
 - Full skill docs: https://github.com/uhstray-io/huhhb

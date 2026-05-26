@@ -40,7 +40,13 @@ All available skills in the Uhstray.io marketplace.
 | Skill | Command | Description |
 |-------|---------|-------------|
 | training | `/training` | Socratic teaching mode — guides you through problems without writing code. Describes approaches, names APIs, links docs, asks questions. Off with "stop training". |
-| unga-bunga | `/unga-bunga` | Ultra-compressed communication. Cuts token usage ~75%. Modes: lite, full, ultra, wenyan. Off with "stop unga-bunga". |
+| caveman | `/caveman` | Ultra-compressed communication sourced from [JuliusBrussee/caveman](https://github.com/JuliusBrussee/caveman). Cuts token usage ~75%. Modes: lite, full, ultra, wenyan. Off with "stop caveman". |
+| caveman-commit | `/caveman-commit` | Terse commit messages. Conventional Commits, ≤50 char subject. |
+| caveman-review | `/caveman-review` | One-line PR review comments: location, problem, fix. |
+| caveman-compress | `/caveman-compress` | Compress CLAUDE.md and other memory files to save input tokens. |
+| caveman-help | `/caveman-help` | Quick-reference card for all caveman modes and commands. |
+| caveman-stats | `/caveman-stats` | Session token usage metrics (requires caveman plugin hooks). |
+| cavecrew | `/cavecrew` | Delegate code tasks to compressed subagents to preserve context. |
 
 ## Review Skills
 

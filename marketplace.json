@@ -3,7 +3,7 @@
   "publisher": "uhstray-io",
   "displayName": "Uhstray Skills Hub",
   "description": "Uhstray.io's curated Claude Code skills marketplace — workflows and automation for engineering teams.",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "homepage": "https://github.com/uhstray-io/huhhb",
   "license": "MIT",
   "skills": [
@@ -192,43 +192,59 @@
       "version": "0.1.0"
     },
     {
-      "name": "unga-bunga",
-      "path": "skills/unga-bunga/SKILL.md",
-      "description": "Ultra-compressed communication mode (Unga Bunga persona). Cuts token usage ~75% while keeping full technical accuracy. Supports lite, full, ultra, and wenyan intensity levels.",
+      "name": "caveman",
+      "path": "skills/caveman/SKILL.md",
+      "description": "Ultra-compressed communication mode sourced from JuliusBrussee/caveman. Cuts token usage ~75% while keeping full technical accuracy. Supports lite, full, ultra, and wenyan intensity levels.",
       "category": "persona",
-      "tags": ["unga-bunga", "tokens", "compression"],
+      "tags": ["caveman", "tokens", "compression"],
       "version": "0.1.0"
     },
     {
-      "name": "unga-bunga-commit",
-      "path": "skills/unga-bunga-commit/SKILL.md",
+      "name": "caveman-commit",
+      "path": "skills/caveman-commit/SKILL.md",
       "description": "Ultra-compressed commit message generator. Conventional Commits format, subject ≤50 chars, body only when why isn't obvious.",
       "category": "persona",
-      "tags": ["unga-bunga", "git", "commits"],
+      "tags": ["caveman", "git", "commits"],
       "version": "0.1.0"
     },
     {
-      "name": "unga-bunga-review",
-      "path": "skills/unga-bunga-review/SKILL.md",
+      "name": "caveman-review",
+      "path": "skills/caveman-review/SKILL.md",
       "description": "Ultra-compressed code review comments. One line per finding: location, problem, fix. No throat-clearing.",
       "category": "persona",
-      "tags": ["unga-bunga", "review"],
+      "tags": ["caveman", "review"],
       "version": "0.1.0"
     },
     {
-      "name": "unga-bunga-compress",
-      "path": "skills/unga-bunga-compress/SKILL.md",
-      "description": "Compress natural language memory files (CLAUDE.md, todos) into Unga Bunga format to save input tokens. Preserves all technical substance.",
+      "name": "caveman-compress",
+      "path": "skills/caveman-compress/SKILL.md",
+      "description": "Compress natural language memory files (CLAUDE.md, todos) into caveman format to save input tokens. Preserves all technical substance.",
       "category": "persona",
-      "tags": ["unga-bunga", "compression", "memory"],
+      "tags": ["caveman", "compression", "memory"],
       "version": "0.1.0"
     },
     {
-      "name": "unga-bunga-help",
-      "path": "skills/unga-bunga-help/SKILL.md",
-      "description": "Quick-reference card for all Unga Bunga modes, skills, and commands.",
+      "name": "caveman-help",
+      "path": "skills/caveman-help/SKILL.md",
+      "description": "Quick-reference card for all caveman modes, skills, and commands.",
       "category": "persona",
-      "tags": ["unga-bunga", "help"],
+      "tags": ["caveman", "help"],
+      "version": "0.1.0"
+    },
+    {
+      "name": "caveman-stats",
+      "path": "skills/caveman-stats/SKILL.md",
+      "description": "Real-time token usage metrics for the current session. Requires caveman plugin hooks to function — install via JuliusBrussee/caveman for full functionality.",
+      "category": "persona",
+      "tags": ["caveman", "stats", "tokens"],
+      "version": "0.1.0"
+    },
+    {
+      "name": "cavecrew",
+      "path": "skills/cavecrew/SKILL.md",
+      "description": "Use when delegating code tasks to compressed subagents — investigator, builder, and reviewer — to preserve main context length.",
+      "category": "dev",
+      "tags": ["caveman", "agents", "context"],
       "version": "0.1.0"
     }
   ]

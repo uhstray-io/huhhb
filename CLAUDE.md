@@ -7,6 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **huhhb** (pronounced "hub") is Uhstray.io's Claude Code skills marketplace — a curated collection of skills (slash commands, workflows, automation) for Claude Code users. Name is a play on "hub" + "uhh" (Uhstray).
 
 Install via:
+
 ```bash
 claude plugin marketplace add uhstray-io/huhhb
 claude plugin install --scope user huhhb
@@ -70,3 +71,38 @@ First install runs `onboarding/welcome.md` — a guided tour of available skills
 - Skills must state their trigger conditions (when to auto-invoke)
 - No skill should duplicate built-in Claude Code behavior
 - Test each skill against at least one real use case before merging
+
+## Repo Memory
+
+Claude stores project knowledge in `.claude/memory/` (committed to git).
+At the start of every session, read `.claude/memory/MEMORY.md` to load context.
+Use `/repo-memory` to save or retrieve memories.
+
+### Recalling Information
+
+Before answering questions about project decisions, conventions, or context,
+check `.claude/memory/` first — read `MEMORY.md` for the index, then open
+relevant files. This is the team's shared knowledge base.
+
+### When to Save
+
+| What | Type |
+| ---- | ---- |
+| Architectural decisions and their rationale | `project` |
+| Team conventions, what to avoid or repeat | `feedback` |
+| Links to external systems, dashboards, docs | `reference` |
+| Personal preferences (add user_*.md to .gitignore if private) | `user` |
+| Chosen libraries/frameworks and why alternatives were rejected | `project` |
+| Things that were tried and didn't work (anti-patterns for this codebase) | `feedback` |
+| Preferred naming conventions, code style, and formatting rules | `feedback` |
+| Things that Claude got wrong multiple timesand required correction | `feedback` |
+| External API docs, service dashboards, internal wikis | `reference` |
+| Environment setup notes (non-obvious deps, quirks, build steps) | `reference` |
+| Domain knowledge the user has that I shouldn't re-explain | `user` |
+
+### What NOT to Save
+
+- Code patterns readable from the codebase
+- Git history (git log / git blame are authoritative)
+- Ephemeral task state or in-progress work
+- Anything already in this CLAUDE.md

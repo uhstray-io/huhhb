@@ -3,7 +3,7 @@
   "publisher": "uhstray-io",
   "displayName": "Uhstray Skills Hub",
   "description": "Uhstray.io's curated Claude Code skills marketplace — workflows and automation for engineering teams.",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "homepage": "https://github.com/uhstray-io/huhhb",
   "license": "MIT",
   "skills": [
@@ -37,6 +37,14 @@
       "description": "Show memory palace statistics.",
       "category": "memory",
       "tags": ["memory", "status"],
+      "version": "0.1.0"
+    },
+    {
+      "name": "repo-memory",
+      "path": "skills/repo-memory/SKILL.md",
+      "description": "Save and retrieve project knowledge in .claude/memory/ — triggers on 'remember', 'don't forget', 'recall', 'what do we know about', and similar phrases.",
+      "category": "memory",
+      "tags": ["memory", "local", "git", "context"],
       "version": "0.1.0"
     },
     {

@@ -38,7 +38,8 @@ claude plugin install --scope project huhhb
 # Fetch latest from all marketplaces
 claude plugin marketplace update
 
-# Re-install to apply updates
+# Uninstall then reinstall — "install" silently skips if already present
+claude plugin uninstall huhhb
 claude plugin install --scope user huhhb
 ```
 
@@ -46,18 +47,18 @@ claude plugin install --scope user huhhb
 
 ## Add a New Skill
 
-1. Create `skills/<category>/<skill-name>/skill.md` with YAML frontmatter:
+1. Create `skills/<skill-name>/SKILL.md` with YAML frontmatter:
 
 ```markdown
 ---
 name: skill-name
-description: One-line description (shown in skill discovery)
-triggers:
-  - phrase that triggers this skill
+description: Use when [specific triggering conditions] — embed trigger phrases here, not in a triggers field
 ---
 
 # Skill content here
 ```
+
+> **Note:** The `triggers` frontmatter field is not supported by VS Code agents. Put trigger phrases in the `description` instead.
 
 2. Register it in `marketplace.json`:
 
@@ -82,10 +83,11 @@ triggers:
 
 | Skill | Trigger | Purpose |
 |-------|---------|---------|
-| `memory` | `/memory` | Team memory nexus — store and recall project context |
+| `memory` | `/memory` | Team memory nexus (Uhstray.io) — store and recall project context via MCP |
 | `memory-search` | `/memory-search` | Semantic search across the nexus |
 | `memory-mine` | `/memory-mine` | Ingest a project directory into the nexus |
 | `memory-status` | `/memory-status` | Nexus stats — drawer count, wings, rooms |
+| `repo-memory` | `/repo-memory` | Repo-local memory in `.claude/memory/` — committed to git, no external service |
 
 ### Dev Workflows (via [superpowers](https://github.com/obra/superpowers))
 
@@ -111,15 +113,19 @@ triggers:
 | `requesting-code-review` | `/requesting-code-review` | Verify work before merging |
 | `receiving-code-review` | `/receiving-code-review` | Process review feedback with technical rigor |
 
-### Unga Bunga (Persona)
+### Caveman (Persona)
+
+Sourced from [JuliusBrussee/caveman](https://github.com/JuliusBrussee/caveman). Run `scripts/sync-caveman.sh` to pull the latest.
 
 | Skill | Trigger | Purpose |
 |-------|---------|---------|
-| `unga-bunga` | `/unga-bunga` | Ultra-compressed mode — ~75% fewer tokens, full technical accuracy |
-| `unga-bunga-commit` | `/unga-bunga-commit` | Terse Conventional Commits, subject ≤50 chars |
-| `unga-bunga-review` | `/unga-bunga-review` | One-line PR comments: location, problem, fix |
-| `unga-bunga-compress` | `/unga-bunga:compress <file>` | Compress memory files to save input tokens |
-| `unga-bunga-help` | `/unga-bunga-help` | Quick-reference for all Unga Bunga modes |
+| `caveman` | `/caveman` | Ultra-compressed mode — ~75% fewer tokens, full technical accuracy |
+| `caveman-commit` | `/caveman-commit` | Terse Conventional Commits, subject ≤50 chars |
+| `caveman-review` | `/caveman-review` | One-line PR comments: location, problem, fix |
+| `caveman-compress` | `/caveman-compress <file>` | Compress memory files to save input tokens |
+| `caveman-help` | `/caveman-help` | Quick-reference for all caveman modes |
+| `caveman-stats` | `/caveman-stats` | Session token usage metrics (requires caveman plugin hooks) |
+| `cavecrew` | `/cavecrew` | Delegate to compressed subagents to preserve context |
 
 Browse the full manifest: [`marketplace.json`](./marketplace.json)
 

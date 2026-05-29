@@ -20,19 +20,23 @@ Each skill lives in `skills/<skill-name>/SKILL.md`. Skills are markdown files wi
 ```markdown
 ---
 name: skill-name
-description: One-line description (used for skill discovery and the Skill tool)
+description: Use when [triggering conditions] — embed trigger phrases here
 ---
 
 Skill content here. Invoked via the Skill tool in Claude Code.
 ```
 
-Skill categories live in subdirectories: `skills/dev/`, `skills/ops/`, `skills/review/`, etc.
+> **Do not use a `triggers` field** — it is not supported by VS Code agents. Trigger phrases belong in `description`.
+
+All skill directories are flat under `skills/`: `skills/<skill-name>/SKILL.md`.
 
 ## Key Files
 
-- `skills/` — all skills, one subdirectory per skill or category
+- `skills/` — all skills, one flat subdirectory per skill (`skills/<skill-name>/SKILL.md`)
 - `onboarding/` — onboarding flow triggered on first install
 - `marketplace.json` — skill manifest (name, description, version, author per skill)
+- `.claude-plugin/plugin.json` — plugin version read by Claude Code for update detection
+- `scripts/sync-caveman.sh` — syncs caveman skills from upstream JuliusBrussee/caveman
 - `CONTEXT.md` — project context for AI assistants
 - `AGENT.md` — agent-specific instructions
 

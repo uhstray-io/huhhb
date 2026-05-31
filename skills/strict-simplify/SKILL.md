@@ -1,6 +1,6 @@
 ---
 name: strict-simplify
-description: Use when reviewing code to replace redundant or verbose logic with a provably-equivalent simpler form — custom code that duplicates a stdlib/builtin, dead/no-op arguments, collapsible redundant expressions. Triggers on "strict simplify", "/strict-simplify", "reduce redundant code". Does not restructure, rename, reformat, optimize, or fix bugs.
+description: Use when reviewing code to replace redundant or verbose logic with a provably-equivalent simpler form — custom code that duplicates a stdlib/builtin or an existing project function, dead/no-op arguments, collapsible redundant expressions, duplicate inline logic that reimplements something already defined in the codebase. Triggers on "strict simplify", "/strict-simplify", "reduce redundant code". Does not restructure, rename, reformat, optimize, or fix bugs.
 ---
 
 # Strict Simplify
@@ -43,6 +43,15 @@ A change is allowed **only if it passes ALL six checks.** Otherwise: **skip it.*
    variable assigned once and used once on the next line.
 4. **Verbose → idiomatic equivalent** — a verbose construct → a shorter one doing *exactly*
    the same thing (manual transform loop → `map`/comprehension).
+5. **Duplicate inline logic → existing project function** — inline code that reimplements
+   logic already defined elsewhere in the codebase, OR multiple call sites that each
+   reimplement the same operation instead of calling the one function that already does it.
+   Replace the inline copy with a call to the existing function.
+   - The existing function must already exist — do not create one.
+   - Its behavior must provably match for every input the call site handles.
+   - If two project functions do the same thing with slight discrepancies, pick the one
+     whose behavior is correct for the call site and route all call sites to it. Do not
+     merge the functions themselves — that is restructuring.
 
 These name the common shapes; they are **not a closed list.** Be ambitious about *discovery*
 — real codebases hold redundancies these four never named. Ambition applies to *what you
@@ -56,7 +65,7 @@ checks.
 - No reordering or restructuring of functions/blocks.
 - No performance/efficiency changes (even if "obviously faster").
 - No bug fixes — **if you find a bug, report it, do not fix it.**
-- No new abstractions, helpers, or layers.
+- No new abstractions, helpers, or layers — but replacing inline logic with an *existing* project function is in scope (category 5).
 - No dead-code removal (unused variables, imports, functions) — that is a separate concern.
 - No formatting-only or whitespace-only changes.
 - No changes that alter logs, errors, or serialized output.
@@ -119,6 +128,19 @@ for x in xs:
 out = [x for x in xs if x > 0]
 ```
 
+**Duplicate inline logic → existing project function**
+```python
+# call site A — reimplements logic inline
+stem = Path(filename).stem.lower()
+for room, keywords in ROOM_KEYWORDS.items():
+    if any(k in stem for k in keywords):
+        return room
+return "general"
+
+# call site B — existing function already does this
+return infer_room(filename)   # only if infer_room() is provably identical for all inputs A handled
+```
+
 ## Counter-Examples — SKIP these (look simpler, fail the gate)
 
 | Tempting change | Why skip |
@@ -133,6 +155,8 @@ out = [x for x in xs if x > 0]
 | `user && user.x` → `user?.x` when `user` may be `0`/`""` | `?.` guards nullish only, `&&` guards falsiness |
 | Rename `tmp` → `userCount` | Renaming is out of scope |
 | Fix a bug you noticed | Report it separately; do not fix in this pass |
+| Two functions differ slightly — merge them into one | Merging/restructuring functions is out of scope; only route call sites |
+| Existing function handles a superset of inputs — assume it's safe | Verify the extra input handling doesn't change behavior at this call site |
 
 ## Red Flags — STOP, you are over-reaching
 

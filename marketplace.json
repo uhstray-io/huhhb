@@ -3,7 +3,7 @@
   "publisher": "uhstray-io",
   "displayName": "Uhstray Skills Hub",
   "description": "Uhstray.io's curated Claude Code skills marketplace — workflows and automation for engineering teams.",
-  "version": "0.2.3",
+  "version": "0.3.0",
   "homepage": "https://github.com/uhstray-io/huhhb",
   "license": "MIT",
   "skills": [
@@ -245,6 +245,14 @@
       "description": "Use when delegating code tasks to compressed subagents — investigator, builder, and reviewer — to preserve main context length.",
       "category": "dev",
       "tags": ["caveman", "agents", "context"],
+      "version": "0.1.0"
+    },
+    {
+      "name": "strict-simplify",
+      "path": "skills/strict-simplify/SKILL.md",
+      "description": "Replace redundant or verbose logic with a provably-equivalent simpler form, apply the edits, and show the diff. Strict: no restructuring, renaming, reformatting, optimizing, or bug-fixing.",
+      "category": "review",
+      "tags": ["review", "simplify", "refactor"],
       "version": "0.1.0"
     }
   ]

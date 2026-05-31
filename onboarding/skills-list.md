@@ -54,6 +54,7 @@ All available skills in the Uhstray.io marketplace.
 |-------|---------|-------------|
 | receiving-code-review | `/receiving-code-review` | Use when receiving code review feedback, before implementing suggestions, especially if feedback seems unclear or technically questionable |
 | requesting-code-review | `/requesting-code-review` | Use when completing tasks, implementing major features, or before merging to verify work meets requirements |
+| strict-simplify | `/strict-simplify` | Replace redundant/verbose logic with a provably-equivalent simpler form. Applies edits, shows the diff. No restructuring, renaming, reformatting, optimizing, or bug-fixing. |
 
 ---
 

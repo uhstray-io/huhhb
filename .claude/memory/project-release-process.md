@@ -17,11 +17,22 @@ Bumping only `marketplace.json` does nothing — the plugin system ignores it fo
 
 **How to apply:** Before tagging a release, update both files to the new version, then commit, tag, and push.
 
+## After merging a PR
+
+The tag is NOT created automatically by merging. After every merge:
+
+1. `git pull origin main`
+2. `git tag vX.Y.Z`
+3. `git push origin vX.Y.Z`
+
+Without the tag, `claude plugin marketplace update` sees no new version.
+
 ## Forcing a plugin update locally
 
 `claude plugin install --scope user huhhb` silently skips if already installed. To pick up a new version:
 
 ```bash
+claude plugin marketplace update
 claude plugin uninstall huhhb
 claude plugin install --scope user huhhb
 ```

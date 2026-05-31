@@ -35,6 +35,13 @@ All available skills in the Uhstray.io marketplace.
 | writing-plans | `/writing-plans` | Use when you have a spec or requirements for a multi-step task, before touching code |
 | writing-skills | `/writing-skills` | Use when creating new skills, editing existing skills, or verifying skills work before deployment |
 
+## Explanation Skills
+
+| Skill | Command | Description |
+|-------|---------|-------------|
+| explaining-plans | `/explaining-plans` | Augment a plan, spec, or RFC in place — decision criteria, cited source context, target-outcome framing, and prose-introduced mermaid diagrams. Composes with writing-plans. |
+| explaining-changes | `/explaining-changes` | Narrate changes as they happen — each logical change, each completed task, and before every commit. Brief prose + simple ASCII diagrams, chat-only. |
+
 ## Persona Skills
 
 | Skill | Command | Description |

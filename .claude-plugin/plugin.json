@@ -1,6 +1,6 @@
 {
   "name": "huhhb",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Uhstray.io skills marketplace — curated Claude Code skills including uhh:memory.",
   "author": {
     "name": "Uhstray.io",
@@ -19,6 +19,31 @@
         "memory.mcp_server"
       ]
     }
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/hooks/explain-changes-activate.sh\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/hooks/precommit-explain.sh\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
   },
   "keywords": ["memory", "skills", "ai", "uhstray", "marketplace"],
   "repository": "https://github.com/uhstray-io/huhhb"

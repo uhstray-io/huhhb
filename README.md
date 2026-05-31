@@ -65,7 +65,7 @@ description: Use when [specific triggering conditions] — embed trigger phrases
 ```json
 {
   "name": "skill-name",
-  "path": "skills/category/skill-name/skill.md",
+  "path": "skills/skill-name/SKILL.md",
   "description": "...",
   "category": "category",
   "tags": ["tag1", "tag2"],
@@ -106,6 +106,13 @@ description: Use when [specific triggering conditions] — embed trigger phrases
 | `finishing-a-development-branch` | `/finishing-a-development-branch` | Structured options for merge, PR, or cleanup |
 | `writing-skills` | `/writing-skills` | Create and validate new skills |
 
+### Explanation
+
+| Skill | Trigger | Purpose |
+|-------|---------|---------|
+| `explaining-plans` | `/explaining-plans` | Augment a plan/spec/RFC in place — decision criteria, cited sources, target outcome, mermaid diagrams. Composes with `writing-plans`. |
+| `explaining-changes` | `/explaining-changes` | Narrate changes as they happen — each change, each task, and before every commit. Brief prose + ASCII diagrams, chat-only. |
+
 ### Review
 
 | Skill | Trigger | Purpose |
@@ -119,6 +126,7 @@ Sourced from [JuliusBrussee/caveman](https://github.com/JuliusBrussee/caveman). 
 
 | Skill | Trigger | Purpose |
 |-------|---------|---------|
+| `training` | `/training` | Socratic "Sensei" mode — guides you to the answer, never writes code |
 | `caveman` | `/caveman` | Ultra-compressed mode — ~75% fewer tokens, full technical accuracy |
 | `caveman-commit` | `/caveman-commit` | Terse Conventional Commits, subject ≤50 chars |
 | `caveman-review` | `/caveman-review` | One-line PR comments: location, problem, fix |

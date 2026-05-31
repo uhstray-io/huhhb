@@ -3,7 +3,7 @@
   "publisher": "uhstray-io",
   "displayName": "Uhstray Skills Hub",
   "description": "Uhstray.io's curated Claude Code skills marketplace — workflows and automation for engineering teams.",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "homepage": "https://github.com/uhstray-io/huhhb",
   "license": "MIT",
   "skills": [
@@ -253,6 +253,22 @@
       "description": "Replace redundant or verbose logic with a provably-equivalent simpler form, apply the edits, and show the diff. Strict: no restructuring, renaming, reformatting, optimizing, or bug-fixing.",
       "category": "review",
       "tags": ["review", "simplify", "refactor"],
+      "version": "0.1.0"
+    },
+    {
+      "name": "explaining-plans",
+      "path": "skills/explaining-plans/SKILL.md",
+      "description": "Use when augmenting or explaining a plan, spec, or RFC — enriches the document in place with decision criteria, cited source context, target-outcome framing, and prose-introduced mermaid diagrams. Composes with writing-plans rather than replacing it.",
+      "category": "dev",
+      "tags": ["explanation", "planning", "mermaid", "education", "diagrams"],
+      "version": "0.1.0"
+    },
+    {
+      "name": "explaining-changes",
+      "path": "skills/explaining-changes/SKILL.md",
+      "description": "Use during implementation to narrate changes as they happen — explains each logical change, each completed plan task, and every commit, using brief prose plus simple ASCII diagrams. Chat/CLI only.",
+      "category": "dev",
+      "tags": ["explanation", "dev", "ascii", "education", "diagrams"],
       "version": "0.1.0"
     }
   ]

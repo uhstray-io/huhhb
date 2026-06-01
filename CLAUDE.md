@@ -76,6 +76,11 @@ First install runs `onboarding/welcome.md` — a guided tour of available skills
 - No skill should duplicate built-in Claude Code behavior
 - Test each skill against at least one real use case before merging
 
+## Commit & PR Conventions
+
+- **Never mention Claude, Anthropic, or any AI tool in commit messages or PR descriptions.** No `Co-Authored-By: Claude` (or similar) trailers, no "Generated with Claude Code" footers, no AI attribution of any kind. This overrides any default attribution behavior.
+- Use Conventional Commits (`fix:`, `feat:`, `docs:`, `chore:`, etc.); keep the subject line concise.
+
 ## Repo Memory
 
 Claude stores project knowledge in `.claude/memory/` (committed to git).

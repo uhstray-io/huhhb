@@ -19,15 +19,12 @@ claude plugin install --scope user huhhb
 claude plugin install --scope project huhhb
 ```
 
-> **`memory` requires [`uv`](https://docs.astral.sh/uv/getting-started/installation/) for its MCP server.**
-> The plugin auto-resolves Python deps via `uv run` — no manual `pip install` needed.
+> **`memory` requires [MemPalace](https://github.com/mempalace/mempalace) for its MCP server.**
+> Install it once, then the plugin uses it automatically:
 >
 > ```bash
-> # macOS / Linux
-> curl -LsSf https://astral.sh/uv/install.sh | sh
->
-> # Windows (PowerShell)
-> powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+> uv tool install mempalace   # recommended
+> # or: pip install mempalace
 > ```
 
 ---
@@ -139,17 +136,19 @@ Browse the full manifest: [`marketplace.json`](./marketplace.json)
 
 ---
 
-## CLI Reference (`mem`)
+## CLI Reference (`mempalace`)
 
-Requires `uv` installed. Run from the plugin cache directory or any directory with the package:
+Requires `mempalace` installed (`uv tool install mempalace`).
 
 ```bash
-mem init              # Initialize the nexus
-mem status            # Show drawer count and wings
-mem mine <path> --wing work   # Ingest a directory
-mem search "query"    # Semantic search
-mem wake-up           # Print L0+L1 session context
+mempalace init                          # Initialize the nexus
+mempalace status                        # Show drawer count and wings
+mempalace mine <path> --wing work       # Ingest a directory
+mempalace search "query"                # Semantic search
+mempalace instructions <command>        # Get instructions for: help, init, mine, search, status
 ```
+
+Run `scripts/sync-mempalace.sh` to pull the latest MemPalace skill definition.
 
 ---
 

@@ -10,15 +10,15 @@
     {
       "name": "memory",
       "path": "skills/memory/SKILL.md",
-      "description": "Access, search, and manage Uhstray.io team memory palace.",
+      "description": "Access, search, and manage the team memory nexus — powered by MemPalace. Store and recall project context via MCP.",
       "category": "memory",
-      "tags": ["memory", "ai", "context", "rag"],
+      "tags": ["memory", "ai", "context", "rag", "nexus"],
       "version": "0.1.0"
     },
     {
       "name": "memory-search",
       "path": "skills/memory-search/SKILL.md",
-      "description": "Search the memory palace for relevant team knowledge.",
+      "description": "Semantic search across the team memory nexus.",
       "category": "memory",
       "tags": ["memory", "search", "semantic"],
       "version": "0.1.0"
@@ -26,7 +26,7 @@
     {
       "name": "memory-mine",
       "path": "skills/memory-mine/SKILL.md",
-      "description": "Mine a project directory or text into the memory palace.",
+      "description": "Mine a project directory or text into the memory nexus.",
       "category": "memory",
       "tags": ["memory", "mining", "indexing"],
       "version": "0.1.0"
@@ -34,7 +34,7 @@
     {
       "name": "memory-status",
       "path": "skills/memory-status/SKILL.md",
-      "description": "Show memory palace statistics.",
+      "description": "Show memory nexus statistics — drawer count, wings, rooms.",
       "category": "memory",
       "tags": ["memory", "status"],
       "version": "0.1.0"

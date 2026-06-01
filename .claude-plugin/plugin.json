@@ -9,15 +9,8 @@
   "license": "MIT",
   "mcpServers": {
     "memory": {
-      "command": "uv",
-      "args": [
-        "run",
-        "--directory",
-        "${CLAUDE_PLUGIN_ROOT}",
-        "python",
-        "-m",
-        "memory.mcp_server"
-      ]
+      "command": "uvx",
+      "args": ["mempalace-mcp"]
     }
   },
   "hooks": {

@@ -1,36 +1,49 @@
 ---
 name: memory
-description: Access, search, and manage Uhstray.io team memory nexus. Auto-triggers at session start to load context.
-triggers:
-  - remember this
-  - save to memory
-  - check memory
-  - what do we know about
-  - recall
+description: Access, search, and manage the team memory nexus — mine projects, store context, and recall knowledge. Triggers on "remember this", "save to memory", "check memory", "what do we know about", "recall". Auto-triggers at session start to load context.
 ---
 
 # memory
 
-Uhstray.io's team memory nexus. Organized as wings → rooms → drawers.
+Team memory nexus — organize knowledge as wings → rooms → drawers, searchable semantically via MemPalace.
+
+## Prerequisites
+
+Ensure `mempalace` is installed:
+
+```bash
+mempalace --version
+```
+
+If not installed:
+
+```bash
+uv tool install mempalace   # recommended
+# or: pip install mempalace
+```
 
 ## Session Start
-Call `uhh_wake_up` at the start of every session to load team context.
+
+Call `mempalace_status` at the start of every session to orient. For deeper context, search the relevant wing.
 
 ## When to Save
-Save to memory when the user shares:
+
+Save to the nexus when the user shares:
 - Architectural decisions and their rationale
 - Team conventions and preferences
 - Bug root causes and fixes
 - Key project facts
 
-Use `uhh_add_drawer` with appropriate wing and room.
+Use `mempalace_add_drawer` with appropriate wing and room.
 
 ## Wing Conventions
+
 - `work` — project code, decisions, architecture
 - `personal` — individual preferences, notes
 - `team` — shared team knowledge, onboarding
 
 ## Sub-Skills
-- `/memory-search` — search the nexus
-- `/memory-mine` — mine a project directory
-- `/memory-status` — nexus stats
+
+- `/memory-search` — semantic search across the nexus
+- `/memory-mine` — mine a project directory or text into the nexus
+- `/memory-status` — nexus stats and structure

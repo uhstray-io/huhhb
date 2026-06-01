@@ -1,31 +1,28 @@
 ---
 name: memory-mine
-description: Mine a project directory or raw text into the memory palace for future recall.
-triggers:
-  - mine this project
-  - index this directory
-  - add project to memory
-  - mine into memory
+description: Mine a project directory or raw text into the memory nexus for future recall. Triggers on "mine this project", "index this directory", "add project to memory", "mine into memory".
 ---
 
 # memory-mine
 
-Ingest project files or raw text into the memory palace.
+Ingest project files or raw text into the team memory nexus.
 
-## Mine a Directory
-Use CLI: `mem mine <path> --wing <wing-name>`
-Or call `uhh_mine_text` with extracted content.
+## Mine a Project Directory
+
+Use `mempalace_sync` to ingest a project path:
+- Provide the full directory path
+- Choose a wing (e.g., `work`) and room name
 
 ## Mine Raw Text
-Call `uhh_mine_text` with:
-- `wing`: category (e.g., "work")
-- `room`: topic (e.g., "auth", "billing", "api")
-- `text`: the content to store
 
-Text auto-splits into 800-char drawers with overlap.
+Call `mempalace_add_drawer` with:
+- `wing`: category (e.g., `work`)
+- `room`: topic (e.g., `auth`, `billing`, `api`)
+- `content`: verbatim text to store
 
 ## Before Mining
+
 Confirm with user:
 - What wing to use
 - Whether to mine the whole directory or specific files
-- Estimated drawer count (rough: 1 drawer per ~500 chars of content)
+- Estimated scope (large directories may produce many drawers)

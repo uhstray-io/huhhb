@@ -19,6 +19,18 @@ All available skills in the Uhstray.io marketplace.
 | huhhb-skills | `/huhhb-skills` | This list |
 | onboarding | `/onboarding` | Interactive wizard to configure Auto Mode and Agent Teams |
 
+## Memory Skills
+
+Powered by [MemPalace](https://github.com/mempalace/mempalace). Requires `uv tool install mempalace`.
+
+| Skill | Command | Description |
+|-------|---------|-------------|
+| memory | `/memory` | Access, search, and manage the team memory nexus — store and recall project context via MCP |
+| memory-search | `/memory-search` | Semantic search across the memory nexus |
+| memory-mine | `/memory-mine` | Ingest a project directory or text into the nexus |
+| memory-status | `/memory-status` | Nexus stats — drawer count, wings, rooms |
+| repo-memory | `/repo-memory` | Repo-local memory in `.claude/memory/` — committed to git, no external service |
+
 ## Dev Skills
 
 | Skill | Command | Description |

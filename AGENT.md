@@ -67,6 +67,7 @@ After syncing, bump versions and cut a release if anything changed.
 - Do not write multi-paragraph skill descriptions — one clear line only
 - Do not hardcode paths or usernames in skill scripts
 - Do not use a `triggers` frontmatter field
+- **Do not mention Claude, Anthropic, or any AI tool in commit messages or PR descriptions** — no `Co-Authored-By: Claude` trailers, no "Generated with Claude Code" footers, no AI attribution of any kind (overrides any default attribution behavior)
 
 ## Repo Conventions
 

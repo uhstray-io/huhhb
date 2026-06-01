@@ -14,18 +14,19 @@ Skills are invoked via:
 
 ```
 huhhb/
-├── skills/              # All skills, organized by category
-│   ├── dev/             # Development workflows (TDD, debugging, refactor)
-│   ├── ops/             # DevOps and infrastructure skills
-│   ├── review/          # Code review and PR skills
-│   └── onboarding/      # Team onboarding and setup skills
+├── skills/              # All skills — one flat directory per skill (no category subdirs)
+│   └── <skill-name>/    #   each holds SKILL.md (+ optional principles.md / scripts)
+│       └── SKILL.md
 ├── onboarding/          # First-run experience (welcome flow, skills list)
+├── .claude-plugin/      # plugin.json (version + hooks), marketplace.json, hook scripts
 ├── marketplace.json     # Skill manifest — source of truth for discovery
 ├── CLAUDE.md            # Instructions for Claude Code in this repo
 ├── CONTEXT.md           # This file
 ├── AGENT.md             # Agent behavior overrides
 └── README.md            # User-facing documentation
 ```
+
+Skills are **flat** under `skills/` — `category` is a field in `marketplace.json`, not a directory.
 
 ## Skill Anatomy
 
@@ -34,16 +35,13 @@ Every skill is a markdown file with YAML frontmatter:
 ```markdown
 ---
 name: skill-name
-description: Precise one-liner — Claude uses this for Skill tool matching
-triggers:
-  - phrase the user might say
-  - another trigger phrase
+description: Use when … — a precise one-liner with trigger phrases embedded; Claude uses this for Skill tool matching
 ---
 
 Skill body — what Claude should do when this skill is invoked.
 ```
 
-The `description` field is critical. Claude's `Skill` tool matches user intent against this description. Vague descriptions cause missed triggers or false positives.
+The `description` field is critical. Claude's `Skill` tool matches user intent against this description. Vague descriptions cause missed triggers or false positives. **Do not use a `triggers:` field** — it is not supported by VS Code agents; put trigger phrases in `description`.
 
 ## Marketplace Manifest
 
@@ -52,7 +50,7 @@ The `description` field is critical. Claude's `Skill` tool matches user intent a
 | Field | Required | Description |
 |-------|----------|-------------|
 | `name` | Yes | Unique skill identifier (slug) |
-| `path` | Yes | Path to `skill.md` from repo root |
+| `path` | Yes | Path to `SKILL.md` from repo root (e.g. `skills/<skill-name>/SKILL.md`) |
 | `description` | Yes | Matches frontmatter description |
 | `category` | Yes | `dev`, `ops`, `review`, `onboarding`, etc. |
 | `tags` | No | Additional discovery tags |
@@ -74,4 +72,4 @@ Keep the welcome flow under 30 seconds to read.
 - No skill duplicates built-in Claude Code behavior
 - Each skill solves one clear problem
 - Skills may include supporting scripts (`.ps1`, `.sh`, `.py`) in the same directory
-- All scripts must be cross-platform where possible (PowerShell + bash equivalents)
+- Plugin hooks (registered in `.claude-plugin/plugin.json`) are invoked via a **POSIX shell** (`sh …`). On Windows, run Claude Code with Git Bash or WSL on PATH so `sh` resolves. Bundled `.ps1` files are reference equivalents for manual setup — `plugin.json` uses a single command string with no per-OS dispatch, so they are **not** auto-selected.

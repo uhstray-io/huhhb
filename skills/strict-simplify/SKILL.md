@@ -87,7 +87,10 @@ For very large repos you MAY delegate discovery to `cavecrew` subagents. Optiona
 
 ## Examples — acceptable *only when the inline condition holds*
 
-Each row is a candidate, not a guarantee. The `// SKIP if …` and `// only if …` notes are
+These are illustrative, not exhaustive. The gate applies to any redundancy you find, not
+just these shapes.
+
+Each example is a candidate, not a guarantee. The `// SKIP if …` and `// only if …` notes are
 **gates, not footnotes**: if you cannot confirm the condition by reading, the change is not
 acceptable — skip it.
 
@@ -97,10 +100,23 @@ total = 0
 for n in nums: total += n        # →
 total = sum(nums)
 ```
+```python
+biggest = items[0]
+for x in items[1:]:
+    if x > biggest: biggest = x   # →
+biggest = max(items)   # items[0] already raises on empty — max([]) does too; behavior preserved
+```
 ```js
 let found = false;
 for (const x of arr) if (x === target) { found = true; break; }   // →
 const found = arr.includes(target);   // SKIP if target may be NaN
+```
+```python
+out = ""
+for i, part in enumerate(parts):
+    out += part
+    if i < len(parts) - 1: out += ", "   # →
+out = ", ".join(parts)   # parts must be strings (already required by the +=)
 ```
 
 **Dead / no-op values & args**
@@ -109,6 +125,14 @@ directories::from("", "", "Zord")   // →  directories::from("Zord")   // only 
 ```
 ```python
 json.dumps(data, indent=None)   // →  json.dumps(data)   // None is the documented default
+```
+```js
+const url = "" + base + "/" + path;   // →
+const url = base + "/" + path;   // SKIP if base may be non-string (leading "" was coercing)
+```
+```rust
+fn log_it(x: i32) { println!("{x}"); return; }   // →
+fn log_it(x: i32) { println!("{x}"); }   // trailing bare return in a unit fn is a no-op
 ```
 
 **Redundant logic collapse**
@@ -119,6 +143,9 @@ if x > 0 { return true } else { return false }   // →  return x > 0
 result = compute(x)
 return result            # →  return compute(x)   // assigned once, used once
 ```
+```js
+if (!(!isReady)) { ... }   // →  if (isReady) { ... }   // SKIP if isReady is non-boolean (!! was coercing)
+```
 
 **Verbose → idiomatic equivalent**
 ```python
@@ -126,6 +153,10 @@ out = []
 for x in xs:
     if x > 0: out.append(x)      # →
 out = [x for x in xs if x > 0]
+```
+```ts
+const name = user && user.profile ? user.profile.name : undefined;   // →
+const name = user?.profile?.name;   // SKIP if user may be 0/"" — ?. guards nullish, && guards falsiness
 ```
 
 **Duplicate inline logic → existing project function**

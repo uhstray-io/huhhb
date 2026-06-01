@@ -72,6 +72,8 @@ marker file to turn the always-on default back off.
 
 > Requires huhhb installed as a **plugin** (the hook ships with it). A loose
 > `~/.claude/skills/` copy of this skill has no hook, so the always-on opt-in won't apply there.
+> The hook runs via a POSIX shell (`sh`); on Windows, use Git Bash or WSL on PATH. The bundled
+> `.ps1` is a reference equivalent for manual setup — `plugin.json` invokes the `.sh` only.
 
 ## Known limitation (be honest about this)
 

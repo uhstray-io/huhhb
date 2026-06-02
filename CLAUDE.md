@@ -34,9 +34,13 @@ All skill directories are flat under `skills/`: `skills/<skill-name>/SKILL.md`.
 
 - `skills/` — all skills, one flat subdirectory per skill (`skills/<skill-name>/SKILL.md`)
 - `onboarding/` — onboarding flow triggered on first install
+- `hooks/` — plugin lifecycle hook scripts (SessionStart, PreToolUse, Stop)
 - `marketplace.json` — skill manifest (name, description, version, author per skill)
 - `.claude-plugin/plugin.json` — plugin version read by Claude Code for update detection
+- `.claude-plugin/.mcp.json` — MCP server config (must match `plugin.json` mcpServers)
 - `scripts/sync-caveman.sh` — syncs caveman skills from upstream JuliusBrussee/caveman
+- `scripts/sync-mempalace.sh` — pulls latest MemPalace skill definition from upstream
+- `scripts/patch-mempalace.sh` — applies Nexus branding on top of synced MemPalace skill
 - `CONTEXT.md` — project context for AI assistants
 - `AGENT.md` — agent-specific instructions
 
@@ -57,7 +61,7 @@ All skill directories are flat under `skills/`: `skills/<skill-name>/SKILL.md`.
   "skills": [
     {
       "name": "skill-name",
-      "path": "skills/category/skill-name/skill.md",
+      "path": "skills/skill-name/SKILL.md",
       "description": "...",
       "tags": ["dev", "review"]
     }
@@ -78,6 +82,7 @@ First install runs `onboarding/welcome.md` — a guided tour of available skills
 
 ## Commit & PR Conventions
 
+- **Always open a PR** for non-trivial changes — CodeRabbit reviews are wired up and catch real issues (e.g., Windows hook breakage). Direct pushes to main are for trivial one-liners only.
 - **Never mention Claude, Anthropic, or any AI tool in commit messages or PR descriptions.** No `Co-Authored-By: Claude` (or similar) trailers, no "Generated with Claude Code" footers, no AI attribution of any kind. This overrides any default attribution behavior.
 - Use Conventional Commits (`fix:`, `feat:`, `docs:`, `chore:`, etc.); keep the subject line concise.
 

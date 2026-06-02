@@ -116,6 +116,7 @@ description: Use when [specific triggering conditions] — embed trigger phrases
 |-------|---------|---------|
 | `requesting-code-review` | `/requesting-code-review` | Verify work before merging |
 | `receiving-code-review` | `/receiving-code-review` | Process review feedback with technical rigor |
+| `strict-simplify` | `/strict-simplify` | Replace redundant/verbose logic with a provably-equivalent simpler form — applies edits, shows the diff |
 
 ### Caveman (Persona)
 
@@ -133,6 +134,16 @@ Sourced from [JuliusBrussee/caveman](https://github.com/JuliusBrussee/caveman). 
 | `cavecrew` | `/cavecrew` | Delegate to compressed subagents to preserve context |
 
 Browse the full manifest: [`marketplace.json`](./marketplace.json)
+
+### Plugin Hooks
+
+Lifecycle hooks in `hooks/` fire automatically — no invocation needed:
+
+| Hook | Event | Purpose |
+|------|-------|---------|
+| `explain-changes-activate.sh` | SessionStart | Opt-in always-on narration (set `HUHHB_EXPLAIN_CHANGES=1` or create `~/.claude/explaining-changes.on`) |
+| `repo-memory-load.sh` | SessionStart | Auto-loads `.claude/memory/MEMORY.md` when present in the project |
+| `precommit-explain.sh` | PreToolUse (Bash) | Nudges a change summary before every `git commit` |
 
 ---
 

@@ -76,6 +76,12 @@ description: Use when [specific triggering conditions] — embed trigger phrases
 
 ## What's Inside
 
+### Onboarding
+
+| Skill | Trigger | Purpose |
+|-------|---------|---------|
+| `onboarding` | `/onboarding` | First-time setup wizard — configure Auto Mode, enable Agent Teams, and orient to Claude Code |
+
 ### Memory
 
 | Skill | Trigger | Purpose |
@@ -86,22 +92,22 @@ description: Use when [specific triggering conditions] — embed trigger phrases
 | `memory-status` | `/memory-status` | Nexus stats — drawer count, wings, rooms |
 | `repo-memory` | `/repo-memory` | Repo-local memory in `.claude/memory/` — committed to git, no external service |
 
-### Dev Workflows (via [superpowers](https://github.com/obra/superpowers))
+### Dev Workflows
 
 | Skill | Trigger | Purpose |
 |-------|---------|---------|
-| `using-superpowers` | `/using-superpowers` | Session start — how to find and invoke skills correctly |
-| `brainstorming` | `/brainstorming` | Explore intent and design before any implementation |
-| `writing-plans` | `/writing-plans` | Write a structured implementation plan from a spec |
-| `executing-plans` | `/executing-plans` | Execute a written plan with review checkpoints |
-| `test-driven-development` | `/test-driven-development` | Write tests before implementation code |
-| `systematic-debugging` | `/systematic-debugging` | Root-cause bugs before proposing fixes |
-| `verification-before-completion` | `/verification-before-completion` | Verify work passes before claiming done |
-| `subagent-driven-development` | `/subagent-driven-development` | Execute plans via parallel subagents |
-| `dispatching-parallel-agents` | `/dispatching-parallel-agents` | Split independent tasks across agents |
-| `using-git-worktrees` | `/using-git-worktrees` | Isolate feature work in git worktrees |
-| `finishing-a-development-branch` | `/finishing-a-development-branch` | Structured options for merge, PR, or cleanup |
-| `writing-skills` | `/writing-skills` | Create and validate new skills |
+| `using-superpowers` | `/using-superpowers` | How to find and invoke skills — read this at session start if skills aren't auto-matching |
+| `brainstorming` | `/brainstorming` | Explore intent and design before touching any code — required before implementing features |
+| `writing-plans` | `/writing-plans` | Write a structured implementation plan from a spec or requirements |
+| `executing-plans` | `/executing-plans` | Execute a written plan in a focused session with review checkpoints |
+| `test-driven-development` | `/test-driven-development` | Write failing tests before writing implementation code |
+| `systematic-debugging` | `/systematic-debugging` | Root-cause a bug before proposing any fix |
+| `verification-before-completion` | `/verification-before-completion` | Run verification commands and confirm output before claiming work is done |
+| `subagent-driven-development` | `/subagent-driven-development` | Execute a multi-step plan using parallel subagents in the current session |
+| `dispatching-parallel-agents` | `/dispatching-parallel-agents` | Split 2+ fully independent tasks across separate agents simultaneously |
+| `using-git-worktrees` | `/using-git-worktrees` | Isolate feature work in a separate git worktree to avoid conflicting with the current workspace |
+| `finishing-a-development-branch` | `/finishing-a-development-branch` | Decide how to integrate completed work — merge, PR, squash, or clean up |
+| `writing-skills` | `/writing-skills` | Author, edit, or validate a new huhhb skill before shipping it |
 
 ### Explanation
 
@@ -114,24 +120,24 @@ description: Use when [specific triggering conditions] — embed trigger phrases
 
 | Skill | Trigger | Purpose |
 |-------|---------|---------|
-| `requesting-code-review` | `/requesting-code-review` | Verify work before merging |
-| `receiving-code-review` | `/receiving-code-review` | Process review feedback with technical rigor |
+| `requesting-code-review` | `/requesting-code-review` | Structure and submit a code review request — frames what changed, why, and what needs scrutiny |
+| `receiving-code-review` | `/receiving-code-review` | Process incoming review feedback with technical rigor before implementing suggestions |
 | `strict-simplify` | `/strict-simplify` | Replace redundant/verbose logic with a provably-equivalent simpler form — applies edits, shows the diff |
 
-### Caveman (Persona)
-
-Sourced from [JuliusBrussee/caveman](https://github.com/JuliusBrussee/caveman). Run `scripts/sync-caveman.sh` to pull the latest.
+### Persona
 
 | Skill | Trigger | Purpose |
 |-------|---------|---------|
-| `training` | `/training` | Socratic "Sensei" mode — guides you to the answer, never writes code |
-| `caveman` | `/caveman` | Ultra-compressed mode — ~75% fewer tokens, full technical accuracy |
+| `training` | `/training` | Socratic "Sensei" mode — guides you to the answer through questions, never writes code for you |
+| `caveman` | `/caveman` | Ultra-compressed communication — ~75% fewer tokens, full technical accuracy |
 | `caveman-commit` | `/caveman-commit` | Terse Conventional Commits, subject ≤50 chars |
 | `caveman-review` | `/caveman-review` | One-line PR comments: location, problem, fix |
-| `caveman-compress` | `/caveman-compress <file>` | Compress memory files to save input tokens |
-| `caveman-help` | `/caveman-help` | Quick-reference for all caveman modes |
+| `caveman-compress` | `/caveman-compress` | Compress CLAUDE.md and memory files into caveman format to save input tokens |
+| `caveman-help` | `/caveman-help` | Quick-reference card for all caveman modes and commands |
 | `caveman-stats` | `/caveman-stats` | Session token usage metrics (requires caveman plugin hooks) |
-| `cavecrew` | `/cavecrew` | Delegate to compressed subagents to preserve context |
+| `cavecrew` | `/cavecrew` | Delegate code tasks to compressed subagents to preserve main context length |
+
+> Caveman skills sourced from [JuliusBrussee/caveman](https://github.com/JuliusBrussee/caveman). Run `scripts/sync-caveman.sh` to pull the latest.
 
 Browse the full manifest: [`marketplace.json`](./marketplace.json)
 

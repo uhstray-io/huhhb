@@ -11,6 +11,12 @@ Heavy detail for the `grounding` skill, kept out of `SKILL.md` to keep it lean.
 - **Clock reset is the skill's job.** The hook cannot know the checkpoint actually finished, so the
   SKILL stamps `last_ground` at the end of a genuinely completed checkpoint — write a temp file then
   `mv` it over the path the hook named (atomic). Only stamp on a real checkpoint, never on a no-op skip.
+- **Review scope since the last checkpoint.** `last_ground` is a Unix epoch, *not* a git ref — you can't
+  `git diff <timestamp>`. The reviewable scope = uncommitted work (`git status`, `git diff`,
+  `git diff --cached`) **plus** commits since the checkpoint, found with `git log --since=@<last_ground>`
+  (then diff that range, e.g. `git diff <oldest-such-commit>~1..HEAD`). For an exact range with no
+  timestamp fuzziness, the skill may also record `last_ground_commit=$(git rev-parse HEAD)` when it
+  stamps and use `git diff <last_ground_commit>..HEAD` next time.
 
 ## Check menu (offer every checkpoint; default = all)
 

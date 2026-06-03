@@ -31,8 +31,10 @@ nudge. Offer the checkpoint at the next natural pause.
 
 ## Then: read state, skip a no-op
 
-Read `git status`, `git diff --stat`, and the diff since `last_ground`. If nothing meaningful changed,
-say "still grounded — nothing to do" and stop. Never invent findings to look useful.
+Read `last_ground` (a Unix epoch) from the state file the hook named, then gather the work since then:
+uncommitted changes (`git status`, `git diff`) **plus** commits since the checkpoint —
+`git log --since=@<last_ground>` (`@<epoch>` is git's epoch form; `last_ground` is **not** a git ref).
+If nothing meaningful changed, say "still grounded — nothing to do" and stop. Never invent findings.
 
 ## Offer the menu, then run the selected checks
 

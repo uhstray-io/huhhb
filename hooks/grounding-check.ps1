@@ -38,7 +38,8 @@ $cooldownS = $cooldownMin * 60
 # session id -> per-session state file
 $sid = 'nosession'
 $sm = [regex]::Match($payload, '"session_id"\s*:\s*"([^"]*)"')
-if ($sm.Success -and $sm.Groups[1].Value) { $sid = $sm.Groups[1].Value }
+if ($sm.Success -and $sm.Groups[1].Value) { $sid = ($sm.Groups[1].Value -replace '[^A-Za-z0-9._-]', '') }  # sanitize: no path traversal
+if (-not $sid) { $sid = 'nosession' }
 $tmpDir = if ($env:TMPDIR) { $env:TMPDIR } else { [System.IO.Path]::GetTempPath() }
 $state = Join-Path $tmpDir ("huhhb-grounding-" + $sid)
 

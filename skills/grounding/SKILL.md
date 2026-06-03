@@ -43,7 +43,9 @@ skipped in the report (their choice — never a silent omission).
 1. **Work snapshot** — `git status` + `git diff --stat`; surface uncommitted/unpushed work, suggest
    logical-chunk commits. Never commit yourself.
 2. **Code review** — actually invoke `/simplify`, then `/security-review`; report *their* output. Don't
-   substitute an eyeballed verdict for the tool. Missing? say "‹cmd› unavailable — manual review needed."
+   substitute an eyeballed verdict for the tool. If you did **not** literally invoke the command this
+   turn (not installed, or you only read the code yourself), label it **"manual review — command not
+   invoked"** — never present your own analysis as `/simplify` or `/security-review` output.
 3. **Test/build/lint health** — detect and run the project's test/lint command (from `package.json`,
    `pyproject.toml`, `Makefile`, …), or offer to; report the real result. Never claim "tests pass"
    unrun; flag untested changes.

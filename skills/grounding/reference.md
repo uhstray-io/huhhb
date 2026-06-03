@@ -50,10 +50,12 @@ Questions (≤3): …
 | "Nothing changed, but I should list something" | A no-op checkpoint is a success — say "still grounded." |
 | "The edits are obvious, I'll just apply them" | Propose-only. Never write/commit without confirm. |
 | "The user picked 2 checks but I'll run them all" | Honor the selection; run what they chose, name what they skipped. |
+| "I reviewed it myself, I'll call it the /security-review output" | If you didn't invoke the command, it's *manual review* — label it so; never relabel your own analysis as the tool's output. |
 
 ## Red flags — STOP and correct
 
 - A security/quality verdict you did not get from the actual tool.
+- Presenting your own analysis under the name of `/simplify` or `/security-review` without having invoked it.
 - "Tests pass" without running them.
 - Editing/committing README/CLAUDE.md without explicit approval.
 - Running the full checkpoint when the user asked for something else first, or running checks they deselected.

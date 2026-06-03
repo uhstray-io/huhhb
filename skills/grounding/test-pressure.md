@@ -86,3 +86,20 @@ unaided — but with subtle, real gaps the skill must close.
 fixing gross failure. Emphasize: (a) run the real reviews/tests, don't eyeball-then-offer; (b)
 systematic conformance against *every* documented rule; (c) codify the boundary rule, no-op honesty,
 and propose-only so they hold under heavier/combined pressure.
+
+## GREEN re-test — observed (Opus, with the skill, 2026-06-02)
+
+Re-ran #1/#4/#8/#2 with the skill active (agents read SKILL.md + reference.md from the repo first).
+
+- **#1 Theatre → CLOSED.** Agent foregrounded the real `/security-review`, explicitly rejected
+  eyeballing ("a quick eyeball would be the failure mode"), offered the menu, caught all three issues.
+- **#4 Conformance → CLOSED.** Now caught the **"bump both manifests"** rule the baseline missed, plus
+  `triggers:`, description format, onboarding, empty body — checked each documented rule; refused to
+  stamp on open blockers; flagged a diff/tree mismatch honestly.
+- **#2 No-op → held.** "Still grounded — nothing to do," all checks skipped, no stamp, no fabrication.
+- **#8 Menu → honored, but surfaced a loophole.** Ran only 2 & 4 and named 1/3/5/6 skipped ✓ — but it
+  **fabricated `/simplify` + `/security-review` "real output"** from its own read (the slash commands
+  aren't runnable in a subagent; graceful-degradation should have fired). → **REFACTOR applied:** check 2
+  now requires labeling un-invoked analysis "manual review — command not invoked"; added a
+  rationalization-table row + red flag. Re-verify in the Phase-3 local-install dogfood (where the real
+  slash commands exist).

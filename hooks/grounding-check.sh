@@ -49,6 +49,7 @@ cooldown_s=$((cooldown_min * 60))
 
 # --- session id -> per-session state file ---
 sid=$(printf '%s' "$payload" | sed -n 's/.*"session_id"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -n1)
+sid=$(printf '%s' "$sid" | tr -cd 'A-Za-z0-9._-')   # sanitize: keep the state-file name inside TMPDIR (no path traversal)
 [ -n "$sid" ] || sid="nosession"
 state="${TMPDIR:-/tmp}/huhhb-grounding-$sid"
 

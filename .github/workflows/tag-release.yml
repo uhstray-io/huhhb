@@ -1,0 +1,76 @@
+name: Tag release
+
+# Auto-tag a release when the plugin version on main changes.
+#
+# The version lives in two manifests that must agree (the repo's "bump both" rule):
+#   .claude-plugin/plugin.json  and  marketplace.json
+# On every push to main this reads that version and, if no matching vX.Y.Z tag exists yet,
+# creates an annotated tag and a GitHub Release. Idempotent: a push that doesn't change the
+# version finds the tag already present and does nothing. Tag pushes don't re-trigger this
+# (it only listens to branch pushes), so there is no loop.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: tag-release
+  cancel-in-progress: false
+
+jobs:
+  tag:
+    # manual dispatch only on main — never tag/release an off-branch commit
+    if: github.event_name != 'workflow_dispatch' || github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          persist-credentials: false
+
+      - name: Resolve and validate version
+        id: ver
+        run: |
+          set -euo pipefail
+          plugin=$(jq -r '.version' .claude-plugin/plugin.json)
+          market=$(jq -r '.version' marketplace.json)
+          if [ "$plugin" != "$market" ]; then
+            echo "::error::version mismatch — .claude-plugin/plugin.json=$plugin marketplace.json=$market (bump both to the same value)"
+            exit 1
+          fi
+          case "$plugin" in
+            ''|null) echo "::error::no version found in plugin.json"; exit 1 ;;
+          esac
+          echo "version=$plugin" >> "$GITHUB_OUTPUT"
+          echo "tag=v$plugin"   >> "$GITHUB_OUTPUT"
+
+      - name: Create tag if it does not exist
+        id: tag
+        env:
+          TAG: ${{ steps.ver.outputs.tag }}
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if git ls-remote --tags --exit-code origin "refs/tags/$TAG" >/dev/null 2>&1; then
+            echo "$TAG already exists — nothing to do."
+            echo "created=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "$TAG" -m "Release $TAG"
+          git push "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "$TAG"
+          echo "Created and pushed $TAG"
+          echo "created=true" >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub Release
+        if: steps.tag.outputs.created == 'true'
+        env:
+          TAG: ${{ steps.ver.outputs.tag }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh release create "$TAG" --title "$TAG" --generate-notes

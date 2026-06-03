@@ -15,17 +15,17 @@ Bumping only `marketplace.json` does nothing — the plugin system ignores it fo
 
 **Why:** We shipped v0.2.2 with only `marketplace.json` bumped. Claude Code still reported v0.2.1 because it reads `.claude-plugin/plugin.json` exclusively for the installed version.
 
-**How to apply:** Before tagging a release, update both files to the new version, then commit, tag, and push.
+**How to apply:** Update both files to the same new version in your PR; on merge, CI tags the release (see below).
 
 ## After merging a PR
 
-The tag is NOT created automatically by merging. After every merge:
+Tagging is automated. The **Tag release** workflow (`.github/workflows/tag-release.yml`) runs on every
+push to `main`; when the version in the two manifests changes, it creates and pushes `vX.Y.Z` and a
+GitHub Release. No manual `git tag` step.
 
-1. `git pull origin main`
-2. `git tag vX.Y.Z`
-3. `git push origin vX.Y.Z`
-
-Without the tag, `claude plugin marketplace update` sees no new version.
+(The plugin marketplace tracks `main` HEAD for version detection — installs picked up 0.4.3 from `main`
+before any tag existed — so tags/releases are for version history and changelog, not a prerequisite for
+`claude plugin marketplace update`.)
 
 ## Forcing a plugin update locally
 

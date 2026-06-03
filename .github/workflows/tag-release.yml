@@ -23,11 +23,13 @@ concurrency:
 
 jobs:
   tag:
+    # manual dispatch only on main — never tag/release an off-branch commit
+    if: github.event_name != 'workflow_dispatch' || github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
-          fetch-depth: 0
+          persist-credentials: false
 
       - name: Resolve and validate version
         id: ver
@@ -49,6 +51,7 @@ jobs:
         id: tag
         env:
           TAG: ${{ steps.ver.outputs.tag }}
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           if git ls-remote --tags --exit-code origin "refs/tags/$TAG" >/dev/null 2>&1; then
@@ -59,7 +62,7 @@ jobs:
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git tag -a "$TAG" -m "Release $TAG"
-          git push origin "$TAG"
+          git push "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "$TAG"
           echo "Created and pushed $TAG"
           echo "created=true" >> "$GITHUB_OUTPUT"
 

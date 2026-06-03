@@ -17,6 +17,13 @@ grounding hook (`~/.claude/grounding.on`) or run `/grounding`. The hook nudges o
 Four goals: keep track of in-flight work · keep changes aligned to the repo's documented principles ·
 improve code quality · keep alignment on goals/outcomes.
 
+## First run (one-time setup)
+
+If `~/.claude/grounding.on` is missing or has no `interval_min`, offer to enable grounding: ask the
+preferred checkpoint interval and write `interval_min=<minutes>` to that marker — **default 2h (120)**
+if no answer is given. Then continue. Skip this once configured; manual `/grounding` runs proceed
+regardless.
+
 ## First: don't hijack
 
 If the user has a pending request, handle it first — a bug, incident, or direct question outranks the
@@ -37,8 +44,9 @@ skipped in the report (their choice — never a silent omission).
    logical-chunk commits. Never commit yourself.
 2. **Code review** — actually invoke `/simplify`, then `/security-review`; report *their* output. Don't
    substitute an eyeballed verdict for the tool. Missing? say "‹cmd› unavailable — manual review needed."
-3. **Test/build/lint health** — run the project's test/lint command (or offer to); report the real
-   result. Never claim "tests pass" unrun; flag untested changes.
+3. **Test/build/lint health** — detect and run the project's test/lint command (from `package.json`,
+   `pyproject.toml`, `Makefile`, …), or offer to; report the real result. Never claim "tests pass"
+   unrun; flag untested changes.
 4. **Repo conformance** — read CLAUDE.md, AGENT.md, CONTEXT.md, CONTRIBUTING, docs/ and check the diff
    against **each** documented rule, methodically — not just the one that springs to mind. No such docs?
    say so; don't invent rules.

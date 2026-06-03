@@ -123,6 +123,7 @@ description: Use when [specific triggering conditions] — embed trigger phrases
 | `requesting-code-review` | `/requesting-code-review` | Structure and submit a code review request — frames what changed, why, and what needs scrutiny |
 | `receiving-code-review` | `/receiving-code-review` | Process incoming review feedback with technical rigor before implementing suggestions |
 | `strict-simplify` | `/strict-simplify` | Replace redundant/verbose logic with a provably-equivalent simpler form — applies edits, shows the diff |
+| `strict-refactor` | `/strict-refactor` | Decompose large functions into named single-purpose units — verbatim extraction only, no logic changes, no renames |
 
 ### Persona
 

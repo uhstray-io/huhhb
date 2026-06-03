@@ -44,7 +44,7 @@ Before marking a skill PR ready:
 
 1. Bump version in `marketplace.json`
 2. Bump version in `.claude-plugin/plugin.json` (same value)
-3. Commit, tag (`git tag vX.Y.Z`), and push with `--tags`
+3. Open a PR; on merge to `main`, the **Tag release** workflow (`.github/workflows/tag-release.yml`) auto-creates and pushes `vX.Y.Z` + a GitHub Release when the version changes — no manual `git tag`
 4. To force a local update: `claude plugin uninstall huhhb && claude plugin install --scope user huhhb`
    (`install` silently skips if already installed — uninstall first)
 

@@ -57,13 +57,17 @@ skipped in the report (their choice — never a silent omission).
 5. **Goal/scope** — compare the work to the session's stated objective; flag drift.
 6. **Gaps & next steps** — what's missing/assumed; re-confirm the expected next steps.
 
-## Report, propose, close
+## Report, recommend, close
 
-Render the report (template in `reference.md`) for the checks that ran, naming any skipped. Propose any
-doc/conformance edits as a **confirm-first diff** — never write or commit unprompted. Ask ≤3 clarifying
-questions. When the checkpoint genuinely completes, record `last_ground` by writing to the state-file
-path the hook named in its nudge (only you know it actually finished). "stop grounding" disables for the
-session, "not now" snoozes, "skip" skips once.
+Render the report (template in `reference.md`) for the checks that ran, naming any skipped. Then
+synthesize the findings into a short, **prioritized "Recommended actions" list** — each action concrete,
+ranked (blockers/security first), and tied to the check + finding that motivates it — and **offer to
+carry them out (confirm-first)**. Recommend only actions a real finding supports; a clean or no-op
+checkpoint recommends nothing — never invent work. Propose any doc/conformance/code edits as a
+confirm-first diff; never write or commit unprompted. Then ask ≤3 clarifying questions. When the
+checkpoint genuinely completes, record `last_ground` by writing to the state-file path the hook named in
+its nudge (only you know it actually finished). "stop grounding" disables, "not now" snoozes, "skip"
+skips once.
 
 **Honest limitation:** the hook nudges, it doesn't force; the cadence is best-effort. Full report
 template, rationalization table, and red-flags: `reference.md`.

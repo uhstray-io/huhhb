@@ -40,6 +40,11 @@ Grounding checkpoint — <branch> · <N files / +X−Y> since last checkpoint
 5. Goal/scope  — still aligned with "<objective>"? drift flagged
 6. Gaps/next   — what's missing/assumed; next steps re-confirmed
 
+Recommended actions (ranked; from real findings only — none if the checkpoint is clean):
+  P1 <action> — from <check>: <finding>
+  P2 <action> — from <check>: <finding>
+  -> want me to do any of these? (confirm-first)
+
 Proposed edits (confirm-first): <diffs, if any> — nothing applied yet.
 Questions (≤3): …
 ```
@@ -57,6 +62,7 @@ Questions (≤3): …
 | "The edits are obvious, I'll just apply them" | Propose-only. Never write/commit without confirm. |
 | "The user picked 2 checks but I'll run them all" | Honor the selection; run what they chose, name what they skipped. |
 | "I reviewed it myself, I'll call it the /security-review output" | If you didn't invoke the command, it's *manual review* — label it so; never relabel your own analysis as the tool's output. |
+| "A checkpoint should end with something actionable" | Recommend only actions a real finding supports; a clean checkpoint recommends nothing — don't invent work to look useful. |
 
 ## Red flags — STOP and correct
 
@@ -68,3 +74,4 @@ Questions (≤3): …
 - Inventing a finding to make a no-op (or a deselected check) look productive.
 - Checking only the convention you happened to remember.
 - Stamping `last_ground` on a checkpoint you didn't actually complete.
+- Recommending an action that no finding supports (inventing work to look useful).

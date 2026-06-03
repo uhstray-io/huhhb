@@ -39,6 +39,7 @@ Powered by [MemPalace](https://github.com/mempalace/mempalace). Requires `uv too
 | dispatching-parallel-agents | `/dispatching-parallel-agents` | Use when facing 2+ independent tasks that can be worked on without shared state or sequential dependencies |
 | executing-plans | `/executing-plans` | Use when you have a written implementation plan to execute in a separate session with review checkpoints |
 | finishing-a-development-branch | `/finishing-a-development-branch` | Use when implementation is complete, all tests pass, and you need to decide how to integrate the work |
+| grounding | `/grounding` | Use when a long session should pause for a checkpoint — surfaces in-flight work, runs reviews + repo-conformance, and re-confirms goals (default 2h, configurable; opt-in, with a user-selectable check menu) |
 | subagent-driven-development | `/subagent-driven-development` | Use when executing implementation plans with independent tasks in the current session |
 | systematic-debugging | `/systematic-debugging` | Use when encountering any bug, test failure, or unexpected behavior, before proposing fixes |
 | test-driven-development | `/test-driven-development` | Use when implementing any feature or bugfix, before writing implementation code |

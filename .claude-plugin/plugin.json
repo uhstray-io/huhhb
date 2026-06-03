@@ -1,6 +1,6 @@
 {
   "name": "huhhb",
-  "version": "0.4.2",
+  "version": "0.4.3",
   "description": "Uhstray.io skills marketplace — curated Claude Code skills including uhh:memory.",
   "author": {
     "name": "Uhstray.io",
@@ -37,6 +37,17 @@
           {
             "type": "command",
             "command": "sh -c '[ -f \"$0\" ] && exec sh \"$0\" || exit 0' \"${CLAUDE_PLUGIN_ROOT}/hooks/precommit-explain.sh\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh -c '[ -f \"$0\" ] && exec sh \"$0\" || exit 0' \"${CLAUDE_PLUGIN_ROOT}/hooks/grounding-check.sh\"",
             "timeout": 5
           }
         ]

@@ -3,7 +3,7 @@
   "publisher": "uhstray-io",
   "displayName": "Uhstray Skills Hub",
   "description": "Uhstray.io's curated Claude Code skills marketplace — workflows and automation for engineering teams.",
-  "version": "0.4.2",
+  "version": "0.4.3",
   "homepage": "https://github.com/uhstray-io/huhhb",
   "license": "MIT",
   "skills": [
@@ -269,6 +269,14 @@
       "description": "Use during implementation to narrate changes as they happen — explains each logical change, each completed plan task, and every commit, using brief prose plus simple ASCII diagrams. Chat/CLI only.",
       "category": "dev",
       "tags": ["explanation", "dev", "ascii", "education", "diagrams"],
+      "version": "0.1.0"
+    },
+    {
+      "name": "grounding",
+      "path": "skills/grounding/SKILL.md",
+      "description": "Use when a long session should pause for a checkpoint — surfaces in-flight work, runs /simplify + /security-review and test/build/lint health, checks the diff against the repo's documented conventions, and re-confirms goals. Fired by the grounding hook (default 2h, configurable) or run manually. Opt-in; offers a user-selectable check menu.",
+      "category": "dev",
+      "tags": ["dev", "checkpoint", "review", "conformance", "session"],
       "version": "0.1.0"
     }
   ]

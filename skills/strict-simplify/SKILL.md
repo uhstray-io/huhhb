@@ -8,7 +8,7 @@ description: Use when reviewing code to replace redundant or verbose logic with 
 ## Overview
 
 Replace code **only** when the replacement is provably identical in behavior and the
-equivalence is **self-evident from reading the diff**. The output is a git diff a human can
+equivalence is **clear from reading the diff**. The output is a git diff a human can
 approve line-by-line without running the code to trust it.
 
 This skill does **less than `simplify` on purpose.** It does not restructure, rename,
@@ -19,18 +19,18 @@ reformat, optimize, or fix bugs. Narrowness is the feature.
 A change is allowed **only if it passes ALL six checks.** Otherwise: **skip it.**
 
 1. **Identical behavior** for every input, including edge cases and error paths.
-2. **Self-evident by reading** — equivalence is obvious from the diff alone. No execution.
+2. **Clear by reading the diff** — equivalence is clear from reading the diff. No execution.
    Documented language/standard-library semantics count as "reading" (you may rely on what
    `sum`, `includes`, or a default argument is *specified* to do); assumptions about *your
    own* untested code paths do not.
 3. **No signature / type / API change** — nothing observable to callers changes.
 4. **No change to side effects, evaluation order, or error/exception behavior.**
-5. **Local** — within an expression/statement/line, not a cross-function move. Inlining a
-   single-use variable into the very next line counts as local.
+5. **Local** — not a cross-function move. Inlining a single-use variable into the very next
+   line counts as local.
 6. **When in doubt, skip.** Bias is always toward leaving code alone.
 
 > Violating the letter of these is violating the spirit. "Basically the same" that fails any
-> one check is not a candidate. If you cannot write a clean one-line "why equivalent"
+> one check is not a candidate. If you cannot write a clear "why equivalent"
 > justification, it is not a candidate.
 
 ## In-Scope Categories
@@ -76,7 +76,7 @@ checks.
    user to commit or stash first, so the simplification diff stays isolated.
 2. **Target** — whole repo by default; if the user passed a path, restrict to it.
 3. **Discover** — read the code and build a candidate ledger. Each row:
-   `file:line · category · current → proposed · one-line why-equivalent`.
+   `file:line · category · current → proposed · why-equivalent`.
    Drop every row that fails the gate.
 4. **Apply** — apply all surviving candidates. Leave edits **unstaged**.
 5. **Report** — show `git diff` + the ledger, plus a short
@@ -196,4 +196,4 @@ return infer_room(filename)   # only if infer_room() is provably identical for a
 - You're about to write "this is basically the same" instead of a clean equivalence line.
 - You're "improving" performance.
 - You're fixing a bug.
-- You can't be 100% sure by reading alone — that means **skip**, not "probably fine".
+- You're relying on assumptions rather than what you can read — that means **skip**, not "probably fine".

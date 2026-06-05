@@ -3,10 +3,26 @@
   "publisher": "uhstray-io",
   "displayName": "Uhstray Skills Hub",
   "description": "Uhstray.io's curated Claude Code skills marketplace — workflows and automation for engineering teams.",
-  "version": "0.4.6",
+  "version": "0.4.7",
   "homepage": "https://github.com/uhstray-io/huhhb",
   "license": "MIT",
   "skills": [
+    {
+      "name": "session-save",
+      "path": "skills/session-save/SKILL.md",
+      "description": "Use when ending or pausing a session and you want to resume cleanly later — writes a gitignored continuation file (.claude/CONTINUE.md) with the exact next action, conversation context, and working-tree state.",
+      "category": "dev",
+      "tags": ["continuity", "session", "save", "context"],
+      "version": "0.1.0"
+    },
+    {
+      "name": "session-resume",
+      "path": "skills/session-resume/SKILL.md",
+      "description": "Use when picking up prior work in a fresh session — consumes the continuation file written by session-save: verifies it against the repo, re-hydrates context, briefs, deletes the file, then acts.",
+      "category": "dev",
+      "tags": ["continuity", "session", "resume", "context"],
+      "version": "0.1.0"
+    },
     {
       "name": "memory",
       "path": "skills/memory/SKILL.md",

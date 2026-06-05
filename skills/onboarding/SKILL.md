@@ -40,7 +40,7 @@ Next, display the default permissions and ask:
 >
 > **Allow** (no prompt needed):
 > `Bash(git status)`, `Bash(git diff *)`, `Bash(git log *)`, `Bash(git show *)`,
-> `Bash(git branch *)`, `Bash(* --version)`, `Bash(* --help *)`,
+> `Bash(git branch *)`, `Bash(git commit *)`, `Bash(* --version)`, `Bash(* --help *)`,
 > `Bash(ansible-lint *)`, `Bash(yamllint *)`,
 > `Bash(ansible-playbook --check *)`, `Bash(ansible-playbook --list-tasks *)`,
 > `Bash(docker ps *)`, `Bash(docker images *)`, `Bash(docker inspect *)`,
@@ -54,10 +54,13 @@ Next, display the default permissions and ask:
 > `Bash(sudo *)`, `Bash(su *)`, `Bash(ssh *)`, `Bash(scp *)`, `Bash(sftp *)`,
 > `Bash(rm -rf *)`, `Bash(wget *)`, `Read(~/.ssh/**)`, `Read(./.env)`,
 > `Read(./.env.*)`, `Read(./secrets/**)`, `Read(**/*.key)`, `Read(**/*.pem)`,
-> `Read(**/id_rsa)`, `Read(**/id_ed25519)`, `Bash(git push *)`, `Bash(git commit *)`,
+> `Read(**/id_rsa)`, `Read(**/id_ed25519)`, `Bash(git push *)`,
 > `Bash(ansible-playbook *)`, `Bash(docker run *)`, `Bash(docker exec *)`,
 > `Bash(podman run *)`, `Bash(podman exec *)`,
 > `Bash(docker compose *)`, `Bash(docker-compose *)`
+>
+> Note: commits are allowed without prompting — they're local and easy to revert, and frequent
+> commits give you restore points. Pushing leaves the machine, so `git push` always asks.
 
 Wait for a response. Apply any requested additions or removals to the lists.
 
@@ -73,6 +76,7 @@ Write to `~/.claude/settings.json` (merge with existing content, do not overwrit
       "Bash(git log *)",
       "Bash(git show *)",
       "Bash(git branch *)",
+      "Bash(git commit *)",
       "Bash(* --version)",
       "Bash(* --help *)",
       "Bash(ansible-lint *)",
@@ -113,7 +117,6 @@ Write to `~/.claude/settings.json` (merge with existing content, do not overwrit
       "Read(**/id_rsa)",
       "Read(**/id_ed25519)",
       "Bash(git push *)",
-      "Bash(git commit *)",
       "Bash(ansible-playbook *)",
       "Bash(docker run *)",
       "Bash(docker exec *)",

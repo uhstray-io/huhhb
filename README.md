@@ -103,6 +103,7 @@ description: Use when [specific triggering conditions] — embed trigger phrases
 | `test-driven-development` | `/test-driven-development` | Write failing tests before writing implementation code |
 | `systematic-debugging` | `/systematic-debugging` | Root-cause a bug before proposing any fix |
 | `verification-before-completion` | `/verification-before-completion` | Run verification commands and confirm output before claiming work is done |
+| `grounding` | `/grounding` | Pause a long session for a checkpoint — surfaces in-flight work, runs `/simplify` + `/security-review` and test/build/lint health, checks the diff against repo conventions, and re-confirms goals. Hook-fired (default 2h) or manual; opt-in |
 | `subagent-driven-development` | `/subagent-driven-development` | Execute a multi-step plan using parallel subagents in the current session |
 | `dispatching-parallel-agents` | `/dispatching-parallel-agents` | Split 2+ fully independent tasks across separate agents simultaneously |
 | `using-git-worktrees` | `/using-git-worktrees` | Isolate feature work in a separate git worktree to avoid conflicting with the current workspace |
@@ -151,6 +152,7 @@ Lifecycle hooks in `hooks/` fire automatically — no invocation needed:
 | `explain-changes-activate.sh` | SessionStart | Opt-in always-on narration (set `HUHHB_EXPLAIN_CHANGES=1` or create `~/.claude/explaining-changes.on`) |
 | `repo-memory-load.sh` | SessionStart | Auto-loads `.claude/memory/MEMORY.md` when present in the project |
 | `precommit-explain.sh` | PreToolUse (Bash) | Nudges a change summary before every `git commit` |
+| `grounding-check.sh` | UserPromptSubmit | Fires a grounding checkpoint (`grounding` skill) after a long session — default 2h interval, configurable; opt-in, off by default |
 
 ---
 

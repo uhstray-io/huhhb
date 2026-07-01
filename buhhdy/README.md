@@ -108,7 +108,10 @@ buhhdy/
 │   └── gemini/config.yaml         ← Google Gemini sub-agent
 ├── skills/
 │   ├── routing-guide/SKILL.md    ← Provider routing reference (load on demand)
-│   └── core-workflows/SKILL.md   ← The two standard planning/dev workflows
+│   ├── core-workflows/SKILL.md   ← The two standard planning/dev workflows
+│   ├── investigate/SKILL.md      ← Vendored from omnigent's examples/polly bundle
+│   ├── fanout/SKILL.md           ← Vendored, adapted for buhhdy's 3-provider roster
+│   └── cross-review/SKILL.md     ← Vendored, adapted for buhhdy's 3-provider roster
 └── README.md                      ← This file
 ```
 
@@ -142,9 +145,24 @@ for the only conditions under which buhhdy merges one itself.
 
 ## Skills Bundled
 
-Native buhhdy skills (in `skills/`):
+All of these live in `skills/` and load via the Skill tool (or, in an
+interactive REPL session, the matching `/skill-name` slash command):
+
+Authored for buhhdy specifically:
 - **routing-guide** — full routing decision tree, tier table, skill affinity map
 - **core-workflows** — the two standard planning/development sequences above
+
+Vendored from omnigent's own `examples/polly` bundle, then adapted (renamed
+self-references from `polly` to `buhhdy`; dropped the AI-attribution commit
+trailer to match buhhdy's own convention). **This copy is manual and doesn't
+auto-update** — an omnigent agent bundle only discovers skills placed in its
+own `skills/` directory, never another bundle's (confirmed against the
+installed runtime's skill-discovery source); if these ever silently stop
+working (e.g. `/investigate` → "Unknown command"), re-diff against the
+installed package's `examples/polly/skills/` for upstream changes:
+- **investigate** — delegate read-only investigation/debugging/audit to sub-agents
+- **fanout** — parallel-safe tasks, each in its own worktree + sub-agent + PR
+- **cross-review** — verify a PR's diff with a different-vendor sub-agent
 
 External skills (referenced, not bundled — must be installed separately):
 - [ponytail](https://github.com/DietrichGebert/ponytail) — lazy-dev style (YAGNI, smallest diff)
@@ -158,9 +176,6 @@ External skills (referenced, not bundled — must be installed separately):
   claude_code and codex — see routing-guide's "mattpocock/skills Routing"
   table. Live-interview skills (grill-me, grilling, loop-me, writing-shape)
   use a persistent-session relay so they stay genuinely subagent-driven.
-
-Bundled with the runtime itself:
-- investigate, fanout, cross-review
 
 ## Cross-Review Pairings
 

@@ -20,12 +20,16 @@ and mattpocock/skills tables name a reviewing *worker*, not a reviewing
 for the reviewer/pre-pass; everywhere else, the reviewer's tier is an
 orchestrator judgment call at dispatch time, not a documented default.
 
-**Verified 2026-07-01:** `triage` (both modes, rows for `gpt-5.5` and
-`gemini-3.1-flash-lite` below) and `loop-me` (`claude-sonnet-5` row) are
-routing targets for skills confirmed NOT installed on this machine — those
-model assignments are the intended design for once the skill is installed,
-not a currently-exercised path. See routing-guide's "Verified Availability"
-section for live fallbacks in the meantime.
+**Verified 2026-07-01, re-verified same day after installation:** `triage`
+(rows for `gpt-5.5` and `gemini-3.1-flash-lite` below) and `loop-me`
+(`claude-sonnet-5` row) are now confirmed installed and live — these model
+assignments are actively exercised, not intended-design placeholders.
+`triage` has a single `/triage` entrypoint (no separate discovery/deep
+commands); the gpt-5.5 / gemini-3.1-flash-lite split reflects how buhhdy
+words the dispatch, not a different command. `loop-me` ships
+`disable-model-invocation` like grill-me/handoff/improve-codebase-architecture
+— dispatch input must literally start with `/loop-me`. See routing-guide's
+"Verified Availability" section for detail.
 
 ## The 9 models
 

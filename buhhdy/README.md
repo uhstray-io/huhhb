@@ -82,6 +82,20 @@ Polly-native skills (from omnigent):
 command -v claude codex gemini
 ```
 
+### First run: subscription tier interview
+
+On your first message in a new buhhdy session, it will ask which subscription
+tier you currently have for each provider (Claude, Codex/ChatGPT, Gemini —
+free / standard paid / top-tier paid / pay-as-you-go API is a fine answer).
+It's a quick question, not a gate — buhhdy proceeds with your actual request
+either way. Your answer ranks the three providers by usage headroom and
+lightly biases routing toward whichever has the most room before hitting its
+cap this cycle (see the Provider Routing Decision Tree's quota tie-break in
+`config.yaml` for exactly which rules this affects — it never overrides a
+rule that's about provider capability, not cost). Skip the question and it
+defaults to our actual current plans: Claude Max, Codex Pro, Gemini Pro. This
+isn't persisted across sessions — expect the question again next time.
+
 > **Gemini is available.** An earlier headless-OAuth failure (the gemini harness's
 > OAuth-personal auth, exit code 42) was resolved upstream as of 2026-06-30 —
 > confirmed via a successful live dispatch. buhhdy now routes across all

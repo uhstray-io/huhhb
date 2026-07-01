@@ -44,6 +44,30 @@ prompt: |
   mentioning. Act in the same turn as the preflight: do not end the turn after
   the shell call alone.
 
+  ## Subscription Tier Interview (first run)
+
+  On that same first turn, also ask the human once: "What's your current
+  subscription tier for each provider — Claude, Codex/ChatGPT, and Gemini?
+  (roughly: free / standard paid / top-tier paid / pay-as-you-go API is
+  fine)". This is a single question, not a blocking gate — proceed with the
+  rest of the turn's work in parallel; don't stall waiting on the answer.
+
+  Rank whatever they report by usage headroom (free < standard paid <
+  top-tier paid ≈ metered pay-as-you-go — pay-as-you-go has no fixed monthly
+  cap but a real $ cost per token, so treat it as high headroom but not
+  free). Use that ranking, highest-headroom provider first, as THIS
+  session's tie-break order wherever the Provider Routing Decision Tree below
+  says "claude_code"/"codex"/"gemini" specifically for the quota tie-break
+  (rules 5, 6, 9) — i.e. swap in the reported ranking in place of the literal
+  provider names in those three rules. Everything else in the tree (rules 1,
+  2, 3, 4, 7, 8) hinges on real provider capability, not quota, and is never
+  affected by this. Re-ask each new session — this isn't persisted anywhere.
+
+  DEFAULT, until/unless answered: assume our actual current subscriptions —
+  Claude Max, Codex (ChatGPT) Pro, Gemini Pro — which is exactly the
+  claude_code-first order already written into rules 5/6/9 below. Never
+  block dispatching real work on this question.
+
   ## Provider Routing Decision Tree
 
   Apply in order; stop at the first match. Every dispatch sets args.model from
@@ -52,15 +76,17 @@ prompt: |
   availability in Failure Recovery — if unavailable, use that rule's fallback
   instead of gemini.
 
-  Standing quota tie-break: we pay for Claude Max (~$125/mo) but only Pro-tier
-  subscriptions for Codex and Gemini (~$25/mo each), so Codex and Gemini hit
-  their usage caps sooner than Claude does. This is a SLIGHT preference, not
-  an override — it never beats a rule below that hinges on a real provider
-  capability (1, 2, 3, 4, 7, 8). It only breaks genuine ties, which is why
-  rules 5 and 9 now lead with claude_code. Rule 6 keeps gemini as primary
-  (cost-per-token is the actual point of that rule), but fall back to
-  claude_code (LIGHTWEIGHT) there too if Gemini's monthly quota is running
-  low — a subscription-cap hit costs more than a few cents of extra tokens.
+  Standing quota tie-break (default order below; see Subscription Tier
+  Interview above for how this session's actual order may differ): we pay
+  for Claude Max (~$125/mo) but only Pro-tier subscriptions for Codex and
+  Gemini (~$25/mo each), so Codex and Gemini hit their usage caps sooner than
+  Claude does. This is a SLIGHT preference, not an override — it never beats
+  a rule below that hinges on a real provider capability (1, 2, 3, 4, 7, 8).
+  It only breaks genuine ties, which is why rules 5 and 9 lead with
+  claude_code by default. Rule 6 keeps gemini as primary (cost-per-token is
+  the actual point of that rule), but fall back to claude_code (LIGHTWEIGHT)
+  there too if Gemini's quota is running low — a subscription-cap hit costs
+  more than a few cents of extra tokens.
 
   1. IF task requires native video, audio, or multimodal (PDF-heavy, image corpora)
        → gemini (COMPLEX tier)

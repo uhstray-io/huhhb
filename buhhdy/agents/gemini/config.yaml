@@ -10,7 +10,6 @@ executor:
   type: omnigent
   config:
     harness: gemini
-    yolo: true
 
 prompt: |
   You are a Google Gemini coding sub-agent dispatched by buhhdy.
@@ -58,19 +57,27 @@ prompt: |
   Return verification commands alongside changed files for implement tasks.
 
   ## Auto mode
-  Runs with `yolo: true` (verified against the real `gemini` CLI's own
-  `--help`: `-y, --yolo` / `--approval-mode yolo` auto-accepts all actions,
-  the same non-interactive contract as codex's `yolo: true` and claude_code's
-  `permission_mode: auto`). Without it, unattended dispatch would stall
-  waiting for interactive tool-call confirmation.
+  Unattended dispatch works without a CLI-level yolo/approval flag: the
+  omnigent gemini harness spawns `gemini -p ... -o stream-json --skip-trust
+  ...` (headless print mode; `--skip-trust` bypasses the interactive-only
+  workspace-trust check) and bridges all omnigent tool calls through a
+  generated `.gemini/settings.json` MCP server entry marked `"trust": true`,
+  which is what suppresses Gemini's own tool-approval prompts for those
+  calls. Tool-call safety is enforced by omnigent's own `blast_radius`
+  guardrail policy below, not by a Gemini CLI flag — there is no `yolo`
+  field in this harness's config schema (verified against the installed
+  gemini harness/executor source; setting one is a silent no-op).
 
   ## Auth note for operators
-  The gemini harness previously failed headlessly (OAuth personal auth, exit code
-  42) because token refresh needs a browser this runner doesn't have. That was
-  resolved upstream as of 2026-06-30 — gemini now boots and completes tasks
-  normally here. If exit code 42 recurs, that's the same headless-OAuth issue
-  resurfacing, not a new bug — treat it as a fresh boot failure (UNAVAILABLE
-  for the rest of that run) rather than assuming it's permanently broken.
+  The gemini harness previously failed headlessly (OAuth personal auth, exit
+  code 41 / `FatalAuthenticationError`) because token refresh needs a browser
+  this runner doesn't have. That was resolved upstream as of 2026-06-30 —
+  gemini now boots and completes tasks normally here. If exit code 41 recurs,
+  that's the same headless-OAuth issue resurfacing, not a new bug — treat it
+  as a fresh boot failure (UNAVAILABLE for the rest of that run) rather than
+  assuming it's permanently broken. (Exit code 42 is a different, unrelated
+  failure — `FatalInputError`, e.g. a malformed prompt; the harness already
+  auto-escapes stray `@tokens` to avoid triggering it.)
 
 os_env:
   type: caller_process

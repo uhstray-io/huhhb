@@ -1,4 +1,4 @@
-# polly-tri
+# buhhdy
 
 A three-provider Polly orchestration config that routes tasks across
 **Claude (Anthropic)**, **OpenAI (ChatGPT/Codex)**, and **Google Gemini**
@@ -8,11 +8,100 @@ Built through a three-round collaborative design process: each provider's
 research agent proposed its own model tier strategy, challenged the other
 two proposals, and converged on the routing rules in this config.
 
+## Getting Started
+
+New here? Follow this in order — it's a one-time setup per machine.
+
+### 1. Install the omnigent runtime — the fork, not upstream
+
+buhhdy needs the **`uhstray-io/omnigent` fork**, not the public
+`omnigent-ai/omnigent` repo. The fork has a real, tested `gemini` harness
+(a dedicated integration that runs the standalone Gemini CLI as a
+subprocess) that upstream's harness allowlist doesn't have — loading buhhdy
+against upstream silently drops the gemini sub-agent at load time instead
+of erroring, so this is easy to get wrong without noticing.
+
+```bash
+# Recommended: uv tool install, straight from the fork's git repo
+uv tool install git+https://github.com/uhstray-io/omnigent.git
+
+# Confirm you actually have the fork (not upstream) once installed
+pip show -f omnigent | grep -i location
+```
+
+### 2. Install and sign in to each CLI
+
+buhhdy dispatches real work to three separate coding CLIs. Install and
+authenticate each one before your first run — a one-time step per machine.
+
+| Provider | Install | Docs |
+|---|---|---|
+| **Claude Code** (Anthropic) | `curl -fsSL https://claude.ai/install.sh \| bash` (macOS/Linux/WSL) — or `npm install -g @anthropic-ai/claude-code` | [Setup](https://code.claude.com/docs/en/setup) · [Auth](https://code.claude.com/docs/en/authentication) |
+| **Codex CLI** (OpenAI) | `npm install -g @openai/codex` (must be the `@openai/codex` scope — an unscoped `codex` package is an unrelated, unmaintained package) — or `curl -fsSL https://chatgpt.com/codex/install.sh \| sh` | [CLI](https://developers.openai.com/codex/cli) · [Auth](https://developers.openai.com/codex/auth) |
+| **Gemini CLI** (Google) | `npm install -g @google/gemini-cli` — or `npx @google/gemini-cli` (no install) | [Repo](https://github.com/google-gemini/gemini-cli) · [Auth](https://github.com/google-gemini/gemini-cli/blob/main/docs/get-started/authentication.mdx) |
+
+Then sign in to each:
+
+- **Claude Code** — run `claude`; it opens a browser to log in with your
+  Claude.ai account (Pro/Max/Team/Enterprise), or choose Claude Console for
+  API-billed usage instead. An `ANTHROPIC_API_KEY` env var, if set, takes
+  precedence over subscription login.
+- **Codex** — run `codex login`; opens a browser to sign in with your
+  ChatGPT account (Plus/Pro/Business/Edu/Enterprise plan credits). For
+  OpenAI-Platform API-key billing instead of plan credits:
+  `codex login --with-api-key`.
+- **Gemini CLI** — run `gemini`; the picker offers **"Sign in with Google"**
+  (free personal Google account, browser OAuth — this is the default,
+  no-cost path) or **"Use Gemini API key"** (`GEMINI_API_KEY` env var from
+  [Google AI Studio](https://aistudio.google.com/apikey), pay-as-you-go) or
+  **Vertex AI**. Google auth flows are the part most likely to drift over
+  time — if "Sign in with Google" ever stops working for your account tier,
+  fall back to the API key. (An earlier headless-OAuth failure specific to
+  the gemini harness below — exit code 41, `FatalAuthenticationError` — was
+  resolved upstream as of 2026-06-30, confirmed via a successful live
+  dispatch; see Failure Recovery in `config.yaml` if it regresses.)
+
+Verify all three are on PATH:
+
+```bash
+command -v claude codex gemini
+```
+
+### 3. Run buhhdy
+
+```bash
+# One-off local launch
+omnigent run buhhdy
+
+# Or point at the config file directly
+omnigent run buhhdy/config.yaml
+```
+
+To register buhhdy as a durable, reusable agent instead of a one-off local
+launch, use the runtime's `sys_session_create` tool with
+`config_path: buhhdy` (this is how the registered `agent_id` referenced in
+this repo's PR history was produced). `omnigent run --server` also uploads
+the YAML, but its own `--help` documents that upload as ephemeral, not a
+persistent registration. Copying into the runtime's own examples directory
+also still works, if you'd rather colocate it there:
+`cp -r /path/to/buhhdy examples/buhhdy`.
+
+### 4. What happens on your first message
+
+buhhdy asks which subscription tier you have for each provider (Claude /
+Codex / Gemini) so it can lightly weight routing toward whichever has the
+most headroom before hitting its usage cap this cycle — it's a quick
+question, not a gate, and your actual request proceeds either way. Skip it
+and it defaults to Claude Max / Codex Pro / Gemini Pro. Not persisted —
+expect the question again next session. Full mechanics: the "Subscription
+Tier Interview" and "Provider Routing Decision Tree" sections of
+`config.yaml`.
+
 ## Structure
 
 ```text
-polly-tri/
-├── config.yaml                    ← Main orchestrator (polly-tri brain)
+buhhdy/
+├── config.yaml                    ← Main orchestrator (buhhdy brain)
 ├── agents/
 │   ├── claude_code/config.yaml    ← Anthropic Claude sub-agent
 │   ├── codex/config.yaml          ← OpenAI Codex sub-agent
@@ -36,7 +125,7 @@ step) in `skills/core-workflows/SKILL.md`:
    ponytail:audit -> grounding -> update docs -> commit + push -> open a PR.
 
 Both end with a deliverable PR, not a merge — see Merge Authorization below
-for the only conditions under which polly-tri merges one itself.
+for the only conditions under which buhhdy merges one itself.
 
 ## Provider Routing at a Glance
 
@@ -53,7 +142,7 @@ for the only conditions under which polly-tri merges one itself.
 
 ## Skills Bundled
 
-Native polly-tri skills (in `skills/`):
+Native buhhdy skills (in `skills/`):
 - **routing-guide** — full routing decision tree, tier table, skill affinity map
 - **core-workflows** — the two standard planning/development sequences above
 
@@ -70,34 +159,8 @@ External skills (referenced, not bundled — must be installed separately):
   table. Live-interview skills (grill-me, grilling, loop-me, writing-shape)
   use a persistent-session relay so they stay genuinely subagent-driven.
 
-Polly-native skills (from omnigent):
+Bundled with the runtime itself:
 - investigate, fanout, cross-review
-
-## Setup
-
-### Requirements
-
-```bash
-# All three CLIs must be on PATH
-command -v claude codex gemini
-```
-
-> **Gemini is available.** An earlier headless-OAuth failure (gemini-native's
-> OAuth-personal auth, exit code 42) was resolved upstream as of 2026-06-30 —
-> confirmed via a successful live dispatch. polly-tri now routes across all
-> three providers; see Failure Recovery in `config.yaml` if it regresses.
-
-### Deploy
-
-Copy `polly-tri/` into the omnigent examples directory or register it directly:
-
-```bash
-# From your omnigent repo root
-cp -r /path/to/polly-tri examples/polly-tri
-
-# Or register from any path
-omnigent agent register ./polly-tri/config.yaml
-```
 
 ## Cross-Review Pairings
 
@@ -108,13 +171,13 @@ omnigent agent register ./polly-tri/config.yaml
 | gemini | claude_code, codex |
 
 The reviewer is always a different vendor than the implementer. PRs are the
-deliverable; the human merges by default. Exception: polly-tri may open a PR
+deliverable; the human merges by default. Exception: buhhdy may open a PR
 for its own direct docs/config commits (non-code authoring, not a delegated
 coding task).
 
 ## Merge Authorization
 
-Default: polly-tri never merges. This flips ONLY on an explicit grant from
+Default: buhhdy never merges. This flips ONLY on an explicit grant from
 the human in the conversation — either a specific request ("merge PR #13")
 or a standing permission grant, scoped to exactly what was said. Vague
 approval ("looks good", "ship it") never counts. Never inferred from
@@ -145,7 +208,7 @@ mergeable before acting on a grant.
   tasks — near-Opus quality per Anthropic's own docs, cheaper than
   claude-opus-4-8. Reserve Opus for planning/architecture judgment.
 - **Gemini is available again (2026-06-30)** — the earlier headless-OAuth
-  failure (exit code 42) was resolved upstream, confirmed via a successful
-  live dispatch. polly-tri routes across all three providers again.
+  failure (exit code 41) was resolved upstream, confirmed via a successful
+  live dispatch. buhhdy routes across all three providers again.
 
 Review the routing-guide skill and this README quarterly as providers evolve.

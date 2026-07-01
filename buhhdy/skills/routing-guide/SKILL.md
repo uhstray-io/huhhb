@@ -1,6 +1,11 @@
+---
+name: routing-guide
+description: Reference skill for buhhdy's provider routing logic — the decision tree, model tier table, per-provider strengths, skill-to-provider affinity, and cross-review pairings. Load when reasoning about which provider to use and why, or when a task doesn't clearly match the main routing tree.
+---
+
 # routing-guide
 
-Reference skill for polly-tri's provider routing logic. Load this when you
+Reference skill for buhhdy's provider routing logic. Load this when you
 need to reason about which provider to use and why, or when a task doesn't
 clearly match the main routing tree.
 
@@ -16,11 +21,18 @@ if unavailable, use claude_code or codex instead.
 | 2 | Native OpenAI tool (voice, image-gen, Assistants) | codex | COMPLEX |
 | 3 | Complex coding: multi-file refactor, deep debugging, long agentic execution | claude_code | COMPLEX |
 | 4 | Strict JSON/schema output, automation-grade instructions | codex | STANDARD |
-| 5 | User-facing prose or plans under a format contract | codex | STANDARD |
-| 6 | Bulk classification/extraction/fanout (cost-dominant) | gemini | LIGHTWEIGHT |
+| 5 | User-facing prose or plans under a format contract | claude_code (codex ALT) | STANDARD |
+| 6 | Bulk classification/extraction/fanout (cost-dominant) | gemini (claude_code fallback if unavailable/quota-low) | LIGHTWEIGHT |
 | 7 | Context >200K tokens, code reasoning | claude_code or codex | COMPLEX |
 | 8 | Context >200K tokens, raw documents/media/search | gemini | COMPLEX |
-| 9 | Default lightweight (no rule matched) | cheapest available | LIGHTWEIGHT |
+| 9 | Default lightweight (no rule matched) | claude_code (cheapest available if unavailable) | LIGHTWEIGHT |
+
+Rules 5, 6 (fallback only), and 9 carry a slight quota-driven claude_code
+preference (we pay for Claude Max but only Pro-tier Codex/Gemini) — see
+`config.yaml`'s Subscription Tier Interview and Provider Routing Decision
+Tree for the full mechanics, including how a reported subscription tier can
+reorder this per session. Rule 6's gemini primary is capability/cost-based,
+not quota-based, and is never demoted by that reordering.
 
 ## Model Tier Table (verified 2026-06-30)
 
@@ -51,8 +63,8 @@ if unavailable, use claude_code or codex instead.
   claude-sonnet-5 tokenizes ~30% heavier.
 
 **Gemini (gemini)** — available again as of 2026-06-30 (an earlier headless-
-OAuth failure, exit code 42, was resolved upstream; confirmed via a
-successful live dispatch).
+OAuth failure, exit code 41 `FatalAuthenticationError`, was resolved
+upstream; confirmed via a successful live dispatch).
 - Best: bulk cheap ingestion, multimodal, Google Search grounding, high-volume fanout
 - Best: large document corpus analysis (1M context at low cost per token)
 - Weakness: subtle code logic vs Claude, nuanced long-form writing vs Claude/OpenAI
@@ -70,9 +82,9 @@ successful live dispatch).
 | writing-plans               | claude_code  | codex        | Long-horizon planning |
 | brainstorming               | claude_code  | codex        | Exploratory depth |
 | executing-plans             | claude_code  | codex        | Agentic execution |
-| grounding                   | polly-level  | —            | Polly runs its own checkpoint on itself — not dispatched |
-| subagent-driven-development | polly-level  | —            | Describes polly's own fanout behavior — not dispatched |
-| dispatching-parallel-agents | polly-level  | —            | Describes polly's own parallel-dispatch behavior — not dispatched |
+| grounding                   | buhhdy-level | —            | buhhdy runs its own checkpoint on itself — not dispatched |
+| subagent-driven-development | buhhdy-level | —            | Describes buhhdy's own fanout behavior — not dispatched |
+| dispatching-parallel-agents | buhhdy-level | —            | Describes buhhdy's own parallel-dispatch behavior — not dispatched |
 | explaining-plans            | codex        | claude_code  | Format-contract prose |
 | requesting-code-review      | claude_code  | codex        | Code context retention |
 | receiving-code-review       | claude_code  | codex        | Self-verification depth |
@@ -106,7 +118,7 @@ provider — see the live-interview and chain notes below for dispatch mechanics
 **Live-interview mechanism** (grill-me, grilling, loop-me, writing-shape): one
 persistent sub-agent session per task (fixed sys_session_send agent+title).
 The sub-agent ends its turn by writing its next question in its output — no
-special tool assumed. Polly relays that question to the human and continues
+special tool assumed. buhhdy relays that question to the human and continues
 the SAME session with the answer as the next dispatch's args.input. Context and prior
 codebase reads survive each relay — cost is the Q&A pair, not a re-dispatch.
 If the sub-agent's harness exposes a native interactive-question tool (e.g.

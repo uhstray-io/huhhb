@@ -18,7 +18,7 @@ if unavailable, use claude_code or codex instead.
 | 4 | Strict JSON/schema output, automation-grade instructions | codex | STANDARD |
 | 5 | User-facing prose or plans under a format contract | codex | STANDARD |
 | 6 | Bulk classification/extraction/fanout (cost-dominant) | gemini | LIGHTWEIGHT |
-| 7 | Context >200K tokens, code reasoning | claude_code or codex | varies |
+| 7 | Context >200K tokens, code reasoning | claude_code or codex | COMPLEX |
 | 8 | Context >200K tokens, raw documents/media/search | gemini | COMPLEX |
 | 9 | Default lightweight (no rule matched) | cheapest available | LIGHTWEIGHT |
 
@@ -36,9 +36,10 @@ if unavailable, use claude_code or codex instead.
 - Best: multi-file refactoring, long agentic runs, subtle code logic, self-verification
 - Best: writing, planning, brainstorming, explaining (prose depth)
 - Weakness: native voice/image-gen, extreme-scale cheap classification, video/audio
-- Note: claude-sonnet-5 (STANDARD) at effort=xhigh rivals claude-opus-4-8 on
-  coding/agentic work per Anthropic's own docs — a valid cheaper COMPLEX-tier
-  ALT for execution-shaped tasks. Keep Opus for planning/architecture judgment
+- Note: claude-sonnet-5 (STANDARD) rivals claude-opus-4-8 on coding/agentic
+  work per Anthropic's own docs — a valid cheaper COMPLEX-tier ALT for
+  execution-shaped tasks, driven by model choice alone (this dispatch
+  contract has no separate effort knob). Keep Opus for planning/architecture judgment
   (writing-plans, domain-modeling) where the bottleneck is judgment, not coding.
 
 **OpenAI (codex)**

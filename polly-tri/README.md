@@ -10,7 +10,7 @@ two proposals, and converged on the routing rules in this config.
 
 ## Structure
 
-```
+```text
 polly-tri/
 ├── config.yaml                    ← Main orchestrator (polly-tri brain)
 ├── agents/
@@ -125,9 +125,9 @@ not a delegated coding task).
 - **claude-fable-5 is not generally available right now** (direct operator
   correction, 2026-06-30) — do not route to it regardless of any model-docs
   citation claiming otherwise. claude-opus-4-8 is the top (COMPLEX) GA tier.
-- **claude-sonnet-5 added as a COMPLEX-tier ALT** (effort=xhigh) for
-  coding/agentic-shaped tasks — near-Opus quality per Anthropic's own docs,
-  cheaper than claude-opus-4-8. Reserve Opus for planning/architecture judgment.
+- **claude-sonnet-5 added as a COMPLEX-tier ALT** for coding/agentic-shaped
+  tasks — near-Opus quality per Anthropic's own docs, cheaper than
+  claude-opus-4-8. Reserve Opus for planning/architecture judgment.
 - **Gemini is available again (2026-06-30)** — the earlier headless-OAuth
   failure (exit code 42) was resolved upstream, confirmed via a successful
   live dispatch. polly-tri routes across all three providers again.

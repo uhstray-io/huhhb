@@ -40,9 +40,11 @@ problem that doesn't yet have a plan.
 | 9 | `simplify` (applied to the plan/issues, not code) | Dispatched | claude_code | implement | STANDARD | codex | Cuts anything in the plan/issues that isn't earning its place — make it as simple and repeatable as possible |
 | 10 | `ponytail:review` | Dispatched (review) | opposite vendor from step 4's author (default codex) | review | LIGHTWEIGHT | — | Only scoped to any prototype/scaffold snippets embedded in the plan or issues (there's usually no real code yet at this stage) — checks they're minimal, not bloated |
 
-End state: a plan doc + published issues, both cross-reviewed, ready to hand
-to Workflow 2. Nothing has been committed to source yet except the plan doc
-itself (step 4/6/7's edits, via its own PR per the implement contract).
+End state: a design doc (step 1) + plan doc + published issues, all
+cross-reviewed (except step 1, which has no dedicated reviewer step), ready
+to hand to Workflow 2. The only commits so far are step 1's design doc and
+steps 4/6/7's plan-doc edits, each via its own PR per the implement contract
+— no application code has been touched yet.
 
 ## Workflow 2 — Development (iterative, from an existing plan)
 
@@ -72,10 +74,10 @@ its own PR for its own direct commits). None merged. The human merges.
   turns out trivial or unusually deep, it's fine to move a tier — note why in
   the dispatch, don't silently default.
 - **claude-sonnet-5 is a valid COMPLEX-tier ALT for coding/agentic-shaped steps.**
-  `executing-plans` (Workflow 2, step 2) fits this — dispatch claude-sonnet-5 at
-  effort=xhigh instead of claude-opus-4-8 when minimizing cost matters more than
-  squeezing out the last bit of judgment quality. Keep Opus for `writing-plans`
-  and `domain-modeling`, where the bottleneck is planning judgment, not coding
+  `executing-plans` (Workflow 2, step 2) fits this — dispatch claude-sonnet-5
+  instead of claude-opus-4-8 when minimizing cost matters more than squeezing
+  out the last bit of judgment quality. Keep Opus for `writing-plans` and
+  `domain-modeling`, where the bottleneck is planning judgment, not coding
   execution.
 - **Gate steps never apply their own fixes.** A gate/audit/review step reports;
   the fix goes back to whichever step produced the artifact, as a new dispatch.

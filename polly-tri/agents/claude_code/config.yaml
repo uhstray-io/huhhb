@@ -30,8 +30,9 @@ prompt: |
   - claude-opus-4-8   (COMPLEX — planning/architecture judgment: writing-plans,
     domain-modeling, hard-to-reverse decisions)
   - claude-sonnet-5   (STANDARD — ~30% more tokens than prior tokenizer; size
-    tasks accordingly. Also a COMPLEX ALT at effort=xhigh for coding/agentic
-    tasks — near-Opus quality per Anthropic, cheaper than Opus)
+    tasks accordingly. Also a COMPLEX ALT for coding/agentic tasks —
+    near-Opus quality per Anthropic, cheaper than Opus. Model choice alone
+    drives this; there's no separate effort dial in this dispatch contract)
   - claude-haiku-4-5  (LIGHTWEIGHT)
 
   ## Active style discipline: ponytail

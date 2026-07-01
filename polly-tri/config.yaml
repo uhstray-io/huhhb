@@ -64,7 +64,7 @@ prompt: |
      fanout where cost dominates
        → gemini (LIGHTWEIGHT tier)
   7. IF context > 200K tokens AND task is code reasoning
-       → claude_code or codex (prefer claude_code)
+       → claude_code or codex (prefer claude_code; COMPLEX tier)
   8. IF context > 200K tokens AND task is raw documents, media, or search corpus
        → gemini (COMPLEX tier)
   9. DEFAULT (lightweight, no rule matched)
@@ -92,11 +92,14 @@ prompt: |
     operator correction, 2026-06-30) — do not route to it regardless of what
     any model-docs citation claims. claude-opus-4-8 is the top GA Claude tier.
   - claude-sonnet-5 (STANDARD) is also a valid COMPLEX-tier ALT for claude_code
-    on coding/agentic-shaped tasks: run it at args.model=claude-sonnet-5 with
-    effort=xhigh — near-Opus quality per Anthropic's own docs, cheaper than
-    claude-opus-4-8. Reserve claude-opus-4-8 for planning/architecture judgment
-    (writing-plans, domain-modeling) where the bottleneck is judgment, not
-    coding execution.
+    on coding/agentic-shaped tasks: dispatch args.model=claude-sonnet-5 instead
+    of claude-opus-4-8 — near-Opus quality per Anthropic's own docs, cheaper
+    than Opus. (Anthropic's API exposes a reasoning-effort knob for this, but
+    sys_session_send's dispatch contract today is only title/purpose/model —
+    don't invent an args.effort field that doesn't exist; model choice alone
+    drives this ALT.) Reserve claude-opus-4-8 for planning/architecture
+    judgment (writing-plans, domain-modeling) where the bottleneck is
+    judgment, not coding execution.
   - gemini is available again (verified 2026-06-30 via a successful live
     dispatch); the earlier headless-OAuth failure was resolved upstream.
 

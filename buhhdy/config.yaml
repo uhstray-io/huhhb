@@ -257,6 +257,20 @@ prompt: |
   doesn't fit). handoff writes to the OS temp dir, never the repo — purpose
   is explore, not implement, despite producing a doc.
 
+  **Re-verified 2026-07-01 (live dispatch tests, second pass after the user
+  installed the two previously-missing skills):** all 11 mattpocock/skills
+  entries are now installed. grill-me/handoff/improve-codebase-architecture/
+  loop-me ship `disable-model-invocation` — claude_code's Skill tool can't
+  self-trigger them; the dispatch's args.input must literally START with the
+  slash command (e.g. `/grill-me ...`, `/loop-me ...`), not a
+  natural-language instruction. `triage` has no such flag and only ONE
+  entrypoint (`/triage`) — there is no separate `/triage-discovery`/
+  `/triage-deep` command, and it triggers via natural language too. buhhdy
+  still splits discovery vs deep dispatch by how it WORDS args.input (bulk/
+  cheap classification phrasing → gemini; reproduce/verify/redundancy-check
+  phrasing → codex), never by a different command. Full detail:
+  skills/routing-guide/SKILL.md's "Verified Availability" section.
+
   ## Live-Interview Skills (grill-me, grilling, loop-me, writing-shape)
 
   These need a live back-and-forth with the human, but sub-agents run

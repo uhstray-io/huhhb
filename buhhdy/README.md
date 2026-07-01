@@ -176,6 +176,16 @@ External skills (referenced, not bundled — must be installed separately):
   claude_code and codex — see routing-guide's "mattpocock/skills Routing"
   table. Live-interview skills (grill-me, grilling, loop-me, writing-shape)
   use a persistent-session relay so they stay genuinely subagent-driven.
+  **Verified 2026-07-01, re-verified same day after the two missing skills
+  were installed:** all 11 are now installed. 7 of 11 trigger normally via
+  natural language (grilling, codebase-design, domain-modeling,
+  writing-shape, to-issues, to-prd, triage); grill-me/handoff/
+  improve-codebase-architecture/loop-me need a literal slash command as the
+  dispatch input (`disable-model-invocation` blocks natural-language
+  triggering). `triage` has a single `/triage` entrypoint — no separate
+  discovery/deep commands; buhhdy distinguishes the two by how it words the
+  dispatch, not by a different command. Full detail: routing-guide's
+  "Verified Availability" section.
 
 ## Cross-Review Pairings
 

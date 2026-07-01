@@ -115,6 +115,45 @@ provider — see the live-interview and chain notes below for dispatch mechanics
 | loop-me | STANDARD | explore | claude_code | codex | Grilling-shaped interview for workflow specs; flagged upstream as in-progress/experimental — don't over-invest |
 | writing-shape | STANDARD | implement | claude_code | codex | Long multi-turn drafting session, taste-work like grilling/loop-me — COMPLEX overrates the reasoning depth needed and multiplies cost per turn |
 
+## Verified Availability (live-tested 2026-07-01, re-verified same day
+after the two missing skills were installed)
+
+Live dispatch tests against this machine's actual claude_code/codex
+environments — not assumed from the mattpocock/skills repo alone:
+
+- **Confirmed installed & working via natural-language dispatch:** grilling,
+  codebase-design, domain-modeling, writing-shape, to-issues, to-prd,
+  triage.
+- **Confirmed installed, but slash-only:** grill-me, handoff,
+  improve-codebase-architecture, loop-me ship with `disable-model-invocation`
+  in their frontmatter, so claude_code's own Skill tool refuses to
+  self-trigger any of them no matter how the dispatch instruction is worded
+  (verified: identical error on retry; for loop-me specifically, the
+  Skill-tool call returns the literal error "Skill loop-me cannot be used
+  with Skill tool due to disable-model-invocation", which also confirms it's
+  installed rather than missing). They DO work, but only when `args.input`
+  literally STARTS WITH the slash command itself (e.g. `/grill-me <subject>`,
+  `/loop-me <workflow>`) — that's parsed by the CLI's input layer before the
+  model's turn starts, not something reachable via any tool call once the
+  turn has already begun. Any dispatcher (buhhdy itself, or a human driving
+  claude_code directly) MUST lead with the literal `/skill-name` text for
+  these 4, not a description of the task.
+- **`triage` has ONE entrypoint, not two commands:** unlike the discovery/
+  deep split in buhhdy's routing table above, there is no
+  `/triage-discovery` or `/triage-deep` slash command — both return "Unknown
+  slash command". The single `/triage` skill (also triggers via natural
+  language; no `disable-model-invocation` flag) handles both modes
+  internally based on how the request is framed. buhhdy's discovery-vs-deep
+  routing split is therefore a DISPATCH-FRAMING decision, not a different
+  command: word `args.input` as bulk/cheap classification for gemini
+  (discovery), or as reproduce/verify/redundancy-check for codex (deep).
+- **History:** `triage` and `loop-me` were both reported missing on
+  2026-07-01's first pass (codex returned "Unknown slash command" for every
+  triage variant tried; a full repo search found no skill-definition file
+  for either). The user installed both locally the same day; the re-test
+  above reflects the current, working state — no `investigate`/`grilling`
+  fallback substitution needed going forward.
+
 **Live-interview mechanism** (grill-me, grilling, loop-me, writing-shape): one
 persistent sub-agent session per task (fixed sys_session_send agent+title).
 The sub-agent ends its turn by writing its next question in its output — no

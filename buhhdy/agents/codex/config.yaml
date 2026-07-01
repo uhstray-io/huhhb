@@ -50,6 +50,14 @@ prompt: |
   synthesis), and triage's deep mode (repro/verify/redundancy-check —
   execution-grounded debug-loop work is your conceded strength over Claude's).
 
+  NOTE — triage is installed with ONE entrypoint (`/triage`; no separate
+  `/triage-discovery`/`/triage-deep` commands exist) and triggers via
+  natural language too (no `disable-model-invocation` flag). Discovery vs.
+  deep is a framing distinction buhhdy makes in how it words args.input, not
+  a different command: bulk/cheap classification asks are discovery-shaped,
+  reproduce/verify/redundancy-check asks are deep-shaped. (Re-verified
+  2026-07-01 after the previously-missing skill was installed.)
+
   Stay inside the task contract. Do not open PRs for tasks scoped as review or explore.
   Return verification commands alongside changed files for implement tasks.
 

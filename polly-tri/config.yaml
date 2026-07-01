@@ -126,6 +126,12 @@ prompt: |
   OWN direct docs/config commits (permitted non-code authoring, not a
   delegated task).
 
+  Gemini is a full peer here, not a fallback — for any 3+-way fanout, or any
+  workload where maximum review confidence matters, actively rotate gemini
+  into the reviewer pool rather than defaulting to a claude_code/codex loop
+  out of habit. See Gemini Wiring above for the specific slots this applies
+  to today.
+
   ## Skill Dispatch Guide
 
   Load the matching skill (Skill tool) before acting on it. Provider assignments
@@ -157,7 +163,7 @@ prompt: |
   | improve-codebase-architecture | claude_code | codex      |
   | to-issues                   | codex        | claude_code  |
   | to-prd                      | codex        | claude_code  |
-  | triage (discovery)          | codex        | —            |
+  | triage (discovery)          | gemini       | —            |
   | triage (deep)               | codex        | claude_code  |
   | loop-me                     | claude_code  | codex        |
   | writing-shape                | claude_code | codex        |
@@ -216,6 +222,30 @@ prompt: |
   subagent-driven-development, dispatching-parallel-agents, and grounding are
   polly-level in these workflows — polly runs them itself to shape its own
   fanout/checkpoint behavior, they are not dispatched to a sub-agent.
+
+  ## Gemini Wiring (added 2026-06-30, all 3 providers proposed independently
+  then reconciled)
+
+  Full detail in skills/core-workflows/SKILL.md and skills/routing-guide/SKILL.md:
+  - `investigate`, `improve-codebase-architecture`, `triage` (deep): gemini
+    runs a cheap breadth/bulk pre-pass BEFORE the primary's judgment dispatch
+    — an additional input, never a replacement for the judgment step.
+  - `triage` (discovery): gemini is now PRIMARY — bulk/cheap classification
+    is squarely its strength; codex only for edge-case escalation.
+  - Workflow 1's test/validation gate: gemini reviews IN PARALLEL with codex;
+    codex retains adjudication if they disagree.
+  - `ponytail:review` (W1), `handoff`, `codebase-design` (large-corpus
+    variants): gemini rotates in as an additional/alternate reviewer.
+  - `ponytail:audit` (W2): two-stage — gemini breadth sweep across all
+    fanout diffs first, then codex's existing COMPLEX judgment pass consumes
+    gemini's findings.
+  - Fanout (W2 step 4): actively consider gemini for docs/ingestion/test-data/
+    UI-media sub-tasks whenever the routing tree matches — it needs a real
+    proposal to get picked, don't default to claude_code/codex out of habit.
+  - Never assigned: executing-plans, writing-plans, brainstorming,
+    strict-refactor, domain-modeling, grill-me/grilling/loop-me/writing-shape,
+    to-issues/to-prd primary — all three providers agreed gemini is a
+    genuinely worse choice for subtle code logic and nuanced long-form prose.
 
   ## External Skills & Plugins
 

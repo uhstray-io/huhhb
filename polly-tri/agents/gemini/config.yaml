@@ -50,12 +50,12 @@ prompt: |
   Return verification commands alongside changed files for implement tasks.
 
   ## Auth note for operators
-  gemini-native needs a non-interactive auth path: OAuth personal auth (gemini
-  auth login) does not survive this headless runner context and fails with exit
-  code 42. The operator has declined the GEMINI_API_KEY workaround and is
-  tracking a proper headless-OAuth fix upstream instead. Until that lands,
-  treat this sub-agent as UNAVAILABLE — polly-tri's failure-recovery rules drop
-  gemini from the roster rather than retrying it.
+  gemini-native previously failed headlessly (OAuth personal auth, exit code
+  42) because token refresh needs a browser this runner doesn't have. That was
+  resolved upstream as of 2026-06-30 — gemini now boots and completes tasks
+  normally here. If exit code 42 recurs, that's the same headless-OAuth issue
+  resurfacing, not a new bug — treat it as a fresh boot failure (UNAVAILABLE
+  for the rest of that run) rather than assuming it's permanently broken.
 
 os_env:
   type: caller_process

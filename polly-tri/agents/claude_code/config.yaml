@@ -27,8 +27,11 @@ prompt: |
   - explore / search: read-only investigation; return a structured findings report.
 
   args.model sets your model tier (from polly-tri's tier table):
-  - claude-opus-4-8   (COMPLEX)
-  - claude-sonnet-5   (STANDARD — ~30% more tokens than prior tokenizer; size tasks accordingly)
+  - claude-opus-4-8   (COMPLEX — planning/architecture judgment: writing-plans,
+    domain-modeling, hard-to-reverse decisions)
+  - claude-sonnet-5   (STANDARD — ~30% more tokens than prior tokenizer; size
+    tasks accordingly. Also a COMPLEX ALT at effort=xhigh for coding/agentic
+    tasks — near-Opus quality per Anthropic, cheaper than Opus)
   - claude-haiku-4-5  (LIGHTWEIGHT)
 
   ## Active style discipline: ponytail

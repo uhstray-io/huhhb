@@ -18,9 +18,25 @@ polly-tri/
 │   ├── codex/config.yaml          ← OpenAI Codex sub-agent
 │   └── gemini/config.yaml         ← Google Gemini sub-agent
 ├── skills/
-│   └── routing-guide/SKILL.md    ← Provider routing reference (load on demand)
+│   ├── routing-guide/SKILL.md    ← Provider routing reference (load on demand)
+│   └── core-workflows/SKILL.md   ← The two standard planning/dev workflows
 └── README.md                      ← This file
 ```
+
+## Core Workflows
+
+Two fixed, repeatable sequences — full detail (provider/purpose/tier/gate per
+step) in `skills/core-workflows/SKILL.md`:
+
+1. **Planning & Research** — brainstorming -> investigate -> grilling ->
+   writing-plans -> gate (test/validation coverage) -> explaining-plans ->
+   codebase-design -> to-issues -> simplify -> ponytail:review.
+2. **Development** (from an existing plan) — investigate -> executing-plans ->
+   subagent-driven-development -> dispatching-parallel-agents ->
+   ponytail:audit -> grounding -> update docs -> commit + push -> open a PR.
+
+Both end with polly-tri never merging — every PR they produce waits for the
+human.
 
 ## Provider Routing at a Glance
 
@@ -39,6 +55,7 @@ polly-tri/
 
 Native polly-tri skills (in `skills/`):
 - **routing-guide** — full routing decision tree, tier table, skill affinity map
+- **core-workflows** — the two standard planning/development sequences above
 
 External skills (referenced, not bundled — must be installed separately):
 - [ponytail](https://github.com/DietrichGebert/ponytail) — lazy-dev style (YAGNI, smallest diff)
@@ -61,15 +78,14 @@ Polly-native skills (from omnigent):
 ### Requirements
 
 ```bash
-# All three CLIs must be on PATH (gemini currently unavailable — see below)
+# All three CLIs must be on PATH
 command -v claude codex gemini
 ```
 
-> **Gemini is currently unavailable.** gemini-native's OAuth-personal auth
-> doesn't survive this headless runner (exit code 42), and the operator has
-> chosen not to work around it with `GEMINI_API_KEY` — a proper headless-OAuth
-> fix is in progress upstream instead. Until that lands, polly-tri runs on
-> claude_code + codex only; see Failure Recovery in `config.yaml`.
+> **Gemini is available.** An earlier headless-OAuth failure (gemini-native's
+> OAuth-personal auth, exit code 42) was resolved upstream as of 2026-06-30 —
+> confirmed via a successful live dispatch. polly-tri now routes across all
+> three providers; see Failure Recovery in `config.yaml` if it regresses.
 
 ### Deploy
 
@@ -92,7 +108,9 @@ omnigent agent register ./polly-tri/config.yaml
 | gemini | claude_code, codex |
 
 The reviewer is always a different vendor than the implementer. polly-tri
-never merges — PRs are the deliverable; the human merges.
+never merges — PRs are the deliverable; the human merges. Exception: polly-tri
+may open a PR for its own direct docs/config commits (non-code authoring,
+not a delegated coding task).
 
 ## Key Calibration Notes (2026-06-30)
 
@@ -107,9 +125,11 @@ never merges — PRs are the deliverable; the human merges.
 - **claude-fable-5 is not generally available right now** (direct operator
   correction, 2026-06-30) — do not route to it regardless of any model-docs
   citation claiming otherwise. claude-opus-4-8 is the top (COMPLEX) GA tier.
-- **Gemini is unavailable, by choice** — gemini-native's OAuth-personal auth
-  fails headlessly (exit code 42); the operator declined the GEMINI_API_KEY
-  workaround and is fixing headless OAuth upstream instead. polly-tri runs
-  claude_code + codex only until that lands.
+- **claude-sonnet-5 added as a COMPLEX-tier ALT** (effort=xhigh) for
+  coding/agentic-shaped tasks — near-Opus quality per Anthropic's own docs,
+  cheaper than claude-opus-4-8. Reserve Opus for planning/architecture judgment.
+- **Gemini is available again (2026-06-30)** — the earlier headless-OAuth
+  failure (exit code 42) was resolved upstream, confirmed via a successful
+  live dispatch. polly-tri routes across all three providers again.
 
 Review the routing-guide skill and this README quarterly as providers evolve.

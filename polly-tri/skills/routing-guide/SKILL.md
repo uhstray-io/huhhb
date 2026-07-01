@@ -36,6 +36,10 @@ if unavailable, use claude_code or codex instead.
 - Best: multi-file refactoring, long agentic runs, subtle code logic, self-verification
 - Best: writing, planning, brainstorming, explaining (prose depth)
 - Weakness: native voice/image-gen, extreme-scale cheap classification, video/audio
+- Note: claude-sonnet-5 (STANDARD) at effort=xhigh rivals claude-opus-4-8 on
+  coding/agentic work per Anthropic's own docs — a valid cheaper COMPLEX-tier
+  ALT for execution-shaped tasks. Keep Opus for planning/architecture judgment
+  (writing-plans, domain-modeling) where the bottleneck is judgment, not coding.
 
 **OpenAI (codex)**
 - Best: strict structured output, JSON schemas, tool routing, format contracts
@@ -45,9 +49,9 @@ if unavailable, use claude_code or codex instead.
   gpt-5.5/gpt-5.4-mini/gpt-5.4-nano (verified 2026-06-30, cross-vendor checked).
   claude-sonnet-5 tokenizes ~30% heavier.
 
-**Gemini (gemini)** — currently UNAVAILABLE (operator declined the GEMINI_API_KEY
-workaround for headless OAuth; fix pending upstream). Route to claude_code or
-codex until restored.
+**Gemini (gemini)** — available again as of 2026-06-30 (an earlier headless-
+OAuth failure, exit code 42, was resolved upstream; confirmed via a
+successful live dispatch).
 - Best: bulk cheap ingestion, multimodal, Google Search grounding, high-volume fanout
 - Best: large document corpus analysis (1M context at low cost per token)
 - Weakness: subtle code logic vs Claude, nuanced long-form writing vs Claude/OpenAI
@@ -62,9 +66,9 @@ codex until restored.
 | writing-plans               | claude_code  | codex        | Long-horizon planning |
 | brainstorming               | claude_code  | codex        | Exploratory depth |
 | executing-plans             | claude_code  | codex        | Agentic execution |
-| grounding                   | gemini       | codex        | Google Search native |
-| subagent-driven-development | claude_code  | codex        | Orchestration mindset |
-| dispatching-parallel-agents | claude_code  | gemini       | Fanout planning |
+| grounding                   | polly-level  | —            | Polly runs its own checkpoint on itself — not dispatched |
+| subagent-driven-development | polly-level  | —            | Describes polly's own fanout behavior — not dispatched |
+| dispatching-parallel-agents | polly-level  | —            | Describes polly's own parallel-dispatch behavior — not dispatched |
 | explaining-plans            | codex        | claude_code  | Format-contract prose |
 | requesting-code-review      | claude_code  | codex        | Code context retention |
 | receiving-code-review       | claude_code  | codex        | Self-verification depth |
@@ -99,7 +103,7 @@ provider — see the live-interview and chain notes below for dispatch mechanics
 persistent sub-agent session per task (fixed sys_session_send agent+title).
 The sub-agent ends its turn by writing its next question in its output — no
 special tool assumed. Polly relays that question to the human and continues
-the SAME session with the answer as the next input.input. Context and prior
+the SAME session with the answer as the next dispatch's args.input. Context and prior
 codebase reads survive each relay — cost is the Q&A pair, not a re-dispatch.
 If the sub-agent's harness exposes a native interactive-question tool (e.g.
 Claude Code's AskUserQuestion), prefer that; otherwise this text relay works

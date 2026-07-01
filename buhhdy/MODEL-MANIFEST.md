@@ -20,6 +20,13 @@ and mattpocock/skills tables name a reviewing *worker*, not a reviewing
 for the reviewer/pre-pass; everywhere else, the reviewer's tier is an
 orchestrator judgment call at dispatch time, not a documented default.
 
+**Verified 2026-07-01:** `triage` (both modes, rows for `gpt-5.5` and
+`gemini-3.1-flash-lite` below) and `loop-me` (`claude-sonnet-5` row) are
+routing targets for skills confirmed NOT installed on this machine — those
+model assignments are the intended design for once the skill is installed,
+not a currently-exercised path. See routing-guide's "Verified Availability"
+section for live fallbacks in the meantime.
+
 ## The 9 models
 
 | Model | Provider · Tier | Status | Primary use-cases | Cross-review / pre-pass role | Workflow(s) |

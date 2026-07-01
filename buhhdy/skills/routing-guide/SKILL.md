@@ -115,6 +115,37 @@ provider — see the live-interview and chain notes below for dispatch mechanics
 | loop-me | STANDARD | explore | claude_code | codex | Grilling-shaped interview for workflow specs; flagged upstream as in-progress/experimental — don't over-invest |
 | writing-shape | STANDARD | implement | claude_code | codex | Long multi-turn drafting session, taste-work like grilling/loop-me — COMPLEX overrates the reasoning depth needed and multiplies cost per turn |
 
+## Verified Availability (live-tested 2026-07-01)
+
+Live dispatch tests against this machine's actual claude_code/codex
+environments — not assumed from the mattpocock/skills repo alone:
+
+- **Confirmed installed & working via natural-language dispatch:** grilling,
+  codebase-design, domain-modeling, writing-shape, to-issues, to-prd.
+- **Confirmed installed, but slash-only:** grill-me, handoff,
+  improve-codebase-architecture ship with `disable-model-invocation` in
+  their frontmatter, so claude_code's own Skill tool refuses to self-trigger
+  them no matter how the dispatch instruction is worded (verified: identical
+  error on retry). They DO work, but only when `args.input` literally
+  STARTS WITH the slash command itself (e.g. `/grill-me <subject>`) — that's
+  parsed by the CLI's input layer before the model's turn starts, not
+  something reachable via any tool call once the turn has already begun.
+  Any dispatcher (buhhdy itself, or a human driving claude_code directly)
+  MUST lead with the literal `/skill-name` text for these 3, not a
+  description of the task.
+- **NOT installed on this machine, either vendor:** `triage` (both modes)
+  and `loop-me`. Codex returns `Unknown slash command` for `/triage`,
+  `/triage-discovery`, and `/triage-deep`; a full repo search found no
+  skill-definition file for either, under any name — only buhhdy's own docs
+  mention them. Matches the "flagged upstream as in-progress" note already
+  recorded for `loop-me`; `triage` turns out to have the same problem.
+  **Fallback until installed:** `triage` (discovery) → `investigate` via
+  gemini (same bulk-classification shape, LIGHTWEIGHT/search); `triage`
+  (deep) → `investigate` via codex (same execution-grounded debug-loop
+  shape, COMPLEX/explore); `loop-me` → `grilling` (closest installed
+  analog — iterative interview, just not workflow-spec-shaped). Re-verify
+  after installing either skill locally.
+
 **Live-interview mechanism** (grill-me, grilling, loop-me, writing-shape): one
 persistent sub-agent session per task (fixed sys_session_send agent+title).
 The sub-agent ends its turn by writing its next question in its output — no

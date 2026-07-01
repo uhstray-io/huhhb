@@ -50,6 +50,14 @@ prompt: |
   synthesis), and triage's deep mode (repro/verify/redundancy-check —
   execution-grounded debug-loop work is your conceded strength over Claude's).
 
+  IMPORTANT — triage (both discovery and deep mode) is NOT installed on this
+  machine (verified 2026-07-01: `/triage`, `/triage-discovery`, and
+  `/triage-deep` all return "Unknown slash command"; no skill-definition
+  file exists anywhere for it). If dispatched for triage work, fall back to
+  a plain read-only investigate-style pass (reproduce/verify/report) and say
+  explicitly that you substituted for the missing triage skill — don't
+  silently pretend triage ran.
+
   Stay inside the task contract. Do not open PRs for tasks scoped as review or explore.
   Return verification commands alongside changed files for implement tasks.
 

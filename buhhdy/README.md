@@ -176,6 +176,13 @@ External skills (referenced, not bundled — must be installed separately):
   claude_code and codex — see routing-guide's "mattpocock/skills Routing"
   table. Live-interview skills (grill-me, grilling, loop-me, writing-shape)
   use a persistent-session relay so they stay genuinely subagent-driven.
+  **Verified 2026-07-01 via live dispatch tests:** 6 of 11 trigger normally;
+  grill-me/handoff/improve-codebase-architecture are installed but need a
+  literal slash command as the dispatch input (`disable-model-invocation`
+  blocks natural-language triggering); triage and loop-me are not installed
+  on this machine at all and fall back to investigate/grilling respectively.
+  Full detail and fallback rules: routing-guide's "Verified Availability"
+  section.
 
 ## Cross-Review Pairings
 

@@ -53,6 +53,17 @@ prompt: |
   the human, just end your turn with the next question in your output —
   buhhdy relays it and continues this same session with the answer.
 
+  IMPORTANT — grill-me, handoff, and improve-codebase-architecture ship with
+  `disable-model-invocation`: your own Skill tool will refuse to trigger
+  them no matter how the instruction is worded (verified). Only a dispatch
+  whose args.input literally STARTS WITH the slash command (e.g.
+  `/grill-me <subject>`) actually invokes them — that's parsed by the CLI
+  before your turn starts, not something you can do via a tool call
+  mid-turn. If you were dispatched with a plain-English instruction instead
+  and hit this error, report it rather than silently improvising the skill's
+  behavior from memory. loop-me is NOT installed on this machine (verified
+  2026-07-01) — if asked for it, fall back to grilling and say so explicitly.
+
   Stay inside the task contract. Do not open PRs for tasks scoped as review or explore.
   Return verification commands alongside changed files for implement tasks.
 

@@ -15,11 +15,12 @@ is deterministic and repeatable rather than ad hoc.
 Two kinds of step appear below:
 - **Dispatched** — buhhdy sends it to a sub-agent via `sys_session_send`
   (title/purpose/model as given).
-- **Polly-level** — buhhdy runs it itself (Skill tool or `sys_os_*`
+- **buhhdy-level** — buhhdy runs it itself (Skill tool or `sys_os_*`
   plumbing), not delegated. `subagent-driven-development` and
-  `dispatching-parallel-agents` are polly-level here: they describe how polly
-  fans work out to sub-agents, not a task to hand to one. `grounding` is also
-  polly-level, per the same checkpoint pattern polly runs on its own session.
+  `dispatching-parallel-agents` are buhhdy-level here: they describe how
+  buhhdy fans work out to sub-agents, not a task to hand to one. `grounding`
+  is also buhhdy-level, per the same checkpoint pattern buhhdy runs on its
+  own session.
 
 Cross-review discipline applies throughout: whichever provider authors a
 step's artifact, the reviewer step immediately after (where one exists) is
@@ -62,18 +63,18 @@ Trigger: picking up development against a plan/issue that already exists
 |---|------|------|---------|---------|------|----------|----------------|
 | 1 | `investigate` | Dispatched | claude_code (gemini breadth pre-pass first if large/unfamiliar — `gemini-3.5-flash`, feeds claude_code's synthesis) | explore | STANDARD (COMPLEX if large/unfamiliar) | — | Re-ground in the CURRENT codebase state — it may have moved since the plan was written |
 | 2 | `executing-plans` | Dispatched | claude_code | implement | COMPLEX | codex | Produces the execution order + review checkpoints for the rest of this run — consequential, worth top tier |
-| 3 | `subagent-driven-development` | **Polly-level** | buhhdy | — | — | — | Polly loads this skill itself to decide how to split step 2's plan into independent, parallel-safe tasks |
-| 4 | `dispatching-parallel-agents` | **Polly-level**, fans out to N dispatched implement tasks | buhhdy orchestrates; each task's provider/tier picked via the main Provider Routing Decision Tree per its own complexity — actively consider gemini for docs/ingestion/test-data/UI-media sub-tasks whenever it matches, don't default to claude_code/codex out of habit | implement (one dispatch per independent task, own worktree, own PR) | varies per task | opposite vendor per task (standard Cross-Review Rule, gemini included) | N implementer PRs, each independently cross-reviewed before merge-readiness |
+| 3 | `subagent-driven-development` | **buhhdy-level** | buhhdy | — | — | — | buhhdy loads this skill itself to decide how to split step 2's plan into independent, parallel-safe tasks |
+| 4 | `dispatching-parallel-agents` | **buhhdy-level**, fans out to N dispatched implement tasks | buhhdy orchestrates; each task's provider/tier picked via the main Provider Routing Decision Tree per its own complexity — actively consider gemini for docs/ingestion/test-data/UI-media sub-tasks whenever it matches, don't default to claude_code/codex out of habit | implement (one dispatch per independent task, own worktree, own PR) | varies per task | opposite vendor per task (standard Cross-Review Rule, gemini included) | N implementer PRs, each independently cross-reviewed before merge-readiness |
 | 5 | `ponytail:audit` | Dispatched, two-stage (a→b) | (a) gemini breadth sweep across all diffs (`gemini-3.1-flash-lite`, LIGHTWEIGHT) → (b) codex (or opposite of whichever vendor did most of the fanout implementation) makes the actual judgment call on gemini's findings | review — judges the diffs against ponytail principles, applies no fixes | LIGHTWEIGHT (stage a) then COMPLEX (stage b, whole-diff-set scope) | — | Over-engineering audit across all of step 4's landed diffs; findings become fix-tasks fed back to the relevant implementer, not applied by the auditor. Stage (a) is an input to stage (b)'s judgment, never a replacement for it |
-| 6 | `grounding` | **Polly-level** | buhhdy | — | — | — | Polly runs its own grounding checkpoint on the batch (per the same pattern as any buhhdy session). Check 2 (code review) is NOT self-eyeballed: it dispatches a review-purpose sub-agent (opposite vendor from the majority implementer) to actually run `/simplify` + `/security-review` against step 4/5's diffs |
-| 7 | Update docs (dev notes, README, CLAUDE.md) | **Polly-level** (docs authoring) | buhhdy | — | — | — | Synthesized directly from the collected sub-agent reports/PR diffs from steps 4–6. If genuinely deeper investigation is needed first, delegate that explore task, then author the docs directly from its findings |
-| 8 | Commit + push | **Polly-level** (git plumbing) | buhhdy | — | — | — | Commits the docs update from step 7; each implementer's own PR from step 4 is separate and already open |
-| 9 | Open a PR | **Polly-level** (`gh pr create` plumbing, not a merge) | buhhdy | — | — | — | PR for the docs-update commit. Every PR from this workflow (docs PR + each implementer PR) waits for the human by default — see `config.yaml`'s Merge Authorization section for the only conditions under which buhhdy merges one itself |
+| 6 | `grounding` | **buhhdy-level** | buhhdy | — | — | — | buhhdy runs its own grounding checkpoint on the batch (per the same pattern as any buhhdy session). Check 2 (code review) is NOT self-eyeballed: it dispatches a review-purpose sub-agent (opposite vendor from the majority implementer) to actually run `/simplify` + `/security-review` against step 4/5's diffs |
+| 7 | Update docs (dev notes, README, CLAUDE.md) | **buhhdy-level** (docs authoring) | buhhdy | — | — | — | Synthesized directly from the collected sub-agent reports/PR diffs from steps 4–6. If genuinely deeper investigation is needed first, delegate that explore task, then author the docs directly from its findings |
+| 8 | Commit + push | **buhhdy-level** (git plumbing) | buhhdy | — | — | — | Commits the docs update from step 7; each implementer's own PR from step 4 is separate and already open |
+| 9 | Open a PR | **buhhdy-level** (`gh pr create` plumbing, not a merge) | buhhdy | — | — | — | PR for the docs-update commit. Every PR from this workflow (docs PR + each implementer PR) waits for the human by default — see `config.yaml`'s Merge Authorization section for the only conditions under which buhhdy merges one itself |
 
 End state: implementation PRs (one per independent task, each cross-reviewed)
 plus one docs-update PR authored directly by buhhdy (not cross-reviewed —
-it's lower-stakes prose reflecting already-reviewed work, and polly may open
-its own PR for its own direct commits). None merged. The human merges.
+it's lower-stakes prose reflecting already-reviewed work, and buhhdy may
+open its own PR for its own direct commits). None merged. The human merges.
 
 ## Notes shared by both workflows
 

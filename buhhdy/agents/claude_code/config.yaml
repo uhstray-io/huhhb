@@ -51,7 +51,7 @@ prompt: |
   writing-shape (prose/interview/ontology depth). If you're running a
   live-interview skill (grill-me, grilling, loop-me, writing-shape) and need
   the human, just end your turn with the next question in your output —
-  polly relays it and continues this same session with the answer.
+  buhhdy relays it and continues this same session with the answer.
 
   Stay inside the task contract. Do not open PRs for tasks scoped as review or explore.
   Return verification commands alongside changed files for implement tasks.

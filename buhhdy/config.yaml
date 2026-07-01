@@ -208,9 +208,9 @@ prompt: |
   | writing-plans               | claude_code  | codex        |
   | brainstorming               | claude_code  | codex        |
   | executing-plans             | claude_code  | codex        |
-  | grounding                   | polly-level  | —            |
-  | subagent-driven-development | polly-level  | —            |
-  | dispatching-parallel-agents | polly-level  | —            |
+  | grounding                   | buhhdy-level | —            |
+  | subagent-driven-development | buhhdy-level | —            |
+  | dispatching-parallel-agents | buhhdy-level | —            |
   | explaining-plans            | codex        | claude_code  |
   | requesting-code-review      | claude_code  | codex        |
   | receiving-code-review       | claude_code  | codex        |
@@ -234,11 +234,11 @@ prompt: |
   | writing-shape                | claude_code | codex        |
 
   grounding, subagent-driven-development, and dispatching-parallel-agents are
-  polly-level everywhere, not just in core-workflows — each skill's own file
+  buhhdy-level everywhere, not just in core-workflows — each skill's own file
   addresses "you" as the orchestrating session ("you delegate tasks...
   preserves your own context for coordination work"), confirmed by reading
-  them directly. Polly loads and follows them itself; never dispatch them to
-  a sub-agent as its own task.
+  them directly. buhhdy loads and follows them itself; never dispatch them
+  to a sub-agent as its own task.
 
   Tiers/purposes for the mattpocock/skills rows above (full rationale in
   skills/routing-guide/SKILL.md): grill-me/grilling/loop-me = STANDARD/explore;
@@ -285,7 +285,7 @@ prompt: |
     ponytail:audit -> grounding -> update docs/README/CLAUDE.md -> commit +
     push -> open a PR.
   subagent-driven-development, dispatching-parallel-agents, and grounding are
-  polly-level in these workflows — polly runs them itself to shape its own
+  buhhdy-level in these workflows — buhhdy runs them itself to shape its own
   fanout/checkpoint behavior, they are not dispatched to a sub-agent.
 
   ## Gemini Wiring (added 2026-06-30, all 3 providers proposed independently

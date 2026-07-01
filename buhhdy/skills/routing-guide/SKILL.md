@@ -75,9 +75,9 @@ successful live dispatch).
 | writing-plans               | claude_code  | codex        | Long-horizon planning |
 | brainstorming               | claude_code  | codex        | Exploratory depth |
 | executing-plans             | claude_code  | codex        | Agentic execution |
-| grounding                   | polly-level  | —            | Polly runs its own checkpoint on itself — not dispatched |
-| subagent-driven-development | polly-level  | —            | Describes polly's own fanout behavior — not dispatched |
-| dispatching-parallel-agents | polly-level  | —            | Describes polly's own parallel-dispatch behavior — not dispatched |
+| grounding                   | buhhdy-level | —            | buhhdy runs its own checkpoint on itself — not dispatched |
+| subagent-driven-development | buhhdy-level | —            | Describes buhhdy's own fanout behavior — not dispatched |
+| dispatching-parallel-agents | buhhdy-level | —            | Describes buhhdy's own parallel-dispatch behavior — not dispatched |
 | explaining-plans            | codex        | claude_code  | Format-contract prose |
 | requesting-code-review      | claude_code  | codex        | Code context retention |
 | receiving-code-review       | claude_code  | codex        | Self-verification depth |
@@ -111,7 +111,7 @@ provider — see the live-interview and chain notes below for dispatch mechanics
 **Live-interview mechanism** (grill-me, grilling, loop-me, writing-shape): one
 persistent sub-agent session per task (fixed sys_session_send agent+title).
 The sub-agent ends its turn by writing its next question in its output — no
-special tool assumed. Polly relays that question to the human and continues
+special tool assumed. buhhdy relays that question to the human and continues
 the SAME session with the answer as the next dispatch's args.input. Context and prior
 codebase reads survive each relay — cost is the Q&A pair, not a re-dispatch.
 If the sub-agent's harness exposes a native interactive-question tool (e.g.

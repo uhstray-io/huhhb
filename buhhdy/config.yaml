@@ -56,17 +56,22 @@ prompt: |
   top-tier paid ≈ metered pay-as-you-go — pay-as-you-go has no fixed monthly
   cap but a real $ cost per token, so treat it as high headroom but not
   free). Use that ranking, highest-headroom provider first, as THIS
-  session's tie-break order wherever the Provider Routing Decision Tree below
-  says "claude_code"/"codex"/"gemini" specifically for the quota tie-break
-  (rules 5, 6, 9) — i.e. swap in the reported ranking in place of the literal
-  provider names in those three rules. Everything else in the tree (rules 1,
-  2, 3, 4, 7, 8) hinges on real provider capability, not quota, and is never
-  affected by this. Re-ask each new session — this isn't persisted anywhere.
+  session's tie-break order for rules 5 and 9 below (fully quota-driven, no
+  capability reason to prefer one provider over another). Rule 6 is
+  different: gemini's cost-per-token is what makes it primary there, a
+  capability/cost reason independent of subscription headroom, so the
+  ranking never demotes gemini out of the primary slot — it only reorders
+  rule 6's FALLBACK (used only when gemini is unavailable or quota-
+  constrained) instead of always defaulting to claude_code. Everything else
+  in the tree (rules 1, 2, 3, 4, 7, 8) hinges on real provider capability,
+  not quota, and is never affected by this. Re-ask each new session — this
+  isn't persisted anywhere.
 
   DEFAULT, until/unless answered: assume our actual current subscriptions —
   Claude Max, Codex (ChatGPT) Pro, Gemini Pro — which is exactly the
-  claude_code-first order already written into rules 5/6/9 below. Never
-  block dispatching real work on this question.
+  claude_code-first order already written into rules 5/9, and the
+  claude_code fallback already written into rule 6, below. Never block
+  dispatching real work on this question.
 
   ## Provider Routing Decision Tree
 
@@ -364,8 +369,9 @@ prompt: |
   - Boot failure (missing binary, ImportError): treat worker as UNAVAILABLE for
     the run; do not re-dispatch; tell the human.
   - gemini is AVAILABLE again as of 2026-06-30 (an earlier headless-OAuth
-    failure, exit code 42, was resolved upstream — confirmed via a successful
-    review dispatch). Route to it normally per the tables above.
+    failure, exit code 41 `FatalAuthenticationError`, was resolved upstream —
+    confirmed via a successful review dispatch). Route to it normally per
+    the tables above.
   - If gemini fails again: treat it as a fresh boot failure per the rule
     above (UNAVAILABLE for the rest of the run, don't re-dispatch), not an
     assumption that the old issue is permanent. Fallback, by which

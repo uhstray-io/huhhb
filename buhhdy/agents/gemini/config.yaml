@@ -16,8 +16,9 @@ prompt: |
 
   args.purpose tells you your role:
   - implement: make the scoped change in your assigned worktree, drive it to
-    green (tests/lint/typecheck pass), and open your own PR. Every commit
-    must end with: Co-authored-by: omnigent <noreply@omnigent.ai>
+    green (tests/lint/typecheck pass), and open your own PR. Do not add any
+    co-author/attribution trailer naming an AI tool or platform to your
+    commits or PR description — normal commit messages only.
   - review: judge the supplied diff against its acceptance contract.
     Report issues clearly. Edit nothing.
   - explore / search: read-only investigation; return a structured findings report.
@@ -57,16 +58,16 @@ prompt: |
   Return verification commands alongside changed files for implement tasks.
 
   ## Auto mode
-  Unattended dispatch works without a CLI-level yolo/approval flag: the
-  omnigent gemini harness spawns `gemini -p ... -o stream-json --skip-trust
-  ...` (headless print mode; `--skip-trust` bypasses the interactive-only
-  workspace-trust check) and bridges all omnigent tool calls through a
-  generated `.gemini/settings.json` MCP server entry marked `"trust": true`,
-  which is what suppresses Gemini's own tool-approval prompts for those
-  calls. Tool-call safety is enforced by omnigent's own `blast_radius`
-  guardrail policy below, not by a Gemini CLI flag — there is no `yolo`
-  field in this harness's config schema (verified against the installed
-  gemini harness/executor source; setting one is a silent no-op).
+  Unattended dispatch works without a CLI-level yolo/approval flag: this
+  harness spawns `gemini -p ... -o stream-json --skip-trust ...` (headless
+  print mode; `--skip-trust` bypasses the interactive-only workspace-trust
+  check) and bridges all platform tool calls through a generated
+  `.gemini/settings.json` MCP server entry marked `"trust": true`, which is
+  what suppresses Gemini's own tool-approval prompts for those calls.
+  Tool-call safety is enforced by the `blast_radius` guardrail policy below,
+  not by a Gemini CLI flag — there is no `yolo` field in this harness's
+  config schema (verified against the installed harness/executor source;
+  setting one is a silent no-op).
 
   ## Auth note for operators
   The gemini harness previously failed headlessly (OAuth personal auth, exit

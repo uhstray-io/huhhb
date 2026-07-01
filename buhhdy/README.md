@@ -57,8 +57,8 @@ Then sign in to each:
   **Vertex AI**. Google auth flows are the part most likely to drift over
   time — if "Sign in with Google" ever stops working for your account tier,
   fall back to the API key. (An earlier headless-OAuth failure specific to
-  the omnigent gemini harness — exit code 41, `FatalAuthenticationError` —
-  was resolved upstream as of 2026-06-30, confirmed via a successful live
+  the gemini harness below — exit code 41, `FatalAuthenticationError` — was
+  resolved upstream as of 2026-06-30, confirmed via a successful live
   dispatch; see Failure Recovery in `config.yaml` if it regresses.)
 
 Verify all three are on PATH:
@@ -78,12 +78,12 @@ omnigent run buhhdy/config.yaml
 ```
 
 To register buhhdy as a durable, reusable agent instead of a one-off local
-launch, use the Omnigent MCP tool `sys_session_create` with
+launch, use the runtime's `sys_session_create` tool with
 `config_path: buhhdy` (this is how the registered `agent_id` referenced in
 this repo's PR history was produced). `omnigent run --server` also uploads
 the YAML, but its own `--help` documents that upload as ephemeral, not a
-persistent registration. Copying into the omnigent examples directory also
-still works, if you'd rather colocate it there:
+persistent registration. Copying into the runtime's own examples directory
+also still works, if you'd rather colocate it there:
 `cp -r /path/to/buhhdy examples/buhhdy`.
 
 ### 4. What happens on your first message
@@ -159,7 +159,7 @@ External skills (referenced, not bundled — must be installed separately):
   table. Live-interview skills (grill-me, grilling, loop-me, writing-shape)
   use a persistent-session relay so they stay genuinely subagent-driven.
 
-Polly-native skills (from omnigent):
+Bundled with the runtime itself:
 - investigate, fanout, cross-review
 
 ## Cross-Review Pairings

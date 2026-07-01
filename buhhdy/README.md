@@ -8,6 +8,95 @@ Built through a three-round collaborative design process: each provider's
 research agent proposed its own model tier strategy, challenged the other
 two proposals, and converged on the routing rules in this config.
 
+## Getting Started
+
+New here? Follow this in order — it's a one-time setup per machine.
+
+### 1. Install the omnigent runtime — the fork, not upstream
+
+buhhdy needs the **`uhstray-io/omnigent` fork**, not the public
+`omnigent-ai/omnigent` repo. The fork has a real, tested `gemini` harness
+(a dedicated integration that runs the standalone Gemini CLI as a
+subprocess) that upstream's harness allowlist doesn't have — loading buhhdy
+against upstream silently drops the gemini sub-agent at load time instead
+of erroring, so this is easy to get wrong without noticing.
+
+```bash
+# Recommended: uv tool install, straight from the fork's git repo
+uv tool install git+https://github.com/uhstray-io/omnigent.git
+
+# Confirm you actually have the fork (not upstream) once installed
+pip show -f omnigent | grep -i location
+```
+
+### 2. Install and sign in to each CLI
+
+buhhdy dispatches real work to three separate coding CLIs. Install and
+authenticate each one before your first run — a one-time step per machine.
+
+| Provider | Install | Docs |
+|---|---|---|
+| **Claude Code** (Anthropic) | `curl -fsSL https://claude.ai/install.sh \| bash` (macOS/Linux/WSL) — or `npm install -g @anthropic-ai/claude-code` | [Setup](https://code.claude.com/docs/en/setup) · [Auth](https://code.claude.com/docs/en/authentication) |
+| **Codex CLI** (OpenAI) | `npm install -g @openai/codex` (must be the `@openai/codex` scope — an unscoped `codex` package is an unrelated, unmaintained package) — or `curl -fsSL https://chatgpt.com/codex/install.sh \| sh` | [CLI](https://developers.openai.com/codex/cli) · [Auth](https://developers.openai.com/codex/auth) |
+| **Gemini CLI** (Google) | `npm install -g @google/gemini-cli` — or `npx @google/gemini-cli` (no install) | [Repo](https://github.com/google-gemini/gemini-cli) · [Auth](https://github.com/google-gemini/gemini-cli/blob/main/docs/get-started/authentication.mdx) |
+
+Then sign in to each:
+
+- **Claude Code** — run `claude`; it opens a browser to log in with your
+  Claude.ai account (Pro/Max/Team/Enterprise), or choose Claude Console for
+  API-billed usage instead. An `ANTHROPIC_API_KEY` env var, if set, takes
+  precedence over subscription login.
+- **Codex** — run `codex login`; opens a browser to sign in with your
+  ChatGPT account (Plus/Pro/Business/Edu/Enterprise plan credits). For
+  OpenAI-Platform API-key billing instead of plan credits:
+  `codex login --with-api-key`.
+- **Gemini CLI** — run `gemini`; the picker offers **"Sign in with Google"**
+  (free personal Google account, browser OAuth — this is the default,
+  no-cost path) or **"Use Gemini API key"** (`GEMINI_API_KEY` env var from
+  [Google AI Studio](https://aistudio.google.com/apikey), pay-as-you-go) or
+  **Vertex AI**. Google auth flows are the part most likely to drift over
+  time — if "Sign in with Google" ever stops working for your account tier,
+  fall back to the API key. (An earlier headless-OAuth failure specific to
+  the omnigent gemini harness — exit code 41, `FatalAuthenticationError` —
+  was resolved upstream as of 2026-06-30, confirmed via a successful live
+  dispatch; see Failure Recovery in `config.yaml` if it regresses.)
+
+Verify all three are on PATH:
+
+```bash
+command -v claude codex gemini
+```
+
+### 3. Run buhhdy
+
+```bash
+# One-off local launch
+omnigent run buhhdy
+
+# Or point at the config file directly
+omnigent run buhhdy/config.yaml
+```
+
+To register buhhdy as a durable, reusable agent instead of a one-off local
+launch, use the Omnigent MCP tool `sys_session_create` with
+`config_path: buhhdy` (this is how the registered `agent_id` referenced in
+this repo's PR history was produced). `omnigent run --server` also uploads
+the YAML, but its own `--help` documents that upload as ephemeral, not a
+persistent registration. Copying into the omnigent examples directory also
+still works, if you'd rather colocate it there:
+`cp -r /path/to/buhhdy examples/buhhdy`.
+
+### 4. What happens on your first message
+
+buhhdy asks which subscription tier you have for each provider (Claude /
+Codex / Gemini) so it can lightly weight routing toward whichever has the
+most headroom before hitting its usage cap this cycle — it's a quick
+question, not a gate, and your actual request proceeds either way. Skip it
+and it defaults to Claude Max / Codex Pro / Gemini Pro. Not persisted —
+expect the question again next session. Full mechanics: the "Subscription
+Tier Interview" and "Provider Routing Decision Tree" sections of
+`config.yaml`.
+
 ## Structure
 
 ```text
@@ -73,60 +162,6 @@ External skills (referenced, not bundled — must be installed separately):
 Polly-native skills (from omnigent):
 - investigate, fanout, cross-review
 
-## Setup
-
-### Requirements
-
-```bash
-# All three CLIs must be on PATH
-command -v claude codex gemini
-```
-
-### First run: subscription tier interview
-
-On your first message in a new buhhdy session, it will ask which subscription
-tier you currently have for each provider (Claude, Codex/ChatGPT, Gemini —
-free / standard paid / top-tier paid / pay-as-you-go API is a fine answer).
-It's a quick question, not a gate — buhhdy proceeds with your actual request
-either way. Your answer ranks the three providers by usage headroom and
-lightly biases routing toward whichever has the most room before hitting its
-cap this cycle (see the Provider Routing Decision Tree's quota tie-break in
-`config.yaml` for exactly which rules this affects — it never overrides a
-rule that's about provider capability, not cost). Skip the question and it
-defaults to our actual current plans: Claude Max, Codex Pro, Gemini Pro. This
-isn't persisted across sessions — expect the question again next time.
-
-> **Gemini is available.** An earlier headless-OAuth failure (the gemini harness's
-> OAuth-personal auth, exit code 42) was resolved upstream as of 2026-06-30 —
-> confirmed via a successful live dispatch. buhhdy now routes across all
-> three providers; see Failure Recovery in `config.yaml` if it regresses.
-
-### Deploy
-
-**Verified 2026-07-01 against the real `omnigent` CLI** — there is no
-`agent register` subcommand (an earlier draft of this doc claimed one that
-never existed). The real command is `run`, which accepts an agent directory
-or YAML file directly:
-
-```bash
-# From wherever buhhdy/ lives on disk — launches a session immediately
-omnigent run buhhdy
-
-# Or point at the config file explicitly
-omnigent run buhhdy/config.yaml
-
-# To register it as a durable, reusable agent (not just a one-off local
-# launch), use the Omnigent MCP tool sys_session_create with
-# config_path: buhhdy — this is what produced the registered
-# agent_id this repo's PR history references. `omnigent run --server`
-# uploads the YAML too, but its own --help documents that upload as
-# "ephemeral" rather than a persistent registration.
-
-# Copying into the omnigent examples directory also still works, if you'd
-# rather colocate it there:
-cp -r /path/to/buhhdy examples/buhhdy
-```
-
 ## Cross-Review Pairings
 
 | Implementer | Valid reviewers |
@@ -173,7 +208,7 @@ mergeable before acting on a grant.
   tasks — near-Opus quality per Anthropic's own docs, cheaper than
   claude-opus-4-8. Reserve Opus for planning/architecture judgment.
 - **Gemini is available again (2026-06-30)** — the earlier headless-OAuth
-  failure (exit code 42) was resolved upstream, confirmed via a successful
+  failure (exit code 41) was resolved upstream, confirmed via a successful
   live dispatch. buhhdy routes across all three providers again.
 
 Review the routing-guide skill and this README quarterly as providers evolve.

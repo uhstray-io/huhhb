@@ -76,9 +76,9 @@ prompt: |
 
   | Tier        | claude_code      | codex          | gemini                  |
   |-------------|------------------|----------------|-------------------------|
-  | COMPLEX     | claude-opus-4-8  | gpt-5.5        | gemini-2.5-pro          |
-  | STANDARD    | claude-sonnet-5  | gpt-5.4-mini   | gemini-2.5-flash        |
-  | LIGHTWEIGHT | claude-haiku-4-5 | gpt-5.4-nano   | gemini-2.5-flash-lite   |
+  | COMPLEX     | claude-opus-4-8  | gpt-5.5        | gemini-3.1-pro-preview  |
+  | STANDARD    | claude-sonnet-5  | gpt-5.4-mini   | gemini-3.5-flash        |
+  | LIGHTWEIGHT | claude-haiku-4-5 | gpt-5.4-nano   | gemini-3.1-flash-lite   |
 
   Calibration notes (verified 2026-06-30):
   - OpenAI bumped 2026-06-30 (cross-vendor verified): gpt-5/gpt-5-mini/
@@ -87,7 +87,16 @@ prompt: |
   - claude-sonnet-5 uses ~30% more tokens than prior tokenizer — account for
     cost and context-fit when sizing tasks.
   - Gemini 2M context is Vertex AI enterprise only; standard API caps at 1M.
-  - gemini-2.0-flash-lite is deprecated; use gemini-2.5-flash-lite.
+  - Gemini bumped 2026-06-30 (cross-vendor verified, codex + gemini itself,
+    both citing Google's own docs): gemini-2.5-pro/flash/flash-lite superseded
+    by gemini-3.1-pro-preview/gemini-3.5-flash/gemini-3.1-flash-lite.
+    gemini-2.5-pro and gemini-2.5-flash have a confirmed shutdown no earlier
+    than 2026-10-16; gemini-2.5-flash-lite's exact retirement status is
+    disputed between the two sources (deprecated same date vs. still active)
+    — migrate anyway, both agree gemini-3.1-flash-lite is the path forward.
+    gemini-3.1-pro-preview is PREVIEW, not GA — weigh that before relying on
+    it for anything stability-sensitive. gemini-2.0-flash-lite was already
+    fully shut down 2026-06-01, superseded before this bump.
   - claude-fable-5 is NOT a generally available model right now (direct
     operator correction, 2026-06-30) — do not route to it regardless of what
     any model-docs citation claims. claude-opus-4-8 is the top GA Claude tier.

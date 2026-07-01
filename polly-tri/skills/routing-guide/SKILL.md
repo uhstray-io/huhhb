@@ -26,9 +26,9 @@ if unavailable, use claude_code or codex instead.
 
 | Tier        | claude_code      | codex          | gemini                |
 |-------------|------------------|----------------|-----------------------|
-| COMPLEX     | claude-opus-4-8  | gpt-5.5        | gemini-2.5-pro        |
-| STANDARD    | claude-sonnet-5  | gpt-5.4-mini   | gemini-2.5-flash      |
-| LIGHTWEIGHT | claude-haiku-4-5 | gpt-5.4-nano   | gemini-2.5-flash-lite |
+| COMPLEX     | claude-opus-4-8  | gpt-5.5        | gemini-3.1-pro-preview |
+| STANDARD    | claude-sonnet-5  | gpt-5.4-mini   | gemini-3.5-flash       |
+| LIGHTWEIGHT | claude-haiku-4-5 | gpt-5.4-nano   | gemini-3.1-flash-lite  |
 
 ## Provider Strengths Summary
 
@@ -57,7 +57,10 @@ successful live dispatch).
 - Best: large document corpus analysis (1M context at low cost per token)
 - Weakness: subtle code logic vs Claude, nuanced long-form writing vs Claude/OpenAI
 - Note: 2M context = Vertex enterprise only; standard API caps at 1M.
-  gemini-2.0-flash-lite deprecated → use gemini-2.5-flash-lite.
+  gemini-2.5-pro/flash/flash-lite superseded by gemini-3.1-pro-preview/
+  gemini-3.5-flash/gemini-3.1-flash-lite (verified 2026-06-30, cross-vendor).
+  2.5-pro/flash confirmed shutdown no earlier than 2026-10-16; flash-lite's
+  status is disputed between sources. gemini-3.1-pro-preview is PREVIEW, not GA.
 
 ## Skill → Provider Affinity
 
@@ -139,8 +142,10 @@ Review and update this table quarterly or when a provider announces model change
   by gpt-5.5/gpt-5.4-mini/gpt-5.4-nano as of 2026-06-30 (cross-vendor verified
   — OpenAI's own GPT-5.4 mini/nano announcement, independently corroborated)
 - Anthropic Sonnet 5 tokenizer: ~30% heavier than Sonnet 4 — account for cost/context
-- Gemini 3.x models: gemini-3.5-flash and gemini-3.1-pro-preview exist; evaluate
-  for COMPLEX/STANDARD tiers when Gemini 2.5 approaches deprecation
+- Gemini 3.x adopted 2026-06-30: gemini-3.1-pro-preview (COMPLEX, still
+  PREVIEW), gemini-3.5-flash (STANDARD, GA), gemini-3.1-flash-lite
+  (LIGHTWEIGHT, GA). Re-check gemini-3.1-pro-preview for GA promotion
+  quarterly — preview models can change without the same notice period.
 - claude-fable-5 is NOT generally available right now (direct operator
   correction, 2026-06-30) — do not route to it regardless of any model-docs
   citation claiming otherwise. claude-opus-4-8 is the top GA Claude tier.

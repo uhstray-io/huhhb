@@ -45,8 +45,8 @@ human.
 | Complex multi-file coding, agentic runs | Claude | claude-opus-4-8 |
 | Strict JSON/schema, format contracts | OpenAI | gpt-5.4-mini |
 | User-facing prose, explanations | OpenAI | gpt-5.4-mini |
-| Multimodal, video/audio/PDF | Gemini | gemini-2.5-pro |
-| Bulk classification, high-volume fanout | Gemini | gemini-2.5-flash-lite |
+| Multimodal, video/audio/PDF | Gemini | gemini-3.1-pro-preview |
+| Bulk classification, high-volume fanout | Gemini | gemini-3.1-flash-lite |
 | Standard implementation | Claude | claude-sonnet-5 |
 | Standard structured tasks | OpenAI | gpt-5.4-mini |
 | Lightweight default | cheapest tier | see routing-guide |
@@ -121,7 +121,13 @@ not a delegated coding task).
   cost and context-fit when sizing tasks.
 - **Gemini 2M context** — Vertex AI enterprise only; standard API caps at 1M.
   Do not route standard API tasks expecting 2M context.
-- **gemini-2.0-flash-lite deprecated** — use gemini-2.5-flash-lite.
+- **Gemini bumped to the 3.x family** (verified 2026-06-30, cross-vendor:
+  codex + gemini itself, both citing Google's own docs) —
+  gemini-2.5-pro/flash/flash-lite superseded by
+  gemini-3.1-pro-preview/gemini-3.5-flash/gemini-3.1-flash-lite. 2.5-pro/flash
+  have a confirmed shutdown no earlier than 2026-10-16; flash-lite's exact
+  status is disputed between sources. gemini-3.1-pro-preview is PREVIEW, not
+  GA. gemini-2.0-flash-lite was fully shut down 2026-06-01.
 - **claude-fable-5 is not generally available right now** (direct operator
   correction, 2026-06-30) — do not route to it regardless of any model-docs
   citation claiming otherwise. claude-opus-4-8 is the top (COMPLEX) GA tier.

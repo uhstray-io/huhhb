@@ -89,14 +89,28 @@ command -v claude codex gemini
 
 ### Deploy
 
-Copy `polly-tri/` into the omnigent examples directory or register it directly:
+**Verified 2026-07-01 against the real `omnigent` CLI** — there is no
+`agent register` subcommand (an earlier draft of this doc claimed one that
+never existed). The real command is `run`, which accepts an agent directory
+or YAML file directly:
 
 ```bash
-# From your omnigent repo root
-cp -r /path/to/polly-tri examples/polly-tri
+# From wherever polly-tri/ lives on disk — launches a session immediately
+omnigent run polly-tri
 
-# Or register from any path
-omnigent agent register ./polly-tri/config.yaml
+# Or point at the config file explicitly
+omnigent run polly-tri/config.yaml
+
+# To register it as a durable, reusable agent (not just a one-off local
+# launch), use the Omnigent MCP tool sys_session_create with
+# config_path: polly-tri — this is what produced the registered
+# agent_id this repo's PR history references. `omnigent run --server`
+# uploads the YAML too, but its own --help documents that upload as
+# "ephemeral" rather than a persistent registration.
+
+# Copying into the omnigent examples directory also still works, if you'd
+# rather colocate it there:
+cp -r /path/to/polly-tri examples/polly-tri
 ```
 
 ## Cross-Review Pairings

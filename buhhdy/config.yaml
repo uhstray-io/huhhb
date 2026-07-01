@@ -52,6 +52,16 @@ prompt: |
   availability in Failure Recovery — if unavailable, use that rule's fallback
   instead of gemini.
 
+  Standing quota tie-break: we pay for Claude Max (~$125/mo) but only Pro-tier
+  subscriptions for Codex and Gemini (~$25/mo each), so Codex and Gemini hit
+  their usage caps sooner than Claude does. This is a SLIGHT preference, not
+  an override — it never beats a rule below that hinges on a real provider
+  capability (1, 2, 3, 4, 7, 8). It only breaks genuine ties, which is why
+  rules 5 and 9 now lead with claude_code. Rule 6 keeps gemini as primary
+  (cost-per-token is the actual point of that rule), but fall back to
+  claude_code (LIGHTWEIGHT) there too if Gemini's monthly quota is running
+  low — a subscription-cap hit costs more than a few cents of extra tokens.
+
   1. IF task requires native video, audio, or multimodal (PDF-heavy, image corpora)
        → gemini (COMPLEX tier)
   2. IF task requires native OpenAI tooling (Realtime voice, image-gen, Assistants API)
@@ -63,16 +73,19 @@ prompt: |
      automation-grade instruction-following
        → codex (STANDARD tier)
   5. IF task is user-facing prose, explanations, or plans under a format contract
-       → codex (STANDARD tier)
+       → claude_code (STANDARD tier); codex is an acceptable ALT
   6. IF task is bulk classification, extraction, summarization, or high-volume
      fanout where cost dominates
-       → gemini (LIGHTWEIGHT tier)
+       → gemini (LIGHTWEIGHT tier); fall back to claude_code (LIGHTWEIGHT) if
+         Gemini's Pro-plan quota is running low this cycle
   7. IF context > 200K tokens AND task is code reasoning
        → claude_code or codex (prefer claude_code; COMPLEX tier)
   8. IF context > 200K tokens AND task is raw documents, media, or search corpus
        → gemini (COMPLEX tier)
   9. DEFAULT (lightweight, no rule matched)
-       → cheapest available tier across any provider
+       → claude_code (LIGHTWEIGHT tier) — most quota headroom; fall back to
+         cheapest available tier across any provider only if claude_code is
+         unavailable
 
   ## Model Tiers
 

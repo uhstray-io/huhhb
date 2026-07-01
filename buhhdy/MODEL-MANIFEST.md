@@ -1,6 +1,6 @@
-# polly-tri Model Manifest
+# buhhdy Model Manifest
 
-All 9 models currently wired into polly-tri, cross-referenced by use-case,
+All 9 models currently wired into buhhdy, cross-referenced by use-case,
 cross-review role, and workflow. Generated from the current state of
 `config.yaml`, `skills/routing-guide/SKILL.md`, and `skills/core-workflows/SKILL.md`.
 
@@ -13,7 +13,7 @@ the full rationale. This revision reflects that reconciliation.
 
 ## Read this caveat first
 
-Cross-review in polly-tri is pinned at the **worker** level almost
+Cross-review in buhhdy is pinned at the **worker** level almost
 everywhere (`claude_code` / `codex` / `gemini`) — the Skill Dispatch Guide
 and mattpocock/skills tables name a reviewing *worker*, not a reviewing
 *model tier*. A handful of steps (marked ★ below) now pin an explicit tier

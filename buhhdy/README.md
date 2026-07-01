@@ -1,4 +1,4 @@
-# polly-tri
+# buhhdy
 
 A three-provider Polly orchestration config that routes tasks across
 **Claude (Anthropic)**, **OpenAI (ChatGPT/Codex)**, and **Google Gemini**
@@ -11,8 +11,8 @@ two proposals, and converged on the routing rules in this config.
 ## Structure
 
 ```text
-polly-tri/
-├── config.yaml                    ← Main orchestrator (polly-tri brain)
+buhhdy/
+├── config.yaml                    ← Main orchestrator (buhhdy brain)
 ├── agents/
 │   ├── claude_code/config.yaml    ← Anthropic Claude sub-agent
 │   ├── codex/config.yaml          ← OpenAI Codex sub-agent
@@ -36,7 +36,7 @@ step) in `skills/core-workflows/SKILL.md`:
    ponytail:audit -> grounding -> update docs -> commit + push -> open a PR.
 
 Both end with a deliverable PR, not a merge — see Merge Authorization below
-for the only conditions under which polly-tri merges one itself.
+for the only conditions under which buhhdy merges one itself.
 
 ## Provider Routing at a Glance
 
@@ -53,7 +53,7 @@ for the only conditions under which polly-tri merges one itself.
 
 ## Skills Bundled
 
-Native polly-tri skills (in `skills/`):
+Native buhhdy skills (in `skills/`):
 - **routing-guide** — full routing decision tree, tier table, skill affinity map
 - **core-workflows** — the two standard planning/development sequences above
 
@@ -84,7 +84,7 @@ command -v claude codex gemini
 
 > **Gemini is available.** An earlier headless-OAuth failure (the gemini harness's
 > OAuth-personal auth, exit code 42) was resolved upstream as of 2026-06-30 —
-> confirmed via a successful live dispatch. polly-tri now routes across all
+> confirmed via a successful live dispatch. buhhdy now routes across all
 > three providers; see Failure Recovery in `config.yaml` if it regresses.
 
 ### Deploy
@@ -95,22 +95,22 @@ never existed). The real command is `run`, which accepts an agent directory
 or YAML file directly:
 
 ```bash
-# From wherever polly-tri/ lives on disk — launches a session immediately
-omnigent run polly-tri
+# From wherever buhhdy/ lives on disk — launches a session immediately
+omnigent run buhhdy
 
 # Or point at the config file explicitly
-omnigent run polly-tri/config.yaml
+omnigent run buhhdy/config.yaml
 
 # To register it as a durable, reusable agent (not just a one-off local
 # launch), use the Omnigent MCP tool sys_session_create with
-# config_path: polly-tri — this is what produced the registered
+# config_path: buhhdy — this is what produced the registered
 # agent_id this repo's PR history references. `omnigent run --server`
 # uploads the YAML too, but its own --help documents that upload as
 # "ephemeral" rather than a persistent registration.
 
 # Copying into the omnigent examples directory also still works, if you'd
 # rather colocate it there:
-cp -r /path/to/polly-tri examples/polly-tri
+cp -r /path/to/buhhdy examples/buhhdy
 ```
 
 ## Cross-Review Pairings
@@ -122,13 +122,13 @@ cp -r /path/to/polly-tri examples/polly-tri
 | gemini | claude_code, codex |
 
 The reviewer is always a different vendor than the implementer. PRs are the
-deliverable; the human merges by default. Exception: polly-tri may open a PR
+deliverable; the human merges by default. Exception: buhhdy may open a PR
 for its own direct docs/config commits (non-code authoring, not a delegated
 coding task).
 
 ## Merge Authorization
 
-Default: polly-tri never merges. This flips ONLY on an explicit grant from
+Default: buhhdy never merges. This flips ONLY on an explicit grant from
 the human in the conversation — either a specific request ("merge PR #13")
 or a standing permission grant, scoped to exactly what was said. Vague
 approval ("looks good", "ship it") never counts. Never inferred from
@@ -160,6 +160,6 @@ mergeable before acting on a grant.
   claude-opus-4-8. Reserve Opus for planning/architecture judgment.
 - **Gemini is available again (2026-06-30)** — the earlier headless-OAuth
   failure (exit code 42) was resolved upstream, confirmed via a successful
-  live dispatch. polly-tri routes across all three providers again.
+  live dispatch. buhhdy routes across all three providers again.
 
 Review the routing-guide skill and this README quarterly as providers evolve.

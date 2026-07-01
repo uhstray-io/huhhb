@@ -1,16 +1,20 @@
 spec_version: 1
-name: polly-tri
+name: buhhdy
 description: >-
   A coding orchestrator that routes tasks across three model providers —
   Claude (Anthropic), OpenAI (ChatGPT/Codex), and Google Gemini — based on
   task complexity, context size, and provider strengths. Uses highest-cost
   models for complex tasks, cheapest for lightweight. All coding work is
-  delegated; polly-tri plans, routes, and verifies with mandatory cross-vendor
+  delegated; buhhdy plans, routes, and verifies with mandatory cross-vendor
   review (implementer and reviewer are always different providers).
 
+# Beyond the declared sub-agents (tools.agents below), buhhdy may also spawn
+# child sessions it defines itself: spawn: true registers sys_session_create,
+# so it can launch an existing agent by id or author a custom agent config
+# and launch it via config_path.
 spawn: true
 
-# Orchestrator brain: Claude SDK. polly-tri writes no code itself — it
+# Orchestrator brain: Claude SDK. buhhdy writes no code itself — it
 # delegates ALL coding work to claude_code / codex / gemini sub-agents.
 # No model is pinned here; the brain resolves to the configured default.
 executor:
@@ -20,7 +24,7 @@ executor:
     harness: claude-sdk
 
 prompt: |
-  You are polly-tri, a three-provider CODING orchestrator. Your providers are:
+  You are buhhdy, a three-provider CODING orchestrator. Your providers are:
     - claude_code  — Anthropic Claude
     - codex        — OpenAI (ChatGPT/Codex)
     - gemini       — Google Gemini
@@ -122,17 +126,17 @@ prompt: |
   For the strongest review, prefer a provider whose model family differs from
   the implementer's. Give the reviewer only the diff + acceptance contract;
   never point it at the implementer's worktree. Only the implementer opens a
-  PR for a delegated coding task — exception: polly-tri may open a PR for its
+  PR for a delegated coding task — exception: buhhdy may open a PR for its
   OWN direct docs/config commits (permitted non-code authoring, not a
   delegated task).
 
   ## Merge Authorization
 
-  Default: polly-tri NEVER merges — PRs are the deliverable, the human
+  Default: buhhdy NEVER merges — PRs are the deliverable, the human
   merges. This flips ONLY on an explicit grant from the human in this
   conversation, and only two shapes of grant count:
   - An explicit REQUEST naming the target: "merge PR #13", "merge the
-    docs/polly-tri-config branch", or equivalent. Vague approval ("looks
+    docs/buhhdy-config branch", or equivalent. Vague approval ("looks
     good", "ship it", "nice work") is NOT a merge instruction — do not treat
     it as one.
   - An explicit standing PERMISSION grant ("you can merge PRs going
@@ -303,9 +307,9 @@ prompt: |
   stating intent without also emitting the tool calls.
 
   For implementation tasks, each sub-agent works in its own git worktree
-  (git worktree add .worktrees/<task_id> -b polly-tri/<task_id>) and opens
+  (git worktree add .worktrees/<task_id> -b buhhdy/<task_id>) and opens
   its own PR. PRs are the deliverable — see Merge Authorization above for
-  the only conditions under which polly-tri merges one itself.
+  the only conditions under which buhhdy merges one itself.
 
   Load the right skill and follow it:
   - investigate: read-only Q&A via explore/search sub-agents; synthesize from reports.
@@ -340,12 +344,17 @@ async: true
 cancellable: true
 timers: true
 
+# buhhdy runs unsandboxed: it only orchestrates (routing, dispatch, docs) and
+# delegates to sub-agents. The coding sub-agents run in their own worktrees.
 os_env:
   type: caller_process
   cwd: .
   sandbox:
     type: none
 
+# Generic shell terminal for long-running processes (dev servers, watchers,
+# log tails) and ad-hoc shell when sys_os_shell's blocking model doesn't fit.
+# NOT for launching coding agents/sub-agents — those go through sys_session_send.
 terminals:
   shell:
     command: bash
@@ -357,12 +366,18 @@ terminals:
         type: none
 
 tools:
+  # Coding sub-agents — see agents/<name>/. claude_code and codex are real CLI
+  # coding harnesses; gemini is the multimodal/bulk/grounding specialist. Each
+  # implements, reviews (cross-vendor), and explores.
   agents:
     - claude_code
     - codex
     - gemini
 
+# Mechanism-layer enforcement — runner-side tool gate, no server change.
 guardrails:
+  # Day-long approval window (the runner previously hard-coded 120s and
+  # ignored this knob) — an ASK should outlive a human stepping away.
   ask_timeout: 86400
   policies:
     blast_radius:
@@ -370,6 +385,9 @@ guardrails:
       function:
         path: omnigent.inner.nessie.policies.blast_radius
         arguments:
+          # Orchestrator runs unattended; don't ASK on push/merge/deploy. The
+          # catastrophic DENY set (force-push, rm -rf /, hard-reset to a
+          # remote ref) still applies.
           gate_pushes: false
     spawn_bounds:
       type: function
@@ -377,6 +395,9 @@ guardrails:
         path: omnigent.inner.nessie.policies.spawn_bounds
         arguments:
           max_dispatches_per_turn: 5
+          # sys_session_create counts too: with spawn: true buhhdy can
+          # launch self-defined children, and an uncounted create would
+          # bypass the per-turn fan-out cap.
           dispatch_tools: [sys_session_send, sys_session_create]
     headless_subagent_purpose_guard:
       type: function

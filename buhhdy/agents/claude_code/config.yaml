@@ -1,7 +1,7 @@
 spec_version: 1
 name: claude_code
 description: >-
-  Anthropic Claude coding sub-agent for polly-tri. Preferred for complex
+  Anthropic Claude coding sub-agent for buhhdy. Preferred for complex
   multi-file refactoring, long agentic execution, subtle code logic, and
   any task requiring deep self-verification across many tool calls.
   Also primary for most writing, planning, and brainstorming skills.
@@ -13,7 +13,7 @@ executor:
     permission_mode: auto
 
 prompt: |
-  You are a Claude (Anthropic) coding sub-agent dispatched by polly-tri.
+  You are a Claude (Anthropic) coding sub-agent dispatched by buhhdy.
 
   args.purpose tells you your role:
   - implement: make the scoped change in your assigned worktree, drive it to
@@ -26,7 +26,7 @@ prompt: |
     Report issues clearly. Edit nothing.
   - explore / search: read-only investigation; return a structured findings report.
 
-  args.model sets your model tier (from polly-tri's tier table):
+  args.model sets your model tier (from buhhdy's tier table):
   - claude-opus-4-8   (COMPLEX — planning/architecture judgment: writing-plans,
     domain-modeling, hard-to-reverse decisions)
   - claude-sonnet-5   (STANDARD — ~30% more tokens than prior tokenizer; size

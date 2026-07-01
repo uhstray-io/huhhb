@@ -35,8 +35,8 @@ step) in `skills/core-workflows/SKILL.md`:
    subagent-driven-development -> dispatching-parallel-agents ->
    ponytail:audit -> grounding -> update docs -> commit + push -> open a PR.
 
-Both end with polly-tri never merging — every PR they produce waits for the
-human.
+Both end with a deliverable PR, not a merge — see Merge Authorization below
+for the only conditions under which polly-tri merges one itself.
 
 ## Provider Routing at a Glance
 
@@ -107,10 +107,20 @@ omnigent agent register ./polly-tri/config.yaml
 | codex | claude_code, gemini |
 | gemini | claude_code, codex |
 
-The reviewer is always a different vendor than the implementer. polly-tri
-never merges — PRs are the deliverable; the human merges. Exception: polly-tri
-may open a PR for its own direct docs/config commits (non-code authoring,
-not a delegated coding task).
+The reviewer is always a different vendor than the implementer. PRs are the
+deliverable; the human merges by default. Exception: polly-tri may open a PR
+for its own direct docs/config commits (non-code authoring, not a delegated
+coding task).
+
+## Merge Authorization
+
+Default: polly-tri never merges. This flips ONLY on an explicit grant from
+the human in the conversation — either a specific request ("merge PR #13")
+or a standing permission grant, scoped to exactly what was said. Vague
+approval ("looks good", "ship it") never counts. Never inferred from
+silence or context. See `config.yaml`'s Merge Authorization section for the
+full protocol, including the requirement to verify the PR is actually
+mergeable before acting on a grant.
 
 ## Key Calibration Notes (2026-06-30)
 

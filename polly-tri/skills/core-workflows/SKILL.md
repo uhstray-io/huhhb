@@ -44,7 +44,9 @@ End state: a design doc (step 1) + plan doc + published issues, all
 cross-reviewed (except step 1, which has no dedicated reviewer step), ready
 to hand to Workflow 2. The only commits so far are step 1's design doc and
 steps 4/6/7's plan-doc edits, each via its own PR per the implement contract
-— no application code has been touched yet.
+— no application code has been touched yet. None of this is merged by
+default — see `config.yaml`'s Merge Authorization section for the only
+conditions under which polly-tri merges a PR itself.
 
 ## Workflow 2 — Development (iterative, from an existing plan)
 
@@ -57,11 +59,11 @@ Trigger: picking up development against a plan/issue that already exists
 | 2 | `executing-plans` | Dispatched | claude_code | implement | COMPLEX | codex | Produces the execution order + review checkpoints for the rest of this run — consequential, worth top tier |
 | 3 | `subagent-driven-development` | **Polly-level** | polly-tri | — | — | — | Polly loads this skill itself to decide how to split step 2's plan into independent, parallel-safe tasks |
 | 4 | `dispatching-parallel-agents` | **Polly-level**, fans out to N dispatched implement tasks | polly-tri orchestrates; each task's provider/tier picked via the main Provider Routing Decision Tree per its own complexity — actively consider gemini for docs/ingestion/test-data/UI-media sub-tasks whenever it matches, don't default to claude_code/codex out of habit | implement (one dispatch per independent task, own worktree, own PR) | varies per task | opposite vendor per task (standard Cross-Review Rule, gemini included) | N implementer PRs, each independently cross-reviewed before merge-readiness |
-| 5 | `ponytail:audit` | Dispatched, two-stage: (a) gemini breadth sweep across all diffs (`gemini-3.1-flash-lite`, LIGHTWEIGHT, cheap pattern-scan) → (b) codex (or opposite of whichever vendor did most of the fanout implementation) makes the actual judgment call on gemini's findings | review — judges the diffs against ponytail principles, applies no fixes | LIGHTWEIGHT (stage a) then COMPLEX (stage b, whole-diff-set scope) | — | Over-engineering audit across all of step 4's landed diffs; findings become fix-tasks fed back to the relevant implementer, not applied by the auditor. Stage (a) is an input to stage (b)'s judgment, never a replacement for it |
+| 5 | `ponytail:audit` | Dispatched, two-stage (a→b) | (a) gemini breadth sweep across all diffs (`gemini-3.1-flash-lite`, LIGHTWEIGHT) → (b) codex (or opposite of whichever vendor did most of the fanout implementation) makes the actual judgment call on gemini's findings | review — judges the diffs against ponytail principles, applies no fixes | LIGHTWEIGHT (stage a) then COMPLEX (stage b, whole-diff-set scope) | — | Over-engineering audit across all of step 4's landed diffs; findings become fix-tasks fed back to the relevant implementer, not applied by the auditor. Stage (a) is an input to stage (b)'s judgment, never a replacement for it |
 | 6 | `grounding` | **Polly-level** | polly-tri | — | — | — | Polly runs its own grounding checkpoint on the batch (per the same pattern as any polly-tri session). Check 2 (code review) is NOT self-eyeballed: it dispatches a review-purpose sub-agent (opposite vendor from the majority implementer) to actually run `/simplify` + `/security-review` against step 4/5's diffs |
 | 7 | Update docs (dev notes, README, CLAUDE.md) | **Polly-level** (docs authoring) | polly-tri | — | — | — | Synthesized directly from the collected sub-agent reports/PR diffs from steps 4–6. If genuinely deeper investigation is needed first, delegate that explore task, then author the docs directly from its findings |
 | 8 | Commit + push | **Polly-level** (git plumbing) | polly-tri | — | — | — | Commits the docs update from step 7; each implementer's own PR from step 4 is separate and already open |
-| 9 | Open a PR | **Polly-level** (`gh pr create` plumbing, not a merge) | polly-tri | — | — | — | PR for the docs-update commit. Polly-tri never merges anything — every PR from this workflow (docs PR + each implementer PR) waits for the human |
+| 9 | Open a PR | **Polly-level** (`gh pr create` plumbing, not a merge) | polly-tri | — | — | — | PR for the docs-update commit. Every PR from this workflow (docs PR + each implementer PR) waits for the human by default — see `config.yaml`'s Merge Authorization section for the only conditions under which polly-tri merges one itself |
 
 End state: implementation PRs (one per independent task, each cross-reviewed)
 plus one docs-update PR authored directly by polly-tri (not cross-reviewed —

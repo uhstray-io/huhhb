@@ -1,3 +1,8 @@
+---
+name: core-workflows
+description: The two standard, repeatable sequences for developing alongside AI through polly-tri — Planning & Research (from a fresh problem to a reviewed plan + issues) and Development (iterating on an existing plan through fanout, audit, and docs). Load when starting new planning/research on a project, or when picking up development against an existing plan.
+---
+
 # core-workflows
 
 Two standard, repeatable sequences for developing alongside AI through polly-tri.

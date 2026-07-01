@@ -9,7 +9,7 @@ description: >-
 executor:
   type: omnigent
   config:
-    harness: gemini-native
+    harness: gemini
     yolo: true
 
 prompt: |
@@ -65,7 +65,7 @@ prompt: |
   waiting for interactive tool-call confirmation.
 
   ## Auth note for operators
-  gemini-native previously failed headlessly (OAuth personal auth, exit code
+  The gemini harness previously failed headlessly (OAuth personal auth, exit code
   42) because token refresh needs a browser this runner doesn't have. That was
   resolved upstream as of 2026-06-30 — gemini now boots and completes tasks
   normally here. If exit code 42 recurs, that's the same headless-OAuth issue

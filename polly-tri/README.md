@@ -82,7 +82,7 @@ Polly-native skills (from omnigent):
 command -v claude codex gemini
 ```
 
-> **Gemini is available.** An earlier headless-OAuth failure (gemini-native's
+> **Gemini is available.** An earlier headless-OAuth failure (the gemini harness's
 > OAuth-personal auth, exit code 42) was resolved upstream as of 2026-06-30 —
 > confirmed via a successful live dispatch. polly-tri now routes across all
 > three providers; see Failure Recovery in `config.yaml` if it regresses.

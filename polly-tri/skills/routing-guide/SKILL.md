@@ -1,3 +1,8 @@
+---
+name: routing-guide
+description: Reference skill for polly-tri's provider routing logic — the decision tree, model tier table, per-provider strengths, skill-to-provider affinity, and cross-review pairings. Load when reasoning about which provider to use and why, or when a task doesn't clearly match the main routing tree.
+---
+
 # routing-guide
 
 Reference skill for polly-tri's provider routing logic. Load this when you

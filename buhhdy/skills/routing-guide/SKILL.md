@@ -34,10 +34,11 @@ Tree for the full mechanics, including how a reported subscription tier can
 reorder this per session. Rule 6's gemini primary is capability/cost-based,
 not quota-based, and is never demoted by that reordering.
 
-## Model Tier Table (verified 2026-06-30)
+## Model Tier Table (verified 2026-06-30; FRONTIER row added 2026-07-01)
 
 | Tier        | claude_code      | codex          | gemini                |
 |-------------|------------------|----------------|-----------------------|
+| FRONTIER    | claude-fable-5   | —              | —                     |
 | COMPLEX     | claude-opus-4-8  | gpt-5.5        | gemini-3.1-pro-preview |
 | STANDARD    | claude-sonnet-5  | gpt-5.4-mini   | gemini-3.5-flash       |
 | LIGHTWEIGHT | claude-haiku-4-5 | gpt-5.4-nano   | gemini-3.1-flash-lite  |
@@ -53,6 +54,10 @@ not quota-based, and is never demoted by that reordering.
   execution-shaped tasks, driven by model choice alone (this dispatch
   contract has no separate effort knob). Keep Opus for planning/architecture judgment
   (writing-plans, domain-modeling) where the bottleneck is judgment, not coding.
+- Note: claude-fable-5 (FRONTIER) is Anthropic's most capable model, for
+  exceptionally hard/long-horizon tasks beyond what Opus handles well — an
+  explicit escalation, not a default; see Model Tier Table and Calibration
+  Notes for the time-bound subscription/API-key access mechanism.
 
 **OpenAI (codex)**
 - Best: strict structured output, JSON schemas, tool routing, format contracts
@@ -230,6 +235,11 @@ Review and update this table quarterly or when a provider announces model change
   PREVIEW), gemini-3.5-flash (STANDARD, GA), gemini-3.1-flash-lite
   (LIGHTWEIGHT, GA). Re-check gemini-3.1-pro-preview for GA promotion
   quarterly — preview models can change without the same notice period.
-- claude-fable-5 is NOT generally available right now (direct operator
-  correction, 2026-06-30) — do not route to it regardless of any model-docs
-  citation claiming otherwise. claude-opus-4-8 is the top GA Claude tier.
+- claude-fable-5 is now GA (direct operator confirmation, 2026-07-01,
+  corroborated by Anthropic's own claude-api model catalog) — added as a
+  new FRONTIER tier, claude_code only, an escalation from COMPLEX for the
+  hardest reasoning/long-horizon agentic tasks, not a routing default.
+  Access is time-bound: usable via the existing Claude Max subscription
+  only through 2026-07-07; from 2026-07-08 it requires a separate API key
+  and per-token billing ($10/$50 per MTok), outside the flat subscription —
+  re-verify this cutover closer to the date.

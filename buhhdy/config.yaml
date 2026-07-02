@@ -124,6 +124,7 @@ prompt: |
 
   | Tier        | claude_code      | codex          | gemini                  |
   |-------------|------------------|----------------|-------------------------|
+  | FRONTIER    | claude-fable-5   | —              | —                       |
   | COMPLEX     | claude-opus-4-8  | gpt-5.5        | gemini-3.1-pro-preview  |
   | STANDARD    | claude-sonnet-5  | gpt-5.4-mini   | gemini-3.5-flash        |
   | LIGHTWEIGHT | claude-haiku-4-5 | gpt-5.4-nano   | gemini-3.1-flash-lite   |
@@ -145,9 +146,22 @@ prompt: |
     gemini-3.1-pro-preview is PREVIEW, not GA — weigh that before relying on
     it for anything stability-sensitive. gemini-2.0-flash-lite was already
     fully shut down 2026-06-01, superseded before this bump.
-  - claude-fable-5 is NOT a generally available model right now (direct
-    operator correction, 2026-06-30) — do not route to it regardless of what
-    any model-docs citation claims. claude-opus-4-8 is the top GA Claude tier.
+  - claude-fable-5 is now GA (direct operator confirmation, 2026-07-01,
+    corroborated by Anthropic's own claude-api model catalog) — Anthropic's
+    most capable widely-released model, for the hardest reasoning and
+    long-horizon agentic work. Added as a new FRONTIER tier, claude_code
+    only. It's an ESCALATION from COMPLEX, not a routing default — none of
+    rules 1-9 route to it automatically; dispatch it deliberately when a
+    task's difficulty genuinely exceeds what claude-opus-4-8 (COMPLEX)
+    handles well. ACCESS MECHANISM (time-bound, per direct operator
+    statement, not independently cross-checked): usable via the existing
+    Claude Max subscription — same flat-cost headroom as Opus/Sonnet/Haiku —
+    only through 2026-07-07. From 2026-07-08 it requires a separate
+    ANTHROPIC_API_KEY and is billed per-token ($10/$50 per MTok per its own
+    docs), outside the flat subscription — the Standing quota tie-break
+    above (which assumes subscription headroom) does NOT apply to FRONTIER
+    dispatches after that date; treat each one as a real, metered cost
+    decision. Re-verify this cutover closer to 2026-07-07.
   - claude-sonnet-5 (STANDARD) is also a valid COMPLEX-tier ALT for claude_code
     on coding/agentic-shaped tasks: dispatch args.model=claude-sonnet-5 instead
     of claude-opus-4-8 — near-Opus quality per Anthropic's own docs, cheaper

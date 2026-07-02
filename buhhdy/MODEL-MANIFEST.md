@@ -1,8 +1,18 @@
 # buhhdy Model Manifest
 
-All 9 models currently wired into buhhdy, cross-referenced by use-case,
+All 10 models currently wired into buhhdy, cross-referenced by use-case,
 cross-review role, and workflow. Generated from the current state of
 `config.yaml`, `skills/routing-guide/SKILL.md`, and `skills/core-workflows/SKILL.md`.
+
+**Updated 2026-07-01:** `claude-fable-5` added as a new FRONTIER tier
+(claude_code only) — Anthropic's most capable widely-released model, per
+direct operator confirmation corroborated by Anthropic's own claude-api
+model catalog. It's an explicit escalation from COMPLEX, not wired into any
+default routing rule. **Time-bound access** (per direct operator statement,
+not independently cross-checked): usable via the existing Claude Max
+subscription only through 2026-07-07; from 2026-07-08 it requires a
+separate API key and is billed per-token ($10/$50 per MTok) — outside the
+flat-subscription cost model the rest of this manifest assumes.
 
 **Updated 2026-06-30:** Gemini was previously under-wired (2 of ~27 skills,
 neither core workflow) because both workflows were designed while its auth
@@ -31,10 +41,11 @@ words the dispatch, not a different command. `loop-me` ships
 — dispatch input must literally start with `/loop-me`. See routing-guide's
 "Verified Availability" section for detail.
 
-## The 9 models
+## The 10 models
 
 | Model | Provider · Tier | Status | Primary use-cases | Cross-review / pre-pass role | Workflow(s) |
 |---|---|---|---|---|---|
+| **claude-fable-5** | Claude · FRONTIER | GA | Explicit escalation from COMPLEX for exceptionally hard/long-horizon reasoning tasks — not wired into any default routing rule; the orchestrator chooses it deliberately. | None pinned — new, high-cost tier; any review of its output follows the general worker-level cross-vendor rule. | Not wired into either core workflow by default — available as an ALT wherever claude_code runs at COMPLEX tier. |
 | **claude-opus-4-8** | Claude · COMPLEX | GA | Decision-tree rule 3 (complex coding); rule 7 (context >200K, code reasoning, preferred over codex). `writing-plans` (W1 step 4). `executing-plans` (W2 step 2 — see `claude-sonnet-5` ALT). `handoff`, `domain-modeling`, `improve-codebase-architecture` (mattpocock, general). COMPLEX fanout tasks (W2 step 4). | Reviews `codex`'s `explaining-plans`/`to-issues`/`to-prd`/`triage`(deep)/`strict-simplify` — worker-level only. `writing-plans`'s output (its own W1 step 4) is now reviewed at ★ step 5 by **codex + gemini in parallel**, not codex alone. | W1 (step 4); W2 (step 2, step 4 fanout) |
 | **claude-sonnet-5** | Claude · STANDARD (+ COMPLEX ALT) | GA | `brainstorming` (W1), `investigate` (W1/W2, default synthesis model), `grilling` (W1), `codebase-design` (W1), `grill-me`, `loop-me`, `writing-shape` (mattpocock). **COMPLEX ALT:** `executing-plans` (W2 step 2), cheaper than Opus for coding/agentic work. | Same worker-level review role as claude-opus-4-8. Its `investigate` synthesis now consumes a ★ gemini breadth pre-pass (`gemini-3.5-flash`) when the codebase is large/unfamiliar — an input, not a replacement. | W1 (1,2,3,7); W2 (1, 2-ALT) |
 | **claude-haiku-4-5** | Claude · LIGHTWEIGHT | GA | Decision-tree rule 9 (default cheapest). Named gemini-down fallback target (no longer needed — gemini is up). | None pinned. | General only |

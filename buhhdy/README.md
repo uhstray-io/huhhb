@@ -226,9 +226,14 @@ mergeable before acting on a grant.
   have a confirmed shutdown no earlier than 2026-10-16; flash-lite's exact
   status is disputed between sources. gemini-3.1-pro-preview is PREVIEW, not
   GA. gemini-2.0-flash-lite was fully shut down 2026-06-01.
-- **claude-fable-5 is not generally available right now** (direct operator
-  correction, 2026-06-30) — do not route to it regardless of any model-docs
-  citation claiming otherwise. claude-opus-4-8 is the top (COMPLEX) GA tier.
+- **claude-fable-5 is now GA** (direct operator confirmation, 2026-07-01,
+  corroborated by Anthropic's own model catalog) — added as a new FRONTIER
+  tier, claude_code only, an escalation from COMPLEX for the hardest
+  reasoning/long-horizon agentic tasks, not a routing default. **Access is
+  time-bound:** usable via the existing Claude Max subscription only through
+  2026-07-07; from 2026-07-08 it requires a separate API key and per-token
+  billing ($10/$50 per MTok), so it falls outside the quota tie-break's
+  subscription-cost assumption after that date.
 - **claude-sonnet-5 added as a COMPLEX-tier ALT** for coding/agentic-shaped
   tasks — near-Opus quality per Anthropic's own docs, cheaper than
   claude-opus-4-8. Reserve Opus for planning/architecture judgment.

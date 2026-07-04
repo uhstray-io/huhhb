@@ -30,6 +30,10 @@ HERE = Path(__file__).resolve().parent
 EVAL_WORKSPACE = "huhhb-evolve-evals"
 
 
+# Transcript-turn builders — the schema contract for digest.py's input.
+# Single source: tests/test_evolve.py imports these; keep them here so an
+# eval and a test can never disagree about the transcript shape.
+
 def turn_user(text):
     return {"type": "user", "message": {"role": "user", "content": [{"type": "text", "text": text}]}}
 
@@ -37,6 +41,14 @@ def turn_user(text):
 def turn_tool(name, inp):
     return {"type": "assistant", "message": {"role": "assistant",
             "content": [{"type": "tool_use", "name": name, "input": inp}]}}
+
+
+def turn_skill(name):
+    return turn_tool("Skill", {"skill": name})
+
+
+def turn_bash(cmd):
+    return turn_tool("Bash", {"command": cmd})
 
 
 def turn_result(text):

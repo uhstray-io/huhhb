@@ -29,29 +29,10 @@ HAS_HONCHO_SDK = VENV_PY.exists() and subprocess.run(
 sys.path.insert(0, str(EVOLVE))
 import digest  # noqa: E402  (pure functions only — no I/O at import)
 import overlay  # noqa: E402
+from evals import turn_bash, turn_result, turn_skill, turn_user  # noqa: E402
 
 UNREACHABLE = "http://127.0.0.1:9"  # discard port — connection refused instantly
 HOOK_BUDGET_SECS = 1.0              # §9: hooks must finish <1s with network blackholed
-
-
-def turn_user(text):
-    return {"type": "user", "message": {"role": "user",
-            "content": [{"type": "text", "text": text}]}}
-
-
-def turn_skill(name):
-    return {"type": "assistant", "message": {"role": "assistant",
-            "content": [{"type": "tool_use", "name": "Skill", "input": {"skill": name}}]}}
-
-
-def turn_bash(cmd):
-    return {"type": "assistant", "message": {"role": "assistant",
-            "content": [{"type": "tool_use", "name": "Bash", "input": {"command": cmd}}]}}
-
-
-def turn_result(text):
-    return {"type": "user", "message": {"role": "user", "content":
-            [{"type": "tool_result", "content": [{"type": "text", "text": text}]}]}}
 
 
 def obs_from(turns):
@@ -200,6 +181,17 @@ class DetectorTests(unittest.TestCase):
             self.assertEqual(len(env), 1, failure)
             self.assertIn("'widget' was missing; fixed by", env[0]["content"])
 
+    def test_install_fix_command_is_redacted(self):
+        # install commands can embed credentials and this observation is
+        # shipped to a remote Honcho when one is configured
+        obs = obs_from([turn_result("zsh: command not found: privatecli"),
+                        turn_bash("pip install privatecli --index-url "
+                                  "https://x token=ghp_abcdefgh1234567890abcd")])
+        env = [o for o in obs if o["type"] == "environment"]
+        self.assertEqual(len(env), 1)
+        self.assertNotIn("ghp_abcdefgh", env[0]["content"])
+        self.assertIn("[redacted]", env[0]["content"])
+
     def test_unresolved_failure_emits_nothing(self):
         obs = obs_from([turn_bash("widget --run"),
                         turn_result("zsh: command not found: widget")])
@@ -240,7 +232,6 @@ class DigestCliTests(SandboxCase):
         transcript = self.sb.dir / "s1.jsonl"
         transcript.write_text(transcript.read_text() + "\n" +
                               json.dumps(turn_user("remember this: deploy on Tuesdays")))
-        time.sleep(1)  # spool filenames are second-granular
         self.sb.run("digest.py", stdin=payload)
         files = self.sb.spool_files()
         self.assertEqual(len(files), 2)
@@ -489,12 +480,12 @@ class ManifestTests(unittest.TestCase):
         mcp = json.loads((REPO / ".claude-plugin" / ".mcp.json").read_text())
         self.assertEqual(mcp["mcpServers"], pj["mcpServers"])
 
-    def test_evolve_frontmatter_minimal(self):
-        for name in ("evolve", "evolve-review", "evolve-status"):
-            fm = (REPO / "skills" / name / "SKILL.md").read_text().split("---")[1]
-            keys = [l.split(":")[0].strip() for l in fm.strip().splitlines()
-                    if re.match(r"^\w[\w-]*:", l)]
-            self.assertEqual(keys, ["name", "description"], name)
+    def test_skill_lint_gate_passes(self):
+        # skill-lint is the single enforcement point for frontmatter shape
+        # (S2), trigger phrasing, and body budgets — run the real gate
+        r = subprocess.run([sys.executable, str(REPO / "scripts" / "skill-lint.py")],
+                           capture_output=True, text=True)
+        self.assertEqual(r.returncode, 0, r.stdout)
 
     def test_hooks_registered_with_guard_and_timeout(self):
         pj = json.loads((REPO / ".claude-plugin" / "plugin.json").read_text())

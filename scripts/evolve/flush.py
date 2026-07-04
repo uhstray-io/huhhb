@@ -54,7 +54,9 @@ def acquire_lock():
     return False
 
 
-def drain(honcho, state):
+def drain(deliver):
+    """Drain spool through `deliver(data)`: at-least-once (delivery errors keep
+    the file for the next flush), corrupt files quarantined as .bad."""
     flushed = 0
     for spool_file in sorted(hc.SPOOL_DIR.glob("*.json")):
         try:
@@ -64,33 +66,23 @@ def drain(honcho, state):
             spool_file.rename(spool_file.with_suffix(".bad"))
             continue
         try:
-            hc.add_observations(honcho, state, data["session_id"], data["observations"])
+            deliver(data)
         except Exception as e:  # network/API — retry on next flush
             log(f"flush failed for {spool_file.name}, keeping: {e}")
             continue
-        try:
+        spool_file.unlink()
+        flushed += 1
+    return flushed
+
+
+def honcho_deliver(honcho, state):
+    def deliver(data):
+        hc.add_observations(honcho, state, data["session_id"], data["observations"])
+        try:  # journal is best-effort once Honcho has the data
             hc.journal_append(data)
         except OSError as e:
             log(f"journal write failed: {e}")
-        spool_file.unlink()
-        flushed += 1
-    return flushed
-
-
-def drain_local(_state):
-    """Local mode: the journal IS the destination — no network at all."""
-    flushed = 0
-    for spool_file in sorted(hc.SPOOL_DIR.glob("*.json")):
-        try:
-            data = json.loads(spool_file.read_text())
-        except (json.JSONDecodeError, OSError) as e:
-            log(f"bad spool file {spool_file.name}: {e}")
-            spool_file.rename(spool_file.with_suffix(".bad"))
-            continue
-        hc.journal_append(data)
-        spool_file.unlink()
-        flushed += 1
-    return flushed
+    return deliver
 
 
 CACHE_FRESH_SECS = 900   # skip refresh when no new work and cache younger than this
@@ -135,12 +127,14 @@ def refresh_injection(honcho, state):
             log(f"prefetch skill {skill} failed: {e}")
     if skill_lines:
         parts.append("## Recently used skills — the agent's own model\n" + "\n".join(skill_lines) + "\n")
+    write_cache(parts)
+
+
+def write_cache(parts, label=""):
     if len(parts) == 1:
         return  # nothing learned yet — keep whatever cache exists
-    tmp = hc.INJECTION_PATH.with_suffix(".tmp")
-    tmp.write_text("\n".join(parts))
-    tmp.replace(hc.INJECTION_PATH)
-    log("injection cache refreshed")
+    hc.atomic_write(hc.INJECTION_PATH, "\n".join(parts))
+    log(f"injection cache refreshed{label}")
 
 
 def refresh_injection_local(state):
@@ -160,12 +154,7 @@ def refresh_injection_local(state):
     if partials:
         parts.append("## Skill friction observed\n"
                      + "\n".join(f"- {c}" for c in list(partials.values())[-5:]) + "\n")
-    if len(parts) == 1:
-        return
-    tmp = hc.INJECTION_PATH.with_suffix(".tmp")
-    tmp.write_text("\n".join(parts))
-    tmp.replace(hc.INJECTION_PATH)
-    log("injection cache refreshed (local)")
+    write_cache(parts, " (local)")
 
 
 def main():
@@ -182,13 +171,12 @@ def main():
         if had_work or not cache_fresh:
             if cfg["mode"] == "local":
                 if had_work:
-                    log(f"local-drained {drain_local(state)} spool file(s)")
+                    log(f"local-drained {drain(hc.journal_append)} spool file(s)")
                 refresh_injection_local(state)
             else:
                 honcho = hc.client(cfg)
                 if had_work:
-                    n = drain(honcho, state)
-                    log(f"flushed {n} spool file(s)")
+                    log(f"flushed {drain(honcho_deliver(honcho, state))} spool file(s)")
                 refresh_injection(honcho, state)
     except SystemExit:
         pass  # client() exits 2 when honcho-ai missing; spool persists

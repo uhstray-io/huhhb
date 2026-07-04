@@ -71,39 +71,62 @@ def bump_patch(version):
     return f"{major}.{minor}.{int(patch) + 1}"
 
 
-def cmd_scaffold(args):
-    d = overlay_dir(args.name)
+def scaffold_overlay(name, description, body=None, pinned=False, signal=None, sessions=None):
+    d = overlay_dir(name)
     if d.exists():
-        sys.exit(f"overlay '{args.name}' already exists — patch it instead of duplicating "
+        sys.exit(f"overlay '{name}' already exists — patch it instead of duplicating "
                  "(update-over-duplicate)")
     d.mkdir(parents=True)
-    body = args.body or "## Learned adjustments\n\n(none yet)\n"
+    body = body or "## Learned adjustments\n\n(none yet)\n"
     (d / "SKILL.md").write_text(
-        f"---\nname: {args.name}\ndescription: {args.description}\n---\n\n"
-        f"# {args.name}\n\n"
+        f"---\nname: {name}\ndescription: {description}\n---\n\n"
+        f"# {name}\n\n"
         f"Personal overlay learned by huhhb evolve — verify low-confidence guidance "
         f"(see meta.json) before trusting it.\n\n{body}\n")
     save_meta({
         "version": "0.1.0", "runs": 0, "successes": 0, "last_error": None,
-        "status": "new", "pinned": bool(args.pinned),
-        "provenance": [{"version": "0.1.0", "sessions": (args.sessions or "").split(",") if args.sessions else [],
-                        "signal": args.signal or "scaffolded", "ts": now_iso()}],
+        "status": "new", "pinned": bool(pinned),
+        "provenance": [{"version": "0.1.0", "sessions": sessions or [],
+                        "signal": signal or "scaffolded", "ts": now_iso()}],
     }, d / "meta.json")
     print(f"scaffolded {d}")
 
 
-def cmd_patch(args):
-    meta, meta_path = load_meta(args.name)
-    new_content = Path(args.file).read_text() if args.file else sys.stdin.read()
+def patch_overlay(name, content, signal, sessions=None):
+    meta, meta_path = load_meta(name)
     meta["version"] = bump_patch(meta["version"])
     meta["provenance"].append({
-        "version": meta["version"],
-        "sessions": args.sessions.split(",") if args.sessions else [],
-        "signal": args.signal, "ts": now_iso(),
+        "version": meta["version"], "sessions": sessions or [],
+        "signal": signal, "ts": now_iso(),
     })
-    (meta_path.parent / "SKILL.md").write_text(new_content)
+    (meta_path.parent / "SKILL.md").write_text(content)
     save_meta(meta, meta_path)
-    print(f"patched {args.name} -> v{meta['version']}")
+    print(f"patched {name} -> v{meta['version']}")
+
+
+def archive_overlay(name):
+    meta, path = load_meta(name)
+    if meta.get("pinned"):
+        sys.exit(f"'{name}' is pinned — pinned overlays are never archived or "
+                 "consolidated, only patched")
+    ARCHIVE_ROOT.mkdir(parents=True, exist_ok=True)
+    dest = ARCHIVE_ROOT / f"{name}-{int(time.time())}"
+    path.parent.rename(dest)
+    print(f"archived to {dest} (archive-never-delete)")
+
+
+def _split_sessions(raw):
+    return raw.split(",") if raw else []
+
+
+def cmd_scaffold(args):
+    scaffold_overlay(args.name, args.description, args.body, args.pinned,
+                     args.signal, _split_sessions(args.sessions))
+
+
+def cmd_patch(args):
+    content = Path(args.file).read_text() if args.file else sys.stdin.read()
+    patch_overlay(args.name, content, args.signal, _split_sessions(args.sessions))
 
 
 def cmd_record(args):
@@ -130,14 +153,7 @@ def cmd_set_status(args):
 
 
 def cmd_archive(args):
-    meta, path = load_meta(args.name)
-    if meta.get("pinned"):
-        sys.exit(f"'{args.name}' is pinned — pinned overlays are never archived or "
-                 "consolidated, only patched")
-    ARCHIVE_ROOT.mkdir(parents=True, exist_ok=True)
-    dest = ARCHIVE_ROOT / f"{args.name}-{int(time.time())}"
-    path.parent.rename(dest)
-    print(f"archived to {dest} (archive-never-delete)")
+    archive_overlay(args.name)
 
 
 def cmd_report(args):
@@ -186,22 +202,14 @@ def cmd_apply_pending(args):
     proposal = json.loads(path.read_text())
     kind = proposal["kind"]
     if kind == "overlay-create":
-        ns = argparse.Namespace(name=proposal["name"], description=proposal["description"],
-                                body=proposal.get("body"), pinned=proposal.get("pinned", False),
-                                signal=proposal["signal"],
-                                sessions=",".join(proposal.get("sessions", [])) or None)
-        cmd_scaffold(ns)
+        scaffold_overlay(proposal["name"], proposal["description"], proposal.get("body"),
+                         proposal.get("pinned", False), proposal["signal"],
+                         proposal.get("sessions", []))
     elif kind == "overlay-patch":
-        d = overlay_dir(proposal["name"])
-        tmp = d / ".patch-content.tmp"
-        tmp.write_text(proposal["content"])
-        ns = argparse.Namespace(name=proposal["name"], file=str(tmp),
-                                signal=proposal["signal"],
-                                sessions=",".join(proposal.get("sessions", [])) or None)
-        cmd_patch(ns)
-        tmp.unlink()
+        patch_overlay(proposal["name"], proposal["content"], proposal["signal"],
+                      proposal.get("sessions", []))
     elif kind == "archive":
-        cmd_archive(argparse.Namespace(name=proposal["name"]))
+        archive_overlay(proposal["name"])
     else:
         # repo-memory / observation proposals are applied by the review skill
         # itself (git-tracked writes and Honcho writes need its judgment)

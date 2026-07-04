@@ -97,11 +97,15 @@ def load_state():
     return state
 
 
+def atomic_write(path, text):
+    tmp = path.with_suffix(".tmp")
+    tmp.write_text(text)
+    tmp.replace(path)
+
+
 def save_state(state):
     ensure_dirs()
-    tmp = STATE_PATH.with_suffix(".tmp")
-    tmp.write_text(json.dumps(state, indent=2))
-    tmp.replace(STATE_PATH)
+    atomic_write(STATE_PATH, json.dumps(state, indent=2))
 
 
 # ---------------------------------------------------------------- naming
@@ -112,11 +116,6 @@ def user_peer_id(state=None):
 
 def skill_peer_id(name):
     return f"skill:{name}"
-
-
-def project_peer_id(cwd):
-    slug = Path(cwd).name.lower().replace(" ", "-") if cwd else "unknown"
-    return f"project:{slug}"
 
 
 def cc_session_id(claude_session_id):

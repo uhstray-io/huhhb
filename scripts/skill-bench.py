@@ -22,6 +22,7 @@ COSTS REAL TOKENS. Requires the plugin installed from the branch under test.
 """
 
 import argparse
+import hashlib
 import json
 import shutil
 import statistics
@@ -122,91 +123,113 @@ def record_history(row):
            "commit": commit or "?", **row}
     with open(HISTORY, "a") as f:
         f.write(json.dumps(row) + "\n")
-    json.loads(HISTORY.read_text().splitlines()[-1])  # self-check: row is readable
-    return row
 
 
-def bench_skill(spec, runs, dry_run, record=True):
-    verdicts = {}
-    scenario_verdicts = {}
+def prompt_hash(prompt):
+    return hashlib.sha256(prompt.encode()).hexdigest()[:12]
 
-    def gate(name, ok, detail):
-        verdicts[f"{gate.scope}:{name}"] = ok
-        scenario_verdicts[name] = ok
+
+def cached_baseline(skill, scenario):
+    """Latest history row with baseline numbers for this exact prompt — the
+    baseline is invariant to the skill version under test, so re-measuring it
+    every bench burns real tokens for no new information."""
+    if not HISTORY.exists():
+        return None
+    want = prompt_hash(scenario["prompt"])
+    for line in reversed(HISTORY.read_text().splitlines()):
+        try:
+            row = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if (row.get("skill") == skill and row.get("scenario") == scenario["id"]
+                and row.get("prompt_hash") == want and row.get("baseline_tokens")):
+            return row
+    return None
+
+
+def bench_skill(spec, runs, dry_run, record=True, rebaseline=False):
+    verdicts = {}  # keyed (scope, gate-name) so scenarios never collide
+
+    def gate(scope, name, ok, detail):
+        verdicts[(scope, name)] = ok
         print(f"  {'PASS' if ok else 'FAIL'} {name}: {detail}")
+
+    def scoped(scope):
+        return {n: ok for (s, n), ok in verdicts.items() if s == scope}
 
     version = skill_version(spec["skill"])
     for scenario in spec["scenarios"]:
-        gate.scope = scenario["id"]
-        scenario_verdicts = {}
-        print(f"\nscenario {scenario['id']} ({runs} runs + baseline)")
+        sid = scenario["id"]
+        print(f"\nscenario {sid} ({runs} runs + baseline)")
         if dry_run:
             print(f"  would run: claude -p {scenario['prompt']!r}  assert: {scenario['assert']}")
             continue
         skilled = run_scenario(scenario, runs, baseline=False)
-        base = run_scenario(scenario, max(1, runs - 1), baseline=True)
+        cached = None if rebaseline else cached_baseline(spec["skill"], scenario)
+        if cached:
+            bt, bd, bn = cached["baseline_tokens"], cached["baseline_ms"], cached.get("baseline_turns") or 0
+            print(f"  INFO baseline reused from history ({cached['ts']}) — --rebaseline to re-measure")
+        else:
+            base = run_scenario(scenario, max(1, runs - 1), baseline=True)
+            bt, bd, bn = med(base, "tokens"), med(base, "duration_ms"), med(base, "turns")
+            print(f"  INFO baseline completion: {sum(r['pass'] for r in base)}/{len(base)} — "
+                  "skill must beat or match this to earn its tokens")
 
         passes = sum(r["pass"] for r in skilled)
         need = runs - 1 if scenario.get("phrasing") else runs
-        gate("B1/B2 completion", passes >= max(need, 1), f"{passes}/{runs} asserts")
-        gate("B11 variance", passes in (0, runs) or scenario.get("phrasing", False),
+        gate(sid, "B1/B2 completion", passes >= max(need, 1), f"{passes}/{runs} asserts")
+        gate(sid, "B11 variance", passes in (0, runs) or scenario.get("phrasing", False),
              "no flip-flop" if passes in (0, runs) else f"flip-flop {passes}/{runs}")
 
         budget = spec.get("budget", {})
         tokens, cost = med(skilled, "tokens"), med(skilled, "cost")
         dur, api, turns = med(skilled, "duration_ms"), med(skilled, "api_ms"), med(skilled, "turns")
         if budget.get("max_tokens"):
-            gate("B4 tokens", tokens <= budget["max_tokens"], f"{tokens} median")
+            gate(sid, "B4 tokens", tokens <= budget["max_tokens"], f"{tokens} median")
         if budget.get("max_cost_usd"):
-            gate("B5 cost", cost <= budget["max_cost_usd"], f"${cost:.3f} median")
+            gate(sid, "B5 cost", cost <= budget["max_cost_usd"], f"${cost:.3f} median")
         if budget.get("max_duration_ms"):
-            gate("B6 wall time", dur <= budget["max_duration_ms"], f"{dur:.0f}ms median")
+            gate(sid, "B6 wall time", dur <= budget["max_duration_ms"], f"{dur:.0f}ms median")
         print(f"  INFO B7 reasoning: {api:.0f}ms api of {dur:.0f}ms wall")
 
-        if base:
-            bt, bd, bn = med(base, "tokens"), med(base, "duration_ms"), med(base, "turns")
-            if bt:
-                gate("B4 vs baseline", tokens <= bt * RATIO_TOKENS, f"{tokens} vs {bt} (<= {RATIO_TOKENS}x)")
-            if bd:
-                gate("B6 vs baseline", dur <= bd * RATIO_TIME, f"{dur:.0f} vs {bd:.0f}ms")
-            if bn:
-                gate("B8 turns", turns <= bn * RATIO_TURNS, f"{turns} vs {bn}")
-            base_pass = sum(r["pass"] for r in base)
-            print(f"  INFO baseline completion: {base_pass}/{len(base)} — skill must beat "
-                  "or match this to earn its tokens")
+        if bt:
+            gate(sid, "B4 vs baseline", tokens <= bt * RATIO_TOKENS, f"{tokens} vs {bt} (<= {RATIO_TOKENS}x)")
+        if bd:
+            gate(sid, "B6 vs baseline", dur <= bd * RATIO_TIME, f"{dur:.0f} vs {bd:.0f}ms")
+        if bn:
+            gate(sid, "B8 turns", turns <= bn * RATIO_TURNS, f"{turns} vs {bn}")
 
         judge_score = None
         if scenario.get("judge") and skilled:
             scores = [judge(scenario["judge"], r["result"]) for r in skilled]
             judge_score = statistics.median(scores)
-            gate("B3 quality", judge_score >= 4, f"judge median {judge_score}/5")
+            gate(sid, "B3 quality", judge_score >= 4, f"judge median {judge_score}/5")
 
         if record:
             record_history({
-                "skill": spec["skill"], "version": version, "scenario": scenario["id"],
+                "skill": spec["skill"], "version": version, "scenario": sid,
+                "prompt_hash": prompt_hash(scenario["prompt"]),
                 "runs": runs, "passes": passes, "judge": judge_score,
                 "tokens": tokens, "cost": cost, "duration_ms": dur,
                 "api_ms": api, "turns": turns,
-                "baseline_tokens": med(base, "tokens"), "baseline_ms": med(base, "duration_ms"),
-                "verdicts": dict(scenario_verdicts),
+                "baseline_tokens": bt, "baseline_ms": bd, "baseline_turns": bn,
+                "verdicts": scoped(sid),
             })
 
     triggers = spec.get("triggers", {})
     if triggers and not dry_run:
-        gate.scope = "triggers"
-        scenario_verdicts = {}
         pos = [skill_invoked(p, spec["skill"]) for p in triggers.get("positive", [])]
         neg = [not skill_invoked(p, spec["skill"]) for p in triggers.get("negative", [])]
         if pos:
-            gate("B9 trigger recall", sum(pos) / len(pos) >= 0.8, f"{sum(pos)}/{len(pos)}")
+            gate("triggers", "B9 trigger recall", sum(pos) / len(pos) >= 0.8, f"{sum(pos)}/{len(pos)}")
         if neg:
-            gate("B10 trigger precision", sum(neg) / len(neg) >= 0.9, f"{sum(neg)}/{len(neg)}")
+            gate("triggers", "B10 trigger precision", sum(neg) / len(neg) >= 0.9, f"{sum(neg)}/{len(neg)}")
         if record and (pos or neg):
             record_history({"skill": spec["skill"], "version": version,
                             "scenario": "triggers",
                             "recall": (sum(pos) / len(pos)) if pos else None,
                             "precision": (sum(neg) / len(neg)) if neg else None,
-                            "verdicts": dict(scenario_verdicts)})
+                            "verdicts": scoped("triggers")})
     elif triggers:
         print(f"\ntriggers: {len(triggers.get('positive', []))} positive, "
               f"{len(triggers.get('negative', []))} negative prompts (skipped in dry-run)")
@@ -222,6 +245,8 @@ def main():
                     help="validate the scenario file and print the plan; no claude calls")
     ap.add_argument("--no-record", action="store_true",
                     help="skip appending scores to tests/bench/history.jsonl")
+    ap.add_argument("--rebaseline", action="store_true",
+                    help="re-measure the no-skill baseline instead of reusing history")
     args = ap.parse_args()
 
     spec_path = REPO / "tests" / "bench" / f"{args.skill}.json"
@@ -237,11 +262,12 @@ def main():
     if not args.dry_run and not shutil.which("claude"):
         sys.exit("claude CLI not on PATH")
     print(f"bench {spec['skill']} — {len(spec['scenarios'])} scenario(s)")
-    verdicts = bench_skill(spec, args.runs, args.dry_run, record=not args.no_record)
+    verdicts = bench_skill(spec, args.runs, args.dry_run,
+                           record=not args.no_record, rebaseline=args.rebaseline)
     if args.dry_run:
         print("\ndry-run OK — scenario file valid")
         return
-    failed = [k for k, ok in verdicts.items() if not ok]
+    failed = [f"{scope}:{name}" for (scope, name), ok in verdicts.items() if not ok]
     print(f"\n{'GATE FAIL: ' + ', '.join(failed) if failed else 'GATE PASS'}")
     sys.exit(1 if failed else 0)
 

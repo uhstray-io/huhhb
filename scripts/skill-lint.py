@@ -25,12 +25,14 @@ def report(level, skill, code, msg):
     issues.append((level, skill, code, msg))
 
 
-def frontmatter_keys(text):
-    parts = text.split("---")
+def parse_skill_md(text):
+    """-> (frontmatter keys | None, frontmatter text, body)."""
+    parts = text.split("---", 2)
     if len(parts) < 3 or parts[0].strip():
-        return None
-    return [line.split(":")[0].strip() for line in parts[1].strip().splitlines()
+        return None, "", text
+    keys = [line.split(":")[0].strip() for line in parts[1].strip().splitlines()
             if re.match(r"^\w[\w-]*:", line)]
+    return keys, parts[1], parts[2]
 
 
 def lint_entry(entry, seen_names, seen_descriptions):
@@ -54,27 +56,24 @@ def lint_entry(entry, seen_names, seen_descriptions):
         report("FAIL", name, "S8", "marketplace entry missing version")
 
     text = path.read_text(encoding="utf-8", errors="replace")
-    keys = frontmatter_keys(text)
-    is_skill_md = path.name == "SKILL.md"
+    keys, fm, body = parse_skill_md(text)
 
-    if is_skill_md:
+    if path.name == "SKILL.md":
         if keys is None:
             report("FAIL", name, "S2", "no parseable frontmatter")
         else:
             if keys != ["name", "description"]:                   # S2
                 report("FAIL", name, "S2", f"frontmatter keys {keys} (want [name, description])")
-            fm_name = re.search(r"^name:\s*(\S+)", text.split("---")[1], re.M)
+            fm_name = re.search(r"^name:\s*(\S+)", fm, re.M)
             if fm_name and fm_name.group(1) != path.parent.name:  # S3
                 report("FAIL", name, "S3",
                        f"frontmatter name '{fm_name.group(1)}' != dir '{path.parent.name}'")
-            fm_desc = re.search(r"^description:\s*(.+)$", text.split("---")[1], re.M)
+            fm_desc = re.search(r"^description:\s*(.+)$", fm, re.M)
             if fm_desc and not TRIGGER_HINT.search(fm_desc.group(1)):
                 report("WARN", name, "S4", "description has no trigger phrasing "
                        "('use when...', quoted phrases)")
     elif keys and "triggers" in keys:                             # S2 (soft for non-SKILL.md)
         report("WARN", name, "S2", "frontmatter has unsupported 'triggers' field")
-
-    body = text.split("---", 2)[-1]
     # links/paths inside fenced code blocks are examples, not references
     prose = re.sub(r"```.*?```", "", body, flags=re.S)
     if len(body) > BODY_FAIL_CHARS:                               # S6
@@ -123,9 +122,9 @@ def main():
             fails.append(issue)
         else:
             warns.append(issue)
-    for level, skill, code, msg in fails + grandfathered + warns:
-        tag = "GRANDFATHERED" if (level, skill, code, msg) in [tuple(g) for g in grandfathered] else level
-        print(f"{tag:13} {code} {skill:34} {msg}")
+    for tag, group in (("FAIL", fails), ("GRANDFATHERED", grandfathered), ("WARN", warns)):
+        for _, skill, code, msg in group:
+            print(f"{tag:13} {code} {skill:34} {msg}")
     print(f"\n{len(mp['skills'])} skills — {len(fails)} FAIL, "
           f"{len(grandfathered)} grandfathered, {len(warns)} WARN")
     sys.exit(1 if fails or (args.strict and warns) else 0)

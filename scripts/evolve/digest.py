@@ -39,7 +39,7 @@ import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from honcho_client import SPOOL_DIR, ensure_dirs, load_state, now_iso, save_state
+from honcho_client import SPOOL_DIR, configured, ensure_dirs, load_state, now_iso, save_state
 
 SNIPPET_MAX = 200
 CORRECTION_WINDOW = 3  # user turns after a skill invocation that still implicate it
@@ -166,10 +166,13 @@ def detect(events):
         elif kind == "bash_cmd":
             if INSTALL_CMD.search(payload):
                 for cmd in [c for c in missing_cmds if c in payload]:
+                    # sanitize: install commands can carry inline credentials
+                    # (--index-url https://user:token@...) and this observation
+                    # leaves the machine when a remote Honcho is configured
                     emit({
                         "type": "environment", "target": "agent",
                         "content": f"[environment] os={platform.system().lower()} — "
-                                   f"'{cmd}' was missing; fixed by `{snippet(payload, 120)}`.",
+                                   f"'{cmd}' was missing; fixed by `{snippet(sanitize(payload), 120)}`.",
                     })
                     del missing_cmds[cmd]
         elif kind == "user_text":
@@ -217,16 +220,22 @@ def anti_capture(observations):
 def digest(session_id, transcript_path, cwd):
     state = load_state()
     cursor = state["cursors"].get(session_id, 0)
+    # byte-offset cursor: Stop fires after every turn, so only ever read the
+    # tail — a whole-file read here is O(n^2) I/O over a session's lifetime
     try:
-        with open(transcript_path, encoding="utf-8", errors="replace") as f:
-            lines = f.readlines()
+        with open(transcript_path, "rb") as f:
+            if cursor > os.fstat(f.fileno()).st_size:
+                cursor = 0  # transcript rotated/rewritten — start over
+            f.seek(cursor)
+            chunk = f.read()
+            new_cursor = f.tell()
     except OSError:
         return 0
-    new_lines = lines[cursor:]
-    if not new_lines:
+    if not chunk:
         return 0
+    new_lines = chunk.decode("utf-8", errors="replace").splitlines()
     observations = anti_capture(detect(iter_events(new_lines)))
-    state["cursors"][session_id] = len(lines)
+    state["cursors"][session_id] = new_cursor
     # track skills for injection prefetch even when nothing else is captured
     seen_skills = {o["skill"] for o in observations if o.get("skill")}
     if seen_skills:
@@ -236,7 +245,7 @@ def digest(session_id, transcript_path, cwd):
     if not observations:
         return 0
     ensure_dirs()
-    spool_file = SPOOL_DIR / f"{session_id}-{int(time.time())}.json"
+    spool_file = SPOOL_DIR / f"{session_id}-{time.time_ns()}.json"
     spool_file.write_text(json.dumps({
         "session_id": session_id,
         "cwd": cwd,
@@ -247,67 +256,9 @@ def digest(session_id, transcript_path, cwd):
     return len(observations)
 
 
-# ---------------------------------------------------------------- selfcheck
-
-def _selfcheck():
-    def turn(role, content):
-        return json.dumps({"type": role, "message": {"role": role, "content": content}})
-
-    fake = [
-        turn("user", [{"type": "text", "text":
-             "<system-reminder>injected scaffolding SECRET=abcdefgh12345678</system-reminder>"
-             "Always use conventional commits, no emoji. api_key=sk-abcdef1234567890xyz"}]),
-        turn("assistant", [{"type": "tool_use", "name": "Skill",
-                            "input": {"skill": "writing-plans"}}]),
-        turn("user", [{"type": "text", "text":
-             "stop adding the verification section, I keep deleting it"}]),
-        turn("assistant", [{"type": "tool_use", "name": "Bash",
-                            "input": {"command": "mempalace --status"}}]),
-        turn("user", [{"type": "tool_result_wrapper", "text": ""},
-                      {"type": "tool_result",
-                       "content": [{"type": "text", "text": "zsh: command not found: mempalace"}]},
-                      ]),
-        turn("assistant", [{"type": "tool_use", "name": "Bash",
-                            "input": {"command": "uv tool install mempalace"}}]),
-        turn("user", [{"type": "text", "text": "<command-name>/caveman</command-name>"}]),
-        turn("user", [{"type": "text", "text": "remember this: I review PRs on Fridays"}]),
-    ]
-    obs = anti_capture(detect(iter_events(fake)))
-    by_type = {}
-    for o in obs:
-        by_type.setdefault(o["type"], []).append(o)
-
-    assert "preference" in by_type, f"no preference detected: {obs}"
-    prefs = " | ".join(o["content"] for o in by_type["preference"])
-    assert "conventional commits" in prefs
-    assert "sk-abcdef" not in prefs and "[redacted]" in prefs, f"secret leaked: {prefs}"
-    assert "injected scaffolding" not in prefs, "system-reminder not stripped"
-    assert any(o.get("explicit") for o in by_type["preference"]), "remember-this not explicit"
-
-    assert "correction" in by_type, f"no correction: {obs}"
-    assert any(o.get("skill") == "writing-plans" and o.get("outcome") == "partial"
-               for o in by_type.get("skill-usage", [])), f"skill outcome not partial: {obs}"
-
-    env = by_type.get("environment", [])
-    assert len(env) == 1 and "fixed by" in env[0]["content"], f"install fix missing: {obs}"
-    all_text = " ".join(o["content"] for o in obs)
-    # E3's local half: the failure survives only phrased as its fix
-    for o in obs:
-        assert not NEGATIVE_CAPABILITY.search(o["content"]) or FIX_PHRASED.search(o["content"])
-    assert "/caveman" not in all_text, "harness command message leaked"
-
-    # anti-capture: unresolved failure emits nothing
-    broken = [turn("user", [{"type": "tool_result",
-                             "content": [{"type": "text", "text": "zsh: command not found: foo"}]}])]
-    assert anti_capture(detect(iter_events(broken))) == [], "unfixed failure was captured"
-
-    print(f"selfcheck OK — {len(obs)} observations, all gates verified")
-
-
 def main():
-    if "--selfcheck" in sys.argv:
-        _selfcheck()
-        return
+    if not configured():
+        return  # the sh guard is a latency fast-path; this is the enforcement
     try:
         payload = json.load(sys.stdin)
     except json.JSONDecodeError:

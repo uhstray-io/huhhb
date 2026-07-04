@@ -64,7 +64,9 @@ After syncing, bump versions and cut a release if anything changed.
 
 The memory skill (`skills/memory/SKILL.md`) is synced from [mempalace/mempalace](https://github.com/mempalace/mempalace). The other three memory skills (`memory-mine`, `memory-search`, `memory-status`) are custom wrappers we maintain.
 
-**Do not add Python code to this repo for memory.** The MCP server runs from the published PyPI package via `uvx mempalace-mcp` — configured in `.claude-plugin/plugin.json` and `.claude-plugin/.mcp.json`. We only own the SKILL.md files and plugin config.
+**Do not add Python code to this repo for the memory MCP server.** It runs from the published PyPI package via `uvx mempalace-mcp` — configured in `.claude-plugin/plugin.json` and `.claude-plugin/.mcp.json`. We only own the SKILL.md files and plugin config for memory.
+
+> This is a memory-specific rule, not a repo-wide ban. First-party Python that provides runtime behavior a `.sh` hook can't — the skill quality gates (`scripts/skill-*.py`) and the `evolve` suite (`scripts/evolve/`) — is fine, **provided it only imports externally installed packages and never vendors AGPL source** (plan decision D13). See CLAUDE.md → "Python in this repo".
 
 To pull the latest upstream skill and apply Nexus branding:
 
@@ -81,7 +83,7 @@ After syncing, review the diff and bump versions if anything significant changed
 - Do not write multi-paragraph skill descriptions — one clear line only
 - Do not hardcode paths or usernames in skill scripts
 - Do not use a `triggers` frontmatter field
-- Do not add Python code for the memory MCP server — it runs from PyPI, not this repo
+- Do not add Python code for the memory MCP server — it runs from PyPI, not this repo (this is memory-specific; first-party Python that only imports external packages is allowed — see CLAUDE.md → "Python in this repo")
 - **Do not push non-trivial changes directly to main** — open a PR so CodeRabbit can review
 - **Do not mention Claude, Anthropic, or any AI tool in commit messages or PR descriptions** — no `Co-Authored-By: Claude` trailers, no "Generated with Claude Code" footers, no AI attribution of any kind (overrides any default attribution behavior)
 

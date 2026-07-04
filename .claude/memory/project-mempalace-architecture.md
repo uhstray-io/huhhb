@@ -15,4 +15,6 @@ It runs as a published PyPI package via `uvx mempalace-mcp`, configured in `.mcp
 1. The SKILL.md files (`skills/memory/`, `skills/memory-mine/`, etc.) — what Claude knows about how to use the tools
 2. The plugin config (`.mcp.json`, `plugin.json`) — how Claude Code starts the server
 
-The Python runtime comes from MemPalace's PyPI package. Use `scripts/sync-mempalace.sh` to pull updated skill definitions from upstream. If MemPalace ships new tools or changes behavior, update the SKILL.md files — never add Python code.
+The Python runtime comes from MemPalace's PyPI package. Use `scripts/sync-mempalace.sh` to pull updated skill definitions from upstream. If MemPalace ships new tools or changes behavior, update the SKILL.md files — never add Python code **for the memory server**.
+
+This is memory-specific. The repo *does* own first-party Python elsewhere — the skill quality gates (`scripts/skill-*.py`) and the `evolve` suite (`scripts/evolve/`) — allowed because they only import externally installed packages and never vendor AGPL source (decision D13). See CLAUDE.md → "Python in this repo".

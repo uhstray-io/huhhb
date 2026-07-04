@@ -73,6 +73,56 @@ def drain(honcho, state):
     return flushed
 
 
+CACHE_FRESH_SECS = 900   # skip refresh when no new work and cache younger than this
+USER_BLOCK_CHARS = 2400  # ~600 tokens — the injection budget from the plan
+SKILL_LINE_CHARS = 200
+
+
+def refresh_injection(honcho, state):
+    """Prefetch path: rebuild context/injection.md after a flush.
+
+    This file is the whole reason injection costs zero (Law 3): the
+    SessionStart hook only ever cats it — every Honcho read happens here,
+    outside any hook budget. All reads are representation-tier (no LLM).
+    Partial results still write: a stale-but-present cache beats none.
+    """
+    hc.wait_for_derivation(honcho, timeout=90)  # non-fatal; cache-first doctrine
+    parts = [f"# evolve memory (cached from Honcho)\n_refreshed: {hc.now_iso()} — "
+             "inferred knowledge, not ground truth; verify low-confidence items. "
+             "Run /evolve-status for freshness._\n"]
+    try:
+        user = honcho.peer(hc.user_peer_id(state))
+        block = []
+        card = user.card()
+        if card:
+            block.extend(card)
+        rep = user.representation(max_conclusions=12)
+        if rep and rep.strip():
+            block.append(rep.strip())
+        if block:
+            parts.append("## About this user\n" + "\n".join(block)[:USER_BLOCK_CHARS] + "\n")
+    except Exception as e:
+        log(f"prefetch user block failed: {e}")
+    skill_lines = []
+    agent = honcho.peer(hc.AGENT_PEER)
+    for skill in state["recent_skills"][:5]:
+        try:
+            rep = agent.representation(target=hc.skill_peer_id(skill), max_conclusions=2)
+            if rep and rep.strip():
+                first = " ".join(rep.strip().split())[:SKILL_LINE_CHARS]
+                skill_lines.append(f"- **{skill}**: {first}")
+        except Exception as e:
+            log(f"prefetch skill {skill} failed: {e}")
+    if skill_lines:
+        parts.append("## Recently used skills — the agent's own model\n" + "\n".join(skill_lines) + "\n")
+    if len(parts) == 1:
+        return  # nothing learned yet — keep whatever cache exists
+    tmp = hc.INJECTION_PATH.with_suffix(".tmp")
+    tmp.write_text("\n".join(parts))
+    tmp.replace(hc.INJECTION_PATH)
+    log("injection cache refreshed")
+
+
 def main():
     cfg = hc.load_config()
     if not hc.configured(cfg):
@@ -82,10 +132,14 @@ def main():
     try:
         state = hc.load_state()
         had_work = any(hc.SPOOL_DIR.glob("*.json"))
-        if had_work:
+        cache_fresh = (hc.INJECTION_PATH.exists()
+                       and time.time() - hc.INJECTION_PATH.stat().st_mtime < CACHE_FRESH_SECS)
+        if had_work or not cache_fresh:
             honcho = hc.client(cfg)
-            n = drain(honcho, state)
-            log(f"flushed {n} spool file(s)")
+            if had_work:
+                n = drain(honcho, state)
+                log(f"flushed {n} spool file(s)")
+            refresh_injection(honcho, state)
     except SystemExit:
         pass  # client() exits 2 when honcho-ai missing; spool persists
     except Exception as e:

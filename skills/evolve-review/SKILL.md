@@ -121,6 +121,31 @@ version ← session-ids so every change is traceable to its evidence.
   `overlay.py record` outcomes — `min(runs/10, 1.0) × success_rate`. Never
   present a fresh overlay as trusted.
 
+## Local mode — you are the deriver
+
+When `honcho_client.py status` shows `mode: local`, there is no Honcho and no
+background derivation: **this review pass is the only place conclusions form.**
+After triage, do what the deriver would have done:
+
+- Maintain `~/.local/share/huhhb/evolve/conclusions.md` — the distilled,
+  current model of the user and their skill experience:
+
+  ```markdown
+  # evolve conclusions (local mode — derived by /evolve-review)
+  ## About this user
+  - Prefers conventional commits, no emoji (cc:abc123, 2026-07-04)
+  ## Skills
+  - writing-plans: end plans at rollout; user deletes verification sections (cc:abc123)
+  ```
+
+- **Supersede, don't accumulate**: a new conclusion that contradicts an old
+  line replaces it (that's the self-healing Honcho would do). Keep every line
+  sourced (session-id, date). Keep the file under ~60 lines — it feeds the
+  injected context, and injection has a token budget.
+- The journal (`journal.jsonl`) is your only evidence source — there is no
+  `query chat`, no semantic search; the dialectic budget is moot. Everything
+  else (triage, routing, thresholds, pending flow) is unchanged.
+
 ## Close out
 
 Update `last_review_ts` in `state.json` (ISO-8601 UTC). Summarize: candidates

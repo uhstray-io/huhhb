@@ -304,6 +304,75 @@ class FlushTests(SandboxCase):
         self.assertTrue((self.sb.data / "spool" / "bad.bad").exists())
 
 
+# ---------------------------------------------------------------- local mode
+# The no-server path: the full loop (capture -> journal -> injection ->
+# recall) must work with plain python3, no honcho-ai, no network.
+
+class LocalModeTests(SandboxCase):
+    def setUp(self):
+        super().setUp()
+        self.sb.env["EVOLVE_MODE"] = "local"
+
+    def test_init_local_writes_config_and_status_reports_it(self):
+        del self.sb.env["EVOLVE_MODE"]
+        self.assertEqual(self.sb.run("honcho_client.py", "init", "--local").returncode, 0)
+        out = self.sb.run("honcho_client.py", "status").stdout
+        self.assertIn("mode          : local", out)
+        r = self.sb.run("honcho_client.py", "init", "--local", "--url", "http://x")
+        self.assertNotEqual(r.returncode, 0, "--local excludes --url")
+
+    def test_full_loop_no_server_no_sdk(self):
+        payload = self.sb.write_transcript("l1", [
+            turn_user("always use uv for python deps, never pip"),
+            turn_bash("mempalace --status"),
+            turn_result("zsh: command not found: mempalace"),
+            turn_bash("uv tool install mempalace"),
+        ])
+        proc, took = self.sb.hook("evolve-capture.sh", stdin=payload)
+        self.assertEqual(proc.returncode, 0)
+        self.assertLess(took, HOOK_BUDGET_SECS)
+        self.assertEqual(len(self.sb.spool_files()), 1)
+
+        r = self.sb.run("flush.py")  # system python3 — no honcho-ai anywhere
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertEqual(len(self.sb.spool_files()), 0, "spool drains into journal")
+        journal = (self.sb.data / "journal.jsonl").read_text()
+        self.assertIn("uv for python deps", journal)
+        self.assertIn("fixed by", journal)
+
+        injection = (self.sb.data / "context" / "injection.md").read_text()
+        self.assertIn("local mode", injection)
+        self.assertIn("uv for python deps", injection)
+        self.assertNotIn("command not found", injection, "anti-capture holds end to end")
+
+        proc, took = self.sb.hook("evolve-inject.sh")
+        self.assertLess(took, HOOK_BUDGET_SECS)
+        ctx = json.loads(proc.stdout)["hookSpecificOutput"]["additionalContext"]
+        self.assertIn("uv for python deps", ctx, "session B sees session A's preference")
+
+    def test_conclusions_feed_injection_and_rep(self):
+        self.sb.data.mkdir(parents=True, exist_ok=True)
+        (self.sb.data / "conclusions.md").write_text(
+            "# evolve conclusions\n## About this user\n- Reviews PRs on Fridays (cc:x)\n")
+        self.sb.run("flush.py")
+        self.assertIn("Fridays", (self.sb.data / "context" / "injection.md").read_text())
+        rep = self.sb.run("honcho_client.py", "query", "rep").stdout
+        self.assertIn("Fridays", rep)
+
+    def test_observe_and_search_local(self):
+        r = self.sb.run("honcho_client.py", "observe", "--type", "preference",
+                        "--target", "user", "--content",
+                        "[preference] user — tabs over spaces, stated explicitly")
+        self.assertIn("journaled", r.stdout)
+        hits = self.sb.run("honcho_client.py", "query", "search", "--q", "tabs").stdout
+        self.assertIn("tabs over spaces", hits)
+
+    def test_chat_degrades_with_clear_error(self):
+        r = self.sb.run("honcho_client.py", "query", "chat", "--q", "what do you know?")
+        self.assertNotEqual(r.returncode, 0)
+        self.assertIn("local mode", r.stderr + r.stdout)
+
+
 # ---------------------------------------------------------------- C-11
 
 class InjectHookTests(SandboxCase):

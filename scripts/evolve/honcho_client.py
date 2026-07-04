@@ -36,6 +36,9 @@ CONTEXT_DIR = DATA_DIR / "context"
 PENDING_DIR = DATA_DIR / "pending"
 STATE_PATH = DATA_DIR / "state.json"
 INJECTION_PATH = CONTEXT_DIR / "injection.md"
+JOURNAL_PATH = DATA_DIR / "journal.jsonl"
+CONCLUSIONS_PATH = DATA_DIR / "conclusions.md"
+JOURNAL_MAX_LINES = 500
 
 
 # ---------------------------------------------------------------- config
@@ -47,18 +50,30 @@ def load_config():
             cfg = json.loads(CONFIG_PATH.read_text())
         except (json.JSONDecodeError, OSError):
             cfg = {}
+    url = os.environ.get("HONCHO_URL") or cfg.get("url")
+    api_key = os.environ.get("HONCHO_API_KEY") or cfg.get("api_key")
+    # mode: honcho (a server to talk to) > local (no server — /evolve-review
+    # is the deriver, all state stays in DATA_DIR) > off (suite inert)
+    if url or api_key:
+        mode = "honcho"
+    elif cfg.get("mode") == "local" or os.environ.get("EVOLVE_MODE") == "local":
+        mode = "local"
+    else:
+        mode = "off"
     return {
-        "url": os.environ.get("HONCHO_URL") or cfg.get("url"),
-        "api_key": os.environ.get("HONCHO_API_KEY") or cfg.get("api_key"),
+        "url": url,
+        "api_key": api_key,
         "workspace": os.environ.get("HONCHO_WORKSPACE") or cfg.get("workspace") or "huhhb-evolve",
-        "source": "env" if os.environ.get("HONCHO_URL") or os.environ.get("HONCHO_API_KEY")
+        "mode": mode,
+        "source": "env" if any(os.environ.get(v) for v in
+                               ("HONCHO_URL", "HONCHO_API_KEY", "EVOLVE_MODE"))
                   else ("file" if cfg else "none"),
     }
 
 
 def configured(cfg=None):
     cfg = cfg or load_config()
-    return bool(cfg["url"] or cfg["api_key"])
+    return cfg["mode"] != "off"
 
 
 def ensure_dirs():
@@ -123,10 +138,11 @@ def _import_honcho():
 
 def client(cfg=None):
     cfg = cfg or load_config()
-    if not configured(cfg):
+    if cfg["mode"] != "honcho":
         sys.stderr.write(
-            "evolve is not configured. Set HONCHO_URL (self-hosted) or HONCHO_API_KEY "
-            f"(managed), or write {CONFIG_PATH} — see docs/evolve.md.\n")
+            "no Honcho client in this mode. Set HONCHO_URL (self-hosted) or "
+            f"HONCHO_API_KEY (managed), use `init --local`, or write {CONFIG_PATH} "
+            "— see docs/evolve.md.\n")
         sys.exit(2)
     Honcho = _import_honcho()
     kwargs = {"workspace_id": cfg["workspace"]}
@@ -153,6 +169,56 @@ def wait_for_derivation(honcho, timeout=90, poll=5):
             return True
         time.sleep(poll)
     return False
+
+
+# ---------------------------------------------------------------- local store
+# Local mode has no deriver: the journal is the observation record and
+# conclusions.md (maintained by /evolve-review — the agent IS the deriver)
+# is the conclusion layer. Both are plain files under DATA_DIR.
+
+def journal_append(data):
+    """Append a digest's observations to the rolling journal (last 500)."""
+    ensure_dirs()
+    lines = JOURNAL_PATH.read_text().splitlines() if JOURNAL_PATH.exists() else []
+    for obs in data["observations"]:
+        lines.append(json.dumps({"session_id": data.get("session_id"),
+                                 "repo": data.get("repo"), "ts": data.get("ts"), **obs}))
+    JOURNAL_PATH.write_text("\n".join(lines[-JOURNAL_MAX_LINES:]) + "\n")
+
+
+def journal_entries():
+    if not JOURNAL_PATH.exists():
+        return []
+    out = []
+    for line in JOURNAL_PATH.read_text().splitlines():
+        try:
+            out.append(json.loads(line))
+        except json.JSONDecodeError:
+            continue
+    return out
+
+
+def local_representation(query=""):
+    """Local stand-in for peer.representation: review-derived conclusions
+    plus recent stated preferences/corrections straight from the journal."""
+    parts = []
+    if CONCLUSIONS_PATH.exists():
+        parts.append(CONCLUSIONS_PATH.read_text().strip())
+    recent = [e["content"] for e in journal_entries()
+              if e.get("type") in ("preference", "correction")]
+    seen, dedup = set(), []
+    for c in reversed(recent):          # newest first, drop repeats
+        if c not in seen:
+            seen.add(c)
+            dedup.append(c)
+    if dedup:
+        parts.append("## Recent stated preferences & corrections\n"
+                     + "\n".join(f"- {c}" for c in dedup[:8]))
+    text = "\n\n".join(parts)
+    if query:
+        hits = [l for l in text.splitlines() if query.lower() in l.lower()]
+        return "\n".join(hits) if hits else text
+    return text
 
 
 # ---------------------------------------------------------------- observe
@@ -274,14 +340,33 @@ def cmd_observe(args):
     if args.target.startswith("skill:"):
         obs["skill"] = args.target.split(":", 1)[1]
         obs["type"] = obs["type"] or "skill-usage"
-    h = client()
+    cfg = load_config()
+    if cfg["mode"] == "local":
+        journal_append({"session_id": args.session or f"manual-{int(time.time())}",
+                        "ts": now_iso(), "observations": [obs]})
+        print("journaled 1 observation (local mode)")
+        return
+    h = client(cfg)
     n = add_observations(h, state, args.session or f"manual-{int(time.time())}", [obs])
     print(f"wrote {n} observation(s)")
 
 
 def cmd_query(args):
     state = load_state()
-    h = client()
+    cfg = load_config()
+    if cfg["mode"] == "local":
+        if args.what in ("rep", "card"):
+            print(local_representation(args.q) or "(nothing learned yet)")
+        elif args.what == "search":
+            hits = [e["content"] for e in journal_entries()
+                    if args.q.lower() in e.get("content", "").lower()]
+            for h in hits[-(args.max or 5):]:
+                print(f"- {h}")
+        else:
+            sys.exit("chat needs a Honcho deriver — local mode has none; "
+                     "use `query rep` / `query search`, or /evolve-review for synthesis")
+        return
+    h = client(cfg)
     me = h.peer(args.perspective or user_peer_id(state))
     target = args.target
     if args.what == "card":
@@ -301,8 +386,16 @@ def cmd_status(_args):
     cfg = load_config()
     state = load_state()
     print(f"config source : {cfg['source']}  ({CONFIG_PATH if cfg['source'] == 'file' else 'env vars' if cfg['source'] == 'env' else 'unconfigured — suite inert'})")
-    print(f"url           : {cfg['url'] or ('api.honcho.dev (managed)' if cfg['api_key'] else '-')}")
-    print(f"workspace     : {cfg['workspace']}")
+    print(f"mode          : {cfg['mode']}")
+    if cfg["mode"] == "local":
+        n_journal = len(journal_entries())
+        n_concl = (len([l for l in CONCLUSIONS_PATH.read_text().splitlines()
+                        if l.startswith("- ")]) if CONCLUSIONS_PATH.exists() else 0)
+        print(f"journal       : {n_journal} observation(s)")
+        print(f"conclusions   : {n_concl} (derived by /evolve-review — run it to distill the journal)")
+    else:
+        print(f"url           : {cfg['url'] or ('api.honcho.dev (managed)' if cfg['api_key'] else '-')}")
+        print(f"workspace     : {cfg['workspace']}")
     print(f"profile id    : {state['profile_id']}")
     spool = list(SPOOL_DIR.glob("*.json")) if SPOOL_DIR.exists() else []
     pending = list(PENDING_DIR.glob("*.json")) if PENDING_DIR.exists() else []
@@ -313,7 +406,7 @@ def cmd_status(_args):
         print(f"cache age     : {int(age // 60)} min ({INJECTION_PATH})")
     else:
         print("cache age     : no injection cache yet")
-    if configured(cfg):
+    if cfg["mode"] == "honcho":
         try:
             qs = client(cfg).queue_status()
             print(f"deriver queue : {qs}")
@@ -322,8 +415,12 @@ def cmd_status(_args):
 
 
 def cmd_init(args):
+    if args.local and (args.url or args.api_key):
+        sys.exit("--local excludes --url/--api-key: local mode means no server")
     CONFIG_PATH.parent.mkdir(parents=True, exist_ok=True)
     cfg = {}
+    if args.local:
+        cfg["mode"] = "local"
     if args.url:
         cfg["url"] = args.url
     if args.api_key:
@@ -331,7 +428,11 @@ def cmd_init(args):
     cfg["workspace"] = args.workspace or "huhhb-evolve"
     CONFIG_PATH.write_text(json.dumps(cfg, indent=2) + "\n")
     os.chmod(CONFIG_PATH, 0o600)
-    print(f"wrote {CONFIG_PATH} — run `honcho_client.py smoke` to verify")
+    if args.local:
+        print(f"wrote {CONFIG_PATH} — local mode active; no server, no smoke test needed. "
+              "The loop starts capturing immediately; /evolve-review derives conclusions.")
+    else:
+        print(f"wrote {CONFIG_PATH} — run `honcho_client.py smoke` to verify")
 
 
 def now_iso():
@@ -366,6 +467,8 @@ def main():
     pi.add_argument("--url")
     pi.add_argument("--api-key", dest="api_key")
     pi.add_argument("--workspace")
+    pi.add_argument("--local", action="store_true",
+                    help="no-server mode: journal + review-derived conclusions only")
 
     args = p.parse_args()
     {"smoke": cmd_smoke, "observe": cmd_observe, "query": cmd_query,

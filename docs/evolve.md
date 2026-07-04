@@ -39,7 +39,18 @@ before anything is stored.
 
 Choose one:
 
-**Self-hosted** (recommended for privacy): run the
+**Local (no server — lightest)**: nothing to deploy, nothing to install
+beyond huhhb itself. Observations land in a local journal; `/evolve-review`
+does the deriving (Claude is the deriver) and maintains `conclusions.md`,
+which feeds the injected context. Trade-offs: no background derivation
+(conclusions form only when review runs), no semantic search, no dialectic
+queries, single-machine memory.
+
+```bash
+python3 <plugin>/scripts/evolve/honcho_client.py init --local
+```
+
+**Self-hosted** (recommended for privacy at full capability): run the
 [Honcho server](https://github.com/plastic-labs/honcho) — both the API *and*
 the deriver worker (`python -m src.deriver`, needs LLM keys) — then:
 
@@ -66,7 +77,7 @@ vars > `~/.config/huhhb/evolve.json` > unconfigured.
 
 | What | Where |
 |---|---|
-| observations + conclusions | your Honcho workspace (your server, or your managed account) |
+| observations + conclusions | your Honcho workspace (your server, or your managed account); **local mode**: `journal.jsonl` + `conclusions.md` under `~/.local/share/huhhb/evolve/` |
 | local spool/cache/journal/state | `~/.local/share/huhhb/evolve/` |
 | learned overlay skills | `~/.claude/skills/*-local/` (archived, never deleted, to `_archive/`) |
 | config | `~/.config/huhhb/evolve.json` |

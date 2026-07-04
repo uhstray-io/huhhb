@@ -68,28 +68,29 @@ def drain(honcho, state):
         except Exception as e:  # network/API — retry on next flush
             log(f"flush failed for {spool_file.name}, keeping: {e}")
             continue
-        journal(data)
+        try:
+            hc.journal_append(data)
+        except OSError as e:
+            log(f"journal write failed: {e}")
         spool_file.unlink()
         flushed += 1
     return flushed
 
 
-JOURNAL = hc.DATA_DIR / "journal.jsonl"
-JOURNAL_MAX_LINES = 500
-
-
-def journal(data):
-    """Rolling local copy of flushed observations — /evolve-review's 'recent
-    digests' source, so the learning pass never depends on the network to see
-    what the capture pipeline saw."""
-    try:
-        lines = JOURNAL.read_text().splitlines() if JOURNAL.exists() else []
-        for obs in data["observations"]:
-            lines.append(json.dumps({"session_id": data["session_id"],
-                                     "repo": data.get("repo"), "ts": data.get("ts"), **obs}))
-        JOURNAL.write_text("\n".join(lines[-JOURNAL_MAX_LINES:]) + "\n")
-    except OSError as e:
-        log(f"journal write failed: {e}")
+def drain_local(_state):
+    """Local mode: the journal IS the destination — no network at all."""
+    flushed = 0
+    for spool_file in sorted(hc.SPOOL_DIR.glob("*.json")):
+        try:
+            data = json.loads(spool_file.read_text())
+        except (json.JSONDecodeError, OSError) as e:
+            log(f"bad spool file {spool_file.name}: {e}")
+            spool_file.rename(spool_file.with_suffix(".bad"))
+            continue
+        hc.journal_append(data)
+        spool_file.unlink()
+        flushed += 1
+    return flushed
 
 
 CACHE_FRESH_SECS = 900   # skip refresh when no new work and cache younger than this
@@ -142,6 +143,31 @@ def refresh_injection(honcho, state):
     log("injection cache refreshed")
 
 
+def refresh_injection_local(state):
+    """Local-mode prefetch: no deriver, so the injection is built from
+    /evolve-review's conclusions.md plus recent journal signal directly.
+    Cruder than a derived representation, but zero infrastructure."""
+    parts = [f"# evolve memory (local mode, cached)\n_refreshed: {hc.now_iso()} — "
+             "conclusions are derived by /evolve-review; run it to distill "
+             "recent sessions. Inferred knowledge, not ground truth._\n"]
+    rep = hc.local_representation()
+    if rep:
+        parts.append(rep[:USER_BLOCK_CHARS] + "\n")
+    partials = {}
+    for e in hc.journal_entries():
+        if e.get("type") == "skill-usage" and e.get("outcome") == "partial":
+            partials[e["skill"]] = e["content"]
+    if partials:
+        parts.append("## Skill friction observed\n"
+                     + "\n".join(f"- {c}" for c in list(partials.values())[-5:]) + "\n")
+    if len(parts) == 1:
+        return
+    tmp = hc.INJECTION_PATH.with_suffix(".tmp")
+    tmp.write_text("\n".join(parts))
+    tmp.replace(hc.INJECTION_PATH)
+    log("injection cache refreshed (local)")
+
+
 def main():
     cfg = hc.load_config()
     if not hc.configured(cfg):
@@ -154,11 +180,16 @@ def main():
         cache_fresh = (hc.INJECTION_PATH.exists()
                        and time.time() - hc.INJECTION_PATH.stat().st_mtime < CACHE_FRESH_SECS)
         if had_work or not cache_fresh:
-            honcho = hc.client(cfg)
-            if had_work:
-                n = drain(honcho, state)
-                log(f"flushed {n} spool file(s)")
-            refresh_injection(honcho, state)
+            if cfg["mode"] == "local":
+                if had_work:
+                    log(f"local-drained {drain_local(state)} spool file(s)")
+                refresh_injection_local(state)
+            else:
+                honcho = hc.client(cfg)
+                if had_work:
+                    n = drain(honcho, state)
+                    log(f"flushed {n} spool file(s)")
+                refresh_injection(honcho, state)
     except SystemExit:
         pass  # client() exits 2 when honcho-ai missing; spool persists
     except Exception as e:

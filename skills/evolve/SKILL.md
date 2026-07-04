@@ -69,6 +69,13 @@ side and is **never** used reflexively.
 
 (`...` = `${CLAUDE_PLUGIN_ROOT}/scripts/evolve`.)
 
+**Local mode** (`status` shows `mode: local` — no server): the ladder
+shortens to injected cache → `query rep` (conclusions.md + recent stated
+preferences) → `query search` (substring over the journal). There is no
+dialectic `chat` and no semantic search; synthesis questions are answered by
+reading those files directly, and conclusions only form when `/evolve-review`
+runs — suggest it when the journal has grown but conclusions look stale.
+
 ## Writing — rarely, and only durable user facts
 
 The Stop hook captures automatically; manual writes are for the moment a user

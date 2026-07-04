@@ -52,20 +52,23 @@ make, skills that work for you — via [Honcho](https://honcho.dev). It is
 **entirely off until configured** and everything it learns stays in the
 Honcho workspace *you* control.
 
-Three choices (details in [docs/evolve.md](../docs/evolve.md)):
+Four choices (details in [docs/evolve.md](../docs/evolve.md)):
 
-1. **Self-hosted** — point it at your own Honcho server:
+1. **Local, no server** — everything stays in files on this machine:
+   `honcho_client.py init --local`
+2. **Self-hosted** — point it at your own Honcho server:
    `honcho_client.py init --url http://your-host:8000`
-2. **Managed** — use api.honcho.dev with your API key:
+3. **Managed** — use api.honcho.dev with your API key:
    `honcho_client.py init --api-key <key>`
-3. **Skip** — do nothing; huhhb behaves exactly as without evolve.
+4. **Skip** — do nothing; huhhb behaves exactly as without evolve.
 
-After either setup, verify with `honcho_client.py smoke`.
+For 2 or 3, verify afterwards with `honcho_client.py smoke` (local mode
+needs no smoke test — there is no server to reach).
 
-**Claude: ask the user which option they want. For 1 or 2, run the `init`
-command from `${CLAUDE_PLUGIN_ROOT}/scripts/evolve/`, then the smoke test,
-and show the result. Consent matters — never configure evolve without an
-explicit yes.**
+**Claude: ask the user which option they want. For 1–3, run the `init`
+command from `${CLAUDE_PLUGIN_ROOT}/scripts/evolve/` (plus the smoke test
+for 2–3) and show the result. Consent matters — never configure evolve
+without an explicit yes.**
 
 ## Personalize Your Setup
 

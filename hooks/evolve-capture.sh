@@ -9,7 +9,7 @@
 # this exits 0 immediately and huhhb behaves as if evolve were not installed.
 
 CONF="${XDG_CONFIG_HOME:-$HOME/.config}/huhhb/evolve.json"
-if [ -z "$HONCHO_URL" ] && [ -z "$HONCHO_API_KEY" ] && [ ! -f "$CONF" ]; then
+if [ -z "$HONCHO_URL" ] && [ -z "$HONCHO_API_KEY" ] && [ -z "$EVOLVE_MODE" ] && [ ! -f "$CONF" ]; then
     exit 0
 fi
 command -v python3 >/dev/null 2>&1 || exit 0

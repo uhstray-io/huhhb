@@ -19,6 +19,10 @@ python3 "${CLAUDE_PLUGIN_ROOT}/scripts/evolve/overlay.py" report
 - **config source: none** — the suite is inert. Nothing is captured, nothing
   injected; huhhb behaves as if evolve were not installed. Point the user at
   `docs/evolve.md` for setup if they expected it on.
+- **mode: local** — no server: there is no deriver queue; health is the
+  journal count growing and conclusions being distilled from it. A large
+  journal with few conclusions means `/evolve-review` hasn't run in a while —
+  suggest it (in local mode it is the only thing that forms conclusions).
 - **spool depth > 0 across multiple sessions** — the flusher can't reach
   Honcho. Check `~/.local/share/huhhb/evolve/flush.log` for the error;
   observations are safe (at-least-once delivery), just undelivered.

@@ -68,9 +68,28 @@ def drain(honcho, state):
         except Exception as e:  # network/API — retry on next flush
             log(f"flush failed for {spool_file.name}, keeping: {e}")
             continue
+        journal(data)
         spool_file.unlink()
         flushed += 1
     return flushed
+
+
+JOURNAL = hc.DATA_DIR / "journal.jsonl"
+JOURNAL_MAX_LINES = 500
+
+
+def journal(data):
+    """Rolling local copy of flushed observations — /evolve-review's 'recent
+    digests' source, so the learning pass never depends on the network to see
+    what the capture pipeline saw."""
+    try:
+        lines = JOURNAL.read_text().splitlines() if JOURNAL.exists() else []
+        for obs in data["observations"]:
+            lines.append(json.dumps({"session_id": data["session_id"],
+                                     "repo": data.get("repo"), "ts": data.get("ts"), **obs}))
+        JOURNAL.write_text("\n".join(lines[-JOURNAL_MAX_LINES:]) + "\n")
+    except OSError as e:
+        log(f"journal write failed: {e}")
 
 
 CACHE_FRESH_SECS = 900   # skip refresh when no new work and cache younger than this

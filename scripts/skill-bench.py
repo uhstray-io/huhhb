@@ -28,9 +28,11 @@ import statistics
 import subprocess
 import sys
 import tempfile
+from datetime import datetime, timezone
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
+HISTORY = REPO / "tests" / "bench" / "history.jsonl"
 RATIO_TOKENS, RATIO_TIME, RATIO_TURNS = 1.5, 2.0, 1.5
 JUDGE_TEMPLATE = (
     "Score 1-5 how well this response satisfies the rubric. Reply with ONLY the digit.\n"
@@ -102,14 +104,41 @@ def med(rows, key):
     return statistics.median(r[key] for r in rows) if rows else 0
 
 
-def bench_skill(spec, runs, dry_run):
+def skill_version(skill):
+    mp = json.loads((REPO / "marketplace.json").read_text())
+    return next((s.get("version", "?") for s in mp["skills"] if s["name"] == skill), "?")
+
+
+def record_history(row):
+    """Append one score row to the git-tracked history (tests/bench/history.jsonl).
+
+    Append-only JSONL on purpose: rows are diffable in PRs, survive forever in
+    git, and DuckDB queries the file directly — the database engine is a
+    reader, never a deployment (docs/skill-quality-bar.md, History & trends).
+    """
+    commit = subprocess.run(["git", "rev-parse", "--short", "HEAD"], cwd=REPO,
+                            capture_output=True, text=True).stdout.strip()
+    row = {"ts": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+           "commit": commit or "?", **row}
+    with open(HISTORY, "a") as f:
+        f.write(json.dumps(row) + "\n")
+    json.loads(HISTORY.read_text().splitlines()[-1])  # self-check: row is readable
+    return row
+
+
+def bench_skill(spec, runs, dry_run, record=True):
     verdicts = {}
+    scenario_verdicts = {}
 
     def gate(name, ok, detail):
-        verdicts[name] = ok
+        verdicts[f"{gate.scope}:{name}"] = ok
+        scenario_verdicts[name] = ok
         print(f"  {'PASS' if ok else 'FAIL'} {name}: {detail}")
 
+    version = skill_version(spec["skill"])
     for scenario in spec["scenarios"]:
+        gate.scope = scenario["id"]
+        scenario_verdicts = {}
         print(f"\nscenario {scenario['id']} ({runs} runs + baseline)")
         if dry_run:
             print(f"  would run: claude -p {scenario['prompt']!r}  assert: {scenario['assert']}")
@@ -146,18 +175,38 @@ def bench_skill(spec, runs, dry_run):
             print(f"  INFO baseline completion: {base_pass}/{len(base)} — skill must beat "
                   "or match this to earn its tokens")
 
+        judge_score = None
         if scenario.get("judge") and skilled:
             scores = [judge(scenario["judge"], r["result"]) for r in skilled]
-            gate("B3 quality", statistics.median(scores) >= 4, f"judge median {statistics.median(scores)}/5")
+            judge_score = statistics.median(scores)
+            gate("B3 quality", judge_score >= 4, f"judge median {judge_score}/5")
+
+        if record:
+            record_history({
+                "skill": spec["skill"], "version": version, "scenario": scenario["id"],
+                "runs": runs, "passes": passes, "judge": judge_score,
+                "tokens": tokens, "cost": cost, "duration_ms": dur,
+                "api_ms": api, "turns": turns,
+                "baseline_tokens": med(base, "tokens"), "baseline_ms": med(base, "duration_ms"),
+                "verdicts": dict(scenario_verdicts),
+            })
 
     triggers = spec.get("triggers", {})
     if triggers and not dry_run:
+        gate.scope = "triggers"
+        scenario_verdicts = {}
         pos = [skill_invoked(p, spec["skill"]) for p in triggers.get("positive", [])]
         neg = [not skill_invoked(p, spec["skill"]) for p in triggers.get("negative", [])]
         if pos:
             gate("B9 trigger recall", sum(pos) / len(pos) >= 0.8, f"{sum(pos)}/{len(pos)}")
         if neg:
             gate("B10 trigger precision", sum(neg) / len(neg) >= 0.9, f"{sum(neg)}/{len(neg)}")
+        if record and (pos or neg):
+            record_history({"skill": spec["skill"], "version": version,
+                            "scenario": "triggers",
+                            "recall": (sum(pos) / len(pos)) if pos else None,
+                            "precision": (sum(neg) / len(neg)) if neg else None,
+                            "verdicts": dict(scenario_verdicts)})
     elif triggers:
         print(f"\ntriggers: {len(triggers.get('positive', []))} positive, "
               f"{len(triggers.get('negative', []))} negative prompts (skipped in dry-run)")
@@ -171,6 +220,8 @@ def main():
     ap.add_argument("--runs", type=int, default=3)
     ap.add_argument("--dry-run", action="store_true",
                     help="validate the scenario file and print the plan; no claude calls")
+    ap.add_argument("--no-record", action="store_true",
+                    help="skip appending scores to tests/bench/history.jsonl")
     args = ap.parse_args()
 
     spec_path = REPO / "tests" / "bench" / f"{args.skill}.json"
@@ -186,7 +237,7 @@ def main():
     if not args.dry_run and not shutil.which("claude"):
         sys.exit("claude CLI not on PATH")
     print(f"bench {spec['skill']} — {len(spec['scenarios'])} scenario(s)")
-    verdicts = bench_skill(spec, args.runs, args.dry_run)
+    verdicts = bench_skill(spec, args.runs, args.dry_run, record=not args.no_record)
     if args.dry_run:
         print("\ndry-run OK — scenario file valid")
         return

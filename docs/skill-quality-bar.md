@@ -82,6 +82,34 @@ Failing soft criteria doesn't evict a skill — it queues it:
 3. Patch re-runs G1; the PR shows before/after metrics side by side.
 4. Human merges. Confidence resets to earned-from-zero for major rewrites.
 
+## History & trends
+
+Every live G1 run appends one row per scenario to `tests/bench/history.jsonl`
+(skill, version, git commit, timestamp, medians for tokens/cost/latency/turns,
+baseline comparisons, judge score, verdicts). Disable with `--no-record`.
+
+Storage is deliberately **git-tracked append-only JSONL, not a database
+file**: rows are human-diffable in the PR that changed the skill, CodeRabbit
+reviews them, and git is the audit trail — the same doctrine as the rest of
+this repo. A `.duckdb`/`.sqlite` binary in git would be unreviewable and
+merge-conflict-prone.
+
+DuckDB is the *query layer*, never a deployment — it reads JSONL natively,
+and `scripts/skill-trends.py` carries its own dependency via PEP 723 inline
+metadata, so `uv` (already a huhhb prerequisite) provisions everything on
+first run. Nothing is installed into the repo; no `.duckdb` file ever exists.
+
+```bash
+uv run scripts/skill-trends.py trend --skill evolve-status   # scores over time
+uv run scripts/skill-trends.py regressions   # latest run worse than previous
+uv run scripts/skill-trends.py ledger        # per-version: did the patch help?
+uv run scripts/skill-trends.py sql "SELECT ... FROM history" # ad hoc
+```
+
+(Note: `uvx duckdb` does NOT work — the PyPI package ships the Python module
+only, no CLI executable. Either use the script above or
+`uv run --with duckdb python -c "import duckdb; ..."`.)
+
 ## Running the gates
 
 ```bash

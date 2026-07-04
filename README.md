@@ -92,6 +92,21 @@ description: Use when [specific triggering conditions] — embed trigger phrases
 | `memory-status` | `/memory-status` | Nexus stats — drawer count, wings, rooms |
 | `repo-memory` | `/repo-memory` | Repo-local memory in `.claude/memory/` — committed to git, no external service |
 
+### Self-Learning (evolve)
+
+Cross-session learning backed by [Honcho](https://honcho.dev): a Stop hook
+digests each session into typed observations, the deriver turns them into
+conclusions, and a SessionStart hook injects what was learned into the next
+session at zero latency. Personalization lands in overlay skills
+(`~/.claude/skills/*-local/`) — hub skills are never edited. **Inert until
+configured**; setup, privacy model, and purge in [docs/evolve.md](docs/evolve.md).
+
+| Skill | Trigger | Purpose |
+|-------|---------|---------|
+| `evolve` | `/evolve` | Memory protocol — recall, explicit writes, strata routing, read cost ladder |
+| `evolve-review` | `/evolve-review` | The learning pass — observations → overlay patches / repo-memory, diff + approval |
+| `evolve-status` | `/evolve-status` | Loop health — spool, deriver queue, cache age, overlay confidence |
+
 ### Dev Workflows
 
 | Skill | Trigger | Purpose |

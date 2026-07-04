@@ -3,7 +3,7 @@
   "publisher": "uhstray-io",
   "displayName": "Uhstray Skills Hub",
   "description": "Uhstray.io's curated Claude Code skills marketplace — workflows and automation for engineering teams.",
-  "version": "0.4.7",
+  "version": "0.5.0",
   "homepage": "https://github.com/uhstray-io/huhhb",
   "license": "MIT",
   "skills": [
@@ -301,6 +301,30 @@
       "description": "Use when a long session should pause for a checkpoint — surfaces in-flight work, runs /simplify + /security-review and test/build/lint health, checks the diff against the repo's documented conventions, and re-confirms goals. Fired by the grounding hook (default 2h, configurable) or run manually. Opt-in; offers a user-selectable check menu.",
       "category": "dev",
       "tags": ["dev", "checkpoint", "review", "conformance", "session"],
+      "version": "0.1.0"
+    },
+    {
+      "name": "evolve",
+      "path": "skills/evolve/SKILL.md",
+      "description": "Cross-session memory protocol backed by Honcho — how to recall what evolve has learned about you, persist durable facts, and route knowledge to the right memory stratum. Inert until configured.",
+      "category": "memory",
+      "tags": ["memory", "honcho", "learning", "personalization"],
+      "version": "0.1.0"
+    },
+    {
+      "name": "evolve-review",
+      "path": "skills/evolve-review/SKILL.md",
+      "description": "The learning pass — triage captured session observations into overlay-skill patches, new overlays, or repo-memory entries, with diffs and approval; also approves proposals staged by headless runs.",
+      "category": "memory",
+      "tags": ["memory", "learning", "review", "overlays"],
+      "version": "0.1.0"
+    },
+    {
+      "name": "evolve-status",
+      "path": "skills/evolve-status/SKILL.md",
+      "description": "Health check for the evolve learning loop — spool depth, deriver queue, cache age, overlay confidence table, pending proposals.",
+      "category": "memory",
+      "tags": ["memory", "status", "observability"],
       "version": "0.1.0"
     }
   ]

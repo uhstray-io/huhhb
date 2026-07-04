@@ -30,8 +30,9 @@ python3 "${CLAUDE_PLUGIN_ROOT}/scripts/evolve/overlay.py" report
   Writes land; conclusions never form.
 - **overlay table** — confidence is earned (`min(runs/10,1) × success_rate`):
   an overlay at 0.1 worked once, not "works". Flag anything `deprecated`, any
-  `last_error`, and anything unused ~60 days as candidates for the next
-  `/evolve-review` to propose archiving (pinned overlays exempt).
+  `last_error`, and anything unused ~60 days (`report --json` shows
+  `last_used`) as candidates for the next `/evolve-review` to propose
+  archiving (pinned overlays exempt).
 - **pending proposals > 0** — a headless review staged work; offer to run
   `/evolve-review` now to approve or reject each.
 

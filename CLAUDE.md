@@ -75,10 +75,25 @@ First install runs `onboarding/welcome.md` — a guided tour of available skills
 
 ## Skill Quality Bar
 
-- Description must be specific enough for Claude to match via `Skill` tool
-- Skills must state their trigger conditions (when to auto-invoke)
-- No skill should duplicate built-in Claude Code behavior
-- Test each skill against at least one real use case before merging
+Three measured gates — full criteria, thresholds, and the improvement loop in
+`docs/skill-quality-bar.md`:
+
+- **G0 static lint** (`python3 scripts/skill-lint.py`) — frontmatter, trigger
+  phrasing, body size, link integrity, manifest sync. Free; run on every PR.
+  Pre-existing debt is grandfathered in `scripts/skill-lint-baseline.json` —
+  shrink it, never grow it.
+- **G1 merge bench** (`python3 scripts/skill-bench.py <skill>`) — real
+  `claude -p` runs against `tests/bench/<skill>.json` scenarios: completion,
+  accuracy, tokens, cost, latency, tool efficiency, trigger precision/recall,
+  and an A/B baseline (skill disabled) the skill must beat. Costs tokens;
+  run when a skill changes.
+- **G2 field promotion** — evolve-loop telemetry (earned confidence,
+  correction pressure) gates featured/pinned status.
+
+Baseline rules that still apply verbatim: descriptions must be specific
+enough for `Skill`-tool matching with trigger conditions embedded; no skill
+duplicates built-in Claude Code behavior; a new skill needs at least one real
+G1 scenario before merging.
 
 ## Commit & PR Conventions
 

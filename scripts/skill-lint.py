@@ -72,8 +72,8 @@ def lint_entry(entry, seen_names, seen_descriptions):
             if fm_desc and not TRIGGER_HINT.search(fm_desc.group(1)):
                 report("WARN", name, "S4", "description has no trigger phrasing "
                        "('use when...', quoted phrases)")
-    elif keys and "triggers" in keys:                             # S2 (soft for non-SKILL.md)
-        report("WARN", name, "S2", "frontmatter has unsupported 'triggers' field")
+    elif keys and "triggers" in keys:                             # S2 — banned repo-wide
+        report("FAIL", name, "S2", "frontmatter has unsupported 'triggers' field")
     # links/paths inside fenced code blocks are examples, not references
     prose = re.sub(r"```.*?```", "", body, flags=re.S)
     if len(body) > BODY_FAIL_CHARS:                               # S6

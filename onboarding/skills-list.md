@@ -1,10 +1,6 @@
 ---
 name: huhhb-skills
-description: List all available huhhb skills with descriptions and usage
-triggers:
-  - list huhhb skills
-  - what skills are available
-  - show me huhhb skills
+description: List all available huhhb skills with descriptions and usage — use when the user asks to "list huhhb skills", "what skills are available", or "show me huhhb skills".
 ---
 
 # huhhb Skills

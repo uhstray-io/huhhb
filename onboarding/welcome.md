@@ -1,9 +1,6 @@
 ---
 name: huhhb-welcome
-description: First-run onboarding for huhhb — Uhstray.io's Claude Code skills marketplace
-triggers:
-  - huhhb installed
-  - plugin install huhhb
+description: First-run onboarding for huhhb — run when huhhb is installed or the user asks to be welcomed/onboarded to the Uhstray.io skills marketplace.
 ---
 
 # Welcome to huhhb

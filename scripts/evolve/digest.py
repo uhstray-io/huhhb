@@ -102,7 +102,7 @@ INSTALL_CMD = re.compile(
 FENCED_CODE = re.compile(r"```.*?```", re.S)
 INLINE_CODE = re.compile(r"`[^`\n]*`")
 QUOTED_SPAN = re.compile(r"\"[^\"\n]{0,300}\"|“[^”\n]{0,300}”")
-EXAMPLE_LINE = re.compile(r"^\s*(?:>|\[[a-z-]+\])", re.I)
+EXAMPLE_LINE = re.compile(r"\s*(?:>|\[[a-zA-Z-]+\])")  # used with .match()
 
 # Anti-capture gate — applied to every observation before spooling.
 NEGATIVE_CAPABILITY = re.compile(
@@ -112,10 +112,18 @@ FIX_PHRASED = re.compile(
     r"(fixed by|installed|resolved by|works after|instead use|use .{1,60} instead|workaround)", re.I)
 
 
-def sanitize(text):
-    text = HARNESS_BLOCK.sub("", text)
-    text = SECRET.sub("[redacted]", text)
-    return text.strip()
+def redact_secrets(text):
+    return SECRET.sub("[redacted]", text).strip()
+
+
+def harness_filter(text):
+    """Harness content is never user speech — one concept, one owner.
+    Wholly-wrapped messages (slash-command scaffolding, system notifications)
+    are skipped outright (None); embedded tag-closed blocks are stripped in
+    place. New harness formats get added HERE, nowhere else."""
+    if any(m in text for m in HARNESS_MARKERS):
+        return None
+    return HARNESS_BLOCK.sub("", text)
 
 
 def snippet(text, limit=SNIPPET_MAX):
@@ -152,9 +160,10 @@ def iter_events(lines):
         content = msg.get("content")
         if rec.get("type") == "user" and not rec.get("isMeta"):
             for text in _text_blocks(content):
-                if any(m in text for m in HARNESS_MARKERS):
+                text = harness_filter(text)
+                if text is None:
                     continue  # harness-injected, not the user speaking
-                text = sanitize(text)
+                text = redact_secrets(text)
                 if text:
                     yield "user_text", text
             if isinstance(content, list):
@@ -199,13 +208,13 @@ def detect(events):
         elif kind == "bash_cmd":
             if INSTALL_CMD.search(payload):
                 for cmd in [c for c in missing_cmds if c in payload]:
-                    # sanitize: install commands can carry inline credentials
+                    # redact: install commands can carry inline credentials
                     # (--index-url https://user:token@...) and this observation
                     # leaves the machine when a remote Honcho is configured
                     emit({
                         "type": "environment", "target": "agent",
                         "content": f"[environment] os={platform.system().lower()} — "
-                                   f"'{cmd}' was missing; fixed by `{snippet(sanitize(payload), 120)}`.",
+                                   f"'{cmd}' was missing; fixed by `{snippet(redact_secrets(payload), 120)}`.",
                     })
                     del missing_cmds[cmd]
         elif kind == "user_text":

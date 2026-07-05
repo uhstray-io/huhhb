@@ -84,6 +84,15 @@ the field record stays continuous. A verdict without recorded evidence is a
 vibe — the next pass must be able to check whether the refine actually
 helped (`skill-trends.py ledger` before/after is the receipt).
 
+## Close out
+
+End every pass with a one-line machine-readable tally, then the human
+summary — the bench asserts on it and the next pass diffs against it:
+
+```text
+verdicts: healthy=<n> refine=<n> merge=<n> prune=<n> create=<n>
+```
+
 ## Hard rules
 
 - Hub skills are read-only on-device; every hub change is a PR (consequence

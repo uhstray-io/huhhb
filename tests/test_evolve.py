@@ -35,6 +35,15 @@ UNREACHABLE = "http://127.0.0.1:9"  # discard port — connection refused instan
 HOOK_BUDGET_SECS = 1.0              # §9: hooks must finish <1s with network blackholed
 
 
+def _load_skill_bench():
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(
+        "skill_bench", REPO / "scripts" / "skill-bench.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
 def obs_from(turns):
     lines = [json.dumps(t) for t in turns]
     return digest.anti_capture(digest.detect(digest.iter_events(lines)))
@@ -537,28 +546,6 @@ class ManifestTests(unittest.TestCase):
         mcp = json.loads((REPO / ".claude-plugin" / ".mcp.json").read_text())
         self.assertEqual(mcp["mcpServers"], pj["mcpServers"])
 
-    def test_bench_env_pinning_executes(self):
-        # regression: run_scenario's env-building used os.environ without
-        # importing os — only reachable with an "env" key, which dry-run
-        # never exercises. runs=0 executes the env line without spawning
-        # any claude session.
-        import importlib.util
-        spec = importlib.util.spec_from_file_location(
-            "skill_bench", REPO / "scripts" / "skill-bench.py")
-        sb = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(sb)
-        rows = sb.run_scenario({"prompt": "x", "assert": "true",
-                                "env": {"X": "1"}}, 0, False)
-        self.assertEqual(rows, [])
-        # cached baselines without baseline_passes must not be trusted
-        tmp = Path(tempfile.mkdtemp(prefix="bench-hist-"))
-        self.addCleanup(shutil.rmtree, tmp, True)
-        sb.HISTORY = tmp / "hist.jsonl"
-        sb.HISTORY.write_text(json.dumps({
-            "skill": "s", "scenario": "sc", "prompt_hash": sb.prompt_hash("p"),
-            "baseline_tokens": 100, "baseline_ms": 5}) + "\n")
-        self.assertIsNone(sb.cached_baseline("s", {"id": "sc", "prompt": "p"}))
-
     def test_skill_lint_gate_passes(self):
         # skill-lint is the single enforcement point for frontmatter shape
         # (S2), trigger phrasing, and body budgets — run the real gate
@@ -583,6 +570,29 @@ class ManifestTests(unittest.TestCase):
     def test_no_honcho_source_vendored(self):
         hits = [p for p in REPO.rglob("honcho/__init__.py") if ".venv" not in p.parts]
         self.assertEqual(hits, [], "AGPL honcho must be imported, never vendored (D13)")
+
+
+class BenchTests(unittest.TestCase):
+    def test_env_pinning_and_os_import(self):
+        # regression: env-building used os.environ without importing os —
+        # dry-run never reaches it, so guard the import explicitly and smoke
+        # the runs=0 path (no claude sessions spawned)
+        sb = _load_skill_bench()
+        self.assertTrue(hasattr(sb, "os"), "skill-bench must import os")
+        rows = sb.run_scenario({"prompt": "x", "assert": "true",
+                                "env": {"X": "1"}}, 0, False)
+        self.assertEqual(rows, [])
+
+    def test_cached_baseline_requires_baseline_passes(self):
+        # rows predating the field can't prove the baseline ever completed
+        sb = _load_skill_bench()
+        tmp = Path(tempfile.mkdtemp(prefix="bench-hist-"))
+        self.addCleanup(shutil.rmtree, tmp, True)
+        sb.HISTORY = tmp / "hist.jsonl"
+        sb.HISTORY.write_text(json.dumps({
+            "skill": "s", "scenario": "sc", "prompt_hash": sb.prompt_hash("p"),
+            "baseline_tokens": 100, "baseline_ms": 5}) + "\n")
+        self.assertIsNone(sb.cached_baseline("s", {"id": "sc", "prompt": "p"}))
 
 
 # ---------------------------------------------------------------- C-16

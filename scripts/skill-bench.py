@@ -41,9 +41,16 @@ JUDGE_TEMPLATE = (
     "RUBRIC: {rubric}\nRESPONSE:\n{response}")
 
 
-def run_claude(prompt, extra=(), timeout=600, env=None):
-    cmd = ["claude", "-p", prompt, "--output-format", "json", *extra]
-    proc = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, env=env)
+def _claude(prompt, output_format, extra=(), timeout=600, env_overrides=None):
+    """Single owner of claude-session invocation — both wrappers route here so
+    env pinning and flags can't drift between the assert runs and the probes."""
+    cmd = ["claude", "-p", prompt, "--output-format", output_format, *extra]
+    env = {**os.environ, **env_overrides} if env_overrides else None
+    return subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, env=env)
+
+
+def run_claude(prompt, extra=(), timeout=600, env_overrides=None):
+    proc = _claude(prompt, "json", extra, timeout, env_overrides)
     try:
         data = json.loads(proc.stdout)
     except json.JSONDecodeError:
@@ -54,9 +61,10 @@ def run_claude(prompt, extra=(), timeout=600, env=None):
 
 
 def skill_invoked(prompt, skill, timeout=600):
-    """B9/B10 probe: did this prompt auto-invoke the skill? (stream-json scan)"""
-    cmd = ["claude", "-p", prompt, "--output-format", "stream-json", "--verbose"]
-    proc = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
+    """B9/B10 probe: did this prompt auto-invoke the skill? (stream-json scan)
+    Not env-pinned: skill triggering is description-matching against the
+    installed catalog, which machine state doesn't influence."""
+    proc = _claude(prompt, "stream-json", ("--verbose",), timeout)
     for line in proc.stdout.splitlines():
         try:
             event = json.loads(line)
@@ -72,14 +80,14 @@ def skill_invoked(prompt, skill, timeout=600):
 
 def run_scenario(scenario, runs, baseline):
     rows = []
-    # scenario "env" pins machine state (e.g. XDG dirs) so asserts don't
-    # depend on whatever the bench host happens to have configured
-    env = {**os.environ, **scenario["env"]} if scenario.get("env") else None
     for _ in range(runs):
         workdir = Path(tempfile.mkdtemp(prefix="skill-bench-"))
         try:
             extra = ["--disallowedTools", "Skill"] if baseline else []
-            data = run_claude(scenario["prompt"], extra, env=env)
+            # scenario "env" pins machine state (e.g. XDG dirs) so asserts
+            # don't depend on what the bench host happens to have configured
+            data = run_claude(scenario["prompt"], extra,
+                              env_overrides=scenario.get("env"))
             (workdir / "result.txt").write_text(str(data.get("result", "")))
             check = subprocess.run(["sh", "-c", scenario["assert"]], cwd=workdir,
                                    capture_output=True, timeout=60)
@@ -175,7 +183,7 @@ def bench_skill(spec, runs, dry_run, record=True, rebaseline=False):
         cached = None if rebaseline else cached_baseline(spec["skill"], scenario)
         if cached:
             bt, bd, bn = cached["baseline_tokens"], cached["baseline_ms"], cached.get("baseline_turns") or 0
-            base_pass = cached.get("baseline_passes")
+            base_pass = cached["baseline_passes"]  # cached_baseline guarantees presence
             print(f"  INFO baseline reused from history ({cached['ts']}) — --rebaseline to re-measure")
         else:
             base = run_scenario(scenario, max(1, runs - 1), baseline=True)

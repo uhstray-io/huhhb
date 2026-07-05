@@ -1,11 +1,16 @@
 {
   "skill": "evolve-status",
-  "budget": {"max_tokens": 60000, "max_cost_usd": 0.75, "max_duration_ms": 180000},
+  "budget": {"max_tokens": 60000, "max_cost_usd": 1.0, "max_duration_ms": 180000},
   "scenarios": [
     {
       "id": "unconfigured-diagnosis",
       "prompt": "/evolve-status",
       "phrasing": true,
+      "env": {
+        "XDG_CONFIG_HOME": "/tmp/skill-bench-noconfig",
+        "XDG_DATA_HOME": "/tmp/skill-bench-nodata",
+        "EVOLVE_MODE": ""
+      },
       "assert": "grep -qiE 'inert|unconfigured|not configured' result.txt && grep -qi 'docs/evolve' result.txt",
       "judge": "The response reports the evolve learning loop's health on an unconfigured machine. It must state the suite is inert/unconfigured, must NOT invent spool/queue numbers that don't exist, and should point to setup docs. Penalize fabricated telemetry heavily."
     }

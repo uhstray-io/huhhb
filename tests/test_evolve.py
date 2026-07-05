@@ -280,6 +280,17 @@ class DetectorTests(unittest.TestCase):
         ])
         self.assertEqual(obs, [])
 
+    def test_embedded_harness_block_stripped_not_dropped(self):
+        # a marker inside genuine user text must not discard the message —
+        # the block is stripped, the user's own words still capture
+        obs = obs_from([turn_user(
+            "always use uv for python deps <task-notification><summary>stop "
+            "using the old API</summary></task-notification> please")])
+        self.assertTrue(any(o["type"] == "preference" for o in obs),
+                        "real user signal around a harness block must survive")
+        self.assertFalse(any(o["type"] == "correction" for o in obs),
+                         "text inside the harness block must not fire")
+
 
 # ---------------------------------------------------------------- C-07/08
 

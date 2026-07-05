@@ -55,9 +55,13 @@ CORRECTION_WINDOW = 3  # user turns after a skill invocation that still implicat
 # indistinguishable from a real failure+fix and will be captured — dev
 # sessions on this repo itself are pathological input.
 HARNESS_BLOCK = re.compile(
-    r"<(system-reminder|task-notification|local-command-caveat)>.*?</\1>", re.S)
-HARNESS_MARKERS = ("<command-name>", "<local-command-stdout>", "<command-message>",
-                   "<command-args>", "[SYSTEM NOTIFICATION")
+    r"<(system-reminder|task-notification|local-command-caveat|command-name"
+    r"|command-message|command-args|local-command-stdout)>.*?</\1>", re.S)
+# a message that STARTS as harness output is wholly harness-authored;
+# a marker merely embedded in user text gets its block stripped instead
+HARNESS_PREFIXES = ("<command-name>", "<local-command-stdout>", "<command-message>",
+                    "<command-args>", "<task-notification>", "<local-command-caveat>",
+                    "[SYSTEM NOTIFICATION")
 SECRET = re.compile(
     r"(sk-[A-Za-z0-9_\-]{10,}"
     r"|ghp_[A-Za-z0-9]{20,}|gho_[A-Za-z0-9]{20,}"
@@ -118,10 +122,11 @@ def redact_secrets(text):
 
 def harness_filter(text):
     """Harness content is never user speech — one concept, one owner.
-    Wholly-wrapped messages (slash-command scaffolding, system notifications)
-    are skipped outright (None); embedded tag-closed blocks are stripped in
-    place. New harness formats get added HERE, nowhere else."""
-    if any(m in text for m in HARNESS_MARKERS):
+    Messages that BEGIN as harness output (slash-command scaffolding, system
+    notifications) are skipped outright (None); tag-closed blocks embedded
+    inside genuine user text are stripped in place, preserving the user's own
+    words around them. New harness formats get added HERE, nowhere else."""
+    if text.lstrip().startswith(HARNESS_PREFIXES):
         return None
     return HARNESS_BLOCK.sub("", text)
 

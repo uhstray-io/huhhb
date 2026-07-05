@@ -81,6 +81,14 @@ skills mined from one-off requests are sprawl that dilutes recall forever).
 | structured collected knowledge | MemPalace | `/memory` flow |
 | hub skill defect affecting everyone | Honcho `skill:<name>` observation | `observe --target skill:<name>` |
 
+**Shape overrides capture type.** The capture pipeline types by phrasing, so
+a project decision stated as "we decided this repo uses uv — remember that"
+arrives as a `[preference]`. Route by what the knowledge *is*, not how it was
+captured: "we decided…", "team convention", "this repo uses…" are
+project-shaped → repo-memory (in headless mode: stage it —
+`overlay.py propose` with `{"kind": "repo-memory", "summary": …, "signal": …,
+"content": <the decision>}`), never a user conclusion or overlay.
+
 **5. Asymmetric thresholds** — cheap to patch, expensive to create:
 
 - *Patch/merge/support-file* needs **one plausible signal**. Low-bar updates

@@ -113,7 +113,13 @@ def state_lock():
     """Serialize state.json read-modify-write across concurrent hook runs —
     atomic_write only prevents torn writes, not lost updates when two
     sessions' Stop hooks race."""
-    import fcntl  # POSIX-only; Windows runs hooks via Git Bash and degrades inert
+    try:
+        import fcntl
+    except ImportError:
+        # non-POSIX (Windows): no flock — degrade to lockless, same behavior
+        # as before the lock existed; atomic_write still prevents torn files
+        yield
+        return
     ensure_dirs()
     with open(DATA_DIR / "state.lock", "w") as f:
         fcntl.flock(f, fcntl.LOCK_EX)

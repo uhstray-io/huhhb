@@ -326,6 +326,14 @@
       "category": "memory",
       "tags": ["memory", "status", "observability"],
       "version": "0.1.0"
+    },
+    {
+      "name": "evolve-skills",
+      "path": "skills/evolve-skills/SKILL.md",
+      "description": "The library lifecycle pass — audits every skill against usage telemetry, bench history, and lint debt; issues refine/merge/prune/create verdicts and distills new skills from proven successful sessions, eval-gated.",
+      "category": "memory",
+      "tags": ["memory", "lifecycle", "skills", "review", "distillation"],
+      "version": "0.1.0"
     }
   ]
 }

@@ -106,6 +106,7 @@ configured**; setup, privacy model, and purge in [docs/evolve.md](docs/evolve.md
 | `evolve` | `/evolve` | Memory protocol — recall, explicit writes, strata routing, read cost ladder |
 | `evolve-review` | `/evolve-review` | The learning pass — observations → overlay patches / repo-memory, diff + approval |
 | `evolve-status` | `/evolve-status` | Loop health — spool, deriver queue, cache age, overlay confidence |
+| `evolve-skills` | `/evolve-skills` | Library lifecycle — audit all skills, refine/merge/prune/create with evidence ([design](docs/skill-lifecycle.md)) |
 
 ### Dev Workflows
 

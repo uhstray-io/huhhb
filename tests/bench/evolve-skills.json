@@ -1,0 +1,25 @@
+{
+  "skill": "evolve-skills",
+  "budget": {"max_tokens": 120000, "max_cost_usd": 2.0, "max_duration_ms": 420000},
+  "scenarios": [
+    {
+      "id": "library-audit-verdicts",
+      "prompt": "/evolve-skills",
+      "phrasing": true,
+      "assert": "grep -qiE 'healthy|refine|merge|prune|create' result.txt && grep -qiE 'lint|bench|journal|telemetry|confidence|evidence' result.txt",
+      "judge": "The response is a skill-library lifecycle review. It must issue per-skill or per-group verdicts (healthy/refine/merge/prune/create) grounded in quoted evidence (lint codes, bench rows, usage telemetry) — penalize verdicts asserted without receipts, edits applied to hub skills directly, or invented telemetry. 'Mostly healthy' with few findings is acceptable and correct when evidence is thin."
+    }
+  ],
+  "triggers": {
+    "positive": [
+      "review the skill library",
+      "which skills need work?",
+      "audit our skills for pruning candidates"
+    ],
+    "negative": [
+      "run the learning pass",
+      "evolve status",
+      "review this PR"
+    ]
+  }
+}

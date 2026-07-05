@@ -24,6 +24,7 @@ COSTS REAL TOKENS. Requires the plugin installed from the branch under test.
 import argparse
 import hashlib
 import json
+import os
 import shutil
 import statistics
 import subprocess
@@ -145,7 +146,10 @@ def cached_baseline(skill, scenario):
         except json.JSONDecodeError:
             continue
         if (row.get("skill") == skill and row.get("scenario") == scenario["id"]
-                and row.get("prompt_hash") == want and row.get("baseline_tokens")):
+                and row.get("prompt_hash") == want and row.get("baseline_tokens")
+                # rows predating baseline_passes can't prove the baseline ever
+                # completed — re-measure instead of trusting them
+                and row.get("baseline_passes") is not None):
             return row
     return None
 

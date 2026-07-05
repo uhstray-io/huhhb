@@ -537,6 +537,28 @@ class ManifestTests(unittest.TestCase):
         mcp = json.loads((REPO / ".claude-plugin" / ".mcp.json").read_text())
         self.assertEqual(mcp["mcpServers"], pj["mcpServers"])
 
+    def test_bench_env_pinning_executes(self):
+        # regression: run_scenario's env-building used os.environ without
+        # importing os — only reachable with an "env" key, which dry-run
+        # never exercises. runs=0 executes the env line without spawning
+        # any claude session.
+        import importlib.util
+        spec = importlib.util.spec_from_file_location(
+            "skill_bench", REPO / "scripts" / "skill-bench.py")
+        sb = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(sb)
+        rows = sb.run_scenario({"prompt": "x", "assert": "true",
+                                "env": {"X": "1"}}, 0, False)
+        self.assertEqual(rows, [])
+        # cached baselines without baseline_passes must not be trusted
+        tmp = Path(tempfile.mkdtemp(prefix="bench-hist-"))
+        self.addCleanup(shutil.rmtree, tmp, True)
+        sb.HISTORY = tmp / "hist.jsonl"
+        sb.HISTORY.write_text(json.dumps({
+            "skill": "s", "scenario": "sc", "prompt_hash": sb.prompt_hash("p"),
+            "baseline_tokens": 100, "baseline_ms": 5}) + "\n")
+        self.assertIsNone(sb.cached_baseline("s", {"id": "sc", "prompt": "p"}))
+
     def test_skill_lint_gate_passes(self):
         # skill-lint is the single enforcement point for frontmatter shape
         # (S2), trigger phrasing, and body budgets — run the real gate

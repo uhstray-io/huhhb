@@ -127,7 +127,7 @@ def detection_view(text):
     text = FENCED_CODE.sub(" ", text)
     text = INLINE_CODE.sub(" ", text)
     text = QUOTED_SPAN.sub(" ", text)
-    return "\n".join(l for l in text.splitlines() if not EXAMPLE_LINE.match(l))
+    return "\n".join(line for line in text.splitlines() if not EXAMPLE_LINE.match(line))
 
 
 def _text_blocks(content):

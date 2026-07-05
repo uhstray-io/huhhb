@@ -38,6 +38,7 @@ managed setup; unconfigured machines behave as if it were not installed.
 | evolve | `/evolve` | The memory protocol — recall what evolve has learned, persist durable facts, route knowledge to the right stratum |
 | evolve-review | `/evolve-review` | The learning pass — turn captured observations into overlay-skill patches, with diffs and approval |
 | evolve-status | `/evolve-status` | Loop health — spool depth, deriver queue, cache age, overlay confidence, pending proposals |
+| evolve-skills | `/evolve-skills` | Library lifecycle pass — refine/merge/prune/create verdicts over all skills, evidence-gated |
 
 ## Dev Skills
 

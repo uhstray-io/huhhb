@@ -24,7 +24,7 @@ python3 "${CLAUDE_PLUGIN_ROOT}/scripts/evolve/overlay.py" report
   journal with few conclusions means `/evolve-review` hasn't run in a while —
   suggest it (in local mode it is the only thing that forms conclusions).
 - **spool depth > 0 across multiple sessions** — the flusher can't reach
-  Honcho. Check `~/.local/share/huhhb/evolve/flush.log` for the error;
+  Honcho. Check `flush.log` in the state dir that `status` prints;
   observations are safe (at-least-once delivery), just undelivered.
 - **cache age** — injection context is cache-first by doctrine; staleness is
   the accepted trade for zero-latency hooks. Old cache + empty spool means no

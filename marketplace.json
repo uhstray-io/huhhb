@@ -3,7 +3,7 @@
   "publisher": "uhstray-io",
   "displayName": "Uhstray Skills Hub",
   "description": "Uhstray.io's curated Claude Code skills marketplace — workflows and automation for engineering teams.",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "homepage": "https://github.com/uhstray-io/huhhb",
   "license": "MIT",
   "skills": [
@@ -325,6 +325,14 @@
       "description": "Health check for the evolve learning loop — spool depth, deriver queue, cache age, overlay confidence table, pending proposals.",
       "category": "memory",
       "tags": ["memory", "status", "observability"],
+      "version": "0.1.0"
+    },
+    {
+      "name": "evolve-skills",
+      "path": "skills/evolve-skills/SKILL.md",
+      "description": "The library lifecycle pass — audits every skill against usage telemetry, bench history, and lint debt; issues refine/merge/prune/create verdicts and distills new skills from proven successful sessions, eval-gated.",
+      "category": "memory",
+      "tags": ["memory", "lifecycle", "skills", "review", "distillation"],
       "version": "0.1.0"
     }
   ]

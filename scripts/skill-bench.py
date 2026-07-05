@@ -24,6 +24,7 @@ COSTS REAL TOKENS. Requires the plugin installed from the branch under test.
 import argparse
 import hashlib
 import json
+import os
 import shutil
 import statistics
 import subprocess
@@ -40,9 +41,16 @@ JUDGE_TEMPLATE = (
     "RUBRIC: {rubric}\nRESPONSE:\n{response}")
 
 
-def run_claude(prompt, extra=(), timeout=600):
-    cmd = ["claude", "-p", prompt, "--output-format", "json", *extra]
-    proc = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
+def _claude(prompt, output_format, extra=(), timeout=600, env_overrides=None):
+    """Single owner of claude-session invocation — both wrappers route here so
+    env pinning and flags can't drift between the assert runs and the probes."""
+    cmd = ["claude", "-p", prompt, "--output-format", output_format, *extra]
+    env = {**os.environ, **env_overrides} if env_overrides else None
+    return subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, env=env)
+
+
+def run_claude(prompt, extra=(), timeout=600, env_overrides=None):
+    proc = _claude(prompt, "json", extra, timeout, env_overrides)
     try:
         data = json.loads(proc.stdout)
     except json.JSONDecodeError:
@@ -53,9 +61,10 @@ def run_claude(prompt, extra=(), timeout=600):
 
 
 def skill_invoked(prompt, skill, timeout=600):
-    """B9/B10 probe: did this prompt auto-invoke the skill? (stream-json scan)"""
-    cmd = ["claude", "-p", prompt, "--output-format", "stream-json", "--verbose"]
-    proc = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
+    """B9/B10 probe: did this prompt auto-invoke the skill? (stream-json scan)
+    Not env-pinned: skill triggering is description-matching against the
+    installed catalog, which machine state doesn't influence."""
+    proc = _claude(prompt, "stream-json", ("--verbose",), timeout)
     for line in proc.stdout.splitlines():
         try:
             event = json.loads(line)
@@ -75,7 +84,13 @@ def run_scenario(scenario, runs, baseline):
         workdir = Path(tempfile.mkdtemp(prefix="skill-bench-"))
         try:
             extra = ["--disallowedTools", "Skill"] if baseline else []
-            data = run_claude(scenario["prompt"], extra)
+            # scenario "env" pins machine state (e.g. XDG dirs) so asserts
+            # don't depend on what the bench host happens to have configured;
+            # {workdir} expands per-run so pinned paths are never shared or
+            # pre-seedable on multi-user hosts
+            env_overrides = {k: v.replace("{workdir}", str(workdir))
+                             for k, v in scenario.get("env", {}).items()} or None
+            data = run_claude(scenario["prompt"], extra, env_overrides=env_overrides)
             (workdir / "result.txt").write_text(str(data.get("result", "")))
             check = subprocess.run(["sh", "-c", scenario["assert"]], cwd=workdir,
                                    capture_output=True, timeout=60)
@@ -142,7 +157,10 @@ def cached_baseline(skill, scenario):
         except json.JSONDecodeError:
             continue
         if (row.get("skill") == skill and row.get("scenario") == scenario["id"]
-                and row.get("prompt_hash") == want and row.get("baseline_tokens")):
+                and row.get("prompt_hash") == want and row.get("baseline_tokens")
+                # rows predating baseline_passes can't prove the baseline ever
+                # completed — re-measure instead of trusting them
+                and row.get("baseline_passes") is not None):
             return row
     return None
 
@@ -168,11 +186,13 @@ def bench_skill(spec, runs, dry_run, record=True, rebaseline=False):
         cached = None if rebaseline else cached_baseline(spec["skill"], scenario)
         if cached:
             bt, bd, bn = cached["baseline_tokens"], cached["baseline_ms"], cached.get("baseline_turns") or 0
+            base_pass = cached["baseline_passes"]  # cached_baseline guarantees presence
             print(f"  INFO baseline reused from history ({cached['ts']}) — --rebaseline to re-measure")
         else:
             base = run_scenario(scenario, max(1, runs - 1), baseline=True)
             bt, bd, bn = med(base, "tokens"), med(base, "duration_ms"), med(base, "turns")
-            print(f"  INFO baseline completion: {sum(r['pass'] for r in base)}/{len(base)} — "
+            base_pass = sum(r["pass"] for r in base)
+            print(f"  INFO baseline completion: {base_pass}/{len(base)} — "
                   "skill must beat or match this to earn its tokens")
 
         passes = sum(r["pass"] for r in skilled)
@@ -192,12 +212,18 @@ def bench_skill(spec, runs, dry_run, record=True, rebaseline=False):
             gate(sid, "B6 wall time", dur <= budget["max_duration_ms"], f"{dur:.0f}ms median")
         print(f"  INFO B7 reasoning: {api:.0f}ms api of {dur:.0f}ms wall")
 
-        if bt:
-            gate(sid, "B4 vs baseline", tokens <= bt * RATIO_TOKENS, f"{tokens} vs {bt} (<= {RATIO_TOKENS}x)")
-        if bd:
-            gate(sid, "B6 vs baseline", dur <= bd * RATIO_TIME, f"{dur:.0f} vs {bd:.0f}ms")
-        if bn:
-            gate(sid, "B8 turns", turns <= bn * RATIO_TURNS, f"{turns} vs {bn}")
+        if base_pass == 0:
+            # a baseline that completed nothing spent tokens on failing —
+            # ratio comparisons against it would penalize the skill for
+            # doing the actual work
+            print("  INFO baseline never completed the task — ratio gates skipped")
+        else:
+            if bt:
+                gate(sid, "B4 vs baseline", tokens <= bt * RATIO_TOKENS, f"{tokens} vs {bt} (<= {RATIO_TOKENS}x)")
+            if bd:
+                gate(sid, "B6 vs baseline", dur <= bd * RATIO_TIME, f"{dur:.0f} vs {bd:.0f}ms")
+            if bn:
+                gate(sid, "B8 turns", turns <= bn * RATIO_TURNS, f"{turns} vs {bn}")
 
         judge_score = None
         if scenario.get("judge") and skilled:
@@ -213,7 +239,7 @@ def bench_skill(spec, runs, dry_run, record=True, rebaseline=False):
                 "tokens": tokens, "cost": cost, "duration_ms": dur,
                 "api_ms": api, "turns": turns,
                 "baseline_tokens": bt, "baseline_ms": bd, "baseline_turns": bn,
-                "verdicts": scoped(sid),
+                "baseline_passes": base_pass, "verdicts": scoped(sid),
             })
 
     triggers = spec.get("triggers", {})

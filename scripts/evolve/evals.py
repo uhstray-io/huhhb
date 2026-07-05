@@ -14,6 +14,12 @@ never touched.
 Pass bar (plan §7): artifact assertions 3/3, phrasing-sensitive ones 2/3.
 Without --with-claude, review-dependent assertions are reported MANUAL with
 the exact command to run.
+
+CAVEAT: --with-claude drives `claude -p "/evolve-review"`, which loads the
+INSTALLED plugin's skill — not this working tree. Skill-prose changes must be
+released and installed before these evals can verify them; script changes
+(this repo's scripts/evolve/*) ARE exercised directly. Set EVOLVE_EVAL_KEEP=1
+to keep sandboxes for post-mortem.
 """
 
 import argparse
@@ -94,6 +100,9 @@ class Sandbox:
         return self.run("honcho_client.py", "query", *args).stdout
 
     def cleanup(self):
+        if os.environ.get("EVOLVE_EVAL_KEEP"):
+            print(f"  (sandbox kept for diagnosis: {self.root})")
+            return
         shutil.rmtree(self.root, ignore_errors=True)
 
 

@@ -35,6 +35,15 @@ UNREACHABLE = "http://127.0.0.1:9"  # discard port — connection refused instan
 HOOK_BUDGET_SECS = 1.0              # §9: hooks must finish <1s with network blackholed
 
 
+def _load_skill_bench():
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(
+        "skill_bench", REPO / "scripts" / "skill-bench.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
 def obs_from(turns):
     lines = [json.dumps(t) for t in turns]
     return digest.anti_capture(digest.detect(digest.iter_events(lines)))
@@ -142,9 +151,21 @@ class DetectorTests(unittest.TestCase):
         for text in ("stop explaining before the diff",
                      "don't add a summary section",
                      "that's not what I asked for",
-                     "you always over-comment the code"):
+                     "you always over-comment the code",
+                     # e-dropping gerunds — use+ing != using; each verb lists real forms
+                     "stop using emoji",
+                     "stop writing summaries",
+                     "stop making assumptions",
+                     "stop creating extra files"):
             obs = obs_from([turn_user(text)])
             self.assertTrue(any(o["type"] == "correction" for o in obs), text)
+
+    def test_gerund_correction_attributes_skill_outcome(self):
+        # the downstream cascade: a missed correction silently misattributes
+        # skill outcome as 'used' instead of 'partial'
+        obs = obs_from([turn_skill("caveman"), turn_user("stop using emoji in headings")])
+        self.assertTrue(any(o.get("skill") == "caveman" and o["outcome"] == "partial"
+                            for o in obs))
 
     def test_benign_phrases_not_corrections(self):
         for text in ("don't worry about the tests for now",
@@ -207,12 +228,68 @@ class DetectorTests(unittest.TestCase):
         self.assertNotIn("sk-abcdef", text)
         self.assertIn("[redacted]", text)
 
+    def test_pasted_document_examples_not_captured(self):
+        # verified in the wild: the evolve build plan, pasted as a user
+        # message, journaled false corrections/preferences from its own
+        # example phrases. Quoted spans, bracket-tagged example lines,
+        # blockquotes, and code fences are not live user signal.
+        doc = "\n".join([
+            "# some design plan",
+            '[correction]   user:<id> — "stop explaining before the diff" — style correction, first-class signal.',
+            '[preference]  user:<id> — Prefers conventional commits with no emoji.',
+            'an explicit "remember this", repetition >=2, or correction of agent behavior',
+            'session A: user states "always use conventional commits, no emoji"',
+            "> never use pip in this repo, the doc said",
+            "```",
+            "always use uv for python deps",
+            "```",
+        ])
+        self.assertEqual(obs_from([turn_user(doc)]), [],
+                         "quoted examples in pasted documents must not be captured")
+
+    def test_quoted_reported_speech_not_a_correction(self):
+        obs = obs_from([turn_user('the old doc says "stop explaining before the diff" somewhere')])
+        self.assertFalse(any(o["type"] == "correction" for o in obs))
+
+    def test_genuine_signal_survives_detection_view(self):
+        # quotes INSIDE a real correction must not suppress it
+        obs = obs_from([turn_user('stop adding "verification" sections to my plans')])
+        self.assertTrue(any(o["type"] == "correction" for o in obs))
+        obs = obs_from([turn_user("remember this: I review PRs on Fridays")])
+        self.assertTrue(any(o["type"] == "preference" and o["explicit"] for o in obs))
+
     def test_system_reminder_stripped_and_wrappers_skipped(self):
         obs = obs_from([
             turn_user("<system-reminder>always use tabs</system-reminder>ok continue"),
             turn_user("<command-name>/caveman</command-name>"),
         ])
         self.assertEqual(obs, [])
+
+    def test_harness_notification_blocks_produce_nothing(self):
+        # verified in the wild: a task-notification block was journaled as a
+        # [correction] on v0.5.0 — every harness block type must yield zero
+        obs = obs_from([
+            turn_user("<task-notification><task-id>x</task-id><summary>stop "
+                      "using the old API, never use it again</summary>"
+                      "</task-notification>"),
+            turn_user("[SYSTEM NOTIFICATION - NOT USER INPUT]\nremember this: "
+                      "always use the fallback"),
+            turn_user("<local-command-caveat>don't add attribution"
+                      "</local-command-caveat>"),
+            turn_user("<command-args>never use pip</command-args>"),
+        ])
+        self.assertEqual(obs, [])
+
+    def test_embedded_harness_block_stripped_not_dropped(self):
+        # a marker inside genuine user text must not discard the message —
+        # the block is stripped, the user's own words still capture
+        obs = obs_from([turn_user(
+            "always use uv for python deps <task-notification><summary>stop "
+            "using the old API</summary></task-notification> please")])
+        self.assertTrue(any(o["type"] == "preference" for o in obs),
+                        "real user signal around a harness block must survive")
+        self.assertFalse(any(o["type"] == "correction" for o in obs),
+                         "text inside the harness block must not fire")
 
 
 # ---------------------------------------------------------------- C-07/08
@@ -504,6 +581,29 @@ class ManifestTests(unittest.TestCase):
     def test_no_honcho_source_vendored(self):
         hits = [p for p in REPO.rglob("honcho/__init__.py") if ".venv" not in p.parts]
         self.assertEqual(hits, [], "AGPL honcho must be imported, never vendored (D13)")
+
+
+class BenchTests(unittest.TestCase):
+    def test_env_pinning_and_os_import(self):
+        # regression: env-building used os.environ without importing os —
+        # dry-run never reaches it, so guard the import explicitly and smoke
+        # the runs=0 path (no claude sessions spawned)
+        sb = _load_skill_bench()
+        self.assertTrue(hasattr(sb, "os"), "skill-bench must import os")
+        rows = sb.run_scenario({"prompt": "x", "assert": "true",
+                                "env": {"X": "1"}}, 0, False)
+        self.assertEqual(rows, [])
+
+    def test_cached_baseline_requires_baseline_passes(self):
+        # rows predating the field can't prove the baseline ever completed
+        sb = _load_skill_bench()
+        tmp = Path(tempfile.mkdtemp(prefix="bench-hist-"))
+        self.addCleanup(shutil.rmtree, tmp, True)
+        sb.HISTORY = tmp / "hist.jsonl"
+        sb.HISTORY.write_text(json.dumps({
+            "skill": "s", "scenario": "sc", "prompt_hash": sb.prompt_hash("p"),
+            "baseline_tokens": 100, "baseline_ms": 5}) + "\n")
+        self.assertIsNone(sb.cached_baseline("s", {"id": "sc", "prompt": "p"}))
 
 
 # ---------------------------------------------------------------- C-16

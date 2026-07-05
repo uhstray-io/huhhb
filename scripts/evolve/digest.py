@@ -46,8 +46,22 @@ SNIPPET_MAX = 200
 CORRECTION_WINDOW = 3  # user turns after a skill invocation that still implicate it
 
 # Sanitizer -------------------------------------------------------------
-SYSTEM_REMINDER = re.compile(r"<system-reminder>.*?</system-reminder>", re.S)
-HARNESS_MARKERS = ("<command-name>", "<local-command-stdout>", "<command-message>")
+# Harness-injected content is never user speech. Tag-closed blocks are
+# stripped in place (verified in the wild: a <task-notification> block was
+# captured as a [correction] before this list included it); wrapper markers
+# cause the whole message to be skipped (slash-command scaffolding).
+# Known limitation: a session that WRITES test fixtures (e.g. a heredoc
+# containing 'command not found: x' followed by an install command) is
+# indistinguishable from a real failure+fix and will be captured — dev
+# sessions on this repo itself are pathological input.
+HARNESS_BLOCK = re.compile(
+    r"<(system-reminder|task-notification|local-command-caveat|command-name"
+    r"|command-message|command-args|local-command-stdout)>.*?</\1>", re.S)
+# a message that STARTS as harness output is wholly harness-authored;
+# a marker merely embedded in user text gets its block stripped instead
+HARNESS_PREFIXES = ("<command-name>", "<local-command-stdout>", "<command-message>",
+                    "<command-args>", "<task-notification>", "<local-command-caveat>",
+                    "[SYSTEM NOTIFICATION")
 SECRET = re.compile(
     r"(sk-[A-Za-z0-9_\-]{10,}"
     r"|ghp_[A-Za-z0-9]{20,}|gho_[A-Za-z0-9]{20,}"
@@ -63,9 +77,13 @@ SECRET = re.compile(
 REMEMBER = re.compile(r"\bremember (?:this|that)\b", re.I)
 PREFERENCE = re.compile(
     r"\b(?:always use|never use|i prefer|from now on|going forward, use)\b", re.I)
+# per-verb gerund forms: e-dropping verbs (use->using) can't be matched by a
+# bare (?:ing)? suffix, so each verb lists its real inflections
 CORRECTION = re.compile(
     r"(?:\b(?:don'?t|do not|stop|never|quit) "
-    r"(?:do|use|add|write|explain|include|put|make|create|mention|say)(?:ing)?\b"
+    r"(?:do(?:ing)?|us(?:e|ing)|add(?:ing)?|writ(?:e|ing)|explain(?:ing)?"
+    r"|includ(?:e|ing)|putt?(?:ing)?|mak(?:e|ing)|creat(?:e|ing)"
+    r"|mention(?:ing)?|say(?:ing)?)\b"
     r"|\bnot what i asked\b|\bi asked for\b|\byou always\b|^actually[ ,])",
     re.I,
 )
@@ -79,6 +97,17 @@ INSTALL_CMD = re.compile(
     r"\b(?:brew|apt|apt-get|dnf|yum|pacman|pip3?|uv|npm|pnpm|yarn|cargo|go|gem)\b"
     r"[^\n;|&]*\b(?:install|add|tool install|i)\b", re.I)
 
+# Detection view — what the detectors are allowed to see. Pasted documents
+# quote example phrases ("stop explaining before the diff", 'an explicit
+# "remember this"') that must not masquerade as live user signal, so before
+# detection we drop fenced/inline code, double-quoted spans, blockquote lines,
+# and bracket-tagged observation examples. Snippets still come from the
+# original text — this view exists only to decide WHETHER something fired.
+FENCED_CODE = re.compile(r"```.*?```", re.S)
+INLINE_CODE = re.compile(r"`[^`\n]*`")
+QUOTED_SPAN = re.compile(r"\"[^\"\n]{0,300}\"|“[^”\n]{0,300}”")
+EXAMPLE_LINE = re.compile(r"\s*(?:>|\[[a-zA-Z-]+\])")  # used with .match()
+
 # Anti-capture gate — applied to every observation before spooling.
 NEGATIVE_CAPABILITY = re.compile(
     r"(is broken|can'?t use|cannot use|doesn'?t work|does not work"
@@ -87,15 +116,31 @@ FIX_PHRASED = re.compile(
     r"(fixed by|installed|resolved by|works after|instead use|use .{1,60} instead|workaround)", re.I)
 
 
-def sanitize(text):
-    text = SYSTEM_REMINDER.sub("", text)
-    text = SECRET.sub("[redacted]", text)
-    return text.strip()
+def redact_secrets(text):
+    return SECRET.sub("[redacted]", text).strip()
+
+
+def harness_filter(text):
+    """Harness content is never user speech — one concept, one owner.
+    Messages that BEGIN as harness output (slash-command scaffolding, system
+    notifications) are skipped outright (None); tag-closed blocks embedded
+    inside genuine user text are stripped in place, preserving the user's own
+    words around them. New harness formats get added HERE, nowhere else."""
+    if text.lstrip().startswith(HARNESS_PREFIXES):
+        return None
+    return HARNESS_BLOCK.sub("", text)
 
 
 def snippet(text, limit=SNIPPET_MAX):
     text = " ".join(text.split())
     return text if len(text) <= limit else text[: limit - 1] + "…"
+
+
+def detection_view(text):
+    text = FENCED_CODE.sub(" ", text)
+    text = INLINE_CODE.sub(" ", text)
+    text = QUOTED_SPAN.sub(" ", text)
+    return "\n".join(line for line in text.splitlines() if not EXAMPLE_LINE.match(line))
 
 
 def _text_blocks(content):
@@ -120,9 +165,10 @@ def iter_events(lines):
         content = msg.get("content")
         if rec.get("type") == "user" and not rec.get("isMeta"):
             for text in _text_blocks(content):
-                if any(m in text for m in HARNESS_MARKERS):
+                text = harness_filter(text)
+                if text is None:
                     continue  # harness-injected, not the user speaking
-                text = sanitize(text)
+                text = redact_secrets(text)
                 if text:
                     yield "user_text", text
             if isinstance(content, list):
@@ -167,19 +213,20 @@ def detect(events):
         elif kind == "bash_cmd":
             if INSTALL_CMD.search(payload):
                 for cmd in [c for c in missing_cmds if c in payload]:
-                    # sanitize: install commands can carry inline credentials
+                    # redact: install commands can carry inline credentials
                     # (--index-url https://user:token@...) and this observation
                     # leaves the machine when a remote Honcho is configured
                     emit({
                         "type": "environment", "target": "agent",
                         "content": f"[environment] os={platform.system().lower()} — "
-                                   f"'{cmd}' was missing; fixed by `{snippet(sanitize(payload), 120)}`.",
+                                   f"'{cmd}' was missing; fixed by `{snippet(redact_secrets(payload), 120)}`.",
                     })
                     del missing_cmds[cmd]
         elif kind == "user_text":
-            corrected = CORRECTION.search(payload)
-            explicit = REMEMBER.search(payload)
-            if explicit or PREFERENCE.search(payload):
+            view = detection_view(payload)
+            corrected = CORRECTION.search(view)
+            explicit = REMEMBER.search(view)
+            if explicit or PREFERENCE.search(view):
                 emit({
                     "type": "preference", "target": "user",
                     "explicit": bool(explicit),

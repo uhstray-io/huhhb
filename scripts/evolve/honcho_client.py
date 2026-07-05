@@ -412,6 +412,7 @@ def cmd_status(_args):
     state = load_state()
     print(f"config source : {cfg['source']}  ({CONFIG_PATH if cfg['source'] == 'file' else 'env vars' if cfg['source'] == 'env' else 'unconfigured — suite inert'})")
     print(f"mode          : {cfg['mode']}")
+    print(f"state dir     : {DATA_DIR}")
     if cfg["mode"] == "local":
         n_journal = len(journal_entries())
         n_concl = (len([l for l in CONCLUSIONS_PATH.read_text().splitlines()

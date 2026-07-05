@@ -7,8 +7,8 @@
       "prompt": "/evolve-status",
       "phrasing": true,
       "env": {
-        "XDG_CONFIG_HOME": "/tmp/skill-bench-noconfig",
-        "XDG_DATA_HOME": "/tmp/skill-bench-nodata",
+        "XDG_CONFIG_HOME": "{workdir}/xdg-config",
+        "XDG_DATA_HOME": "{workdir}/xdg-data",
         "EVOLVE_MODE": ""
       },
       "assert": "grep -qiE 'inert|unconfigured|not configured' result.txt && grep -qi 'docs/evolve' result.txt",

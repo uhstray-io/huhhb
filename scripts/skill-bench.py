@@ -85,9 +85,12 @@ def run_scenario(scenario, runs, baseline):
         try:
             extra = ["--disallowedTools", "Skill"] if baseline else []
             # scenario "env" pins machine state (e.g. XDG dirs) so asserts
-            # don't depend on what the bench host happens to have configured
-            data = run_claude(scenario["prompt"], extra,
-                              env_overrides=scenario.get("env"))
+            # don't depend on what the bench host happens to have configured;
+            # {workdir} expands per-run so pinned paths are never shared or
+            # pre-seedable on multi-user hosts
+            env_overrides = {k: v.replace("{workdir}", str(workdir))
+                             for k, v in scenario.get("env", {}).items()} or None
+            data = run_claude(scenario["prompt"], extra, env_overrides=env_overrides)
             (workdir / "result.txt").write_text(str(data.get("result", "")))
             check = subprocess.run(["sh", "-c", scenario["assert"]], cwd=workdir,
                                    capture_output=True, timeout=60)

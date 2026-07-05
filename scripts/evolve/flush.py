@@ -116,15 +116,18 @@ def refresh_injection(honcho, state):
     except Exception as e:
         log(f"prefetch user block failed: {e}")
     skill_lines = []
-    agent = honcho.peer(hc.AGENT_PEER)
-    for skill in state["recent_skills"][:5]:
-        try:
-            rep = agent.representation(target=hc.skill_peer_id(skill), max_conclusions=2)
-            if rep and rep.strip():
-                first = " ".join(rep.strip().split())[:SKILL_LINE_CHARS]
-                skill_lines.append(f"- **{skill}**: {first}")
-        except Exception as e:
-            log(f"prefetch skill {skill} failed: {e}")
+    try:  # a skills-block failure must not discard the user block above
+        agent = honcho.peer(hc.AGENT_PEER)
+        for skill in state["recent_skills"][:5]:
+            try:
+                rep = agent.representation(target=hc.skill_peer_id(skill), max_conclusions=2)
+                if rep and rep.strip():
+                    first = " ".join(rep.strip().split())[:SKILL_LINE_CHARS]
+                    skill_lines.append(f"- **{skill}**: {first}")
+            except Exception as e:
+                log(f"prefetch skill {skill} failed: {e}")
+    except Exception as e:
+        log(f"prefetch skills block failed: {e}")
     if skill_lines:
         parts.append("## Recently used skills — the agent's own model\n" + "\n".join(skill_lines) + "\n")
     write_cache(parts)

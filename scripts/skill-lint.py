@@ -37,10 +37,11 @@ def parse_skill_md(text):
 
 def lint_entry(entry, seen_names, seen_descriptions):
     name = entry.get("name", "?")
-    path = REPO / entry.get("path", "")
+    rel = entry.get("path")
+    path = REPO / rel if rel else None
 
-    if not path.exists():                                         # S1
-        report("FAIL", name, "S1", f"missing file {entry['path']}")
+    if path is None or not path.is_file():                        # S1
+        report("FAIL", name, "S1", f"missing file {rel or '(no path in entry)'}")
         return
     if name in seen_names:                                        # S5
         report("FAIL", name, "S5", "duplicate skill name")

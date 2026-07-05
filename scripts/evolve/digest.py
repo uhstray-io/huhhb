@@ -39,7 +39,8 @@ import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from honcho_client import SPOOL_DIR, configured, ensure_dirs, load_state, now_iso, save_state
+from honcho_client import (SPOOL_DIR, configured, ensure_dirs, load_state, now_iso,
+                           save_state, state_lock)
 
 SNIPPET_MAX = 200
 CORRECTION_WINDOW = 3  # user turns after a skill invocation that still implicate it
@@ -218,6 +219,11 @@ def anti_capture(observations):
 
 
 def digest(session_id, transcript_path, cwd):
+    with state_lock():  # two sessions' Stop hooks can race on state.json
+        return _digest_locked(session_id, transcript_path, cwd)
+
+
+def _digest_locked(session_id, transcript_path, cwd):
     state = load_state()
     cursor = state["cursors"].get(session_id, 0)
     # byte-offset cursor: Stop fires after every turn, so only ever read the

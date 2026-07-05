@@ -1,6 +1,6 @@
 ---
 name: evolve-review
-description: Use to run evolve's learning pass over recent sessions — triaging captured observations into overlay patches, new overlays, repo-memory entries, or discards ("run the learning pass", "evolve review", "review session learnings", "turn recent sessions into skill updates"), or to approve proposals a headless review staged in pending/ ("approve evolve proposals", "review pending proposals"). For recalling what evolve already knows, use the evolve skill instead.
+description: Use when running evolve's learning pass over recent sessions — triaging captured observations into overlay patches, new overlays, repo-memory entries, or discards ("run the learning pass", "evolve review", "review session learnings", "turn recent sessions into skill updates") — or when approving proposals a headless review staged in pending/ ("approve evolve proposals", "review pending proposals"). For recalling what evolve already knows, use the evolve skill instead.
 ---
 
 # evolve-review — the learning pass

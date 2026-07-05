@@ -1,6 +1,6 @@
 ---
 name: evolve-status
-description: Use to inspect the health of evolve's learning loop — spool depth, deriver queue, injection-cache age, overlay confidence table, and pending proposals ("evolve status", "is evolve working", "memory loop health", "show overlay confidence", "why is my evolve context stale").
+description: Use when inspecting the health of evolve's learning loop — spool depth, deriver queue, injection-cache age, overlay confidence table, and pending proposals ("evolve status", "is evolve working", "memory loop health", "show overlay confidence", "why is my evolve context stale").
 ---
 
 # evolve-status — loop observability

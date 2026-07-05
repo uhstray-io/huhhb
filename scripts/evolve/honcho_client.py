@@ -22,6 +22,7 @@ import os
 import sys
 import time
 import uuid
+from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -77,8 +78,11 @@ def configured(cfg=None):
 
 
 def ensure_dirs():
-    for d in (SPOOL_DIR, CONTEXT_DIR, PENDING_DIR):
+    # captured session content lives here — keep it private on shared machines,
+    # same standard the config file already gets (0o600)
+    for d in (DATA_DIR, SPOOL_DIR, CONTEXT_DIR, PENDING_DIR):
         d.mkdir(parents=True, exist_ok=True)
+        os.chmod(d, 0o700)
 
 
 def load_state():
@@ -100,7 +104,23 @@ def load_state():
 def atomic_write(path, text):
     tmp = path.with_suffix(".tmp")
     tmp.write_text(text)
+    os.chmod(tmp, 0o600)
     tmp.replace(path)
+
+
+@contextmanager
+def state_lock():
+    """Serialize state.json read-modify-write across concurrent hook runs —
+    atomic_write only prevents torn writes, not lost updates when two
+    sessions' Stop hooks race."""
+    import fcntl  # POSIX-only; Windows runs hooks via Git Bash and degrades inert
+    ensure_dirs()
+    with open(DATA_DIR / "state.lock", "w") as f:
+        fcntl.flock(f, fcntl.LOCK_EX)
+        try:
+            yield
+        finally:
+            fcntl.flock(f, fcntl.LOCK_UN)
 
 
 def save_state(state):
@@ -182,7 +202,7 @@ def journal_append(data):
     for obs in data["observations"]:
         lines.append(json.dumps({"session_id": data.get("session_id"),
                                  "repo": data.get("repo"), "ts": data.get("ts"), **obs}))
-    JOURNAL_PATH.write_text("\n".join(lines[-JOURNAL_MAX_LINES:]) + "\n")
+    atomic_write(JOURNAL_PATH, "\n".join(lines[-JOURNAL_MAX_LINES:]) + "\n")
 
 
 def journal_entries():

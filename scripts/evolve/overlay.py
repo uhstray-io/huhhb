@@ -134,6 +134,7 @@ def cmd_record(args):
     meta["runs"] = meta.get("runs", 0) + 1
     if args.outcome == "success":
         meta["successes"] = meta.get("successes", 0) + 1
+        meta["last_error"] = None  # recovered — stop flagging the stale failure
     else:
         meta["last_error"] = args.error or "unspecified failure"
     if meta["status"] == "new" and meta.get("successes"):
@@ -192,7 +193,8 @@ def cmd_propose(args):
         if not proposal.get(field):
             sys.exit(f"proposal missing required field '{field}'")
     proposal["ts"] = now_iso()
-    dest = PENDING_DIR / f"{kind}-{int(time.time() * 1000)}.json"
+    # ns + pid: concurrent headless runs must never overwrite each other's proposals
+    dest = PENDING_DIR / f"{kind}-{time.time_ns()}-{os.getpid()}.json"
     dest.write_text(json.dumps(proposal, indent=2) + "\n")
     print(f"staged {dest}")
 

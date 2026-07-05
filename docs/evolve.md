@@ -6,7 +6,7 @@ setup, huhhb behaves exactly as if evolve were not installed.
 
 ## How it works
 
-```
+```text
 your session ──Stop hook──► digest (local) ──► spool ──► flusher ──► Honcho
                                                             │
 next session ◄──SessionStart hook◄── injection.md (cache) ◄─┘

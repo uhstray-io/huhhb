@@ -31,7 +31,7 @@ QUERIES = {
     # latest run worse than the one before it
     "regressions": """
         WITH h AS (SELECT *, row_number() OVER (PARTITION BY skill, scenario
-                   ORDER BY ts DESC) AS rn FROM history WHERE scenario != 'triggers')
+                   ORDER BY ts DESC) AS rn FROM history WHERE scenario != 'triggers' {where})
         SELECT a.skill, a.scenario, a.version, a.tokens, b.tokens AS prev_tokens,
                a.passes, b.passes AS prev_passes, a.judge, b.judge AS prev_judge
         FROM h a JOIN h b USING (skill, scenario)
@@ -43,7 +43,7 @@ QUERIES = {
         SELECT skill, version, min(ts) AS first_seen, count(*) AS bench_runs,
                round(avg(passes/runs), 2) AS pass_rate,
                round(avg(tokens)) AS avg_tokens, round(avg(judge), 1) AS avg_judge
-        FROM history WHERE scenario != 'triggers'
+        FROM history WHERE scenario != 'triggers' {where}
         GROUP BY skill, version ORDER BY skill, first_seen""",
 }
 

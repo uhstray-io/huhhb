@@ -39,6 +39,7 @@ import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+import guardrails
 from honcho_client import (SPOOL_DIR, configured, ensure_dirs, load_state, now_iso,
                            save_state, state_lock)
 
@@ -288,6 +289,8 @@ def _digest_locked(session_id, transcript_path, cwd):
         return 0
     new_lines = chunk.decode("utf-8", errors="replace").splitlines()
     observations = anti_capture(detect(iter_events(new_lines)))
+    for obs in observations:  # GR1: tag signal strength for recall + review
+        obs["trust"] = guardrails.assess_trust(obs)
     state["cursors"][session_id] = new_cursor
     # track skills for injection prefetch even when nothing else is captured
     seen_skills = {o["skill"] for o in observations if o.get("skill")}

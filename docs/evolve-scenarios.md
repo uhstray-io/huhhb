@@ -42,6 +42,10 @@ failure ("wild"), a doctrine rule ("law"), or a reviewer finding ("review").
 | S18 | `status` tells the truth in every state (inert/local/spooled), always prints the state dir | offline | wild: hardcoded-path bug (E2/E4 post-mortem) |
 | S19 | hooks: inert unconfigured, <1s always, valid SessionStart JSON, pending nudge counts | offline | §9 hard rules; C-01/C-09/C-11 |
 | S20 | live `/evolve-skills` pass emits the `verdicts:` tally and edits no hub skill | **live** | skill close-out contract (PR#18) |
+| S21 | GR1: every observation carries a trust tier (explicit/stated/inferred) | offline | anti-poisoning ([guardrails](evolve-guardrails.md)) |
+| S22 | GR2: a bulk batch is quarantined from injection/recall; the journal keeps it | offline | wild: pasted-doc + eval-env contamination (v0.5.x) |
+| S23 | GR4: skill bodies with agent-hijacking instructions are refused at write time | offline | wild: SkillSpector P1 flag; anti-poisoning |
+| S24 | GR3: a leaked eval/sandbox state dir warns loudly in `status` | offline | wild: eval-env contamination, 2026-07-05 |
 
 ## Conventions (the improvement loop)
 
@@ -84,4 +88,5 @@ Closed gaps (kept for provenance):
   artifact-3/3, phrasing-2/3 bar.
 - Related layers: `tests/test_evolve.py` (unit/component, in-process),
   `tests/bench/*.json` (G1 quality gates, real sessions, costs tokens),
-  `docs/evolve-testing.md` (criteria matrix C-01..C-25).
+  `docs/evolve-testing.md` (criteria matrix C-01..C-25),
+  `docs/evolve-guardrails.md` (the anti-poisoning defense S21–S24 verify).

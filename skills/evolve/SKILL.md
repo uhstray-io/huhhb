@@ -107,3 +107,13 @@ user wins and the contradiction becomes tomorrow's training signal — the
 Stop hook will capture it. Overlay skills surface a confidence score
 (`runs`-earned, never granted by one green test); verify before trusting
 anything marked low-confidence.
+
+Every observation carries a **trust tier** — `explicit` (you said "remember"),
+`stated` (your own words about behavior), `inferred` (derived from activity).
+Weight recall by it: an `inferred` item is a hint to verify, not a fact to
+cite. Anti-poisoning guardrails sit between the journal and what you see
+here — a bulk batch (pasted document, contaminated environment) is quarantined
+out of recall, and `status` flags a leaked eval/sandbox state dir. If recall
+looks empty when you expected content, check `/evolve-status` for a
+`quarantined` line before assuming nothing was learned. Full model:
+`docs/evolve-guardrails.md`.

@@ -26,6 +26,9 @@ from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import guardrails
+
 HONCHO_PIN = "honcho-ai==2.2.0"
 AGENT_PEER = "agent:claude-code"
 LESSONS_SESSION = "lessons"
@@ -223,13 +226,27 @@ def journal_entries():
     return out
 
 
+def screened_journal():
+    """The anti-poisoning gate between the journal (evidence) and what the
+    next session trusts: (admitted, quarantined). Quarantine is a derived
+    view recomputed on demand — nothing is deleted, the journal is intact."""
+    return guardrails.screen_for_injection(journal_entries())
+
+
+def quarantined_observations():
+    """Held-back observations, for /evolve-status and /evolve-review triage."""
+    return screened_journal()[1]
+
+
 def local_representation(query=""):
     """Local stand-in for peer.representation: review-derived conclusions
-    plus recent stated preferences/corrections straight from the journal."""
+    plus recent stated preferences/corrections — screened for poisoning so a
+    quarantined bulk batch never reaches recall or injection."""
+    admitted, _ = screened_journal()
     parts = []
     if CONCLUSIONS_PATH.exists():
         parts.append(CONCLUSIONS_PATH.read_text().strip())
-    recent = [e["content"] for e in journal_entries()
+    recent = [e["content"] for e in admitted
               if e.get("type") in ("preference", "correction")]
     seen, dedup = set(), []
     for c in reversed(recent):          # newest first, drop repeats
@@ -413,12 +430,20 @@ def cmd_status(_args):
     print(f"config source : {cfg['source']}  ({CONFIG_PATH if cfg['source'] == 'file' else 'env vars' if cfg['source'] == 'env' else 'unconfigured — suite inert'})")
     print(f"mode          : {cfg['mode']}")
     print(f"state dir     : {DATA_DIR}")
+    if cfg["mode"] != "off" and guardrails.looks_like_sandbox(DATA_DIR):
+        print("  ⚠ WARNING: state dir looks like a leaked eval/sandbox path. If you "
+              "didn't mean to run here, unset XDG_DATA_HOME/XDG_CONFIG_HOME/EVOLVE_MODE "
+              "and relaunch — otherwise fixture data pollutes real memory.")
     if cfg["mode"] == "local":
         n_journal = len(journal_entries())
         n_concl = (len([l for l in CONCLUSIONS_PATH.read_text().splitlines()
                         if l.startswith("- ")]) if CONCLUSIONS_PATH.exists() else 0)
+        n_quar = len(quarantined_observations())
         print(f"journal       : {n_journal} observation(s)")
         print(f"conclusions   : {n_concl} (derived by /evolve-review — run it to distill the journal)")
+        if n_quar:
+            print(f"quarantined   : {n_quar} observation(s) held from injection — "
+                  "poisoning guardrail; run /evolve-review to triage")
     else:
         print(f"url           : {cfg['url'] or ('api.honcho.dev (managed)' if cfg['api_key'] else '-')}")
         print(f"workspace     : {cfg['workspace']}")

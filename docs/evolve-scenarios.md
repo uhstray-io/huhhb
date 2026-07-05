@@ -28,7 +28,7 @@ failure ("wild"), a doctrine rule ("law"), or a reviewer finding ("review").
 | S04 | project decisions route to repo-memory, not overlays/conclusions | offline + live half | plan §7 E4; wild: routed-by-capture-type miss (v0.5.0) |
 | S05 | e-dropping gerunds ("stop using") detected; outcome cascades to `partial` | offline | wild: missed live on v0.5.0 |
 | S06 | pasted documents quoting example phrases capture nothing | offline | wild: build plan journaled its own examples (v0.5.0) |
-| S07 | harness blocks are never user speech; **`ci-monitor-event` probe is a known gap (`:xfail`)** | offline | wild: task-notification captured as correction (v0.5.0); gap: journal idx 14, 2026-07-05 |
+| S07 | harness blocks are never user speech, including `ci-monitor-event` | offline | wild: task-notification captured as correction (v0.5.0); ci-monitor-event: journal idx 14, 2026-07-05, fixed same day |
 | S08 | markers embedded in genuine text strip their block; user's words survive | offline | review: CodeRabbit PR#18 |
 | S09 | secrets redacted in every artifact (journal + injection), incl. install commands | offline | wild: MEDIUM security finding (v0.5.0 review) |
 | S10 | benign phrasing near detector vocabulary captures nothing | offline | law: capture purity beats volume |
@@ -66,7 +66,13 @@ failure ("wild"), a doctrine rule ("law"), or a reviewer finding ("review").
 
 | Gap | Scenario | Since | Fix tracked |
 |---|---|---|---|
-| `<ci-monitor-event>` blocks not in digest's harness strip list — captured as a false `[correction]` in live state | S07 `ci_monitor_event_blocked:xfail` | 2026-07-05 (journal idx 14) | evolve-skills pass R1 verdict |
+| _none currently_ | | | |
+
+Closed gaps (kept for provenance):
+
+| Gap | Scenario | Since | Fixed |
+|---|---|---|---|
+| `<ci-monitor-event>` blocks not in digest's harness strip list — captured as a false `[correction]` in live state | S07 `ci_monitor_event_blocked` (promoted from `:xfail`) | 2026-07-05 (journal idx 14) | 2026-07-05, evolve-skills pass R2 |
 
 ### Caveats
 

@@ -56,12 +56,12 @@ CORRECTION_WINDOW = 3  # user turns after a skill invocation that still implicat
 # sessions on this repo itself are pathological input.
 HARNESS_BLOCK = re.compile(
     r"<(system-reminder|task-notification|local-command-caveat|command-name"
-    r"|command-message|command-args|local-command-stdout)>.*?</\1>", re.S)
+    r"|command-message|command-args|local-command-stdout|ci-monitor-event)>.*?</\1>", re.S)
 # a message that STARTS as harness output is wholly harness-authored;
 # a marker merely embedded in user text gets its block stripped instead
 HARNESS_PREFIXES = ("<command-name>", "<local-command-stdout>", "<command-message>",
                     "<command-args>", "<task-notification>", "<local-command-caveat>",
-                    "[SYSTEM NOTIFICATION")
+                    "<ci-monitor-event>", "[SYSTEM NOTIFICATION")
 SECRET = re.compile(
     r"(sk-[A-Za-z0-9_\-]{10,}"
     r"|ghp_[A-Za-z0-9]{20,}|gho_[A-Za-z0-9]{20,}"

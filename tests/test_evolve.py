@@ -142,9 +142,21 @@ class DetectorTests(unittest.TestCase):
         for text in ("stop explaining before the diff",
                      "don't add a summary section",
                      "that's not what I asked for",
-                     "you always over-comment the code"):
+                     "you always over-comment the code",
+                     # e-dropping gerunds — use+ing != using; each verb lists real forms
+                     "stop using emoji",
+                     "stop writing summaries",
+                     "stop making assumptions",
+                     "stop creating extra files"):
             obs = obs_from([turn_user(text)])
             self.assertTrue(any(o["type"] == "correction" for o in obs), text)
+
+    def test_gerund_correction_attributes_skill_outcome(self):
+        # the downstream cascade: a missed correction silently misattributes
+        # skill outcome as 'used' instead of 'partial'
+        obs = obs_from([turn_skill("caveman"), turn_user("stop using emoji in headings")])
+        self.assertTrue(any(o.get("skill") == "caveman" and o["outcome"] == "partial"
+                            for o in obs))
 
     def test_benign_phrases_not_corrections(self):
         for text in ("don't worry about the tests for now",

@@ -63,9 +63,13 @@ SECRET = re.compile(
 REMEMBER = re.compile(r"\bremember (?:this|that)\b", re.I)
 PREFERENCE = re.compile(
     r"\b(?:always use|never use|i prefer|from now on|going forward, use)\b", re.I)
+# per-verb gerund forms: e-dropping verbs (use->using) can't be matched by a
+# bare (?:ing)? suffix, so each verb lists its real inflections
 CORRECTION = re.compile(
     r"(?:\b(?:don'?t|do not|stop|never|quit) "
-    r"(?:do|use|add|write|explain|include|put|make|create|mention|say)(?:ing)?\b"
+    r"(?:do(?:ing)?|us(?:e|ing)|add(?:ing)?|writ(?:e|ing)|explain(?:ing)?"
+    r"|includ(?:e|ing)|putt?(?:ing)?|mak(?:e|ing)|creat(?:e|ing)"
+    r"|mention(?:ing)?|say(?:ing)?)\b"
     r"|\bnot what i asked\b|\bi asked for\b|\byou always\b|^actually[ ,])",
     re.I,
 )

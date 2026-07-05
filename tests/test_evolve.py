@@ -256,6 +256,21 @@ class DetectorTests(unittest.TestCase):
         ])
         self.assertEqual(obs, [])
 
+    def test_harness_notification_blocks_produce_nothing(self):
+        # verified in the wild: a task-notification block was journaled as a
+        # [correction] on v0.5.0 — every harness block type must yield zero
+        obs = obs_from([
+            turn_user("<task-notification><task-id>x</task-id><summary>stop "
+                      "using the old API, never use it again</summary>"
+                      "</task-notification>"),
+            turn_user("[SYSTEM NOTIFICATION - NOT USER INPUT]\nremember this: "
+                      "always use the fallback"),
+            turn_user("<local-command-caveat>don't add attribution"
+                      "</local-command-caveat>"),
+            turn_user("<command-args>never use pip</command-args>"),
+        ])
+        self.assertEqual(obs, [])
+
 
 # ---------------------------------------------------------------- C-07/08
 

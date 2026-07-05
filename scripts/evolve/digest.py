@@ -46,8 +46,18 @@ SNIPPET_MAX = 200
 CORRECTION_WINDOW = 3  # user turns after a skill invocation that still implicate it
 
 # Sanitizer -------------------------------------------------------------
-SYSTEM_REMINDER = re.compile(r"<system-reminder>.*?</system-reminder>", re.S)
-HARNESS_MARKERS = ("<command-name>", "<local-command-stdout>", "<command-message>")
+# Harness-injected content is never user speech. Tag-closed blocks are
+# stripped in place (verified in the wild: a <task-notification> block was
+# captured as a [correction] before this list included it); wrapper markers
+# cause the whole message to be skipped (slash-command scaffolding).
+# Known limitation: a session that WRITES test fixtures (e.g. a heredoc
+# containing 'command not found: x' followed by an install command) is
+# indistinguishable from a real failure+fix and will be captured — dev
+# sessions on this repo itself are pathological input.
+HARNESS_BLOCK = re.compile(
+    r"<(system-reminder|task-notification|local-command-caveat)>.*?</\1>", re.S)
+HARNESS_MARKERS = ("<command-name>", "<local-command-stdout>", "<command-message>",
+                   "<command-args>", "[SYSTEM NOTIFICATION")
 SECRET = re.compile(
     r"(sk-[A-Za-z0-9_\-]{10,}"
     r"|ghp_[A-Za-z0-9]{20,}|gho_[A-Za-z0-9]{20,}"
@@ -103,7 +113,7 @@ FIX_PHRASED = re.compile(
 
 
 def sanitize(text):
-    text = SYSTEM_REMINDER.sub("", text)
+    text = HARNESS_BLOCK.sub("", text)
     text = SECRET.sub("[redacted]", text)
     return text.strip()
 

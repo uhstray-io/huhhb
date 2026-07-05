@@ -79,6 +79,17 @@ INSTALL_CMD = re.compile(
     r"\b(?:brew|apt|apt-get|dnf|yum|pacman|pip3?|uv|npm|pnpm|yarn|cargo|go|gem)\b"
     r"[^\n;|&]*\b(?:install|add|tool install|i)\b", re.I)
 
+# Detection view — what the detectors are allowed to see. Pasted documents
+# quote example phrases ("stop explaining before the diff", 'an explicit
+# "remember this"') that must not masquerade as live user signal, so before
+# detection we drop fenced/inline code, double-quoted spans, blockquote lines,
+# and bracket-tagged observation examples. Snippets still come from the
+# original text — this view exists only to decide WHETHER something fired.
+FENCED_CODE = re.compile(r"```.*?```", re.S)
+INLINE_CODE = re.compile(r"`[^`\n]*`")
+QUOTED_SPAN = re.compile(r"\"[^\"\n]{0,300}\"|“[^”\n]{0,300}”")
+EXAMPLE_LINE = re.compile(r"^\s*(?:>|\[[a-z-]+\])", re.I)
+
 # Anti-capture gate — applied to every observation before spooling.
 NEGATIVE_CAPABILITY = re.compile(
     r"(is broken|can'?t use|cannot use|doesn'?t work|does not work"
@@ -96,6 +107,13 @@ def sanitize(text):
 def snippet(text, limit=SNIPPET_MAX):
     text = " ".join(text.split())
     return text if len(text) <= limit else text[: limit - 1] + "…"
+
+
+def detection_view(text):
+    text = FENCED_CODE.sub(" ", text)
+    text = INLINE_CODE.sub(" ", text)
+    text = QUOTED_SPAN.sub(" ", text)
+    return "\n".join(l for l in text.splitlines() if not EXAMPLE_LINE.match(l))
 
 
 def _text_blocks(content):
@@ -177,9 +195,10 @@ def detect(events):
                     })
                     del missing_cmds[cmd]
         elif kind == "user_text":
-            corrected = CORRECTION.search(payload)
-            explicit = REMEMBER.search(payload)
-            if explicit or PREFERENCE.search(payload):
+            view = detection_view(payload)
+            corrected = CORRECTION.search(view)
+            explicit = REMEMBER.search(view)
+            if explicit or PREFERENCE.search(view):
                 emit({
                     "type": "preference", "target": "user",
                     "explicit": bool(explicit),

@@ -207,6 +207,36 @@ class DetectorTests(unittest.TestCase):
         self.assertNotIn("sk-abcdef", text)
         self.assertIn("[redacted]", text)
 
+    def test_pasted_document_examples_not_captured(self):
+        # verified in the wild: the evolve build plan, pasted as a user
+        # message, journaled false corrections/preferences from its own
+        # example phrases. Quoted spans, bracket-tagged example lines,
+        # blockquotes, and code fences are not live user signal.
+        doc = "\n".join([
+            "# some design plan",
+            '[correction]   user:<id> — "stop explaining before the diff" — style correction, first-class signal.',
+            '[preference]  user:<id> — Prefers conventional commits with no emoji.',
+            'an explicit "remember this", repetition >=2, or correction of agent behavior',
+            'session A: user states "always use conventional commits, no emoji"',
+            "> never use pip in this repo, the doc said",
+            "```",
+            "always use uv for python deps",
+            "```",
+        ])
+        self.assertEqual(obs_from([turn_user(doc)]), [],
+                         "quoted examples in pasted documents must not be captured")
+
+    def test_quoted_reported_speech_not_a_correction(self):
+        obs = obs_from([turn_user('the old doc says "stop explaining before the diff" somewhere')])
+        self.assertFalse(any(o["type"] == "correction" for o in obs))
+
+    def test_genuine_signal_survives_detection_view(self):
+        # quotes INSIDE a real correction must not suppress it
+        obs = obs_from([turn_user('stop adding "verification" sections to my plans')])
+        self.assertTrue(any(o["type"] == "correction" for o in obs))
+        obs = obs_from([turn_user("remember this: I review PRs on Fridays")])
+        self.assertTrue(any(o["type"] == "preference" and o["explicit"] for o in obs))
+
     def test_system_reminder_stripped_and_wrappers_skipped(self):
         obs = obs_from([
             turn_user("<system-reminder>always use tabs</system-reminder>ok continue"),

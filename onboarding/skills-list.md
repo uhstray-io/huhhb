@@ -1,10 +1,6 @@
 ---
 name: huhhb-skills
-description: List all available huhhb skills with descriptions and usage
-triggers:
-  - list huhhb skills
-  - what skills are available
-  - show me huhhb skills
+description: List all available huhhb skills with descriptions and usage — use when the user asks to "list huhhb skills", "what skills are available", or "show me huhhb skills".
 ---
 
 # huhhb Skills
@@ -30,6 +26,18 @@ Powered by [MemPalace](https://github.com/mempalace/mempalace). Requires `uv too
 | memory-mine | `/memory-mine` | Ingest a project directory or text into the nexus |
 | memory-status | `/memory-status` | Nexus stats — drawer count, wings, rooms |
 | repo-memory | `/repo-memory` | Repo-local memory in `.claude/memory/` — committed to git, no external service |
+
+## Self-Learning (evolve)
+
+Cross-session learning backed by [Honcho](https://honcho.dev). **Off until
+configured** — see [docs/evolve.md](../docs/evolve.md) for self-hosted or
+managed setup; unconfigured machines behave as if it were not installed.
+
+| Skill | Command | Description |
+|-------|---------|-------------|
+| evolve | `/evolve` | The memory protocol — recall what evolve has learned, persist durable facts, route knowledge to the right stratum |
+| evolve-review | `/evolve-review` | The learning pass — turn captured observations into overlay-skill patches, with diffs and approval |
+| evolve-status | `/evolve-status` | Loop health — spool depth, deriver queue, cache age, overlay confidence, pending proposals |
 
 ## Dev Skills
 

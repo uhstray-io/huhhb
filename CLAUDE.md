@@ -41,8 +41,27 @@ All skill directories are flat under `skills/`: `skills/<skill-name>/SKILL.md`.
 - `scripts/sync-caveman.sh` — syncs caveman skills from upstream JuliusBrussee/caveman
 - `scripts/sync-mempalace.sh` — pulls latest MemPalace skill definition from upstream
 - `scripts/patch-mempalace.sh` — applies Nexus branding on top of synced MemPalace skill
+- `scripts/skill-lint.py`, `scripts/skill-bench.py`, `scripts/skill-trends.py` — the skill quality gates (see below)
+- `scripts/evolve/` — the `evolve` self-learning suite's Python (own MIT code that *imports* `honcho-ai` from PyPI, never vendors it — see [Python in this repo](#python-in-this-repo))
+- `tests/` — `test_evolve.py` (offline suite) and `bench/` scenarios
 - `CONTEXT.md` — project context for AI assistants
 - `AGENT.md` — agent-specific instructions
+
+### Python in this repo
+
+The "no Python MCP server code" rule (AGENT.md, and the MemPalace memory) is
+**specific to the memory MCP server** — that runs from the `mempalace-mcp`
+PyPI package via `uvx`, and a hand-rolled reimplementation must never come
+back. It is *not* a blanket ban on Python.
+
+huhhb owns first-party Python where a skill needs real runtime behavior a
+`.sh` hook can't provide: the quality gates (`scripts/skill-*.py`) and the
+`evolve` suite (`scripts/evolve/`). The licensing rule (plan decision D13)
+is the boundary: **our scripts are MIT and only *import* externally
+installed packages — nothing AGPL (e.g. Honcho) is ever vendored into the
+tree**, mirroring the `uvx mempalace-mcp` pattern. New first-party Python is
+fine when it clears that bar; copying a dependency's source into the repo is
+not.
 
 ## Adding a Skill
 
@@ -75,10 +94,25 @@ First install runs `onboarding/welcome.md` — a guided tour of available skills
 
 ## Skill Quality Bar
 
-- Description must be specific enough for Claude to match via `Skill` tool
-- Skills must state their trigger conditions (when to auto-invoke)
-- No skill should duplicate built-in Claude Code behavior
-- Test each skill against at least one real use case before merging
+Three measured gates — full criteria, thresholds, and the improvement loop in
+`docs/skill-quality-bar.md`:
+
+- **G0 static lint** (`python3 scripts/skill-lint.py`) — frontmatter, trigger
+  phrasing, body size, link integrity, manifest sync. Free; run on every PR.
+  Pre-existing debt is grandfathered in `scripts/skill-lint-baseline.json` —
+  shrink it, never grow it.
+- **G1 merge bench** (`python3 scripts/skill-bench.py <skill>`) — real
+  `claude -p` runs against `tests/bench/<skill>.json` scenarios: completion,
+  accuracy, tokens, cost, latency, tool efficiency, trigger precision/recall,
+  and an A/B baseline (skill disabled) the skill must beat. Costs tokens;
+  run when a skill changes.
+- **G2 field promotion** — evolve-loop telemetry (earned confidence,
+  correction pressure) gates featured/pinned status.
+
+Baseline rules that still apply verbatim: descriptions must be specific
+enough for `Skill`-tool matching with trigger conditions embedded; no skill
+duplicates built-in Claude Code behavior; a new skill needs at least one real
+G1 scenario before merging.
 
 ## Commit & PR Conventions
 

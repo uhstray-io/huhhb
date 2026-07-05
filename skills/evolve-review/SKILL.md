@@ -9,8 +9,12 @@ This is where captured signal becomes durable adaptation. Everything below is
 doctrine distilled from production self-evolving systems; each rule earned its
 place by a failure mode someone shipped. Understand the why, don't just obey.
 
-Paths: `EVOLVE=${CLAUDE_PLUGIN_ROOT}/scripts/evolve`, local state in
-`~/.local/share/huhhb/evolve/` (`journal.jsonl`, `pending/`, `state.json`).
+Paths: `EVOLVE=${CLAUDE_PLUGIN_ROOT}/scripts/evolve`. Local state
+(`journal.jsonl`, `pending/`, `state.json`, `conclusions.md`) lives in
+`$XDG_DATA_HOME/huhhb/evolve/`, defaulting to `~/.local/share/huhhb/evolve/`
+— **resolve it with `python3 $EVOLVE/honcho_client.py status` first** (it
+prints the live paths and honors `XDG_DATA_HOME`); never assume the default,
+or a sandboxed or relocated environment silently reviews the wrong journal.
 
 ## Two modes
 

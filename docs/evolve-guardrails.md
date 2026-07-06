@@ -71,10 +71,17 @@ judgment):
 
 ## Scope & limits
 
-- **GR2/GR3 are local-mode-first.** In honcho mode the deriver forms
-  conclusions server-side; the volume net there is future work (screen the
-  representation, or cap per-session `add_messages`). GR1 (trust tags travel
-  as observation metadata) and GR4 (write-time) apply in both modes.
+- **GR2 is local-mode-only today — honcho-mode delivery is UNSCREENED.**
+  The volume gate runs in `local_representation` (the local read path). In
+  honcho mode, `honcho_deliver` → `add_observations` pushes every observation
+  to the server before any screening, so a bulk batch that is quarantined in
+  local mode reaches server-side conclusions in honcho mode. This is a known
+  gap, not an accidental bypass. The fix is to move the gate to the shared
+  delivery boundary (`drain`/`deliver`) so both modes route a poisoning batch
+  to a quarantine record instead of to memory — holding the batch back from
+  delivery while the journal still keeps it as evidence. Tracked as follow-up;
+  GR1 (metadata on every observation) and GR4 (write-time) already apply in
+  both modes. GR3 is advisory in both.
 - **GR4 is deliberately tight** — it refuses only agent-hijacking patterns a
   legitimate procedure skill never needs. It is a trust-boundary check, not a
   content filter; it does not judge whether a skill is *good*, only whether it

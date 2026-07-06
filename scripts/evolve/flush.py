@@ -151,7 +151,8 @@ def refresh_injection_local(state):
     if rep:
         parts.append(rep[:USER_BLOCK_CHARS] + "\n")
     partials = {}
-    for e in hc.journal_entries():
+    admitted, _ = hc.screened_journal()  # GR2: never build the friction block
+    for e in admitted:                   # from a quarantined session's partials
         if e.get("type") == "skill-usage" and e.get("outcome") == "partial":
             partials[e["skill"]] = e["content"]
     if partials:

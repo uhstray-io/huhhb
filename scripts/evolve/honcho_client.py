@@ -241,7 +241,9 @@ def quarantined_observations():
 def local_representation(query=""):
     """Local stand-in for peer.representation: review-derived conclusions
     plus recent stated preferences/corrections — screened for poisoning so a
-    quarantined bulk batch never reaches recall or injection."""
+    quarantined bulk batch never reaches recall or injection *in local mode*.
+    Honcho mode delivers observations to the server unscreened (GR2 does not
+    yet gate the delivery path — see docs/evolve-guardrails.md scope)."""
     admitted, _ = screened_journal()
     parts = []
     if CONCLUSIONS_PATH.exists():

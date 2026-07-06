@@ -50,10 +50,14 @@ DURABLE_TYPES = ("preference", "correction")
 def screen_for_injection(entries):
     """Split journal entries into (admitted, quarantined).
 
-    quarantined is a list of (entry, reason). Only durable observations from
-    an anomalous session are held; its skill-usage/environment entries still
-    pass (a session legitimately touches many skills). Evidence is untouched
-    in the journal — this only decides what the next session TRUSTS.
+    quarantined is a list of (entry, reason). A session whose DURABLE count
+    trips the cap is treated as a poisoning batch, and the WHOLE session is
+    held — not just its durable observations. A skill-usage `partial` embeds
+    the correction text that provoked it, so admitting it while quarantining
+    the correction would leak the same attacker text through the injected
+    skill-friction block (the GR2 bypass caught in PR #19 review). A poisoning
+    batch contributes nothing to the trusted view; evidence stays in the
+    journal untouched.
     """
     by_session = {}
     for e in entries:
@@ -65,9 +69,7 @@ def screen_for_injection(entries):
             reason = (f"volume anomaly: session {sid} produced {len(durable)} durable "
                       f"observations (cap {DURABLE_VOLUME_CAP}) — likely a pasted "
                       f"document, contaminated environment, or bulk injection")
-            for e in group:
-                (quarantined.append((e, reason)) if e.get("type") in DURABLE_TYPES
-                 else admitted.append(e))
+            quarantined.extend((e, reason) for e in group)
         else:
             admitted.extend(group)
     return admitted, quarantined
@@ -133,16 +135,25 @@ def _selfcheck():
     assert assess_trust({"type": "preference"}) == "stated"
     assert assess_trust({"type": "correction"}) == "stated"
     assert assess_trust({"type": "skill-usage"}) == "inferred"
+    # every tier assess_trust can emit is a known member of the canonical order
+    # (TRUST_ORDER is the single source the review-supersession doctrine cites)
+    for o in ({"explicit": True}, {"type": "preference"}, {"type": "skill-usage"}, {}):
+        assert assess_trust(o) in TRUST_ORDER
 
-    # 6 durable from one session -> all quarantined; skill-usage still admitted
+    # 6 durable from one session -> the WHOLE session quarantined, including
+    # its skill-usage partial (it embeds correction text). A separate legit
+    # session passes untouched.
     entries = [{"session_id": "poison", "type": "preference", "content": f"p{i}"}
                for i in range(6)]
-    entries.append({"session_id": "poison", "type": "skill-usage", "content": "s"})
+    entries.append({"session_id": "poison", "type": "skill-usage",
+                    "outcome": "partial", "content": "leaks correction text"})
     entries += [{"session_id": "real", "type": "preference", "content": "legit"}]
     admitted, quarantined = screen_for_injection(entries)
-    assert len(quarantined) == 6, quarantined
+    assert len(quarantined) == 7, quarantined
+    assert not any(e["content"] == "leaks correction text" for e in admitted), \
+        "the poison session's partial must NOT be admitted (friction-block leak)"
+    assert all(e.get("session_id") == "real" for e in admitted), admitted
     assert {"content": "legit", "session_id": "real", "type": "preference"} in admitted
-    assert any(e["content"] == "s" for e in admitted), "skill-usage must pass"
 
     # cap boundary: exactly the cap is fine
     ok = [{"session_id": "x", "type": "preference", "content": str(i)}

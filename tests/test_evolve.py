@@ -611,6 +611,63 @@ class GuardrailTests(unittest.TestCase):
         self.assertFalse(guardrails.scan_skill_content("stop adding emoji; end at rollout"))
 
 
+_HONCHO_DELIVER_DRIVER = '''
+import sys, json
+sys.path.insert(0, {evolve!r})
+import flush, honcho_client as hc
+
+class FakePeer:
+    def message(self, content, metadata=None): return {{"content": content}}
+class FakeSession:
+    sent = []
+    def add_messages(self, msgs): FakeSession.sent.extend(msgs)
+class FakeHoncho:
+    def peer(self, _id): return FakePeer()
+    def session(self, _id): return FakeSession()
+
+deliver = flush.honcho_deliver(FakeHoncho(), hc.load_state())
+def pref(sid, n):
+    return {{"session_id": sid, "repo": "r", "ts": "t", "observations":
+            [{{"type": "preference", "target": "user", "content": f"{{sid}}-{{i}}",
+              "trust": "stated"}} for i in range(n)]}}
+
+deliver(pref("clean", 1))
+after_clean = len(FakeSession.sent)
+deliver(pref("bulk", 6))          # over the durable cap -> must be held
+after_bulk = len(FakeSession.sent)
+journal_prefs = len([o for o in hc.journal_entries() if o["type"] == "preference"])
+quar_sids = {{e.get("session_id") for e, _ in hc.quarantined_observations()}}
+print(json.dumps({{
+    "clean_delivered": after_clean >= 1,
+    "bulk_held_from_server": after_bulk == after_clean,
+    "journal_kept_all": journal_prefs == 7,
+    "bulk_quarantined_for_review": "bulk" in quar_sids,
+}}))
+'''
+
+
+class HonchoDeliveryGuardTests(unittest.TestCase):
+    def test_gr2_gates_honcho_delivery_not_just_local_read(self):
+        # honcho mode pushes to a server via honcho_deliver; a bulk-anomaly
+        # session must be held from delivery (journal still keeps it), the
+        # same GR2 gate local mode applies at read time. Fake Honcho client +
+        # temp XDG so no server is needed.
+        tmp = Path(tempfile.mkdtemp(prefix="honcho-deliver-"))
+        self.addCleanup(shutil.rmtree, tmp, True)
+        env = {**os.environ, "XDG_DATA_HOME": str(tmp / "data"),
+               "XDG_CONFIG_HOME": str(tmp / "cfg")}
+        env.pop("EVOLVE_MODE", None)
+        r = subprocess.run([sys.executable, "-c",
+                            _HONCHO_DELIVER_DRIVER.format(evolve=str(EVOLVE))],
+                           capture_output=True, text=True, env=env)
+        self.assertEqual(r.returncode, 0, r.stderr)
+        out = json.loads(r.stdout)
+        self.assertTrue(out["clean_delivered"], "a normal session must reach the server")
+        self.assertTrue(out["bulk_held_from_server"], "a bulk batch must NOT reach the server")
+        self.assertTrue(out["journal_kept_all"], "evidence invariant: journal keeps everything")
+        self.assertTrue(out["bulk_quarantined_for_review"], "held session must surface for review")
+
+
 class BenchTests(unittest.TestCase):
     def test_env_pinning_and_os_import(self):
         # regression: env-building used os.environ without importing os —

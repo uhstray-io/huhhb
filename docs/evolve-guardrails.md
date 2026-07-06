@@ -26,7 +26,7 @@ trusts and *refuse* unsafe writes — hold-and-flag, never silent-drop.
 | # | Stage | Threat | Guardrail | Where | Scenario |
 |---|---|---|---|---|---|
 | **GR1** | capture | weak signal trusted as strong | **trust tiers** — every observation tagged `explicit`/`stated`/`inferred` by signal strength | `guardrails.assess_trust`, tagged in `digest.py` | S21 |
-| **GR2** | inject/recall | a bulk batch (pasted doc, contaminated env, injection) poisons the cache | **volume-anomaly quarantine** — a session over the durable-observation cap is held out of injection and recall | `guardrails.screen_for_injection`, applied in `honcho_client.local_representation` | S22 |
+| **GR2** | inject/recall | a bulk batch (pasted doc, contaminated env, injection) poisons the cache | **volume-anomaly quarantine** — a session over the durable-observation cap is held from injection/recall (local read) and from server delivery (honcho) | `guardrails.screen_for_injection`, applied in `local_representation` (local) and `honcho_deliver` (honcho) | S22 |
 | **GR3** | inject | leaked eval/sandbox state writes fixture data into real memory | **sandbox detection** — `status` warns loudly when the state dir looks like a temp/eval path | `guardrails.looks_like_sandbox`, surfaced in `status` | S24 |
 | **GR4** | adapt | a learned skill body hijacks every future agent | **skill-write scan** — instruction-override / exfiltration patterns refuse the write, whatever the source | `guardrails.scan_skill_content`, enforced in `overlay.py` scaffold+patch | S23 |
 | **GR5** | operate/review | poison silently dropped, or a poisoned observation supersedes a good conclusion | **visibility + supersession doctrine** — quarantine surfaced in `status`; review weighs trust before superseding | `quarantined_observations()`; `evolve-review` prose | (doctrine) |
@@ -71,17 +71,19 @@ judgment):
 
 ## Scope & limits
 
-- **GR2 is local-mode-only today — honcho-mode delivery is UNSCREENED.**
-  The volume gate runs in `local_representation` (the local read path). In
-  honcho mode, `honcho_deliver` → `add_observations` pushes every observation
-  to the server before any screening, so a bulk batch that is quarantined in
-  local mode reaches server-side conclusions in honcho mode. This is a known
-  gap, not an accidental bypass. The fix is to move the gate to the shared
-  delivery boundary (`drain`/`deliver`) so both modes route a poisoning batch
-  to a quarantine record instead of to memory — holding the batch back from
-  delivery while the journal still keeps it as evidence. Tracked as follow-up;
-  GR1 (metadata on every observation) and GR4 (write-time) already apply in
-  both modes. GR3 is advisory in both.
+- **GR2 gates BOTH modes.** Local mode screens at the read path
+  (`local_representation`); honcho mode screens at the delivery boundary
+  (`honcho_deliver` journals first for the evidence record, then holds a
+  quarantined session's batch back from `add_observations` — the same
+  `screen_for_injection` decision, one owner). A quarantined session is
+  surfaced identically in both modes via `quarantined_observations()` (the
+  journal is mirrored in honcho mode). **Residual limit:** honcho delivery is
+  fire-and-forget, so a session that only crosses the cap on a *later* digest
+  may have delivered earlier batches that can't be un-sent — a single-turn
+  bulk dump (the common vector: pasted doc, injection) is caught in full;
+  slow cross-turn accumulation is caught from the crossing digest onward.
+  GR1 (metadata) and GR4 (write-time) apply in both modes; GR3 is advisory in
+  both.
 - **GR4 is deliberately tight** — it refuses only agent-hijacking patterns a
   legitimate procedure skill never needs. It is a trust-boundary check, not a
   content filter; it does not judge whether a skill is *good*, only whether it

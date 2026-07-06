@@ -437,18 +437,18 @@ def cmd_status(_args):
               "didn't mean to run here, unset XDG_DATA_HOME/XDG_CONFIG_HOME/EVOLVE_MODE "
               "and relaunch — otherwise fixture data pollutes real memory.")
     if cfg["mode"] == "local":
-        n_journal = len(journal_entries())
         n_concl = (len([l for l in CONCLUSIONS_PATH.read_text().splitlines()
                         if l.startswith("- ")]) if CONCLUSIONS_PATH.exists() else 0)
-        n_quar = len(quarantined_observations())
-        print(f"journal       : {n_journal} observation(s)")
+        print(f"journal       : {len(journal_entries())} observation(s)")
         print(f"conclusions   : {n_concl} (derived by /evolve-review — run it to distill the journal)")
-        if n_quar:
-            print(f"quarantined   : {n_quar} observation(s) held from injection — "
-                  "poisoning guardrail; run /evolve-review to triage")
     else:
         print(f"url           : {cfg['url'] or ('api.honcho.dev (managed)' if cfg['api_key'] else '-')}")
         print(f"workspace     : {cfg['workspace']}")
+    if cfg["mode"] != "off":  # journal is mirrored in both modes, so is quarantine
+        n_quar = len(quarantined_observations())
+        if n_quar:
+            print(f"quarantined   : {n_quar} observation(s) held (poisoning guardrail, "
+                  f"{cfg['mode']} mode) — run /evolve-review to triage")
     print(f"profile id    : {state['profile_id']}")
     spool = list(SPOOL_DIR.glob("*.json")) if SPOOL_DIR.exists() else []
     pending = list(PENDING_DIR.glob("*.json")) if PENDING_DIR.exists() else []

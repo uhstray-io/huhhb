@@ -1,6 +1,6 @@
-# evolve scenario catalog — S01–S20
+# evolve scenario catalog — S01–S24
 
-Twenty behavior scenarios that define what "the evolve suite works" means,
+Twenty-four behavior scenarios that define what "the evolve suite works" means,
 runnable any time with zero infrastructure. Runner:
 `scripts/evolve/evals.py` — each scenario builds an isolated sandbox and
 drives the **real pipeline** (hooks → digest → flush → injection → CLIs),

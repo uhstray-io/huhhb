@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""huhhb evolve — scenario evals for the whole suite (S01-S20).
+"""huhhb evolve — scenario evals for the whole suite (S01-S24).
 
 Scripted scenarios; graders check artifacts, not vibes. Catalog with intent,
 provenance, and improvement workflow: docs/evolve-scenarios.md.

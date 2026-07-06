@@ -260,7 +260,7 @@ def local_representation(query=""):
                      + "\n".join(f"- {c}" for c in dedup[:8]))
     text = "\n\n".join(parts)
     if query:
-        hits = [l for l in text.splitlines() if query.lower() in l.lower()]
+        hits = [ln for ln in text.splitlines() if query.lower() in ln.lower()]
         return "\n".join(hits) if hits else text
     return text
 
@@ -437,8 +437,8 @@ def cmd_status(_args):
               "didn't mean to run here, unset XDG_DATA_HOME/XDG_CONFIG_HOME/EVOLVE_MODE "
               "and relaunch — otherwise fixture data pollutes real memory.")
     if cfg["mode"] == "local":
-        n_concl = (len([l for l in CONCLUSIONS_PATH.read_text().splitlines()
-                        if l.startswith("- ")]) if CONCLUSIONS_PATH.exists() else 0)
+        n_concl = (len([ln for ln in CONCLUSIONS_PATH.read_text().splitlines()
+                        if ln.startswith("- ")]) if CONCLUSIONS_PATH.exists() else 0)
         print(f"journal       : {len(journal_entries())} observation(s)")
         print(f"conclusions   : {n_concl} (derived by /evolve-review — run it to distill the journal)")
     else:

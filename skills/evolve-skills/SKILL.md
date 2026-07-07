@@ -73,6 +73,11 @@ Both inform the bar:
 4. **Register with provenance**: `version ← session-ids` (overlay scaffold
    does this); confidence starts at 0.0 and is earned (`record` outcomes) —
    never present a fresh skill as trusted.
+5. **The write is scanned (anti-poisoning GR4).** `overlay.py` refuses a skill
+   body carrying agent-hijacking instructions (instruction-override,
+   exfiltration) whatever its source. A distilled skill that trips the guard
+   is a poisoning signal, not a skill — discard it and note the source; never
+   hand-edit around the scan. See `docs/evolve-guardrails.md`.
 
 ## 4. Remember — close the loop
 

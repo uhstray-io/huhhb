@@ -77,11 +77,25 @@ def drain(deliver):
 
 def honcho_deliver(honcho, state):
     def deliver(data):
-        hc.add_observations(honcho, state, data["session_id"], data["observations"])
-        try:  # journal is best-effort once Honcho has the data
+        # Evidence first: the journal keeps every observation in BOTH modes,
+        # and journaling before the screen lets it count this batch toward the
+        # session's accumulated durable total.
+        try:
             hc.journal_append(data)
         except OSError as e:
             log(f"journal write failed: {e}")
+        # GR2 at the delivery boundary (the same gate local mode applies at
+        # read time): a session whose accumulated durable count trips the cap
+        # is a poisoning batch — hold it back from the server. The journal
+        # still has it; /evolve-review surfaces it via quarantined_observations.
+        # Residual: a session that only crosses the cap on a later digest may
+        # have delivered earlier batches (fire-and-forget can't un-send) — a
+        # single-turn bulk dump, the common vector, is caught in full.
+        _, quarantined = hc.screened_journal()
+        if data["session_id"] in {e.get("session_id") for e, _ in quarantined}:
+            log(f"held session {data['session_id']} from Honcho (GR2 volume quarantine)")
+            return
+        hc.add_observations(honcho, state, data["session_id"], data["observations"])
     return deliver
 
 
@@ -151,7 +165,8 @@ def refresh_injection_local(state):
     if rep:
         parts.append(rep[:USER_BLOCK_CHARS] + "\n")
     partials = {}
-    for e in hc.journal_entries():
+    admitted, _ = hc.screened_journal()  # GR2: never build the friction block
+    for e in admitted:                   # from a quarantined session's partials
         if e.get("type") == "skill-usage" and e.get("outcome") == "partial":
             partials[e["skill"]] = e["content"]
     if partials:

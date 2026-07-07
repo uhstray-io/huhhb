@@ -31,12 +31,25 @@ import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+import guardrails
 from honcho_client import PENDING_DIR, ensure_dirs, now_iso
 
 import os
 OVERLAY_ROOT = Path(os.environ.get("EVOLVE_OVERLAY_DIR", Path.home() / ".claude" / "skills"))
 ARCHIVE_ROOT = OVERLAY_ROOT / "_archive"
 PROPOSAL_KINDS = ("overlay-create", "overlay-patch", "repo-memory", "observation", "archive")
+
+
+def guard_skill_content(name, text):
+    """GR4: a skill body is an instruction the agent will follow. Refuse to
+    write one carrying instruction-override / exfiltration patterns, whatever
+    the source (crafted transcript, bad review, poisoned proposal)."""
+    hits = guardrails.scan_skill_content(text)
+    if hits:
+        detail = "; ".join(f"{n} ({s!r})" for n, s in hits)
+        sys.exit(f"refusing to write '{name}': skill content tripped the poisoning "
+                 f"guard — {detail}. A learned skill must never carry agent-hijacking "
+                 f"instructions.")
 
 
 def overlay_dir(name):
@@ -76,8 +89,9 @@ def scaffold_overlay(name, description, body=None, pinned=False, signal=None, se
     if d.exists():
         sys.exit(f"overlay '{name}' already exists — patch it instead of duplicating "
                  "(update-over-duplicate)")
-    d.mkdir(parents=True)
     body = body or "## Learned adjustments\n\n(none yet)\n"
+    guard_skill_content(name, f"{description}\n{body}")
+    d.mkdir(parents=True)
     (d / "SKILL.md").write_text(
         f"---\nname: {name}\ndescription: {description}\n---\n\n"
         f"# {name}\n\n"
@@ -93,6 +107,7 @@ def scaffold_overlay(name, description, body=None, pinned=False, signal=None, se
 
 
 def patch_overlay(name, content, signal, sessions=None):
+    guard_skill_content(name, content)
     meta, meta_path = load_meta(name)
     meta["version"] = bump_patch(meta["version"])
     meta["provenance"].append({

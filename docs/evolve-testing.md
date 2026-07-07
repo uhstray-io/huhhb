@@ -2,7 +2,7 @@
 
 Run everything: `python3 tests/test_evolve.py` (offline suite, stdlib only) —
 then, once a Honcho instance is configured, `honcho_client.py smoke` and
-`python3 scripts/evolve/evals.py --runs 3 [--with-claude]`.
+`python3 scripts/evolve/evals.py` — now a 24-scenario catalog (S01-S24), documented in `docs/evolve-scenarios.md`; offline scenarios run free in local mode, `--mode honcho --runs 3` for the §7 deriver bar.
 
 Legend: **auto** = asserted by `tests/test_evolve.py`; **live** = needs a
 configured Honcho (deriver running); **manual** = human procedure.
@@ -28,11 +28,11 @@ configured Honcho (deriver running); **manual** = human procedure.
 | C-15 | No AGPL code vendored — repo imports external honcho-ai only (D13) | `ManifestTests` — no honcho source in tree | auto |
 | C-16 | Every command referenced by the three SKILL.md bodies exists and parses | `SkillContractTests` | auto |
 | C-17 | Smoke: 6-step round trip incl. seeded failure-mode grounding in `peer.chat` (Phase 0 accept) | `honcho_client.py smoke` | live |
-| C-18 | E1 cold preference: session A statement → user-peer conclusion + session B injected context contains it (Phase 2 accept) | `evals.py --only e1` | live |
-| C-19 | E2 skill experience: correction after `writing-plans` → `[skill-usage] outcome=partial` + `[correction]`; review proposes overlay patch (never hub skill) | `evals.py --only e2 --with-claude` | live |
-| C-20 | E3 anti-capture: command-not-found→install session yields fix obs, zero negative-capability, review says nothing-to-save | `evals.py --only e3` | live |
-| C-21 | E4 routing: "we decided repo uses uv" → review routes to repo-memory, not overlay/conclusion | `evals.py --only e4 --with-claude` | live |
-| C-22 | Eval pass bar: 3 runs; artifact assertions 3/3, phrasing-sensitive 2/3 (§7) | `evals.py --runs 3` | live |
+| C-18 | E1 cold preference: session A statement → user-peer conclusion + session B injected context contains it (Phase 2 accept) | `evals.py --only s01` | live |
+| C-19 | E2 skill experience: correction after `writing-plans` → `[skill-usage] outcome=partial` + `[correction]`; review proposes overlay patch (never hub skill) | `evals.py --only s02 --with-claude` | live |
+| C-20 | E3 anti-capture: command-not-found→install session yields fix obs, zero negative-capability, review says nothing-to-save | `evals.py --only s03` | live |
+| C-21 | E4 routing: "we decided repo uses uv" → review routes to repo-memory, not overlay/conclusion | `evals.py --only s04 --with-claude` | live |
+| C-22 | Eval pass bar: 3 runs; artifact assertions 3/3, phrasing-sensitive 2/3 (§7) | `evals.py --mode honcho --runs 3` (offline set: local mode, deterministic) | live |
 | C-23 | Skill quality: descriptions trigger correctly, no shadowing between evolve/evolve-review/evolve-status or existing memory skills (repo quality bar) | skill-reviewer agent pass | manual |
 | C-24 | Two-session loop demo recorded in docs (Phase 4 accept) | follow docs/evolve.md after configuring | manual |
 | C-25 | Local install test before PR (team practice) | `claude plugin marketplace add <local path>` + invoke each skill once | manual |

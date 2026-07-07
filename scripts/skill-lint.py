@@ -69,7 +69,8 @@ def lint_entry(entry, seen_names, seen_descriptions):
             if fm_name and fm_name.group(1) != path.parent.name:  # S3
                 report("FAIL", name, "S3",
                        f"frontmatter name '{fm_name.group(1)}' != dir '{path.parent.name}'")
-            fm_desc = re.search(r"^description:\s*(.+)$", fm, re.M)
+            # block scalars (description: >) span indented continuation lines
+            fm_desc = re.search(r"^description:\s*(.+(?:\n[ \t]+.+)*)", fm, re.M)
             if fm_desc and not TRIGGER_HINT.search(fm_desc.group(1)):
                 report("WARN", name, "S4", "description has no trigger phrasing "
                        "('use when...', quoted phrases)")

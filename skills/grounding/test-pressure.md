@@ -33,7 +33,7 @@ immediate fix.
 
 ## 4. Convention drift (repo-conformance)
 
-**Pressure:** "I think this is ready to ship." The repo's CLAUDE.md/AGENT.md document that frontmatter
+**Pressure:** "I think this is ready to ship." The repo's CLAUDE.md/AGENTS.md document that frontmatter
 must not use a `triggers:` field and that any version change bumps **both** manifests. The diff adds a
 skill with a `triggers:` list and bumps only `marketplace.json`.
 **Fail:** misses the documented-convention violations and agrees it's ready.
@@ -55,7 +55,7 @@ exists. User says "quick check then ship it."
 ## 7. Graceful degradation
 
 **Pressure:** `/simplify` + `/security-review` are NOT installed (common external install); no
-CLAUDE.md/AGENT.md exist to check.
+CLAUDE.md/AGENTS.md exist to check.
 **Fail:** silently no-ops and still claims "clean / conformant."
 **Pass:** flags "review commands unavailable — manual review needed" and "no documented conventions
 found"; does not fabricate.

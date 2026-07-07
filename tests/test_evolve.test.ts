@@ -1121,6 +1121,65 @@ describe("SkillGraphTests", () => {
       "cache copies across version dirs must collapse to one",
     );
   });
+
+  test("test_hash_version_dirs_collapse_to_owner", () => {
+    // claude-plugins-official uses content-hash version dirs — each hash must
+    // resolve to the owning plugin, not become a phantom source
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "skill-graph-hash-"));
+    cleanups.push(tmp);
+    for (const ver of ["069551a7d2b0", "52b6c0970b90"]) {
+      const d = path.join(tmp, "plugins", "cache", "official", "fire", ver, "skills", "crawl");
+      fs.mkdirSync(d, { recursive: true });
+      fs.writeFileSync(path.join(d, "SKILL.md"),
+        "---\nname: crawl\ndescription: Use when crawling a site fast\n---\n");
+    }
+    const env = { ...process.env, EVOLVE_USER_SKILLS: path.join(tmp, "none"),
+      EVOLVE_PLUGINS_ROOT: path.join(tmp, "plugins") };
+    const recs: Record<string, any>[] = JSON.parse(_run(["inventory", "--json"], env).stdout);
+    const crawl = recs.filter((r) => r.name === "crawl");
+    assert.equal(crawl.length, 1, "hash version dirs must collapse to one record");
+    assert.equal(crawl[0].source, "fire", "source must be the owning plugin, not the hash");
+  });
+
+  test("test_hex_looking_plugin_name_keeps_its_identity", () => {
+    // a plugin literally named in short hex ("facade1") must stay the source —
+    // only >=12-char hash dirs shift ownership one level up
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "skill-graph-hex-"));
+    cleanups.push(tmp);
+    const d = path.join(tmp, "plugins", "facade1", "skills", "veneer");
+    fs.mkdirSync(d, { recursive: true });
+    fs.writeFileSync(path.join(d, "SKILL.md"),
+      "---\nname: veneer\ndescription: Use when veneering a surface neatly\n---\n");
+    const env = { ...process.env, EVOLVE_USER_SKILLS: path.join(tmp, "none"),
+      EVOLVE_PLUGINS_ROOT: path.join(tmp, "plugins") };
+    const recs: Record<string, any>[] = JSON.parse(_run(["inventory", "--json"], env).stdout);
+    const veneer = recs.filter((r) => r.name === "veneer");
+    assert.equal(veneer.length, 1);
+    assert.equal(veneer[0].source, "facade1", "hex-looking plugin name must stay the source");
+  });
+
+  test("test_tool_mirror_dot_dirs_excluded", () => {
+    // plugins vendor per-tool mirrors (.cursor/, .claude-plugin/) of their own
+    // skills — packaging scaffolding, not installations; they must not mint
+    // same-name duplicates
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "skill-graph-mirror-"));
+    cleanups.push(tmp);
+    for (const base of [
+      path.join(tmp, "plugins", "acme", "skills", "solo"),
+      path.join(tmp, "plugins", "acme", ".cursor", "skills", "solo"),
+      path.join(tmp, "plugins", "acme", ".claude-plugin", "skills", "solo"),
+    ]) {
+      fs.mkdirSync(base, { recursive: true });
+      fs.writeFileSync(path.join(base, "SKILL.md"),
+        "---\nname: solo\ndescription: Use when testing mirror exclusion here\n---\n");
+    }
+    const env = { ...process.env, EVOLVE_USER_SKILLS: path.join(tmp, "none"),
+      EVOLVE_PLUGINS_ROOT: path.join(tmp, "plugins") };
+    const recs: Record<string, any>[] = JSON.parse(_run(["inventory", "--json"], env).stdout);
+    const solo = recs.filter((r) => r.name === "solo");
+    assert.equal(solo.length, 1, "dot-dir mirrors must be excluded");
+    assert.equal(solo[0].source, "acme");
+  });
 });
 
 describe("DistillationGateTests", () => {

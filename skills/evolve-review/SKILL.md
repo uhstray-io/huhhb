@@ -23,12 +23,17 @@ or a sandboxed or relocated environment silently reviews the wrong journal.
 - **Headless** (running under `claude -p`, no user present): identical
   analysis, but you must NOT apply anything. Stage every proposal via
   `overlay.py propose` (reads JSON on stdin, writes only to `pending/`).
-  The recommended headless invocation whitelists exactly that:
+  The recommended headless invocation:
 
   ```bash
-  claude -p "/evolve-review" --allowedTools \
-    "Read,Grep,Glob,Bash(python3 *scripts/evolve/overlay.py propose*),Bash(python3 *scripts/evolve/honcho_client.py query*),Bash(python3 *scripts/evolve/honcho_client.py status*)"
+  claude -p "/evolve-review" --allowedTools "Read,Grep,Glob,Bash(python3 *)"
   ```
+
+  (One broad `python3` rule on purpose: allowedTools match the *literal*
+  command text, and this skill invokes via `$EVOLVE/...` — path-substring
+  rules never match the unexpanded variable, and headless `-p` hard-aborts
+  on the first unmatched call. Tighter scoping belongs in a PreToolUse
+  hook, not a substring pattern.)
 
   The next SessionStart surfaces staged proposals; approving replays them via
   `overlay.py apply-pending <file>`.

@@ -121,7 +121,9 @@ export function _plugin_source(p: string): string {
   // cache layouts insert a version dir (plugin/<ver>/skills/) — the owner is
   // one level further up. Two spellings in the wild: dotted semver ("0.5.4")
   // and content-hash dirs ("069551a7d2b0", seen in claude-plugins-official).
-  if ((fullmatch(/v?\d+(?:[.\-]\w+)*/, src) || fullmatch(/[0-9a-f]{7,40}/, src)) && i >= 2) {
+  // The hash floor is 12 chars: observed hashes are 12, and short hex-looking
+  // English plugin names ("facade1", "deadbef") must not shift the owner.
+  if ((fullmatch(/v?\d+(?:[.\-]\w+)*/, src) || fullmatch(/[0-9a-f]{12,40}/, src)) && i >= 2) {
     src = parts[i - 2];
   }
   return src ?? "?";

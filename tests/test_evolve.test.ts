@@ -1141,6 +1141,23 @@ describe("SkillGraphTests", () => {
     assert.equal(crawl[0].source, "fire", "source must be the owning plugin, not the hash");
   });
 
+  test("test_hex_looking_plugin_name_keeps_its_identity", () => {
+    // a plugin literally named in short hex ("facade1") must stay the source —
+    // only >=12-char hash dirs shift ownership one level up
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "skill-graph-hex-"));
+    cleanups.push(tmp);
+    const d = path.join(tmp, "plugins", "facade1", "skills", "veneer");
+    fs.mkdirSync(d, { recursive: true });
+    fs.writeFileSync(path.join(d, "SKILL.md"),
+      "---\nname: veneer\ndescription: Use when veneering a surface neatly\n---\n");
+    const env = { ...process.env, EVOLVE_USER_SKILLS: path.join(tmp, "none"),
+      EVOLVE_PLUGINS_ROOT: path.join(tmp, "plugins") };
+    const recs: Record<string, any>[] = JSON.parse(_run(["inventory", "--json"], env).stdout);
+    const veneer = recs.filter((r) => r.name === "veneer");
+    assert.equal(veneer.length, 1);
+    assert.equal(veneer[0].source, "facade1", "hex-looking plugin name must stay the source");
+  });
+
   test("test_tool_mirror_dot_dirs_excluded", () => {
     // plugins vendor per-tool mirrors (.cursor/, .claude-plugin/) of their own
     // skills — packaging scaffolding, not installations; they must not mint

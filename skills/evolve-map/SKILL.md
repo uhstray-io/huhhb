@@ -84,8 +84,10 @@ echo '{"kind":"repo-promotion","name":"<skill>","summary":"promote <skill> to re
   | python3 $EVOLVE/overlay.py propose
 ```
 
-On approval, `/evolve-map` (or `/evolve-review`) opens the huhhb PR: writes
-`skills/<name>/SKILL.md`, the `marketplace.json` entry, and
+`propose` runs the GR4 poisoning scan on the promoted `content` before it can
+stage (a promoted body is the widest-blast-radius skill write — everyone
+installs it). On approval, `/evolve-map` (or `/evolve-review`) opens the huhhb
+PR: writes `skills/<name>/SKILL.md`, the `marketplace.json` entry, and
 `tests/bench/<name>.json` from the bundled eval — a human merges it. Never
 promote a plugin skill (upstream-owned) or auto-write to the repo.
 

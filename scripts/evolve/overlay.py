@@ -232,6 +232,13 @@ def cmd_propose(args):
         if not (isinstance(proposal.get("eval"), dict) and proposal["eval"].get("assert")):
             sys.exit("repo-promotion must bundle an 'eval' with a non-empty 'assert' "
                      "(repo skills require a G1 scenario — no eval, no promotion)")
+    # GR4 at the proposal boundary: any kind carrying a skill body is scanned
+    # HERE so poison is refused at stage time, not left to apply-time (overlays)
+    # or agent prose (promotion, whose apply is agent-mediated and the highest
+    # blast radius). One chokepoint, every skill-body write.
+    for body_field in ("body", "content"):
+        if proposal.get(body_field):
+            guard_skill_content(proposal.get("name", kind), proposal[body_field])
     proposal["ts"] = now_iso()
     # ns + pid: concurrent headless runs must never overwrite each other's proposals
     dest = PENDING_DIR / f"{kind}-{time.time_ns()}-{os.getpid()}.json"

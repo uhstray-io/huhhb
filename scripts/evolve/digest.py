@@ -272,9 +272,10 @@ def digest(session_id, transcript_path, cwd):
         return _digest_locked(session_id, transcript_path, cwd)
 
 
-def _digest_locked(session_id, transcript_path, cwd):
-    state = load_state()
-    cursor = state["cursors"].get(session_id, 0)
+def _read_new_observations(session_id, transcript_path, cursor):
+    """Read the unprocessed tail from `cursor`, return (observations, new_cursor)
+    or (None, cursor) if nothing/unreadable. Shared by live digest and
+    backfill's dry-run so the tail-read and rotated-cursor guard live once."""
     # byte-offset cursor: Stop fires after every turn, so only ever read the
     # tail — a whole-file read here is O(n^2) I/O over a session's lifetime
     try:
@@ -285,13 +286,22 @@ def _digest_locked(session_id, transcript_path, cwd):
             chunk = f.read()
             new_cursor = f.tell()
     except OSError:
-        return 0
+        return None, cursor
     if not chunk:
-        return 0
-    new_lines = chunk.decode("utf-8", errors="replace").splitlines()
-    observations = anti_capture(detect(iter_events(new_lines)))
+        return None, cursor
+    lines = chunk.decode("utf-8", errors="replace").splitlines()
+    observations = anti_capture(detect(iter_events(lines)))
     for obs in observations:  # GR1: tag signal strength for recall + review
         obs["trust"] = guardrails.assess_trust(obs)
+    return observations, new_cursor
+
+
+def _digest_locked(session_id, transcript_path, cwd):
+    state = load_state()
+    observations, new_cursor = _read_new_observations(
+        session_id, transcript_path, state["cursors"].get(session_id, 0))
+    if observations is None:
+        return 0
     state["cursors"][session_id] = new_cursor
     # track skills for injection prefetch even when nothing else is captured
     seen_skills = {o["skill"] for o in observations if o.get("skill")}
@@ -338,31 +348,17 @@ def backfill(limit=None, dry_run=False):
     if limit:
         transcripts = transcripts[:limit]
     sessions, total = 0, 0
+    cursors = load_state()["cursors"] if dry_run else None  # read once, not per-transcript
     for t in transcripts:
         sid, cwd = t.stem, _decode_project_cwd(t.parent.name)
         if dry_run:
-            # count what WOULD be captured from the unprocessed tail, no writes
-            state = load_state()
-            cursor = state["cursors"].get(sid, 0)
-            try:
-                with open(t, "rb") as f:
-                    size = os.fstat(f.fileno()).st_size
-                    f.seek(cursor if cursor <= size else 0)
-                    chunk = f.read()
-            except OSError:
-                continue
-            if not chunk:
-                continue
-            lines = chunk.decode("utf-8", errors="replace").splitlines()
-            obs = anti_capture(detect(iter_events(lines)))
-            if obs:
-                sessions += 1
-                total += len(obs)
+            obs, _ = _read_new_observations(sid, str(t), cursors.get(sid, 0))
+            n = len(obs) if obs else 0
         else:
             n = digest(sid, str(t), cwd)
-            if n:
-                sessions += 1
-                total += n
+        if n:
+            sessions += 1
+            total += n
     verb = "would capture" if dry_run else "spooled"
     print(f"backfill: {len(transcripts)} transcript(s) scanned, {verb} "
           f"{total} observation(s) from {sessions} session(s)")

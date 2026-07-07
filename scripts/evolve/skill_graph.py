@@ -39,6 +39,9 @@ _FM_DESC = re.compile(r"^description:\s*(.+(?:\n[ \t]+.+)*)", re.M)
 
 
 def _parse(path):
+    # mirrors skill-lint.py's parse_skill_md (name+description frontmatter);
+    # kept local rather than cross-importing a sibling top-level script for
+    # ~10 lines — if a third caller appears, extract a shared module
     try:
         text = path.read_text(encoding="utf-8", errors="replace")
     except OSError:

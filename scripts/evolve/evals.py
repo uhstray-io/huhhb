@@ -670,12 +670,11 @@ def s27_skill_map_and_promotion(sb, live):
     env = {**sb.env, "EVOLVE_USER_SKILLS": str(user_s),
            "EVOLVE_PLUGINS_ROOT": str(sb.root / "plugins")}
     graph = str(REPO / "scripts" / "evolve" / "skill_graph.py")
-    import subprocess as _sp
-    records = json.loads(_sp.run([sys.executable, graph, "inventory", "--json"],
-                                 capture_output=True, text=True, env=env).stdout)
+    records = json.loads(subprocess.run([sys.executable, graph, "inventory", "--json"],
+                                        capture_output=True, text=True, env=env).stdout)
     tiers = {r["tier"] for r in records}
-    pairs = json.loads(_sp.run([sys.executable, graph, "overlaps", "--json"],
-                               capture_output=True, text=True, env=env).stdout)
+    pairs = json.loads(subprocess.run([sys.executable, graph, "overlaps", "--json"],
+                                      capture_output=True, text=True, env=env).stdout)
 
     def propose(obj):
         return sb.run("overlay.py", "propose", stdin=json.dumps(obj))

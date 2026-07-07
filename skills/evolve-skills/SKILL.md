@@ -50,39 +50,15 @@ Verdicts route through the existing machinery: interactive = show the exact
 diff, apply on approval; headless = `propose` only. Hub-skill changes are
 **always** a PR a human merges, whatever the mode.
 
-## 3. Creation protocol — distill from success, gate on evals
+## 3. Creation — hand off to /evolve-distill
 
-> The operational `create` flow lives in **`/evolve-distill`** (read the
-> evidence, distill class-level, bundle the eval, stage a proposal). This
-> pass *identifies* a `create` candidate; hand the actual distillation to
-> that skill. The bar below is the shared contract.
-
-The paper's strongest result: skills distilled from successful trajectories
-outperform human-authored ones — but its headline failure mode is
-single-trajectory overfit (run-specific paths and calibrations baked in).
-Both inform the bar:
-
-1. **Evidence** (our Phase 1): the same class of task solved successfully in
-   **≥2 sessions** (journal/`session-ids` as witnesses), or the user
-   explicitly asks ("turn this into a skill"). One impressive session is not
-   evidence — it is the overfit trap.
-2. **Distill class-level, not session-level**: name for the task class;
-   strip session-specific paths, values, and calibrations; structure as
-   *When to use / Core principles / Workflow* with concrete tool commands.
-   Anything only one trajectory needed goes to `references/`, not the body.
-3. **Bundle the eval — no eval, no registration** (MUSE's test gate, our
-   G1): a personal overlay needs `overlay.py scaffold` + at least a
-   `tests/bench/<name>.json`-style scenario stated in the proposal; a hub
-   candidate's PR must include its real bench scenario. An unproven skill
-   never enters the catalog, because the catalog is trusted recall surface.
-4. **Register with provenance**: `version ← session-ids` (overlay scaffold
-   does this); confidence starts at 0.0 and is earned (`record` outcomes) —
-   never present a fresh skill as trusted.
-5. **The write is scanned (anti-poisoning GR4).** `overlay.py` refuses a skill
-   body carrying agent-hijacking instructions (instruction-override,
-   exfiltration) whatever its source. A distilled skill that trips the guard
-   is a poisoning signal, not a skill — discard it and note the source; never
-   hand-edit around the scan. See `docs/evolve-guardrails.md`.
+This pass only *identifies* a `create` candidate (a gap nothing covers). The
+operational flow — read the evidence, distill class-level, bundle the eval,
+stage the proposal — is **`/evolve-distill`**, and its gates are enforced in
+one place (`overlay.py propose`): ≥2-session evidence (or an explicit ask), a
+bundled eval (no eval, no registration), and the GR4 poisoning scan on the
+body. Don't restate the bar here — route to `/evolve-distill` so the contract
+lives once. Cross-skill relationships and gap-finding are `/evolve-map`.
 
 ## 4. Remember — close the loop
 

@@ -52,19 +52,20 @@ Honcho workspace *you* control.
 Four choices (details in [docs/evolve-plan.md](../docs/evolve-plan.md)):
 
 1. **Local, no server** — everything stays in files on this machine:
-   `honcho_client.py init --local`
+   `node ${CLAUDE_PLUGIN_ROOT}/scripts/evolve/honcho_client.ts init --local`
 2. **Self-hosted** — point it at your own Honcho server:
-   `honcho_client.py init --url http://your-host:8000`
+   `node ${CLAUDE_PLUGIN_ROOT}/scripts/evolve/honcho_client.ts init --url http://your-host:8000`
 3. **Managed** — use api.honcho.dev with your API key:
-   `honcho_client.py init --api-key <key>`
+   `node ${CLAUDE_PLUGIN_ROOT}/scripts/evolve/honcho_client.ts init --api-key <key>`
 4. **Skip** — do nothing; huhhb behaves exactly as without evolve.
 
-For 2 or 3, verify afterwards with `honcho_client.py smoke` (local mode
+For 2 or 3, verify afterwards with
+`node ${CLAUDE_PLUGIN_ROOT}/scripts/evolve/honcho_client.ts smoke` (local mode
 needs no smoke test — there is no server to reach).
 
 **Claude: ask the user which option they want. For 1–3, run the `init`
-command from `${CLAUDE_PLUGIN_ROOT}/scripts/evolve/` (plus the smoke test
-for 2–3) and show the result. Consent matters — never configure evolve
+command shown above (plus the smoke test for 2–3) and show the result.
+Consent matters — never configure evolve
 without an explicit yes.**
 
 ## Personalize Your Setup

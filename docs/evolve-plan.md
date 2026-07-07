@@ -433,6 +433,11 @@ through gated proposals).
 Record every evolve change here: date, what changed, roadmap item or
 provenance.
 
+- **2026-07-07** — Follow-up cleanup: onboarding evolve setup examples now
+  use the Node-native `honcho_client.ts` command, grounding references the
+  unified `AGENTS.md` file, and stale Python comments were removed. Version
+  0.5.6.
+
 - **2026-07-07** — Field test of installed 0.5.4 (all layers green: 79 units,
   80/80 scenario assertions, state round-trip across the migration verified —
   0 re-captures from 422 transcripts). Wild-caught: the skill graph minted

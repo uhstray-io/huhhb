@@ -37,7 +37,7 @@ Mechanics, report template, rationalization table, and red-flags live in **`refe
    your own analysis as the tool's output.
 3. **Test/build/lint** — detect and run the project's test/lint command (`package.json`/`pyproject`/
    `Makefile`/…), or offer to; report the real result. Never claim "tests pass" unrun.
-4. **Repo conformance** — read CLAUDE.md / AGENT.md / CONTEXT.md / CONTRIBUTING / docs and check the work
+4. **Repo conformance** — read CLAUDE.md / AGENTS.md / CONTEXT.md / CONTRIBUTING / docs and check the work
    against **each** documented rule, not just the salient one. No docs? say so; don't invent rules.
 5. **Goal/scope** — compare the work to the session's stated objective; flag drift.
 6. **Gaps & next steps** — what's missing or assumed; re-confirm the next steps.

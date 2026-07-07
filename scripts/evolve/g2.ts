@@ -117,7 +117,7 @@ export function field_report(now?: Date | number | null): Record<string, any>[] 
   const rows: Record<string, any>[] = [];
   for (const [skill, uses] of usages) {
     const runs = uses.length;
-    // journal says used/partial (digest.py); overlay record says ok/fail
+    // journal says used/partial (digest.ts); overlay record says ok/fail
     const ok = uses.filter((u) => u.outcome === "used" || u.outcome === "ok").length;
     const f1 = py_round2(Math.min(runs / 10, 1.0) * (ok / runs));
 

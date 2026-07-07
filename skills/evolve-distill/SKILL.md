@@ -15,7 +15,7 @@ say so. That prevents the sprawl and poisoning that ungated auto-creation
 invites.
 
 Paths: `EVOLVE=${CLAUDE_PLUGIN_ROOT}/scripts/evolve`; resolve state with
-`python3 $EVOLVE/honcho_client.py status` (honors `XDG_DATA_HOME`).
+`node $EVOLVE/honcho_client.ts status` (honors `XDG_DATA_HOME`).
 
 ## When NOT to distill
 
@@ -31,7 +31,7 @@ A workflow earns a skill only when **all** hold — otherwise stop:
 - **Non-obvious.** It saved real work and isn't common knowledge or a
   single command.
 - **Not already covered** by a hub skill or an existing overlay (check
-  `overlay.py report`; near-duplicate → propose a *patch* via evolve-review,
+  `overlay.ts report`; near-duplicate → propose a *patch* via evolve-review,
   not a new skill).
 
 ## Procedure
@@ -39,12 +39,12 @@ A workflow earns a skill only when **all** hold — otherwise stop:
 **1. Find candidates.** Recurring signal points at what to read:
 
 ```bash
-python3 $EVOLVE/overlay.py distill-candidates
+node $EVOLVE/overlay.ts distill-candidates
 ```
 
 Task classes seen in ≥2 distinct sessions, with their session-ids. Thin by
 design — it says *where to look*, not *what to create*. No candidates? Say
-"nothing to distill" and stop (run `digest.py --backfill` first if the
+"nothing to distill" and stop (run `digest.ts --backfill` first if the
 journal is empty).
 
 **2. Read the evidence — you are the extractor.** For a candidate, open the
@@ -66,7 +66,7 @@ reject; name for the class (`setup-fastapi-service-local`, never
 prove it works never enters the catalog (the catalog is trusted recall). Draft
 a bench scenario that asserts on **artifacts**: `{"id": ..., "prompt": ...,
 "assert": "<shell that exits 0 iff the skill worked>", "judge": "<optional
-rubric>"}`. This is the gate — `overlay.py propose` refuses an
+rubric>"}`. This is the gate — `overlay.ts propose` refuses an
 `overlay-create` without it.
 
 **5. Stage the proposal (never write the skill).** Pipe the proposal to
@@ -79,18 +79,18 @@ echo '{"kind":"overlay-create","name":"<class>-local",
        "summary":"distilled <class> workflow","signal":"recurred in N sessions",
        "sessions":["<id1>","<id2>"],
        "eval":{"id":"smoke","prompt":"/<class>-local …","assert":"…"}}' \
-  | python3 $EVOLVE/overlay.py propose
+  | node $EVOLVE/overlay.ts propose
 ```
 
 **6. Record the mining (symmetric mining, Law 9).** Bank what *worked*, not
-only failures: `honcho_client.py observe --type technique --target agent
+only failures: `honcho_client.ts observe --type technique --target agent
 --content "[technique] project=… — <the reusable method>"` so the next
 distill pass sees the reinforcing signal.
 
 **7. Hand off.** The proposal sits in `pending/`; `/evolve-review` presents it
-for approval, and approval replays it via `overlay.py apply-pending` →
+for approval, and approval replays it via `overlay.ts apply-pending` →
 **GR4 skill-write scan** → overlay scaffolded at confidence **0.0** with its
-`bench.json` bundled. It earns trust only through `overlay.py record` outcomes;
+`bench.json` bundled. It earns trust only through `overlay.ts record` outcomes;
 never present a fresh distilled skill as proven.
 
 ## Hard rules

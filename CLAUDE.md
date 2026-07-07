@@ -43,7 +43,7 @@ All skill directories are flat under `skills/`: `skills/<skill-name>/SKILL.md`.
 - `scripts/patch-mempalace.sh` — applies Nexus branding on top of synced MemPalace skill
 - `scripts/skill-lint.ts`, `scripts/skill-bench.ts`, `scripts/skill-trends.ts` — the skill quality gates (see below)
 - `scripts/evolve/` — the `evolve` self-learning suite's TypeScript (own MIT code; optional integrations load dynamically, never vendored — see [Language policy](#language-policy--typescriptjavascript-only))
-- `tests/` — `test_evolve.test.ts` (offline suite, `node --test tests/`) and `bench/` scenarios
+- `tests/` — `test_evolve.test.ts` (offline suite, `node --test tests/test_evolve.test.ts`) and `bench/` scenarios
 - `docs/evolve-plan.md` — the evolve living plan: architecture, guardrails, gates, scenarios, roadmap; every evolve change is recorded in its change log
 - `CONTEXT.md` — project context for AI assistants
 - `AGENTS.md` — unified agent instructions (all AI tools)
@@ -52,7 +52,7 @@ All skill directories are flat under `skills/`: `skills/<skill-name>/SKILL.md`.
 
 All first-party runtime code is **TypeScript**, run directly with Node
 ≥ 22.18 (native type stripping — zero build step): `node scripts/<x>.ts`,
-`node --test tests/`. Node stdlib only; no npm runtime dependencies.
+`node --test tests/test_evolve.test.ts`. Node stdlib only; no npm runtime dependencies.
 Optional integrations (the Honcho SDK) load via dynamic `import()` and
 degrade gracefully when absent. Erasable TS syntax only (no `enum`/
 `namespace`) so files run unmodified under type stripping.

@@ -12,8 +12,8 @@ get used more effectively, more interoperably, and so a genuinely new skill is
 built only when nothing already covers the approach.
 
 Paths: `EVOLVE=${CLAUDE_PLUGIN_ROOT}/scripts/evolve`. The persisted map lives at
-`<state dir>/skill-map.md` (resolve the state dir with `honcho_client.py
-status`). Two layers, as everywhere in evolve: `skill_graph.py` does the
+`<state dir>/skill-map.md` (resolve the state dir with `honcho_client.ts
+status`). Two layers, as everywhere in evolve: `skill_graph.ts` does the
 deterministic part (discover, parse, dedup, structural overlap); **you draw
 the semantic relationships** — the tool only says where to look.
 
@@ -30,9 +30,9 @@ the semantic relationships** — the tool only says where to look.
 **1. Inventory.** Build the catalog across all tiers:
 
 ```bash
-python3 $EVOLVE/skill_graph.py inventory          # human view, grouped by tier
-python3 $EVOLVE/skill_graph.py inventory --json   # for analysis
-python3 $EVOLVE/skill_graph.py overlaps            # structural near-duplicate pairs
+node $EVOLVE/skill_graph.ts inventory          # human view, grouped by tier
+node $EVOLVE/skill_graph.ts inventory --json   # for analysis
+node $EVOLVE/skill_graph.ts overlaps            # structural near-duplicate pairs
 ```
 
 `overlaps` flags same-name and high-similarity pairs; `cross_tier` pairs (a
@@ -60,7 +60,7 @@ the file, don't append — it's the current model, kept current.
 **3. Recommend improvements (augment before create).** For each skill worth
 improving, name the concrete change and route it by tier:
 - **repo** skill → propose a patch as a huhhb **PR** (never edit on-device).
-- **user** skill / overlay → `overlay.py patch` (via `/evolve-review`).
+- **user** skill / overlay → `overlay.ts patch` (via `/evolve-review`).
 - **plugin** skill → an **upstream** issue/PR; never a local divergence.
 Recommendations without a specific, evidence-backed change are noise — skip them.
 
@@ -81,7 +81,7 @@ echo '{"kind":"repo-promotion","name":"<skill>","summary":"promote <skill> to re
        "signal":"proven useful across N sessions","rationale":"why the team needs it",
        "description":"Use when …","content":"<full SKILL.md body>",
        "eval":{"id":"smoke","prompt":"…","assert":"…"}}' \
-  | python3 $EVOLVE/overlay.py propose
+  | node $EVOLVE/overlay.ts propose
 ```
 
 `propose` runs the GR4 poisoning scan on the promoted `content` before it can
@@ -100,5 +100,5 @@ promote a plugin skill (upstream-owned) or auto-write to the repo.
   a gap the inventory confirms nothing fills. Overlap → merge/augment.
 - **Propose, never write.** Repo PRs and promotions are staged and
   human-approved; the map itself is the only thing this skill writes directly.
-- **The tool points; you judge.** `skill_graph.py` seeds with structure; the
+- **The tool points; you judge.** `skill_graph.ts` seeds with structure; the
   relationships and recommendations are your reading of the actual skills.

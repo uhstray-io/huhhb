@@ -11,22 +11,22 @@
 DATA="${XDG_DATA_HOME:-$HOME/.local/share}/huhhb/evolve"
 CTX="$DATA/context/injection.md"
 [ -f "$CTX" ] || exit 0
-command -v python3 >/dev/null 2>&1 || exit 0
+command -v node >/dev/null 2>&1 || exit 0
 
-python3 - "$CTX" "$DATA/pending" <<'PY'
-import json, os, sys
-ctx = open(sys.argv[1], encoding="utf-8", errors="replace").read().strip()
-pending_dir = sys.argv[2]
-try:
-    pending = len([f for f in os.listdir(pending_dir) if f.endswith(".json")])
-except OSError:
-    pending = 0
-if pending:
-    ctx += (f"\n\n**{pending} evolve proposal(s) pending approval** — a headless "
-            "review staged changes; run /evolve-review to inspect and approve them.")
-if ctx:
-    print(json.dumps({"hookSpecificOutput": {
-        "hookEventName": "SessionStart", "additionalContext": ctx}}))
-PY
+node - "$CTX" "$DATA/pending" <<'JS'
+import { readFileSync, readdirSync } from "node:fs";
+let ctx = "";
+try { ctx = readFileSync(process.argv[2], "utf-8").trim(); } catch { process.exit(0); }
+let pending = 0;
+try { pending = readdirSync(process.argv[3]).filter(f => f.endsWith(".json")).length; } catch {}
+if (pending) {
+  ctx += `\n\n**${pending} evolve proposal(s) pending approval** — a headless ` +
+         "review staged changes; run /evolve-review to inspect and approve them.";
+}
+if (ctx) {
+  process.stdout.write(JSON.stringify({ hookSpecificOutput: {
+    hookEventName: "SessionStart", additionalContext: ctx } }));
+}
+JS
 
 exit 0

@@ -10,8 +10,8 @@ so this skill is how a user sees it working — or sees why it isn't. Run both
 commands and present the combined picture:
 
 ```bash
-python3 "${CLAUDE_PLUGIN_ROOT}/scripts/evolve/honcho_client.py" status
-python3 "${CLAUDE_PLUGIN_ROOT}/scripts/evolve/overlay.py" report
+node "${CLAUDE_PLUGIN_ROOT}/scripts/evolve/honcho_client.ts" status
+node "${CLAUDE_PLUGIN_ROOT}/scripts/evolve/overlay.ts" report
 ```
 
 ## How to read it

@@ -28,7 +28,7 @@ directly with Node ≥ 22.18 (native type stripping — no build step, no
 transpiler, no bundler):
 
 - Scripts: `node scripts/<name>.ts`, `node scripts/evolve/<name>.ts`
-- Tests: `node --test tests/`
+- Tests: `node --test tests/test_evolve.test.ts`
 - Zero npm runtime dependencies — Node stdlib only (`node:fs`, `node:test`,
   …). Optional integrations (the Honcho SDK) load via dynamic `import()` in
   a try/catch and degrade gracefully when absent; they are never added to

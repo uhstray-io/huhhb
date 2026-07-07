@@ -295,7 +295,7 @@ Boundary: *skills judges one, map relates all, distill creates one.*
 
 Three layers, all free and offline by default:
 
-1. **Unit/component**: `node --test tests/` — sandboxed, in-process +
+1. **Unit/component**: `node --test tests/test_evolve.test.ts` — sandboxed, in-process +
    subprocess CLI contract tests.
 2. **Scenario catalog (S01–S27)**: `node scripts/evolve/evals.ts` — each
    scenario builds an isolated sandbox and drives the real pipeline,
@@ -432,6 +432,14 @@ through gated proposals).
 
 Record every evolve change here: date, what changed, roadmap item or
 provenance.
+
+- **2026-07-07** — TypeScript migration completed and verified: 12 modules
+  ported (78/78 unit tests, 80/80 offline scenario assertions, lint parity
+  byte-for-byte); Python removed. Honcho-mode call surface aligned to the
+  documented TS SDK (promise-returning peer/session, addMessages,
+  searchQuery, reasoningLevel; live validation stays with `smoke`, C-17).
+  Wild-caught during port verification: backfill spawned the flusher one
+  directory too high (s25 caught it). Version 0.5.4.
 
 - **2026-07-06** — Consolidated seven docs into this plan; external repo
   references removed. Suite migrated Python → TypeScript (Node ≥22.18,

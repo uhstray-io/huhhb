@@ -14,7 +14,7 @@ you only need this protocol for explicit reads, explicit writes, and routing.
 Everything here is inert when evolve is unconfigured — check with:
 
 ```bash
-python3 "${CLAUDE_PLUGIN_ROOT}/scripts/evolve/honcho_client.py" status
+node "${CLAUDE_PLUGIN_ROOT}/scripts/evolve/honcho_client.ts" status
 ```
 
 ## What this memory is (and is not)
@@ -50,12 +50,12 @@ side and is **never** used reflexively.
    most recall questions are already answered there.
 2. **Card / representation (fast, no LLM).**
    ```bash
-   python3 .../honcho_client.py query card
-   python3 .../honcho_client.py query rep --q "commit style" --max 10
+   node .../honcho_client.ts query card
+   node .../honcho_client.ts query rep --q "commit style" --max 10
    ```
 3. **Semantic search (excerpts, no LLM).**
    ```bash
-   python3 .../honcho_client.py query search --q "pytest flags" --max 5
+   node .../honcho_client.ts query search --q "pytest flags" --max 5
    ```
 4. **Targeted representation** — another peer's view:
    `query rep --target skill:writing-plans --perspective agent:claude-code`
@@ -64,7 +64,7 @@ side and is **never** used reflexively.
    `--level minimal` or `low` for lookups; `medium`+ only for multi-aspect
    synthesis.
    ```bash
-   python3 .../honcho_client.py query chat --q "..." --level low
+   node .../honcho_client.ts query chat --q "..." --level low
    ```
 
 (`...` = `${CLAUDE_PLUGIN_ROOT}/scripts/evolve`.)
@@ -83,7 +83,7 @@ states a durable fact and expects it kept ("remember this about me",
 "I always want X"). Write it as a typed observation:
 
 ```bash
-python3 .../honcho_client.py observe --type preference --target user \
+node .../honcho_client.ts observe --type preference --target user \
   --content "[preference] user — always wants conventional commits, no emoji; stated explicitly."
 ```
 

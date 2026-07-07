@@ -14,9 +14,9 @@ arXiv:2605.27366 — trajectory-distilled, eval-gated skills beat human-authored
 ones and pay for themselves after ~3 reuses).
 
 Paths: `EVOLVE=${CLAUDE_PLUGIN_ROOT}/scripts/evolve`; resolve local state with
-`python3 $EVOLVE/honcho_client.py status` (honors `XDG_DATA_HOME` — never
+`node $EVOLVE/honcho_client.ts status` (honors `XDG_DATA_HOME` — never
 assume the default). Same two modes as evolve-review: interactive shows diffs
-and applies on approval; headless stages everything via `overlay.py propose`
+and applies on approval; headless stages everything via `overlay.ts propose`
 into `pending/` and applies nothing.
 
 ## 1. Inventory — evidence before opinions
@@ -24,11 +24,11 @@ into `pending/` and applies nothing.
 Gather, in one pass (all read-only, no LLM calls):
 
 ```bash
-python3 scripts/skill-lint.py                  # G0 debt: oversized bodies, weak descriptions
-uv run scripts/skill-trends.py ledger          # bench history: did versions move the numbers?
-uv run scripts/skill-trends.py regressions     # skills that got worse
-python3 $EVOLVE/overlay.py report --json       # overlay confidence / last_used / last_error
-python3 $EVOLVE/g2.py report                   # G2 field verdicts: promote/improve/demote per skill
+node scripts/skill-lint.ts                  # G0 debt: oversized bodies, weak descriptions
+node scripts/skill-trends.ts ledger          # bench history: did versions move the numbers?
+node scripts/skill-trends.ts regressions     # skills that got worse
+node $EVOLVE/overlay.ts report --json       # overlay confidence / last_used / last_error
+node $EVOLVE/g2.ts report                   # G2 field verdicts: promote/improve/demote per skill
 ```
 
 plus the journal (`journal.jsonl` in the state dir): `[skill-usage]` outcomes
@@ -42,7 +42,7 @@ Every skill in `marketplace.json` and every overlay resolves to exactly one:
 | Verdict | Evidence that earns it | Action |
 |---|---|---|
 | `healthy` | used, no correction pressure, bench stable, lint clean | nothing — most skills, most passes |
-| `refine` | recurring corrections after use, bench regression, grandfathered lint debt, stale upstream sync | patch proposal with the signal quoted; hub skills → PR, overlays → `overlay.py patch` |
+| `refine` | recurring corrections after use, bench regression, grandfathered lint debt, stale upstream sync | patch proposal with the signal quoted; hub skills → PR, overlays → `overlay.ts patch` |
 | `merge` | overlapping descriptions (lint S5 near-misses) or the same task class split across skills | one general variant absorbs; others → archive proposal. Conservative: merging destroys trigger surface — require evidence both actually fire on the same intents |
 | `prune` | ~60 days unused AND confidence < 0.3, or consistently failing | archive proposal (never delete; pinned exempt) |
 | `create` | see creation protocol below | scaffold + eval + register |
@@ -56,7 +56,7 @@ diff, apply on approval; headless = `propose` only. Hub-skill changes are
 This pass only *identifies* a `create` candidate (a gap nothing covers). The
 operational flow — read the evidence, distill class-level, bundle the eval,
 stage the proposal — is **`/evolve-distill`**, and its gates are enforced in
-one place (`overlay.py propose`): ≥2-session evidence (or an explicit ask), a
+one place (`overlay.ts propose`): ≥2-session evidence (or an explicit ask), a
 bundled eval (no eval, no registration), and the GR4 poisoning scan on the
 body. Don't restate the bar here — route to `/evolve-distill` so the contract
 lives once. Cross-skill relationships and gap-finding are `/evolve-map`.
@@ -66,10 +66,10 @@ lives once. Cross-skill relationships and gap-finding are `/evolve-map`.
 After verdicts, write what the pass learned back where the next pass will
 see it: per-skill lessons worth keeping → the skill's own memory (overlay
 `references/` today; `.memory.md` when phase 2 of the design lands), and
-`[skill-usage]`/`[strategic]` observations via `honcho_client.py observe` so
+`[skill-usage]`/`[strategic]` observations via `honcho_client.ts observe` so
 the field record stays continuous. A verdict without recorded evidence is a
 vibe — the next pass must be able to check whether the refine actually
-helped (`skill-trends.py ledger` before/after is the receipt).
+helped (`skill-trends.ts ledger` before/after is the receipt).
 
 ## Close out
 

@@ -155,13 +155,12 @@ export function runScenario(scenario: Scenario, runs: number, baseline: boolean)
 function judge(rubric: string, response: string): number {
   const data = runClaude(
     JUDGE_TEMPLATE.replace("{rubric}", rubric).replace("{response}", response));
-  // the score is the FINAL line — the evidence quote above it may itself
-  // contain digits, so scan lines from the bottom
-  const lines = String(data.result ?? "").trim().split("\n");
-  for (let i = lines.length - 1; i >= 0; i--) {
-    const m = /[0-9]/.exec(lines[i]);
-    if (m) return Number(m[0]);
-  }
+  // the score is the FINAL line, bare 1-5 only — the evidence quote above
+  // may itself contain digits, and a scavenged digit recorded as a score is
+  // worse than failing closed (0 fails the B3 gate loudly)
+  const lines = String(data.result ?? "").trim().split(/\r?\n/);
+  const score_line = lines[lines.length - 1]?.trim();
+  if (/^[1-5]$/.test(score_line ?? "")) return Number(score_line);
   return 0;
 }
 

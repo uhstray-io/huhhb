@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""huhhb evolve — G2 field promotion (docs/skill-quality-bar.md).
+"""huhhb evolve — G2 field promotion (docs/evolve-plan.md).
 
 The third quality gate: where G0 lints prose and G1 benches behavior, G2
 scores what actually happened in the field. It reads the SCREENED journal
@@ -12,7 +12,7 @@ verdicts a human routes; featured/pinned changes are always PRs.
   keep      in use, no pressure, below the promote bar
   no-data   registered but no field observations yet
 
-Criteria (spec: docs/skill-quality-bar.md):
+Criteria (spec: docs/evolve-plan.md):
   F1  earned confidence  min(runs/10, 1) × success_rate       ≥ 0.7 to promote
   F2  correction pressure  corrections in-session at/after a   0 recurring
       skill's use (journal has session+ts, not turn indices,
@@ -153,7 +153,7 @@ def main():
     print("\ng2: " + " ".join(f"{k}={tally.get(k, 0)}"
           for k in ("promote", "improve", "demote", "keep", "no-data")))
     print("promote/demote are candidates — featured/pinned changes ship as PRs "
-          "(docs/skill-quality-bar.md gating).")
+          "(docs/evolve-plan.md gating).")
 
 
 if __name__ == "__main__":

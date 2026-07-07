@@ -9,7 +9,7 @@ Where `/evolve-review` learns from *sessions*, this pass manages the *library*:
 every skill is a long-lived asset moving through a lifecycle —
 `create → evaluate → register → reuse → remember → refine/merge/prune` —
 and this skill is the driver that walks the library and issues verdicts.
-Design and evidence: `docs/skill-lifecycle.md` (adapted from MUSE-Autoskill,
+Design and evidence: `docs/evolve-plan.md` (adapted from MUSE-Autoskill,
 arXiv:2605.27366 — trajectory-distilled, eval-gated skills beat human-authored
 ones and pay for themselves after ~3 reuses).
 

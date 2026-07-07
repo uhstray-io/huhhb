@@ -91,7 +91,7 @@ When **not** to write:
 
 - **Don't correct the record manually.** Honcho self-heals: new observations
   supersede stale conclusions. Deletion is only for PII/secrets (see
-  `docs/evolve.md` purge procedure).
+  `docs/evolve-plan.md` purge procedure).
 - **Don't write failures as constraints.** "Tool X is broken" persisted today
   is a refusal the agent cites for months. If something failed and was fixed,
   the *fix* is the observation; if it failed and wasn't fixed, write nothing.
@@ -116,4 +116,4 @@ here — a bulk batch (pasted document, contaminated environment) is quarantined
 out of recall, and `status` flags a leaked eval/sandbox state dir. If recall
 looks empty when you expected content, check `/evolve-status` for a
 `quarantined` line before assuming nothing was learned. Full model:
-`docs/evolve-guardrails.md`.
+`docs/evolve-plan.md`.

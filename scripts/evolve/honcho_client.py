@@ -170,7 +170,7 @@ def client(cfg=None):
         sys.stderr.write(
             "no Honcho client in this mode. Set HONCHO_URL (self-hosted) or "
             f"HONCHO_API_KEY (managed), use `init --local`, or write {CONFIG_PATH} "
-            "— see docs/evolve.md.\n")
+            "— see docs/evolve-plan.md.\n")
         sys.exit(2)
     Honcho = _import_honcho()
     kwargs = {"workspace_id": cfg["workspace"]}
@@ -243,7 +243,7 @@ def local_representation(query=""):
     plus recent stated preferences/corrections — screened for poisoning so a
     quarantined bulk batch never reaches recall or injection *in local mode*.
     Honcho mode delivers observations to the server unscreened (GR2 does not
-    yet gate the delivery path — see docs/evolve-guardrails.md scope)."""
+    yet gate the delivery path — see docs/evolve-plan.md scope)."""
     admitted, _ = screened_journal()
     parts = []
     if CONCLUSIONS_PATH.exists():

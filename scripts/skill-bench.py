@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""huhhb G1 merge bench — behavioral quality gate (docs/skill-quality-bar.md B1-B11).
+"""huhhb G1 merge bench — behavioral quality gate (docs/evolve-plan.md B1-B11).
 
 Drives real `claude -p` sessions against scenario files in tests/bench/<skill>.json
 and gates on measured criteria:
@@ -130,7 +130,7 @@ def record_history(row):
 
     Append-only JSONL on purpose: rows are diffable in PRs, survive forever in
     git, and DuckDB queries the file directly — the database engine is a
-    reader, never a deployment (docs/skill-quality-bar.md, History & trends).
+    reader, never a deployment (docs/evolve-plan.md, History & trends).
     """
     commit = subprocess.run(["git", "rev-parse", "--short", "HEAD"], cwd=REPO,
                             capture_output=True, text=True).stdout.strip()
@@ -277,7 +277,7 @@ def main():
 
     spec_path = REPO / "tests" / "bench" / f"{args.skill}.json"
     if not spec_path.exists():
-        sys.exit(f"no scenario file {spec_path} — see docs/skill-quality-bar.md")
+        sys.exit(f"no scenario file {spec_path} — see docs/evolve-plan.md")
     spec = json.loads(spec_path.read_text())
     for field in ("skill", "scenarios"):
         assert spec.get(field), f"scenario file missing '{field}'"

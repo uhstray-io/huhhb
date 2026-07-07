@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""huhhb G0 static lint — the free quality gate (docs/skill-quality-bar.md S1-S8).
+"""huhhb G0 static lint — the free quality gate (docs/evolve-plan.md S1-S8).
 
 Checks every marketplace.json entry. FAIL blocks merge (exit 1); WARN is
 advisory. Stdlib only, no network — safe for CI and pre-commit.

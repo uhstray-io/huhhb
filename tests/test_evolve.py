@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """huhhb evolve — offline validation suite (criteria C-01..C-16 in
-docs/evolve-testing.md). Stdlib only; honcho-ai is NOT required — tests that
+docs/evolve-plan.md). Stdlib only; honcho-ai is NOT required — tests that
 exercise the flusher's SDK path use the repo .venv when present and skip
 otherwise. Live criteria (C-17..C-22) are covered by smoke + evals.py once a
 Honcho instance is configured.

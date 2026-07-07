@@ -2,7 +2,7 @@
 """huhhb evolve — scenario evals for the whole suite (S01-S27).
 
 Scripted scenarios; graders check artifacts, not vibes. Catalog with intent,
-provenance, and improvement workflow: docs/evolve-scenarios.md.
+provenance, and improvement workflow: docs/evolve-plan.md.
 
   python3 evals.py --list               # the catalog
   python3 evals.py                      # all offline scenarios, local mode
@@ -155,7 +155,7 @@ def run_headless_review(sb, enabled):
 
 # ------------------------------------------------------------------ scenarios
 # Each returns {assertion_name: True/False/"MANUAL"}. See module docstring
-# for the :phrasing and :xfail conventions. Catalog: docs/evolve-scenarios.md.
+# for the :phrasing and :xfail conventions. Catalog: docs/evolve-plan.md.
 
 def s01_cold_preference(sb, live):
     """A preference stated in session A is injected into session B."""
@@ -597,7 +597,7 @@ def s25_backfill_mines_history_through_guardrails(sb, live):
     """Retrospective backfill (adopted from claude-autoskill): digest --backfill
     mines historical transcripts through the SAME pipeline as live capture —
     a normal session is captured, a bulk-poison transcript is quarantined, and
-    re-running is idempotent. See docs/evolve-vs-autoskill.md."""
+    re-running is idempotent. See docs/evolve-plan.md."""
     proj = sb.root / "projects"
     (proj / "-Users-me-repoA").mkdir(parents=True)
     (proj / "-Users-me-bulk").mkdir(parents=True)
@@ -630,7 +630,7 @@ def s26_distillation_gates(sb, live):
     is refused without a bundled eval and without ≥2-session evidence, an
     approved one scaffolds at 0.0 confidence with its eval bundled, and
     distill-candidates surfaces only ≥2-session recurring classes.
-    See skills/evolve-distill and docs/evolve-vs-autoskill.md."""
+    See skills/evolve-distill and docs/evolve-plan.md."""
     def o(*a, **k):
         return sb.run("overlay.py", *a, **k)
     out = {}
@@ -670,7 +670,7 @@ def s27_skill_map_and_promotion(sb, live):
     """Cross-skill inventory/relate + tier delineation + user→repo promotion
     gate. skill_graph discovers tiers and flags a cross-tier same-name
     collision; repo-promotion is refused without body/rationale/eval.
-    See skills/evolve-map and docs/evolve-vs-autoskill.md."""
+    See skills/evolve-map and docs/evolve-plan.md."""
     # fixture user + plugin trees; the repo tier comes from the real huhhb
     # skills (skill_graph resolves it from its own location), which makes the
     # user-shadows-repo collision for "writing-plans" a genuine cross-tier hit.

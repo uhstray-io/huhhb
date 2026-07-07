@@ -218,7 +218,7 @@ def cmd_propose(args):
         ev = proposal.get("eval") or {}
         if not (isinstance(ev, dict) and ev.get("assert")):
             sys.exit("overlay-create proposals must bundle an 'eval' with a non-empty "
-                     "'assert' (no eval, no registration — see docs/skill-lifecycle.md)")
+                     "'assert' (no eval, no registration — see docs/evolve-plan.md)")
         # distinct sessions — ["a", "a"] is one witness, not two
         if len(set(proposal.get("sessions") or [])) < 2 and not proposal.get("explicit"):
             sys.exit("overlay-create needs >=2 witnessing sessions (the anti-overfit "

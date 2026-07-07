@@ -6,7 +6,7 @@ description: Use when turning a repeated, successful multi-step workflow from pa
 # evolve-distill — a proven workflow becomes a skill, safely
 
 This is evolve's answer to autoskill-style skill creation
-(`docs/evolve-vs-autoskill.md`): distill a *successful multi-step workflow*
+(`docs/evolve-plan.md`): distill a *successful multi-step workflow*
 into a reusable skill — but behind every evolve gate. The difference that
 matters: autoskill runs an LLM subprocess and **auto-writes** the skill to
 disk. Here **you are the extractor** (the agent-is-deriver pattern), and the

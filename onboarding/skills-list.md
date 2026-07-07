@@ -30,7 +30,7 @@ Powered by [MemPalace](https://github.com/mempalace/mempalace). Requires `uv too
 ## Self-Learning (evolve)
 
 Cross-session learning backed by [Honcho](https://honcho.dev). **Off until
-configured** — see [docs/evolve.md](../docs/evolve.md) for self-hosted or
+configured** — see [docs/evolve-plan.md](../docs/evolve-plan.md) for self-hosted or
 managed setup; unconfigured machines behave as if it were not installed.
 
 | Skill | Command | Description |
@@ -92,4 +92,4 @@ managed setup; unconfigured machines behave as if it were not installed.
 
 ---
 
-*To add a skill: see [AGENT.md](../AGENT.md) and open a PR.*
+*To add a skill: see [AGENTS.md](../AGENTS.md) and open a PR.*

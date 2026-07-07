@@ -384,7 +384,7 @@ def main():
     if "--backfill" in sys.argv:
         if not configured():
             sys.exit("evolve is not configured — nothing to backfill into. "
-                     "See docs/evolve.md (init --local, or HONCHO_URL/API_KEY).")
+                     "See docs/evolve-plan.md (init --local, or HONCHO_URL/API_KEY).")
         args = sys.argv[sys.argv.index("--backfill") + 1:]
         limit = None
         for a in args:

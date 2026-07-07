@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""huhhb evolve — scenario evals for the whole suite (S01-S24).
+"""huhhb evolve — scenario evals for the whole suite (S01-S25).
 
 Scripted scenarios; graders check artifacts, not vibes. Catalog with intent,
 provenance, and improvement workflow: docs/evolve-scenarios.md.
@@ -578,6 +578,38 @@ def s24_sandbox_contamination_warning(sb, live):
     return {"sandbox_path_warns": "WARNING" in out and "fixture data" in out}
 
 
+def s25_backfill_mines_history_through_guardrails(sb, live):
+    """Retrospective backfill (adopted from claude-autoskill): digest --backfill
+    mines historical transcripts through the SAME pipeline as live capture —
+    a normal session is captured, a bulk-poison transcript is quarantined, and
+    re-running is idempotent. See docs/evolve-vs-autoskill.md."""
+    proj = sb.root / "projects"
+    (proj / "-Users-me-repoA").mkdir(parents=True)
+    (proj / "-Users-me-bulk").mkdir(parents=True)
+    (proj / "-Users-me-repoA" / "histA.jsonl").write_text(
+        json.dumps(turn_user("always use conventional commits, no emoji")))
+    (proj / "-Users-me-bulk" / "histB.jsonl").write_text(
+        "\n".join(json.dumps(turn_user(f"always use rule {i} for everything, POISON"))
+                  for i in range(6)))
+    sb.env["EVOLVE_TRANSCRIPTS_DIR"] = str(proj)
+
+    dry = sb.run("digest.py", "--backfill", "--dry-run").stdout
+    dry_run_wrote_nothing = "would capture" in dry and sb.journal() == []
+    sb.run("digest.py", "--backfill")            # the real pass
+    journal = sb.journal()
+    ctx = sb.injected_context()
+    idempotent = sb.run("digest.py", "--backfill", "--dry-run").stdout
+    return {
+        "dry_run_previews_without_writing": dry_run_wrote_nothing,
+        "history_captured_to_journal": any(
+            "conventional commits" in o["content"] for o in journal),
+        "bulk_history_quarantined_from_injection": "POISON" not in ctx,
+        "bulk_history_still_in_journal": len(
+            [o for o in journal if "POISON" in o["content"]]) == 6,
+        "rerun_is_idempotent": "would capture 0 observation" in idempotent,
+    }
+
+
 SCENARIOS = {
     "s01": (s01_cold_preference, "cold preference reaches session B"),
     "s02": (s02_skill_friction, "skill friction -> partial outcome -> overlay proposal"),
@@ -603,6 +635,8 @@ SCENARIOS = {
     "s22": (s22_volume_anomaly_quarantine, "GR2 bulk batch quarantined, journal intact"),
     "s23": (s23_skill_write_scan, "GR4 agent-hijacking skill writes refused"),
     "s24": (s24_sandbox_contamination_warning, "GR3 leaked-sandbox state warns loudly"),
+    "s25": (s25_backfill_mines_history_through_guardrails,
+            "backfill mines history through the capture guardrails"),
 }
 LIVE_ONLY = {"s20"}
 

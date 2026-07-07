@@ -646,6 +646,42 @@ print(json.dumps({{
 '''
 
 
+class BackfillTests(SandboxCase):
+    def _fixture(self, transcripts):
+        proj = self.sb.dir / "projects"
+        for i, (sid, turns) in enumerate(transcripts.items()):
+            d = proj / f"-Users-me-repo{i}"
+            d.mkdir(parents=True, exist_ok=True)
+            (d / f"{sid}.jsonl").write_text("\n".join(json.dumps(t) for t in turns))
+        self.sb.env["EVOLVE_TRANSCRIPTS_DIR"] = str(proj)
+        return proj
+
+    def test_backfill_dry_run_writes_nothing(self):
+        self.sb.env["EVOLVE_MODE"] = "local"
+        self._fixture({"h1": [turn_user("always use conventional commits, no emoji")]})
+        r = self.sb.run("digest.py", "--backfill", "--dry-run")
+        self.assertIn("would capture", r.stdout)
+        self.assertEqual(self.sb.spool_files(), [], "dry-run must not spool")
+
+    def test_backfill_is_idempotent(self):
+        self.sb.env["EVOLVE_MODE"] = "local"
+        self._fixture({"h1": [turn_user("always use uv, never pip")]})
+        first = self.sb.run("digest.py", "--backfill", "--dry-run").stdout
+        self.assertNotIn("would capture 0 observation", first)
+        self.sb.run("digest.py", "--backfill")               # real pass advances cursors
+        again = self.sb.run("digest.py", "--backfill", "--dry-run").stdout
+        self.assertIn("would capture 0 observation", again, "processed transcripts must be skipped")
+
+    def test_backfill_unconfigured_refuses(self):
+        # no EVOLVE_MODE, no honcho creds -> off -> refuse with guidance
+        self.sb.env.pop("EVOLVE_MODE", None)
+        self.sb.env.pop("HONCHO_URL", None)
+        self._fixture({"h1": [turn_user("always use tabs")]})
+        r = self.sb.run("digest.py", "--backfill")
+        self.assertNotEqual(r.returncode, 0)
+        self.assertIn("not configured", r.stderr)
+
+
 class HonchoDeliveryGuardTests(unittest.TestCase):
     def test_gr2_gates_honcho_delivery_not_just_local_read(self):
         # honcho mode pushes to a server via honcho_deliver; a bulk-anomaly

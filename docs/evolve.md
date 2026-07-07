@@ -73,6 +73,23 @@ python3 <plugin>/scripts/evolve/honcho_client.py smoke
 Config precedence: `HONCHO_URL` / `HONCHO_API_KEY` / `HONCHO_WORKSPACE` env
 vars > `~/.config/huhhb/evolve.json` > unconfigured.
 
+### Bootstrap from your history (optional)
+
+A fresh install learns only going-forward. To seed it from your existing
+Claude Code sessions, mine your transcript history through the same capture
+pipeline (redaction, anti-capture, and the volume guardrail all apply — a
+bulk/poisoned session is quarantined, never blindly trusted):
+
+```bash
+python3 <plugin>/scripts/evolve/digest.py --backfill --dry-run   # preview, writes nothing
+python3 <plugin>/scripts/evolve/digest.py --backfill             # mine ~/.claude/projects/*.jsonl
+python3 <plugin>/scripts/evolve/digest.py --backfill --limit=50  # bound to the 50 most-recent
+```
+
+Idempotent — re-running skips transcripts already processed. Afterward,
+`/evolve-status` shows the journal (and any quarantined batches) and
+`/evolve-review` distills it.
+
 ## Where your data lives
 
 | What | Where |

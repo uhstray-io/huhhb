@@ -34,6 +34,7 @@ import json
 import os
 import platform
 import re
+import subprocess
 import sys
 import time
 from pathlib import Path
@@ -312,7 +313,76 @@ def _digest_locked(session_id, transcript_path, cwd):
     return len(observations)
 
 
+TRANSCRIPTS_ROOT = Path(os.environ.get(
+    "EVOLVE_TRANSCRIPTS_DIR", Path.home() / ".claude" / "projects"))
+
+
+def _decode_project_cwd(project_dir_name):
+    """Claude Code encodes the cwd as a dash-sanitized dir name; the last
+    path-ish segment is a good-enough repo slug for the observation record."""
+    return project_dir_name.rsplit("-", 1)[-1] or "unknown"
+
+
+def backfill(limit=None, dry_run=False):
+    """Mine historical ~/.claude/projects/*/*.jsonl transcripts through the
+    SAME capture pipeline as live sessions — redaction, harness-block
+    stripping, anti-capture, trust tagging, and (at flush) GR2 volume
+    quarantine all apply. Idempotent via the per-session byte cursor:
+    re-running skips transcripts already processed (live or backfilled).
+    """
+    if not TRANSCRIPTS_ROOT.exists():
+        print(f"no transcripts at {TRANSCRIPTS_ROOT}")
+        return
+    transcripts = sorted(TRANSCRIPTS_ROOT.glob("*/*.jsonl"),
+                         key=lambda p: p.stat().st_mtime, reverse=True)
+    if limit:
+        transcripts = transcripts[:limit]
+    sessions, total = 0, 0
+    for t in transcripts:
+        sid, cwd = t.stem, _decode_project_cwd(t.parent.name)
+        if dry_run:
+            # count what WOULD be captured from the unprocessed tail, no writes
+            state = load_state()
+            cursor = state["cursors"].get(sid, 0)
+            try:
+                with open(t, "rb") as f:
+                    size = os.fstat(f.fileno()).st_size
+                    f.seek(cursor if cursor <= size else 0)
+                    chunk = f.read()
+            except OSError:
+                continue
+            if not chunk:
+                continue
+            lines = chunk.decode("utf-8", errors="replace").splitlines()
+            obs = anti_capture(detect(iter_events(lines)))
+            if obs:
+                sessions += 1
+                total += len(obs)
+        else:
+            n = digest(sid, str(t), cwd)
+            if n:
+                sessions += 1
+                total += n
+    verb = "would capture" if dry_run else "spooled"
+    print(f"backfill: {len(transcripts)} transcript(s) scanned, {verb} "
+          f"{total} observation(s) from {sessions} session(s)")
+    if not dry_run and total:
+        # drain spool -> journal (+ GR2 screening) via the normal flusher
+        subprocess.run([sys.executable, str(Path(__file__).resolve().parent / "flush.py")],
+                       check=False)
+        print("flushed to journal — run /evolve-status to see counts and any "
+              "quarantined batches, then /evolve-review to distill.")
+
+
 def main():
+    if "--backfill" in sys.argv:
+        if not configured():
+            sys.exit("evolve is not configured — nothing to backfill into. "
+                     "See docs/evolve.md (init --local, or HONCHO_URL/API_KEY).")
+        args = sys.argv[sys.argv.index("--backfill") + 1:]
+        limit = next((int(a.split("=")[1]) for a in args if a.startswith("--limit=")), None)
+        backfill(limit=limit, dry_run="--dry-run" in args)
+        return
     if not configured():
         return  # the sh guard is a latency fast-path; this is the enforcement
     try:

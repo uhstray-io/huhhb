@@ -281,6 +281,16 @@ class DetectorTests(unittest.TestCase):
         ])
         self.assertEqual(obs, [])
 
+    def test_compaction_summary_produces_nothing(self):
+        # found by backfill dogfooding: compaction summaries are user-role
+        # turns that QUOTE past corrections — re-capturing them mints fresh
+        # [correction] entries from stale text
+        obs = obs_from([turn_user(
+            "This session is being continued from a previous conversation that "
+            "ran out of context. The user corrected: \"stop adding emoji, "
+            "don't do that again\" and prefers conventional commits.")])
+        self.assertEqual(obs, [])
+
     def test_embedded_harness_block_stripped_not_dropped(self):
         # a marker inside genuine user text must not discard the message —
         # the block is stripped, the user's own words still capture

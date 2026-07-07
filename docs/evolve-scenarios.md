@@ -23,12 +23,12 @@ failure ("wild"), a doctrine rule ("law"), or a reviewer finding ("review").
 | ID | Proves | Mode | Provenance |
 |---|---|---|---|
 | S01 | preference in session A is injected into session B before any turn | offline | plan §7 E1 |
-| S02 | correction after skill use → `partial` outcome → review proposes overlay patch, never a hub edit | offline + live half | plan §7 E2 |
+| S02 | correction after skill use → `partial` outcome → review proposes overlay patch, never a hub edit | offline + live half | plan §7 E2; wild: live half staged nothing — allowedTools substring rules miss `$EVOLVE`-style invocations and headless `-p` hard-aborts on the first unmatched call (diagnosed 2026-07-06, rules broadened; live re-verify pending) |
 | S03 | fixed failures are remembered as their fix; no negative-capability claims survive | offline | plan §7 E3, law: never persist a grudge |
 | S04 | project decisions route to repo-memory, not overlays/conclusions | offline + live half | plan §7 E4; wild: routed-by-capture-type miss (v0.5.0) |
 | S05 | e-dropping gerunds ("stop using") detected; outcome cascades to `partial` | offline | wild: missed live on v0.5.0 |
 | S06 | pasted documents quoting example phrases capture nothing | offline | wild: build plan journaled its own examples (v0.5.0) |
-| S07 | harness blocks are never user speech, including `ci-monitor-event` | offline | wild: task-notification captured as correction (v0.5.0); ci-monitor-event: journal idx 14, 2026-07-05, fixed same day |
+| S07 | harness blocks are never user speech, including `ci-monitor-event` and compaction summaries | offline | wild: task-notification captured as correction (v0.5.0); ci-monitor-event: journal idx 14, 2026-07-05; compaction summary quoting old corrections: backfill dogfood, 2026-07-06 |
 | S08 | markers embedded in genuine text strip their block; user's words survive | offline | review: CodeRabbit PR#18 |
 | S09 | secrets redacted in every artifact (journal + injection), incl. install commands | offline | wild: MEDIUM security finding (v0.5.0 review) |
 | S10 | benign phrasing near detector vocabulary captures nothing | offline | law: capture purity beats volume |

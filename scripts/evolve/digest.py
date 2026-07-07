@@ -63,7 +63,11 @@ HARNESS_BLOCK = re.compile(
 # a marker merely embedded in user text gets its block stripped instead
 HARNESS_PREFIXES = ("<command-name>", "<local-command-stdout>", "<command-message>",
                     "<command-args>", "<task-notification>", "<local-command-caveat>",
-                    "<ci-monitor-event>", "[SYSTEM NOTIFICATION")
+                    "<ci-monitor-event>", "[SYSTEM NOTIFICATION",
+                    # compaction summaries are harness-authored user-role turns;
+                    # they quote past corrections, which re-captures them as new
+                    # (found by backfill dogfooding — old transcripts are full of them)
+                    "This session is being continued from a previous conversation")
 SECRET = re.compile(
     r"(sk-[A-Za-z0-9_\-]{10,}"
     r"|ghp_[A-Za-z0-9]{20,}|gho_[A-Za-z0-9]{20,}"

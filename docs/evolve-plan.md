@@ -433,6 +433,16 @@ through gated proposals).
 Record every evolve change here: date, what changed, roadmap item or
 provenance.
 
+- **2026-07-07** — Field test of installed 0.5.4 (all layers green: 79 units,
+  80/80 scenario assertions, state round-trip across the migration verified —
+  0 re-captures from 422 transcripts). Wild-caught: the skill graph minted
+  phantom plugin sources from content-hash version dirs and counted per-tool
+  packaging mirrors (.cursor/, .claude-plugin/, .claude/) as installations —
+  inventory read 225 skills/114 pairs of mostly noise. Fixed (hash dirs
+  collapse to owner; mirrors excluded, judged relative to the plugins root);
+  real inventory now 180 skills/44 pairs, remaining same-name dups are
+  genuine cross-plugin collisions. Version 0.5.5.
+
 - **2026-07-07** — TypeScript migration completed and verified: 12 modules
   ported (78/78 unit tests, 80/80 offline scenario assertions, lint parity
   byte-for-byte); Python removed. Honcho-mode call surface aligned to the

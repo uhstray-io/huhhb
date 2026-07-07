@@ -118,12 +118,27 @@ export function _plugin_source(p: string): string {
   if (src === undefined) {
     return "?"; // IndexError parity (i === 0)
   }
-  // cache layouts insert a version dir (plugin/<ver>/skills/) — the
-  // owner is one level further up
-  if (fullmatch(/v?\d+(?:[.\-]\w+)*/, src) && i >= 2) {
+  // cache layouts insert a version dir (plugin/<ver>/skills/) — the owner is
+  // one level further up. Two spellings in the wild: dotted semver ("0.5.4")
+  // and content-hash dirs ("069551a7d2b0", seen in claude-plugins-official).
+  if ((fullmatch(/v?\d+(?:[.\-]\w+)*/, src) || fullmatch(/[0-9a-f]{7,40}/, src)) && i >= 2) {
     src = parts[i - 2];
   }
   return src ?? "?";
+}
+
+/* Plugins vendor per-tool mirrors of their own skills in dot-directories
+   (.claude-plugin/, .cursor/, .openclaw/, .codex-plugin/, even .claude/).
+   Those are packaging scaffolding, not installed skill locations — counting
+   them mints phantom same-name duplicates (found by the 0.5.4 field test:
+   114 overlap pairs, most of them mirror noise). Judged RELATIVE to the
+   plugins root so the ~/.claude prefix of the root itself never trips it. */
+export function is_tool_mirror(p: string, root: string = PLUGINS_ROOT): boolean {
+  const rel = path.relative(root, p);
+  if (rel.startsWith("..")) return false; // outside the root — not ours to judge
+  const parts = rel.split(path.sep);
+  const i = parts.indexOf("skills");
+  return parts.slice(0, i === -1 ? undefined : i).some((seg) => seg.startsWith("."));
 }
 
 /* re.fullmatch parity. */
@@ -196,6 +211,10 @@ export function inventory(tier_filter: string | null = null): SkillRecord[] {
       // drop the huhhb mirror (marketplaces/huhhb, cache/huhhb) — it's repo;
       // p.parts is separator-agnostic, matching _plugin_source
       if (pathParts(p).includes("huhhb")) {
+        continue;
+      }
+      // drop per-tool packaging mirrors (.cursor/, .claude-plugin/, ...)
+      if (is_tool_mirror(p)) {
         continue;
       }
       const r = _parse(p);

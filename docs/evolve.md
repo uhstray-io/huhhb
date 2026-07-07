@@ -82,7 +82,7 @@ bulk/poisoned session is quarantined, never blindly trusted):
 
 ```bash
 python3 <plugin>/scripts/evolve/digest.py --backfill --dry-run   # preview, writes nothing
-python3 <plugin>/scripts/evolve/digest.py --backfill             # mine ~/.claude/projects/*.jsonl
+python3 <plugin>/scripts/evolve/digest.py --backfill             # mine ~/.claude/projects/*/*.jsonl
 python3 <plugin>/scripts/evolve/digest.py --backfill --limit=50  # bound to the 50 most-recent
 ```
 

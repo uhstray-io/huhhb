@@ -368,10 +368,16 @@ def backfill(limit=None, dry_run=False):
           f"{total} observation(s) from {sessions} session(s)")
     if not dry_run and total:
         # drain spool -> journal (+ GR2 screening) via the normal flusher
-        subprocess.run([sys.executable, str(Path(__file__).resolve().parent / "flush.py")],
-                       check=False)
-        print("flushed to journal — run /evolve-status to see counts and any "
-              "quarantined batches, then /evolve-review to distill.")
+        result = subprocess.run(
+            [sys.executable, str(Path(__file__).resolve().parent / "flush.py")],
+            check=False)
+        if result.returncode == 0:
+            print("flushed to journal — run /evolve-status to see counts and any "
+                  "quarantined batches, then /evolve-review to distill.")
+        else:
+            print(f"backfill spooled {total} observation(s) but the flush step "
+                  f"failed (exit {result.returncode}) — the spool is intact; "
+                  "re-run flush.py or check /evolve-status.", file=sys.stderr)
 
 
 def main():

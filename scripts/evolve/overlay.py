@@ -219,7 +219,8 @@ def cmd_propose(args):
         if not (isinstance(ev, dict) and ev.get("assert")):
             sys.exit("overlay-create proposals must bundle an 'eval' with a non-empty "
                      "'assert' (no eval, no registration — see docs/skill-lifecycle.md)")
-        if len(proposal.get("sessions") or []) < 2 and not proposal.get("explicit"):
+        # distinct sessions — ["a", "a"] is one witness, not two
+        if len(set(proposal.get("sessions") or [])) < 2 and not proposal.get("explicit"):
             sys.exit("overlay-create needs >=2 witnessing sessions (the anti-overfit "
                      "evidence bar), or explicit=true for a user-requested skill")
     if kind == "repo-promotion":
@@ -239,6 +240,15 @@ def cmd_propose(args):
     for body_field in ("body", "content"):
         if proposal.get(body_field):
             guard_skill_content(proposal.get("name", kind), proposal[body_field])
+    # eval fields are executable surface too: 'assert' runs via sh -c in the
+    # bench runner and 'prompt' drives claude -p — a poisoned proposal must
+    # not smuggle payloads past GR4 through the eval it is required to bundle
+    ev = proposal.get("eval")
+    if isinstance(ev, dict):
+        for ev_field in ("assert", "prompt"):
+            if ev.get(ev_field):
+                guard_skill_content(f"{proposal.get('name', kind)}.eval.{ev_field}",
+                                    str(ev[ev_field]))
     proposal["ts"] = now_iso()
     # ns + pid: concurrent headless runs must never overwrite each other's proposals
     dest = PENDING_DIR / f"{kind}-{time.time_ns()}-{os.getpid()}.json"

@@ -21,7 +21,7 @@ the semantic relationships** — the tool only says where to look.
 
 | Tier | Where | Ownership | Change path |
 |---|---|---|---|
-| **repo** | huhhb `skills/` | shared, versioned, everyone gets it | PR, human-merged + CI evals |
+| **repo** | `skills/` | shared, versioned, everyone gets it | PR, human-merged + CI evals |
 | **user** | `~/.claude/skills/*` (incl. `*-local` overlays) | this machine only | overlay patch / direct edit |
 | **plugin** | `~/.claude/plugins/**/skills/*` | upstream-owned | **read-only** — fixes go upstream |
 

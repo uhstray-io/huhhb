@@ -63,7 +63,13 @@ def _plugin_source(path):
     path — the segment immediately above skills/."""
     parts = path.parts
     try:
-        return parts[parts.index("skills") - 1]
+        i = parts.index("skills")
+        src = parts[i - 1]
+        # cache layouts insert a version dir (plugin/<ver>/skills/) — the
+        # owner is one level further up
+        if re.fullmatch(r"v?\d+(?:[.\-][\w]+)*", src) and i >= 2:
+            src = parts[i - 2]
+        return src
     except (ValueError, IndexError):
         return "?"
 
@@ -88,7 +94,10 @@ def inventory(tier_filter=None):
         # collapse to one per tier+name (newest). Cross-tier same-name pairs —
         # the real dedup signal, e.g. a user skill shadowing a repo one —
         # survive because the tier differs.
-        key = (tier, rec["name"])
+        # plugin tier keys on source too: same-plugin version copies still
+        # collapse (same source), but two DIFFERENT plugins shipping the same
+        # skill name stay distinct so overlaps() can flag the collision
+        key = (tier, source, rec["name"]) if tier == "plugin" else (tier, rec["name"])
         prev = seen.get(key)
         if prev is None or _mtime(rec["path"]) > _mtime(prev["path"]):
             seen[key] = rec

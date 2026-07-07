@@ -54,6 +54,13 @@ quality is negative-value — the marketplace equivalent of dead code.
 
 ### G2 — field promotion (continuous, via the evolve loop)
 
+Runner: `python3 scripts/evolve/g2.py report [--json]` — computes F1–F3 from
+the **screened** journal (GR2: a quarantined batch never earns confidence)
+plus the bench ledger, and emits per-skill verdicts
+(`promote / improve / demote / keep / no-data`). Read-only: featured/pinned
+changes still ship as PRs. F2 approximates "within 3 turns" as
+same-session-at-or-after-use — the journal stores no turn indices by design.
+
 | # | Criterion | Source | Bar |
 |---|---|---|---|
 | F1 | Earned confidence `min(runs/10,1) × success_rate` | `[skill-usage]` outcomes / overlay `record` | ≥ 0.7 for featured/pinned status |

@@ -28,6 +28,7 @@ python3 scripts/skill-lint.py                  # G0 debt: oversized bodies, weak
 uv run scripts/skill-trends.py ledger          # bench history: did versions move the numbers?
 uv run scripts/skill-trends.py regressions     # skills that got worse
 python3 $EVOLVE/overlay.py report --json       # overlay confidence / last_used / last_error
+python3 $EVOLVE/g2.py report                   # G2 field verdicts: promote/improve/demote per skill
 ```
 
 plus the journal (`journal.jsonl` in the state dir): `[skill-usage]` outcomes

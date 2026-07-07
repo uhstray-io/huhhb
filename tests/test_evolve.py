@@ -868,5 +868,63 @@ class SkillContractTests(SandboxCase):
         self.assertIn("no overlays yet", self.sb.run("overlay.py", "report").stdout)
 
 
+class G2Tests(unittest.TestCase):
+    """g2.py — field-promotion verdicts from the screened journal."""
+
+    def _report(self, entries):
+        tmp = Path(tempfile.mkdtemp(prefix="g2-"))
+        self.addCleanup(shutil.rmtree, tmp, True)
+        journal = tmp / "data" / "huhhb" / "evolve" / "journal.jsonl"
+        journal.parent.mkdir(parents=True)
+        journal.write_text("\n".join(json.dumps(e) for e in entries) + "\n")
+        env = {**os.environ, "XDG_DATA_HOME": str(tmp / "data"),
+               "XDG_CONFIG_HOME": str(tmp / "config"), "EVOLVE_MODE": "local"}
+        r = subprocess.run([sys.executable, str(EVOLVE / "g2.py"), "report", "--json"],
+                           capture_output=True, text=True, env=env)
+        self.assertEqual(r.returncode, 0, r.stderr)
+        return {row["skill"]: row for row in json.loads(r.stdout)}
+
+    @staticmethod
+    def _use(skill, sid, outcome="used", ts="2026-07-01T00:00:00Z"):
+        return {"type": "skill-usage", "skill": skill, "outcome": outcome,
+                "session_id": sid, "ts": ts, "content": f"[skill-usage] {skill}"}
+
+    @staticmethod
+    def _corr(sid, ts="2026-07-01T00:01:00Z"):
+        return {"type": "correction", "session_id": sid, "ts": ts,
+                "content": "[correction] not like that"}
+
+    def test_clean_heavy_use_promotes(self):
+        rows = self._report([self._use("planner", f"s{i}") for i in range(10)])
+        self.assertEqual(rows["planner"]["verdict"], "promote")
+        self.assertEqual(rows["planner"]["f1"], 1.0)
+
+    def test_recurring_correction_pressure_blocks_promotion(self):
+        entries = [self._use("planner", f"s{i}") for i in range(10)]
+        entries += [self._corr("s0"), self._corr("s1")]  # ≥2 sessions = recurring
+        self.assertEqual(self._report(entries)["planner"]["verdict"], "improve")
+
+    def test_correction_before_use_is_not_pressure(self):
+        entries = [self._use("planner", "s0", ts="2026-07-01T00:05:00Z"),
+                   self._corr("s0", ts="2026-07-01T00:01:00Z"),  # earlier — unrelated
+                   self._use("planner", "s1"), self._corr("s1")]
+        row = self._report(entries)["planner"]
+        self.assertEqual(row["pressure_sessions"], 1)  # only s1 counts
+        self.assertNotEqual(row["verdict"], "improve")
+
+    def test_stale_low_confidence_demotes(self):
+        entries = [self._use("dusty", "s0", outcome="partial", ts="2026-01-01T00:00:00Z")]
+        self.assertEqual(self._report(entries)["dusty"]["verdict"], "demote")
+
+    def test_quarantined_session_earns_no_confidence(self):
+        # GR2: a flooded session (>5 durable) is held whole — its skill-usage
+        # entries must not buy confidence toward promotion
+        flood = [{"type": "preference", "content": f"[preference] rule {i}",
+                  "session_id": "evil", "ts": "2026-07-01T00:00:00Z"} for i in range(6)]
+        flood += [self._use("trojan", "evil") for _ in range(10)]
+        rows = self._report(flood)
+        self.assertNotIn("trojan", {k for k, v in rows.items() if v["runs"] > 0})
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

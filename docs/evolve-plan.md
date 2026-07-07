@@ -52,7 +52,7 @@ accumulating; ~60-line cap because injection has a token budget). No
 background derivation, no semantic search, single-machine memory.
 
 ```bash
-node <plugin>/scripts/evolve/honcho_client.ts init --local
+node ${CLAUDE_PLUGIN_ROOT}/scripts/evolve/honcho_client.ts init --local
 ```
 
 **Self-hosted [Honcho](https://honcho.dev)** (privacy at full capability):
@@ -92,9 +92,9 @@ harness stripping, anti-capture, trust tagging, and volume quarantine all
 apply, so a bulk/poisoned historical session is held, never blindly trusted.
 
 ```bash
-node <plugin>/scripts/evolve/digest.ts --backfill --dry-run   # preview, writes nothing
-node <plugin>/scripts/evolve/digest.ts --backfill             # mine ~/.claude/projects/*/*.jsonl
-node <plugin>/scripts/evolve/digest.ts --backfill --limit=50  # bound to the 50 most-recent
+node ${CLAUDE_PLUGIN_ROOT}/scripts/evolve/digest.ts --backfill --dry-run   # preview, writes nothing
+node ${CLAUDE_PLUGIN_ROOT}/scripts/evolve/digest.ts --backfill             # mine ~/.claude/projects/*/*.jsonl
+node ${CLAUDE_PLUGIN_ROOT}/scripts/evolve/digest.ts --backfill --limit=50  # bound to the 50 most-recent
 ```
 
 Idempotent via per-session byte cursors. First real run on this machine
@@ -158,7 +158,7 @@ per-user configurable (upgrade path noted in `guardrails.ts`).
 
 ## Quality gates (G0 / G1 / G2)
 
-```
+```text
 G0 static lint (free, every PR)       node scripts/skill-lint.ts
    └─► G1 merge bench (paid, on change)    node scripts/skill-bench.ts <skill>
           └─► G2 field promotion (continuous)   node scripts/evolve/g2.ts report

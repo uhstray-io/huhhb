@@ -49,7 +49,7 @@ make, skills that work for you — via [Honcho](https://honcho.dev). It is
 **entirely off until configured** and everything it learns stays in the
 Honcho workspace *you* control.
 
-Four choices (details in [docs/evolve.md](../docs/evolve.md)):
+Four choices (details in [docs/evolve-plan.md](../docs/evolve-plan.md)):
 
 1. **Local, no server** — everything stays in files on this machine:
    `honcho_client.py init --local`

@@ -10,15 +10,15 @@ so this skill is how a user sees it working — or sees why it isn't. Run both
 commands and present the combined picture:
 
 ```bash
-python3 "${CLAUDE_PLUGIN_ROOT}/scripts/evolve/honcho_client.py" status
-python3 "${CLAUDE_PLUGIN_ROOT}/scripts/evolve/overlay.py" report
+node "${CLAUDE_PLUGIN_ROOT}/scripts/evolve/honcho_client.ts" status
+node "${CLAUDE_PLUGIN_ROOT}/scripts/evolve/overlay.ts" report
 ```
 
 ## How to read it
 
 - **config source: none** — the suite is inert. Nothing is captured, nothing
   injected; huhhb behaves as if evolve were not installed. Point the user at
-  `docs/evolve.md` for setup if they expected it on.
+  `docs/evolve-plan.md` for setup if they expected it on.
 - **mode: local** — no server: there is no deriver queue; health is the
   journal count growing and conclusions being distilled from it. A large
   journal with few conclusions means `/evolve-review` hasn't run in a while —

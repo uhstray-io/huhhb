@@ -5,3 +5,5 @@ plan/
 
 # session-save continuation file (never committed)
 .claude/CONTINUE.md
+.codex/
+.teach.zip

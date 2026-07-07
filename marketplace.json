@@ -3,7 +3,7 @@
   "publisher": "uhstray-io",
   "displayName": "Uhstray Skills Hub",
   "description": "Uhstray.io's curated Claude Code skills marketplace — workflows and automation for engineering teams.",
-  "version": "0.5.2",
+  "version": "0.5.4",
   "homepage": "https://github.com/uhstray-io/huhhb",
   "license": "MIT",
   "skills": [
@@ -333,6 +333,22 @@
       "description": "The library lifecycle pass — audits every skill against usage telemetry, bench history, and lint debt; issues refine/merge/prune/create verdicts and distills new skills from proven successful sessions, eval-gated.",
       "category": "memory",
       "tags": ["memory", "lifecycle", "skills", "review", "distillation"],
+      "version": "0.1.0"
+    },
+    {
+      "name": "evolve-distill",
+      "path": "skills/evolve-distill/SKILL.md",
+      "description": "Distill a repeated, successful multi-step workflow from past sessions into a reusable overlay skill — eval-gated, ≥2-session evidence, human-approved; stages a proposal, never writes a skill directly.",
+      "category": "memory",
+      "tags": ["memory", "distillation", "skills", "workflow", "creation"],
+      "version": "0.1.0"
+    },
+    {
+      "name": "evolve-map",
+      "path": "skills/evolve-map/SKILL.md",
+      "description": "Inventory every skill across tiers (repo/user/plugin), draw the relationships between them (overlaps, complements, composes, supersedes, gaps), recommend augment-vs-build, avoid duplicates, and promote a user skill to the repository.",
+      "category": "memory",
+      "tags": ["memory", "skills", "graph", "inventory", "interoperability"],
       "version": "0.1.0"
     }
   ]

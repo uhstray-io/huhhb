@@ -22,7 +22,7 @@ huhhb/
 ├── marketplace.json     # Skill manifest — source of truth for discovery
 ├── CLAUDE.md            # Instructions for Claude Code in this repo
 ├── CONTEXT.md           # This file
-├── AGENT.md             # Agent behavior overrides
+├── AGENTS.md            # Unified agent instructions (all AI tools)
 └── README.md            # User-facing documentation
 ```
 

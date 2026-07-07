@@ -103,6 +103,28 @@ Everything is pseudonymous (a random profile id, no account identity) and
 device-local except the Honcho workspace you chose. Nothing is shared with
 uhstray.io.
 
+### Choosing honcho mode: what the managed service means for your data
+
+Verified against honcho.dev, app.honcho.dev/privacy (eff. 2025-04-24), and
+app.honcho.dev/tos as of 2026-07-06 — re-verify before relying on it:
+
+- **Cost**: one-time $100 signup credit (no perpetual free tier), then
+  usage-based — $2.00/1M tokens ingested; storage and retrieval free; chat
+  reasoning $0.001–$0.50 per query by level. No published spend caps.
+- **Data use**: no training of *public* models on your content without
+  opt-in, but the policy permits non-public fine-tuning on de-identified
+  data by default. On the managed platform the deriver runs on *their*
+  models/keys; content transits their inference subprocessors (Groq,
+  Anthropic, Google Cloud) and LLM-observability tooling (Langfuse).
+- **Protections**: TLS + AES-256, default 90-day retention (configurable),
+  hard-delete on workspace purge, logical workspace isolation. **Not** SOC 2
+  / HIPAA certified (ToS says so explicitly); US-hosted only; no default SLA.
+- **Keeping data local**: local mode (this suite's default) or self-hosting
+  the AGPL server with your own LLM keys are the only fully-local options.
+  Treat the managed service as fine for low-sensitivity telemetry, not for
+  regulated or confidential content. The `honcho-ai` SDK we import is
+  Apache-2.0; the server is AGPL-3.0 (never vendored — see CLAUDE.md).
+
 ## Purge
 
 ```bash

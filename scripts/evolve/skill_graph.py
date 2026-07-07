@@ -60,7 +60,7 @@ def _parse(path):
 
 def _plugin_source(path):
     """The owning plugin name from a ~/.claude/plugins/**/skills/<name>/SKILL.md
-    path — the segment two levels above skills/."""
+    path — the segment immediately above skills/."""
     parts = path.parts
     try:
         return parts[parts.index("skills") - 1]
@@ -105,8 +105,9 @@ def inventory(tier_filter=None):
                 add(r, "user", "user")
     if PLUGINS_ROOT.exists():
         for p in PLUGINS_ROOT.glob("**/skills/*/SKILL.md"):
-            # drop the huhhb mirror (marketplaces/huhhb, cache/huhhb) — it's repo
-            if "/huhhb/" in str(p):
+            # drop the huhhb mirror (marketplaces/huhhb, cache/huhhb) — it's repo;
+            # p.parts is separator-agnostic, matching _plugin_source
+            if "huhhb" in p.parts:
                 continue
             r = _parse(p)
             if r:

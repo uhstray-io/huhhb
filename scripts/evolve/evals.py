@@ -385,7 +385,8 @@ def s15_explicit_observe_roundtrip(sb, live):
 def s16_overlay_lifecycle(sb, live):
     """Overlay asset lifecycle: scaffold → patch (semver+provenance) →
     earned confidence → pinned protection → archive-never-delete."""
-    o = lambda *a, **k: sb.run("overlay.py", *a, **k)
+    def o(*a, **k):
+        return sb.run("overlay.py", *a, **k)
     out = {}
     out["scaffold_enforces_suffix"] = o("scaffold", "bad", "--description", "d").returncode != 0
     o("scaffold", "demo-local", "--description", "d", "--signal", "s", "--sessions", "cc:a")
@@ -412,7 +413,8 @@ def s16_overlay_lifecycle(sb, live):
 def s17_headless_confinement(sb, live):
     """Headless review's only write path: propose validates and stages to
     pending/; apply-pending replays; repo-memory kinds refuse CLI apply."""
-    o = lambda *a, **k: sb.run("overlay.py", *a, **k)
+    def o(*a, **k):
+        return sb.run("overlay.py", *a, **k)
     out = {}
     out["bad_kind_rejected"] = o("propose", stdin=json.dumps(
         {"kind": "run-command", "summary": "s", "signal": "x"})).returncode != 0
@@ -616,7 +618,8 @@ def s26_distillation_gates(sb, live):
     approved one scaffolds at 0.0 confidence with its eval bundled, and
     distill-candidates surfaces only ≥2-session recurring classes.
     See skills/evolve-distill and docs/evolve-vs-autoskill.md."""
-    o = lambda *a, **k: sb.run("overlay.py", *a, **k)
+    def o(*a, **k):
+        return sb.run("overlay.py", *a, **k)
     out = {}
     base = {"kind": "overlay-create", "name": "setup-svc-local", "description": "d",
             "body": "## Workflow\n1. step", "summary": "s", "signal": "recurred"}
@@ -640,7 +643,7 @@ def s26_distillation_gates(sb, live):
     sb.capture_session("d1", [turn_user("always use conventional commits")])  # noise, not a candidate
     for sid in ("t1", "t2"):
         sb.run("honcho_client.py", "observe", "--type", "technique", "--target", "agent",
-               "--content", f"[technique] project=svc — scaffold via make bootstrap", "--session", sid)
+               "--content", "[technique] project=svc — scaffold via make bootstrap", "--session", sid)
     cands = o("distill-candidates", "--json").stdout
     try:
         classes = [c["class"] for c in json.loads(cands)]

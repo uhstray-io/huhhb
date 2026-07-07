@@ -704,6 +704,59 @@ class HonchoDeliveryGuardTests(unittest.TestCase):
         self.assertTrue(out["bulk_quarantined_for_review"], "held session must surface for review")
 
 
+class SkillGraphTests(unittest.TestCase):
+    def _run(self, *args, env=None):
+        return subprocess.run([sys.executable, str(EVOLVE / "skill_graph.py"), *args],
+                              capture_output=True, text=True, env=env)
+
+    def _fixture(self):
+        tmp = Path(tempfile.mkdtemp(prefix="skill-graph-"))
+        self.addCleanup(shutil.rmtree, tmp, True)
+        user, plug = tmp / "user", tmp / "plugins" / "acme" / "skills"
+        for base, name, desc in [
+            (user, "writing-plans", "Use when drafting a plan my way"),   # shadows repo
+            (user, "mine-local", "Use when doing my own thing daily"),
+            (plug, "webfetch", "Use when fetching a URL over http")]:
+            (base / name).mkdir(parents=True, exist_ok=True)
+            (base / name / "SKILL.md").write_text(
+                f"---\nname: {name}\ndescription: {desc}\n---\n# {name}\n")
+        env = {**os.environ, "EVOLVE_USER_SKILLS": str(user),
+               "EVOLVE_PLUGINS_ROOT": str(tmp / "plugins")}
+        return env
+
+    def test_inventory_tags_tiers_and_overlay(self):
+        env = self._fixture()
+        recs = json.loads(self._run("inventory", "--json", env=env).stdout)
+        by = {(r["tier"], r["name"]): r for r in recs}
+        self.assertIn(("user", "writing-plans"), by)
+        self.assertIn(("plugin", "webfetch"), by)
+        self.assertTrue(by[("user", "mine-local")]["is_overlay"])
+        self.assertTrue(any(r["tier"] == "repo" and r["name"] == "evolve-map" for r in recs),
+                        "repo tier resolves from the real huhhb skills")
+
+    def test_overlaps_flags_cross_tier_same_name(self):
+        env = self._fixture()
+        pairs = json.loads(self._run("overlaps", "--json", env=env).stdout)
+        self.assertFalse(any(p["a"] == p["b"] for p in pairs), "no self-pairs")
+        self.assertTrue(any(p["same_name"] and p["cross_tier"]
+                            and "writing-plans" in p["a"] + p["b"] for p in pairs),
+                        "user writing-plans must collide with repo writing-plans")
+
+    def test_inventory_dedups_plugin_cache_copies(self):
+        # the same plugin skill vendored under two version dirs collapses to one
+        tmp = Path(tempfile.mkdtemp(prefix="skill-graph-dup-"))
+        self.addCleanup(shutil.rmtree, tmp, True)
+        for ver in ("1.0", "2.0"):
+            d = tmp / "plugins" / "acme" / ver / "skills" / "dup"
+            d.mkdir(parents=True)
+            (d / "SKILL.md").write_text("---\nname: dup\ndescription: Use when deduping copies\n---\n")
+        env = {**os.environ, "EVOLVE_USER_SKILLS": str(tmp / "none"),
+               "EVOLVE_PLUGINS_ROOT": str(tmp / "plugins")}
+        recs = json.loads(self._run("inventory", "--json", env=env).stdout)
+        self.assertEqual(len([r for r in recs if r["name"] == "dup"]), 1,
+                         "cache copies across version dirs must collapse to one")
+
+
 class DistillationGateTests(SandboxCase):
     def setUp(self):
         super().setUp()

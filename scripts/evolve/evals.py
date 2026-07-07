@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""huhhb evolve — scenario evals for the whole suite (S01-S26).
+"""huhhb evolve — scenario evals for the whole suite (S01-S27).
 
 Scripted scenarios; graders check artifacts, not vibes. Catalog with intent,
 provenance, and improvement workflow: docs/evolve-scenarios.md.
@@ -650,6 +650,51 @@ def s26_distillation_gates(sb, live):
     return out
 
 
+def s27_skill_map_and_promotion(sb, live):
+    """Cross-skill inventory/relate + tier delineation + user→repo promotion
+    gate. skill_graph discovers tiers and flags a cross-tier same-name
+    collision; repo-promotion is refused without body/rationale/eval.
+    See skills/evolve-map and docs/evolve-vs-autoskill.md."""
+    # fixture user + plugin trees; the repo tier comes from the real huhhb
+    # skills (skill_graph resolves it from its own location), which makes the
+    # user-shadows-repo collision for "writing-plans" a genuine cross-tier hit.
+    user_s, plug_s = sb.root / "user-skills", sb.root / "plugins" / "acme" / "skills"
+    fixtures = {user_s: [("writing-plans", "Use when drafting a plan my way"),
+                         ("my-helper-local", "Use when doing my personal thing")],
+                plug_s: [("webfetch", "Use when fetching a URL")]}
+    for base, skills in fixtures.items():
+        for name, desc in skills:
+            (base / name).mkdir(parents=True, exist_ok=True)
+            (base / name / "SKILL.md").write_text(
+                f"---\nname: {name}\ndescription: {desc}\n---\n# {name}\n")
+    env = {**sb.env, "EVOLVE_USER_SKILLS": str(user_s),
+           "EVOLVE_PLUGINS_ROOT": str(sb.root / "plugins")}
+    graph = str(REPO / "scripts" / "evolve" / "skill_graph.py")
+    import subprocess as _sp
+    records = json.loads(_sp.run([sys.executable, graph, "inventory", "--json"],
+                                 capture_output=True, text=True, env=env).stdout)
+    tiers = {r["tier"] for r in records}
+    pairs = json.loads(_sp.run([sys.executable, graph, "overlaps", "--json"],
+                               capture_output=True, text=True, env=env).stdout)
+
+    def propose(obj):
+        return sb.run("overlay.py", "propose", stdin=json.dumps(obj))
+    bad = propose({"kind": "repo-promotion", "name": "my-helper-local",
+                   "summary": "s", "signal": "sig"})   # missing content/rationale/eval
+    good = propose({"kind": "repo-promotion", "name": "my-helper-local",
+                    "summary": "s", "signal": "sig", "rationale": "team needs it",
+                    "description": "Use when …", "content": "---\nname: my-helper\n---\nbody",
+                    "eval": {"id": "e", "assert": "true"}})
+    return {
+        "discovers_user_tier": "user" in tiers,
+        "discovers_plugin_tier": "plugin" in tiers,
+        "flags_user_shadowing_signal": any(
+            p["same_name"] and "writing-plans" in p["a"] + p["b"] for p in pairs),
+        "promotion_refused_without_body_and_eval": bad.returncode != 0,
+        "valid_promotion_staged": good.returncode == 0,
+    }
+
+
 SCENARIOS = {
     "s01": (s01_cold_preference, "cold preference reaches session B"),
     "s02": (s02_skill_friction, "skill friction -> partial outcome -> overlay proposal"),
@@ -679,6 +724,8 @@ SCENARIOS = {
             "backfill mines history through the capture guardrails"),
     "s26": (s26_distillation_gates,
             "workflow distillation stays eval-gated + ≥2-session evidence"),
+    "s27": (s27_skill_map_and_promotion,
+            "cross-tier skill inventory/overlaps + user→repo promotion gate"),
 }
 LIVE_ONLY = {"s20"}
 

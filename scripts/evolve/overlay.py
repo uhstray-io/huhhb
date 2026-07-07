@@ -37,7 +37,8 @@ from honcho_client import PENDING_DIR, ensure_dirs, journal_entries, now_iso
 import os
 OVERLAY_ROOT = Path(os.environ.get("EVOLVE_OVERLAY_DIR", Path.home() / ".claude" / "skills"))
 ARCHIVE_ROOT = OVERLAY_ROOT / "_archive"
-PROPOSAL_KINDS = ("overlay-create", "overlay-patch", "repo-memory", "observation", "archive")
+PROPOSAL_KINDS = ("overlay-create", "overlay-patch", "repo-memory", "observation",
+                  "archive", "repo-promotion")
 
 
 def guard_skill_content(name, text):
@@ -221,6 +222,16 @@ def cmd_propose(args):
         if len(proposal.get("sessions") or []) < 2 and not proposal.get("explicit"):
             sys.exit("overlay-create needs >=2 witnessing sessions (the anti-overfit "
                      "evidence bar), or explicit=true for a user-requested skill")
+    if kind == "repo-promotion":
+        # promoting a user skill to the shared repo tier: highest consequence
+        # radius (everyone gets it), so it needs the skill body, a rationale
+        # for why it belongs shared, and the eval every repo skill must carry.
+        for field in ("name", "description", "content", "rationale"):
+            if not proposal.get(field):
+                sys.exit(f"repo-promotion missing required field '{field}'")
+        if not (isinstance(proposal.get("eval"), dict) and proposal["eval"].get("assert")):
+            sys.exit("repo-promotion must bundle an 'eval' with a non-empty 'assert' "
+                     "(repo skills require a G1 scenario — no eval, no promotion)")
     proposal["ts"] = now_iso()
     # ns + pid: concurrent headless runs must never overwrite each other's proposals
     dest = PENDING_DIR / f"{kind}-{time.time_ns()}-{os.getpid()}.json"
@@ -275,9 +286,11 @@ def cmd_apply_pending(args):
     elif kind == "archive":
         archive_overlay(proposal["name"])
     else:
-        # repo-memory / observation proposals are applied by the review skill
-        # itself (git-tracked writes and Honcho writes need its judgment)
-        sys.exit(f"'{kind}' proposals are applied by /evolve-review directly, not this command")
+        # repo-memory / observation / repo-promotion proposals are applied by
+        # the review/map skill directly — git-tracked writes, Honcho writes, and
+        # a user->repo PR all need the agent's judgment, not a blind replay
+        sys.exit(f"'{kind}' proposals are applied by /evolve-review or /evolve-map "
+                 "directly (they open a PR / write git-tracked files), not this command")
     path.unlink()
     print(f"applied and removed {path.name}")
 

@@ -342,6 +342,14 @@
       "category": "memory",
       "tags": ["memory", "distillation", "skills", "workflow", "creation"],
       "version": "0.1.0"
+    },
+    {
+      "name": "evolve-map",
+      "path": "skills/evolve-map/SKILL.md",
+      "description": "Inventory every skill across tiers (repo/user/plugin), draw the relationships between them (overlaps, complements, composes, supersedes, gaps), recommend augment-vs-build, avoid duplicates, and promote a user skill to the repository.",
+      "category": "memory",
+      "tags": ["memory", "skills", "graph", "inventory", "interoperability"],
+      "version": "0.1.0"
     }
   ]
 }

@@ -433,6 +433,18 @@ through gated proposals).
 Record every evolve change here: date, what changed, roadmap item or
 provenance.
 
+- **2026-07-07** — Roadmap batch shipped (R1, R2, R4, R5, R6, R7): derive-stage
+  filters + delta-only derivation in the review/distill prose; four-axis merge
+  policy with degrade-to-add; evidence-cited verification (triage verdicts cite
+  journal lines; the bench judge must quote the response, score parsed from the
+  final line); injection skepticism preamble in both modes; overlay lifecycle
+  as a declared transition table (validated/active earned via record, set-status
+  demotes or re-promotes deprecated only); optional hypothesis
+  {variable, expected_delta} on proposals, shape-validated. Test CI workflow
+  added (lint + units + scenarios on every PR). 84 tests. Version 0.5.7.
+  Open: R3 (champion/challenger — needs bench spend), R8 (needs a Honcho
+  instance decision), R9 (headless cadence needs authed claude -p).
+
 - **2026-07-07** — Follow-up cleanup: onboarding evolve setup examples now
   use the Node-native `honcho_client.ts` command, grounding references the
   unified `AGENTS.md` file, and stale Python comments were removed. Version

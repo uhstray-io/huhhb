@@ -95,6 +95,12 @@ never present a fresh distilled skill as proven.
 
 ## Hard rules
 
+- **De-identification reuse test (R1)**: after stripping case-specific
+  entities, ask whether this user would need the same policy again — if what
+  remains is generic advice, distill nothing. Empty is the default success.
+- **Never invent steps.** Only workflow steps the sessions actually
+  demonstrate; single-trajectory details go to `references/`, not the body.
+
 - **Propose, never write.** This skill stages proposals only. Applying is
   `/evolve-review`'s human-gated step; scaffolding runs the poisoning scan.
 - **≥2 sessions or an explicit ask.** One impressive session is the overfit

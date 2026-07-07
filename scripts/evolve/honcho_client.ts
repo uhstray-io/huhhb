@@ -880,7 +880,10 @@ export async function cmd_status(_args: Record<string, any>): Promise<void> {
   }
   if (cfg.mode === "honcho") {
     try {
-      const qs = await (await client(cfg)).queue_status();
+      const h = await client(cfg);
+      const queue_fn = h.queueStatus ?? h.queue_status; // same fallback as wait_for_derivation
+      if (!queue_fn) throw new Error("SDK exposes no queue-status method");
+      const qs = await queue_fn.call(h);
       console.log(`deriver queue : ${qs}`);
     } catch (e) {
       if (e instanceof SystemExit) throw e; // SDK missing exits 2, like Python's SystemExit

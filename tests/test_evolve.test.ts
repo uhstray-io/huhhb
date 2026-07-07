@@ -423,6 +423,24 @@ describe("DigestCliTests", () => {
     sb.cleanup();
   });
 
+  test("test_traversal_session_id_confined_to_spool", () => {
+    // a crafted session_id ("../x") must never place the spool file
+    // outside SPOOL_DIR — the id is normalized to a safe filename
+    const transcript = path.join(sb.dir, "evil.jsonl");
+    fs.writeFileSync(transcript, JSON.stringify(turn_user("always use uv, never pip")));
+    const payload = JSON.stringify({
+      session_id: "../../escape", transcript_path: transcript, cwd: sb.dir,
+    });
+    const r = sb.run("digest.ts", [], { stdin: payload });
+    assert.equal(r.status, 0, r.stderr);
+    const spool = sb.spool_files();
+    assert.equal(spool.length, 1, "observation must spool");
+    assert.ok(String(spool[0]).startsWith(path.join(String(sb.data), "spool")),
+      "spool file must live inside SPOOL_DIR");
+    assert.ok(!fs.existsSync(path.join(sb.dir, "data", "escape")),
+      "no file may escape the spool directory");
+  });
+
   test("test_spool_written_and_cursor_incremental", () => {
     const payload = sb.write_transcript("s1", [turn_user("always use uv, never pip")]);
     const r = sb.run("digest.ts", [], { stdin: payload });

@@ -26,14 +26,16 @@ or a sandboxed or relocated environment silently reviews the wrong journal.
   The recommended headless invocation:
 
   ```bash
-  claude -p "/evolve-review" --allowedTools "Read,Grep,Glob,Bash(node *)"
+  claude -p "/evolve-review" --allowedTools \
+    "Read,Grep,Glob,Bash(node *honcho_client.ts status*),Bash(node *honcho_client.ts query*),Bash(node *overlay.ts propose*)"
   ```
 
-  (One broad `node` rule on purpose: allowedTools match the *literal*
-  command text, and this skill invokes via `$EVOLVE/...` — path-substring
-  rules never match the unexpanded variable, and headless `-p` hard-aborts
-  on the first unmatched call. Tighter scoping belongs in a PreToolUse
-  hook, not a substring pattern.)
+  (Rules anchor on the *script name + subcommand*, never the path prefix:
+  allowedTools match the literal command text, and this skill invokes via
+  `$EVOLVE/...` — a rule that constrains the path never matches the
+  unexpanded variable, and headless `-p` hard-aborts on the first
+  unmatched call. The wildcard eats the path spelling; the suffix pins
+  what the command may do. Stronger scoping belongs in a PreToolUse hook.)
 
   The next SessionStart surfaces staged proposals; approving replays them via
   `overlay.ts apply-pending <file>`.

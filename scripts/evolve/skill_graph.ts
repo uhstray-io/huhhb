@@ -386,7 +386,7 @@ function py_float_str(x: number): string {
 }
 
 /* round(x, 2) with CPython's round-half-to-even on the true double value.
-The shared honcho_client.py_round2 rounds ties away from zero (toFixed),
+The shared honcho_client py_round2 rounds ties away from zero (toFixed),
 which diverges on exact dyadic ties like 0.625 -> Python 0.62 vs 0.63; a
 Jaccard ratio such as 5/8 hits exactly that tie, so score rounding needs
 the even rule. Not edited into honcho_client.ts (owned elsewhere). */

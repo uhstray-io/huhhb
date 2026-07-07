@@ -28,7 +28,7 @@ Criteria (spec: docs/evolve-plan.md):
       so same-session-after-use approximates the 3-turn window)
   F3  freshness  days since the skill's last G1 bench row      re-bench > 90d
 
-Read-only, stdlib only.  Usage:  g2.py report [--json]`;
+Read-only, stdlib only.  Usage:  g2.ts report [--json]`;
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 export const BENCH_HISTORY = path.join(

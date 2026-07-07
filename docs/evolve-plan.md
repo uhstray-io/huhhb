@@ -439,7 +439,10 @@ provenance.
   documented TS SDK (promise-returning peer/session, addMessages,
   searchQuery, reasoningLevel; live validation stays with `smoke`, C-17).
   Wild-caught during port verification: backfill spawned the flusher one
-  directory too high (s25 caught it). Version 0.5.4.
+  directory too high (s25 caught it). Review hardening: spool filenames
+  sanitize session_id (traversal-proof, regression-tested); the headless
+  allowlist tightened to script-name-anchored rules (path-spelling
+  agnostic, so $EVOLVE invocations still match). Version 0.5.4.
 
 - **2026-07-06** — Consolidated seven docs into this plan; external repo
   references removed. Suite migrated Python → TypeScript (Node ≥22.18,

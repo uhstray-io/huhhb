@@ -26,7 +26,7 @@ import {
 const __doc__ = `huhhb evolve — transcript digester (Stop-hook payload on stdin).
 
 Reads the Claude Code hook JSON {session_id, transcript_path, cwd}, parses
-the session transcript (.jsonl), and spools typed observations for flush.py.
+the session transcript (.jsonl), and spools typed observations for flush.ts.
 Stdlib only — must run even where honcho-ai is not installed.
 
 Capture doctrine (Law 1: purity beats volume). Emission is gated by explicit
@@ -437,7 +437,10 @@ function _digest_locked(session_id: string, transcript_path: string, cwd: string
   ensure_dirs();
   // time.time_ns() parity: nanoseconds since the Unix epoch (uniqueness key).
   const ns = BigInt(Date.now()) * 1_000_000n + (process.hrtime.bigint() % 1_000_000n);
-  const spool_file = path.join(SPOOL_DIR, `${session_id}-${ns}.json`);
+  // session_id arrives from the hook payload / transcript stem — normalize it
+  // to a safe filename so a crafted id ("../x") can never escape SPOOL_DIR
+  const safe_sid = session_id.replace(/[^A-Za-z0-9._-]/g, "_");
+  const spool_file = path.join(SPOOL_DIR, `${safe_sid}-${ns}.json`);
   fs.writeFileSync(
     spool_file,
     py_json_dumps(

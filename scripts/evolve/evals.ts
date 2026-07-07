@@ -190,7 +190,7 @@ export class Sandbox {
 // call (docs: unmatched tool in -p aborts the run; nothing gets staged).
 // Sandboxed eval, so one broad node rule; tightening belongs in a
 // PreToolUse hook, not a substring pattern.
-export const HEADLESS_CMD = 'claude -p "/evolve-review" --allowedTools "Read,Grep,Glob,Bash(node *)"';
+export const HEADLESS_CMD = 'claude -p "/evolve-review" --allowedTools "Read,Grep,Glob,Bash(node *honcho_client.ts status*),Bash(node *honcho_client.ts query*),Bash(node *overlay.ts propose*)"';
 
 export function run_headless_review(sb: Sandbox, enabled: boolean): Record<string, any>[] | null {
   if (!enabled || !which("claude")) {

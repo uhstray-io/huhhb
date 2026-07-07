@@ -443,7 +443,7 @@ export function cmd_distill_candidates(args: Record<string, any>): void {
   if (!cands.length) {
     console.log(
       "no distillation candidates — need a task class seen in >=2 sessions " +
-        "(run digest.py --backfill to mine history first)",
+        "(run digest.ts --backfill to mine history first)",
     );
     return;
   }

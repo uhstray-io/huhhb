@@ -345,7 +345,7 @@ def backfill(limit=None, dry_run=False):
         return
     transcripts = sorted(TRANSCRIPTS_ROOT.glob("*/*.jsonl"),
                          key=lambda p: p.stat().st_mtime, reverse=True)
-    if limit:
+    if limit is not None:                 # limit=0 means "none", not "unlimited"
         transcripts = transcripts[:limit]
     sessions, total = 0, 0
     cursors = load_state()["cursors"] if dry_run else None  # read once, not per-transcript
@@ -376,7 +376,13 @@ def main():
             sys.exit("evolve is not configured — nothing to backfill into. "
                      "See docs/evolve.md (init --local, or HONCHO_URL/API_KEY).")
         args = sys.argv[sys.argv.index("--backfill") + 1:]
-        limit = next((int(a.split("=")[1]) for a in args if a.startswith("--limit=")), None)
+        limit = None
+        for a in args:
+            if a.startswith("--limit="):
+                raw = a.split("=", 1)[1]
+                if not raw.isdigit() or int(raw) < 1:
+                    sys.exit(f"--limit must be a positive integer (got {raw!r})")
+                limit = int(raw)
         backfill(limit=limit, dry_run="--dry-run" in args)
         return
     if not configured():

@@ -74,6 +74,12 @@ def inventory(tier_filter=None):
     (it IS the repo tier)."""
     records, seen = [], {}
 
+    def _mtime(p):
+        try:
+            return Path(p).stat().st_mtime
+        except OSError:
+            return 0.0  # vanished/unreadable between glob and here — degrade, don't crash
+
     def add(rec, tier, source):
         rec.update(tier=tier, source=source,
                    is_overlay=rec["name"].endswith("-local"))
@@ -84,7 +90,7 @@ def inventory(tier_filter=None):
         # survive because the tier differs.
         key = (tier, rec["name"])
         prev = seen.get(key)
-        if prev is None or Path(rec["path"]).stat().st_mtime > Path(prev["path"]).stat().st_mtime:
+        if prev is None or _mtime(rec["path"]) > _mtime(prev["path"]):
             seen[key] = rec
 
     if REPO_SKILLS and REPO_SKILLS.exists():

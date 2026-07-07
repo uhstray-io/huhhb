@@ -21,8 +21,9 @@ keep/update/merge/delete.
 | Capability | claude-autoskill | evolve | Winner |
 |---|---|---|---|
 | Prospective capture from live sessions | ✓ (Stop hook, turn archive) | ✓ (Stop hook, typed observations) | tie |
-| **Retrospective mining of history** | ✓ (`--import`/`--extract-all` over all past transcripts) | ✗ — learns going-forward only | **autoskill** |
-| **Workflow-skill distillation from successful sessions** | ✓ (threshold-triggered `claude -p`) | ✗ — evolve distills from *corrections*, not workflows (design Phase 3, deferred) | **autoskill** |
+| **Retrospective mining of history** | ✓ (`--import`/`--extract-all` over all past transcripts) | ✓ now — `digest.py --backfill` mines all past transcripts *through the capture guardrails* (this PR) | **evolve** (screened, not raw) |
+| **Workflow-skill distillation from successful sessions** | ✓ (threshold-triggered `claude -p`, auto-written) | ✓ now — `/evolve-distill` distills class-level, but as a gated proposal (≥2-session, eval, GR4, human-approved), never auto-written (this PR) | **evolve** (gated, not auto) |
+| **Cross-skill relationships / tier map / promotion** | ✗ — flat `~/.claude/skills/as-*`, no graph, no tiers | ✓ `/evolve-map`: repo/user/plugin inventory, relationship graph, augment-before-create, user→repo promotion (this PR) | **evolve** |
 | PreCompact capture | ✓ | n/a — digest reads the transcript *file* incrementally (byte cursor), so context compaction can't lose signal | tie (evolve resilient by design) |
 | Anti-poisoning (PII/secret redaction, anti-capture, volume caps) | ✗ none — stores full raw turns unencrypted | ✓ five guardrails (GR1–GR5), redaction, quarantine | **evolve** |
 | Human-in-the-loop before a skill lands | ✗ auto-writes to `~/.claude/skills/` | ✓ proposals staged to `pending/`, approved in review | **evolve** |
@@ -31,10 +32,12 @@ keep/update/merge/delete.
 | Memory strata / routing | ✗ slash-command skills only | ✓ Honcho / repo-memory / MemPalace / overlay routing | **evolve** |
 | Dedup | LLM reads a skills-inventory list | lint S5 + review judgment + quarantine | tie |
 
-**Summary:** evolve is materially ahead on safety, quality gating, provenance,
-and memory strata. autoskill is ahead on exactly two axes, both of which evolve
-*designed* but *deferred*: retrospective history mining and workflow-skill
-distillation.
+**Summary:** evolve was already ahead on safety, quality gating, provenance,
+and memory strata. The two axes autoskill led on — retrospective history mining
+and workflow-skill distillation — are now closed (`--backfill` and
+`/evolve-distill`), and evolve's versions are *screened* and *gated* where
+autoskill's are raw and auto-written. `/evolve-map` adds a cross-skill layer
+autoskill has no analogue for.
 
 ## What evolve adopts
 
@@ -55,17 +58,25 @@ poisoning batch is still held from the trusted view. Idempotent via the
 per-session byte cursor (re-running skips processed transcripts); `--dry-run`
 previews; `--limit` bounds it.
 
-### 2. Workflow-skill distillation (DESIGNED — deferred, Phase 3)
+### 2. Workflow-skill distillation (BUILT — this change, `/evolve-distill`)
 
 autoskill's core trick — distill a *successful multi-step workflow* into a
-skill — is evolve's `docs/skill-lifecycle.md` Phase 3, still unbuilt. The
-adaptation is not a copy: autoskill auto-writes unproven skills to disk (a
-sprawl/poisoning risk evolve rejects). evolve's version keeps autoskill's
-extraction mechanism (threshold-triggered `claude -p` over journal-referenced
-sessions) but behind evolve's gates — distill to a *proposal* in `pending/`,
-require the ≥2-session evidence bar, bundle a G1 eval, and land only on human
-approval. Tracked as the next lifecycle increment; autoskill's `autoskill.py`
-extraction prompt is the reference to adapt.
+skill — is now `/evolve-distill`, but not a copy: autoskill auto-writes
+unproven skills to disk (a sprawl/poisoning risk evolve rejects). evolve's
+version keeps the extraction idea but the agent is the extractor (no
+`claude -p` subprocess, no raw-turn archive) and the output is a *proposal*,
+gated at `overlay.py propose` — ≥2-session evidence, a bundled G1 eval (no
+eval, no registration), and the GR4 poisoning scan — landing only on human
+approval, scaffolded at 0.0 confidence.
+
+### 3. Cross-skill map & user→repo promotion (BUILT — this change, `/evolve-map`)
+
+Beyond anything autoskill offers: `skill_graph.py` inventories every skill
+across repo/user/plugin tiers and flags overlaps/collisions; `/evolve-map`
+draws the relationship graph, enforces augment-before-create (a new skill only
+for a confirmed gap, then via `/evolve-distill`), and adds the
+`repo-promotion` path so a proven user skill can be promoted to the shared
+repo tier through a human-merged PR (body + rationale + eval + GR4 scan).
 
 ## What evolve deliberately does NOT adopt
 

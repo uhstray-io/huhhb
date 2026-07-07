@@ -704,6 +704,59 @@ class HonchoDeliveryGuardTests(unittest.TestCase):
         self.assertTrue(out["bulk_quarantined_for_review"], "held session must surface for review")
 
 
+class DistillationGateTests(SandboxCase):
+    def setUp(self):
+        super().setUp()
+        self.sb.env["EVOLVE_MODE"] = "local"
+
+    def _propose(self, obj):
+        return self.sb.run("overlay.py", "propose", stdin=json.dumps(obj))
+
+    def test_create_requires_bundled_eval(self):
+        r = self._propose({"kind": "overlay-create", "name": "x-local", "description": "d",
+                           "summary": "s", "signal": "sig", "sessions": ["a", "b"]})
+        self.assertNotEqual(r.returncode, 0)
+        self.assertIn("no eval, no registration", r.stderr)
+
+    def test_create_requires_two_sessions(self):
+        r = self._propose({"kind": "overlay-create", "name": "x-local", "description": "d",
+                           "summary": "s", "signal": "sig", "sessions": ["a"],
+                           "eval": {"assert": "true"}})
+        self.assertNotEqual(r.returncode, 0)
+        self.assertIn(">=2", r.stderr)
+
+    def test_explicit_ask_bypasses_two_session_bar(self):
+        r = self._propose({"kind": "overlay-create", "name": "x-local", "description": "d",
+                           "summary": "s", "signal": "sig", "sessions": ["a"],
+                           "explicit": True, "eval": {"assert": "true"}})
+        self.assertEqual(r.returncode, 0, r.stderr)
+
+    def test_valid_create_scaffolds_with_eval_at_zero_confidence(self):
+        self._propose({"kind": "overlay-create", "name": "svc-local", "description": "d",
+                       "body": "## Workflow\n1. x", "summary": "s", "signal": "sig",
+                       "sessions": ["a", "b"], "eval": {"id": "e", "assert": "true"}})
+        pend = list((self.sb.data / "pending").glob("overlay-create-*.json"))
+        self.assertEqual(len(pend), 1)
+        self.sb.run("overlay.py", "apply-pending", str(pend[0]))
+        d = self.sb.dir / "overlays" / "svc-local"
+        self.assertTrue((d / "bench.json").exists(), "bundled eval must be written")
+        meta = json.loads((d / "meta.json").read_text())
+        self.assertEqual((meta["runs"], meta["status"]), (0, "new"))
+
+    def test_distill_candidates_needs_two_sessions(self):
+        # one technique session -> not a candidate; two -> candidate
+        for sid in ("only",):
+            self.sb.run("honcho_client.py", "observe", "--type", "technique",
+                        "--target", "agent", "--content", "[technique] project=p — m",
+                        "--session", sid)
+        r1 = self.sb.run("overlay.py", "distill-candidates", "--json").stdout
+        self.assertEqual(json.loads(r1), [], "single session is not a candidate")
+        self.sb.run("honcho_client.py", "observe", "--type", "technique", "--target", "agent",
+                    "--content", "[technique] project=p — m", "--session", "second")
+        r2 = json.loads(self.sb.run("overlay.py", "distill-candidates", "--json").stdout)
+        self.assertTrue(any(len(c["sessions"]) >= 2 for c in r2))
+
+
 class BenchTests(unittest.TestCase):
     def test_env_pinning_and_os_import(self):
         # regression: env-building used os.environ without importing os —

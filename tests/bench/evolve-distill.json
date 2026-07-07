@@ -1,0 +1,25 @@
+{
+  "skill": "evolve-distill",
+  "budget": {"max_tokens": 120000, "max_cost_usd": 2.0, "max_duration_ms": 420000},
+  "scenarios": [
+    {
+      "id": "nothing-to-distill",
+      "prompt": "/evolve-distill",
+      "phrasing": true,
+      "assert": "grep -qiE 'nothing to distill|no distillation candidates|no candidate' result.txt",
+      "judge": "The response runs the distillation flow on a machine with no recurring workflow evidence. It must conclude there is nothing to distill (candidates require a task class seen in >=2 sessions) rather than fabricate a skill. Penalize any attempt to scaffold or propose a skill without >=2-session evidence, and any skill written directly to disk (this flow only stages proposals)."
+    }
+  ],
+  "triggers": {
+    "positive": [
+      "distill a skill from this workflow",
+      "turn how I keep doing this into a skill",
+      "extract a reusable skill from my past sessions"
+    ],
+    "negative": [
+      "review the skill library",
+      "run the learning pass",
+      "what do you know about me"
+    ]
+  }
+}

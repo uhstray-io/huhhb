@@ -334,6 +334,14 @@
       "category": "memory",
       "tags": ["memory", "lifecycle", "skills", "review", "distillation"],
       "version": "0.1.0"
+    },
+    {
+      "name": "evolve-distill",
+      "path": "skills/evolve-distill/SKILL.md",
+      "description": "Distill a repeated, successful multi-step workflow from past sessions into a reusable overlay skill — eval-gated, ≥2-session evidence, human-approved; stages a proposal, never writes a skill directly.",
+      "category": "memory",
+      "tags": ["memory", "distillation", "skills", "workflow", "creation"],
+      "version": "0.1.0"
     }
   ]
 }

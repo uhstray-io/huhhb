@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""huhhb evolve — scenario evals for the whole suite (S01-S25).
+"""huhhb evolve — scenario evals for the whole suite (S01-S26).
 
 Scripted scenarios; graders check artifacts, not vibes. Catalog with intent,
 provenance, and improvement workflow: docs/evolve-scenarios.md.
@@ -610,6 +610,46 @@ def s25_backfill_mines_history_through_guardrails(sb, live):
     }
 
 
+def s26_distillation_gates(sb, live):
+    """Workflow distillation stays inside evolve's gates: a create proposal
+    is refused without a bundled eval and without ≥2-session evidence, an
+    approved one scaffolds at 0.0 confidence with its eval bundled, and
+    distill-candidates surfaces only ≥2-session recurring classes.
+    See skills/evolve-distill and docs/evolve-vs-autoskill.md."""
+    o = lambda *a, **k: sb.run("overlay.py", *a, **k)
+    out = {}
+    base = {"kind": "overlay-create", "name": "setup-svc-local", "description": "d",
+            "body": "## Workflow\n1. step", "summary": "s", "signal": "recurred"}
+    out["no_eval_refused"] = o("propose", stdin=json.dumps(
+        {**base, "sessions": ["a", "b"]})).returncode != 0
+    out["under_two_sessions_refused"] = o("propose", stdin=json.dumps(
+        {**base, "sessions": ["a"], "eval": {"assert": "true"}})).returncode != 0
+    ok = o("propose", stdin=json.dumps(
+        {**base, "sessions": ["a", "b"],
+         "eval": {"id": "smoke", "prompt": "/setup-svc-local", "assert": "true"}}))
+    out["valid_create_staged"] = ok.returncode == 0
+    pend = list((sb.state / "pending").glob("overlay-create-*.json"))
+    out["proposal_in_pending"] = len(pend) == 1
+    if pend:
+        o("apply-pending", str(pend[0]))
+        d = sb.root / "overlays" / "setup-svc-local"
+        out["scaffolded_with_bundled_eval"] = (d / "bench.json").exists()
+        meta = json.loads((d / "meta.json").read_text()) if (d / "meta.json").exists() else {}
+        out["starts_at_zero_confidence"] = meta.get("runs") == 0 and meta.get("status") == "new"
+    # candidate surfacing: a technique seen in 2 sessions shows; 1 session doesn't
+    sb.capture_session("d1", [turn_user("always use conventional commits")])  # noise, not a candidate
+    for sid in ("t1", "t2"):
+        sb.run("honcho_client.py", "observe", "--type", "technique", "--target", "agent",
+               "--content", f"[technique] project=svc — scaffold via make bootstrap", "--session", sid)
+    cands = o("distill-candidates", "--json").stdout
+    try:
+        classes = [c["class"] for c in json.loads(cands)]
+    except (json.JSONDecodeError, ValueError):
+        classes = []
+    out["recurring_class_is_candidate"] = any("technique" in c for c in classes)
+    return out
+
+
 SCENARIOS = {
     "s01": (s01_cold_preference, "cold preference reaches session B"),
     "s02": (s02_skill_friction, "skill friction -> partial outcome -> overlay proposal"),
@@ -637,6 +677,8 @@ SCENARIOS = {
     "s24": (s24_sandbox_contamination_warning, "GR3 leaked-sandbox state warns loudly"),
     "s25": (s25_backfill_mines_history_through_guardrails,
             "backfill mines history through the capture guardrails"),
+    "s26": (s26_distillation_gates,
+            "workflow distillation stays eval-gated + ≥2-session evidence"),
 }
 LIVE_ONLY = {"s20"}
 

@@ -32,7 +32,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import guardrails
-from honcho_client import PENDING_DIR, ensure_dirs, now_iso
+from honcho_client import PENDING_DIR, ensure_dirs, journal_entries, now_iso
 
 import os
 OVERLAY_ROOT = Path(os.environ.get("EVOLVE_OVERLAY_DIR", Path.home() / ".claude" / "skills"))
@@ -84,7 +84,8 @@ def bump_patch(version):
     return f"{major}.{minor}.{int(patch) + 1}"
 
 
-def scaffold_overlay(name, description, body=None, pinned=False, signal=None, sessions=None):
+def scaffold_overlay(name, description, body=None, pinned=False, signal=None,
+                     sessions=None, eval_scenario=None):
     d = overlay_dir(name)
     if d.exists():
         sys.exit(f"overlay '{name}' already exists — patch it instead of duplicating "
@@ -103,6 +104,8 @@ def scaffold_overlay(name, description, body=None, pinned=False, signal=None, se
         "provenance": [{"version": "0.1.0", "sessions": sessions or [],
                         "signal": signal or "scaffolded", "ts": now_iso()}],
     }, d / "meta.json")
+    if eval_scenario:  # the bundled eval that gates the overlay (no eval, no trust)
+        (d / "bench.json").write_text(json.dumps(eval_scenario, indent=2) + "\n")
     print(f"scaffolded {d}")
 
 
@@ -207,11 +210,55 @@ def cmd_propose(args):
     for field in ("summary", "signal"):
         if not proposal.get(field):
             sys.exit(f"proposal missing required field '{field}'")
+    # no eval, no registration (evolve-skills §3): a created skill must arrive
+    # with the eval that will gate it — a runnable assert on artifacts, plus
+    # the ≥2-session evidence that a distilled workflow is not a one-off.
+    if kind == "overlay-create":
+        ev = proposal.get("eval") or {}
+        if not (isinstance(ev, dict) and ev.get("assert")):
+            sys.exit("overlay-create proposals must bundle an 'eval' with a non-empty "
+                     "'assert' (no eval, no registration — see docs/skill-lifecycle.md)")
+        if len(proposal.get("sessions") or []) < 2 and not proposal.get("explicit"):
+            sys.exit("overlay-create needs >=2 witnessing sessions (the anti-overfit "
+                     "evidence bar), or explicit=true for a user-requested skill")
     proposal["ts"] = now_iso()
     # ns + pid: concurrent headless runs must never overwrite each other's proposals
     dest = PENDING_DIR / f"{kind}-{time.time_ns()}-{os.getpid()}.json"
     dest.write_text(json.dumps(proposal, indent=2) + "\n")
     print(f"staged {dest}")
+
+
+def cmd_distill_candidates(args):
+    """Surface reusable-workflow candidates: task classes whose signal recurs
+    across >=2 DISTINCT sessions in the journal. This points the distiller at
+    which transcripts to read — the agent judges whether a real workflow
+    recurred; the journal only says where to look. Preferences/corrections are
+    excluded (those are evolve-review's territory, not skill creation)."""
+    from collections import defaultdict
+    sessions, samples = defaultdict(set), {}
+    for e in journal_entries():
+        t = e.get("type")
+        if t == "technique":
+            key = f"technique @ {e.get('repo') or '?'}"
+        elif t == "skill-usage":
+            key = f"skill:{e.get('skill') or '?'}"
+        else:
+            continue
+        sessions[key].add(e.get("session_id"))
+        samples.setdefault(key, e.get("content", "")[:90])
+    cands = sorted(((k, s) for k, s in sessions.items() if len(s) >= 2),
+                   key=lambda x: -len(x[1]))
+    if args.json:
+        print(json.dumps([{"class": k, "sessions": sorted(s), "sample": samples[k]}
+                          for k, s in cands], indent=2))
+        return
+    if not cands:
+        print("no distillation candidates — need a task class seen in >=2 sessions "
+              "(run digest.py --backfill to mine history first)")
+        return
+    print("distillation candidates (read these transcripts, then /evolve-distill):")
+    for k, s in cands:
+        print(f"  {k:28} {len(s)} sessions  [{', '.join(sorted(s))}]")
 
 
 def cmd_apply_pending(args):
@@ -221,7 +268,7 @@ def cmd_apply_pending(args):
     if kind == "overlay-create":
         scaffold_overlay(proposal["name"], proposal["description"], proposal.get("body"),
                          proposal.get("pinned", False), proposal["signal"],
-                         proposal.get("sessions", []))
+                         proposal.get("sessions", []), proposal.get("eval"))
     elif kind == "overlay-patch":
         patch_overlay(proposal["name"], proposal["content"], proposal["signal"],
                       proposal.get("sessions", []))
@@ -270,13 +317,17 @@ def main():
 
     sub.add_parser("propose")
 
+    pdc = sub.add_parser("distill-candidates")
+    pdc.add_argument("--json", action="store_true")
+
     pap = sub.add_parser("apply-pending")
     pap.add_argument("file")
 
     args = p.parse_args()
     {"scaffold": cmd_scaffold, "patch": cmd_patch, "record": cmd_record,
      "set-status": cmd_set_status, "archive": cmd_archive, "report": cmd_report,
-     "propose": cmd_propose, "apply-pending": cmd_apply_pending}[args.cmd](args)
+     "propose": cmd_propose, "distill-candidates": cmd_distill_candidates,
+     "apply-pending": cmd_apply_pending}[args.cmd](args)
 
 
 if __name__ == "__main__":

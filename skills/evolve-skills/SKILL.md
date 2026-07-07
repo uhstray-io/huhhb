@@ -52,6 +52,11 @@ diff, apply on approval; headless = `propose` only. Hub-skill changes are
 
 ## 3. Creation protocol — distill from success, gate on evals
 
+> The operational `create` flow lives in **`/evolve-distill`** (read the
+> evidence, distill class-level, bundle the eval, stage a proposal). This
+> pass *identifies* a `create` candidate; hand the actual distillation to
+> that skill. The bar below is the shared contract.
+
 The paper's strongest result: skills distilled from successful trajectories
 outperform human-authored ones — but its headline failure mode is
 single-trajectory overfit (run-specific paths and calibrations baked in).

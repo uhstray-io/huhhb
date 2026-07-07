@@ -2,7 +2,7 @@
 
 Run everything: `python3 tests/test_evolve.py` (offline suite, stdlib only) —
 then, once a Honcho instance is configured, `honcho_client.py smoke` and
-`python3 scripts/evolve/evals.py` — now a 24-scenario catalog (S01-S24), documented in `docs/evolve-scenarios.md`; offline scenarios run free in local mode, `--mode honcho --runs 3` for the §7 deriver bar.
+`python3 scripts/evolve/evals.py` — now a 27-scenario catalog (S01-S27), documented in `docs/evolve-scenarios.md`; offline scenarios run free in local mode, `--mode honcho --runs 3` for the §7 deriver bar.
 
 Legend: **auto** = asserted by `tests/test_evolve.py`; **live** = needs a
 configured Honcho (deriver running); **manual** = human procedure.

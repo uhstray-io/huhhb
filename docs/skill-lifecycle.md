@@ -116,6 +116,13 @@ active (confidence ≥0.5) → deprecated (proposed) → archived (never deleted
 3. **Distillation tooling** — digest gains success-trajectory mining
    (currently only friction is first-class); a `distill` helper drafts the
    SKILL.md + bench scenario pair from journal-referenced sessions.
+   `digest.py --backfill` (shipped, see `docs/evolve-vs-autoskill.md`) already
+   mines historical transcripts into observations — the remaining work is the
+   *distillation* step: threshold-triggered `claude -p` over those sessions to
+   draft a workflow-skill proposal (claude-autoskill's `autoskill.py`
+   extraction prompt is the reference), kept behind evolve's gates (propose to
+   `pending/`, ≥2-session evidence, bundled eval, human approval) rather than
+   auto-written to disk.
 4. **Refine loop automation** — headless `/evolve-skills` on a cadence;
    bench-regression → auto-staged refine proposal with before/after numbers
    in the PR body (the improvement queue, mechanized).

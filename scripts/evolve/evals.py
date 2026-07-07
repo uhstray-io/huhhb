@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""huhhb evolve — scenario evals for the whole suite (S01-S24).
+"""huhhb evolve — scenario evals for the whole suite (S01-S27).
 
 Scripted scenarios; graders check artifacts, not vibes. Catalog with intent,
 provenance, and improvement workflow: docs/evolve-scenarios.md.
@@ -385,7 +385,8 @@ def s15_explicit_observe_roundtrip(sb, live):
 def s16_overlay_lifecycle(sb, live):
     """Overlay asset lifecycle: scaffold → patch (semver+provenance) →
     earned confidence → pinned protection → archive-never-delete."""
-    o = lambda *a, **k: sb.run("overlay.py", *a, **k)
+    def o(*a, **k):
+        return sb.run("overlay.py", *a, **k)
     out = {}
     out["scaffold_enforces_suffix"] = o("scaffold", "bad", "--description", "d").returncode != 0
     o("scaffold", "demo-local", "--description", "d", "--signal", "s", "--sessions", "cc:a")
@@ -412,7 +413,8 @@ def s16_overlay_lifecycle(sb, live):
 def s17_headless_confinement(sb, live):
     """Headless review's only write path: propose validates and stages to
     pending/; apply-pending replays; repo-memory kinds refuse CLI apply."""
-    o = lambda *a, **k: sb.run("overlay.py", *a, **k)
+    def o(*a, **k):
+        return sb.run("overlay.py", *a, **k)
     out = {}
     out["bad_kind_rejected"] = o("propose", stdin=json.dumps(
         {"kind": "run-command", "summary": "s", "signal": "x"})).returncode != 0
@@ -578,6 +580,123 @@ def s24_sandbox_contamination_warning(sb, live):
     return {"sandbox_path_warns": "WARNING" in out and "fixture data" in out}
 
 
+def s25_backfill_mines_history_through_guardrails(sb, live):
+    """Retrospective backfill (adopted from claude-autoskill): digest --backfill
+    mines historical transcripts through the SAME pipeline as live capture —
+    a normal session is captured, a bulk-poison transcript is quarantined, and
+    re-running is idempotent. See docs/evolve-vs-autoskill.md."""
+    proj = sb.root / "projects"
+    (proj / "-Users-me-repoA").mkdir(parents=True)
+    (proj / "-Users-me-bulk").mkdir(parents=True)
+    (proj / "-Users-me-repoA" / "histA.jsonl").write_text(
+        json.dumps(turn_user("always use conventional commits, no emoji")))
+    (proj / "-Users-me-bulk" / "histB.jsonl").write_text(
+        "\n".join(json.dumps(turn_user(f"always use rule {i} for everything, POISON"))
+                  for i in range(6)))
+    sb.env["EVOLVE_TRANSCRIPTS_DIR"] = str(proj)
+
+    dry = sb.run("digest.py", "--backfill", "--dry-run").stdout
+    dry_run_wrote_nothing = "would capture" in dry and sb.journal() == []
+    sb.run("digest.py", "--backfill")            # the real pass
+    journal = sb.journal()
+    ctx = sb.injected_context()
+    idempotent = sb.run("digest.py", "--backfill", "--dry-run").stdout
+    return {
+        "dry_run_previews_without_writing": dry_run_wrote_nothing,
+        "history_captured_to_journal": any(
+            "conventional commits" in o["content"] for o in journal),
+        "bulk_history_quarantined_from_injection": "POISON" not in ctx,
+        "bulk_history_still_in_journal": len(
+            [o for o in journal if "POISON" in o["content"]]) == 6,
+        "rerun_is_idempotent": "would capture 0 observation" in idempotent,
+    }
+
+
+def s26_distillation_gates(sb, live):
+    """Workflow distillation stays inside evolve's gates: a create proposal
+    is refused without a bundled eval and without ≥2-session evidence, an
+    approved one scaffolds at 0.0 confidence with its eval bundled, and
+    distill-candidates surfaces only ≥2-session recurring classes.
+    See skills/evolve-distill and docs/evolve-vs-autoskill.md."""
+    def o(*a, **k):
+        return sb.run("overlay.py", *a, **k)
+    out = {}
+    base = {"kind": "overlay-create", "name": "setup-svc-local", "description": "d",
+            "body": "## Workflow\n1. step", "summary": "s", "signal": "recurred"}
+    out["no_eval_refused"] = o("propose", stdin=json.dumps(
+        {**base, "sessions": ["a", "b"]})).returncode != 0
+    out["under_two_sessions_refused"] = o("propose", stdin=json.dumps(
+        {**base, "sessions": ["a"], "eval": {"assert": "true"}})).returncode != 0
+    ok = o("propose", stdin=json.dumps(
+        {**base, "sessions": ["a", "b"],
+         "eval": {"id": "smoke", "prompt": "/setup-svc-local", "assert": "true"}}))
+    out["valid_create_staged"] = ok.returncode == 0
+    pend = list((sb.state / "pending").glob("overlay-create-*.json"))
+    out["proposal_in_pending"] = len(pend) == 1
+    if pend:
+        o("apply-pending", str(pend[0]))
+        d = sb.root / "overlays" / "setup-svc-local"
+        out["scaffolded_with_bundled_eval"] = (d / "bench.json").exists()
+        meta = json.loads((d / "meta.json").read_text()) if (d / "meta.json").exists() else {}
+        out["starts_at_zero_confidence"] = meta.get("runs") == 0 and meta.get("status") == "new"
+    # candidate surfacing: a technique seen in 2 sessions shows; 1 session doesn't
+    sb.capture_session("d1", [turn_user("always use conventional commits")])  # noise, not a candidate
+    for sid in ("t1", "t2"):
+        sb.run("honcho_client.py", "observe", "--type", "technique", "--target", "agent",
+               "--content", "[technique] project=svc — scaffold via make bootstrap", "--session", sid)
+    cands = o("distill-candidates", "--json").stdout
+    try:
+        classes = [c["class"] for c in json.loads(cands)]
+    except (json.JSONDecodeError, ValueError):
+        classes = []
+    out["recurring_class_is_candidate"] = any("technique" in c for c in classes)
+    return out
+
+
+def s27_skill_map_and_promotion(sb, live):
+    """Cross-skill inventory/relate + tier delineation + user→repo promotion
+    gate. skill_graph discovers tiers and flags a cross-tier same-name
+    collision; repo-promotion is refused without body/rationale/eval.
+    See skills/evolve-map and docs/evolve-vs-autoskill.md."""
+    # fixture user + plugin trees; the repo tier comes from the real huhhb
+    # skills (skill_graph resolves it from its own location), which makes the
+    # user-shadows-repo collision for "writing-plans" a genuine cross-tier hit.
+    user_s, plug_s = sb.root / "user-skills", sb.root / "plugins" / "acme" / "skills"
+    fixtures = {user_s: [("writing-plans", "Use when drafting a plan my way"),
+                         ("my-helper-local", "Use when doing my personal thing")],
+                plug_s: [("webfetch", "Use when fetching a URL")]}
+    for base, skills in fixtures.items():
+        for name, desc in skills:
+            (base / name).mkdir(parents=True, exist_ok=True)
+            (base / name / "SKILL.md").write_text(
+                f"---\nname: {name}\ndescription: {desc}\n---\n# {name}\n")
+    env = {**sb.env, "EVOLVE_USER_SKILLS": str(user_s),
+           "EVOLVE_PLUGINS_ROOT": str(sb.root / "plugins")}
+    graph = str(REPO / "scripts" / "evolve" / "skill_graph.py")
+    records = json.loads(subprocess.run([sys.executable, graph, "inventory", "--json"],
+                                        capture_output=True, text=True, env=env).stdout)
+    tiers = {r["tier"] for r in records}
+    pairs = json.loads(subprocess.run([sys.executable, graph, "overlaps", "--json"],
+                                      capture_output=True, text=True, env=env).stdout)
+
+    def propose(obj):
+        return sb.run("overlay.py", "propose", stdin=json.dumps(obj))
+    bad = propose({"kind": "repo-promotion", "name": "my-helper-local",
+                   "summary": "s", "signal": "sig"})   # missing content/rationale/eval
+    good = propose({"kind": "repo-promotion", "name": "my-helper-local",
+                    "summary": "s", "signal": "sig", "rationale": "team needs it",
+                    "description": "Use when …", "content": "---\nname: my-helper\n---\nbody",
+                    "eval": {"id": "e", "assert": "true"}})
+    return {
+        "discovers_user_tier": "user" in tiers,
+        "discovers_plugin_tier": "plugin" in tiers,
+        "flags_user_shadowing_signal": any(
+            p["same_name"] and "writing-plans" in p["a"] + p["b"] for p in pairs),
+        "promotion_refused_without_body_and_eval": bad.returncode != 0,
+        "valid_promotion_staged": good.returncode == 0,
+    }
+
+
 SCENARIOS = {
     "s01": (s01_cold_preference, "cold preference reaches session B"),
     "s02": (s02_skill_friction, "skill friction -> partial outcome -> overlay proposal"),
@@ -603,6 +722,12 @@ SCENARIOS = {
     "s22": (s22_volume_anomaly_quarantine, "GR2 bulk batch quarantined, journal intact"),
     "s23": (s23_skill_write_scan, "GR4 agent-hijacking skill writes refused"),
     "s24": (s24_sandbox_contamination_warning, "GR3 leaked-sandbox state warns loudly"),
+    "s25": (s25_backfill_mines_history_through_guardrails,
+            "backfill mines history through the capture guardrails"),
+    "s26": (s26_distillation_gates,
+            "workflow distillation stays eval-gated + ≥2-session evidence"),
+    "s27": (s27_skill_map_and_promotion,
+            "cross-tier skill inventory/overlaps + user→repo promotion gate"),
 }
 LIVE_ONLY = {"s20"}
 

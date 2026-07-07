@@ -1,6 +1,6 @@
-# evolve scenario catalog — S01–S24
+# evolve scenario catalog — S01–S27
 
-Twenty-four behavior scenarios that define what "the evolve suite works" means,
+Twenty-seven behavior scenarios that define what "the evolve suite works" means,
 runnable any time with zero infrastructure. Runner:
 `scripts/evolve/evals.py` — each scenario builds an isolated sandbox and
 drives the **real pipeline** (hooks → digest → flush → injection → CLIs),
@@ -46,6 +46,9 @@ failure ("wild"), a doctrine rule ("law"), or a reviewer finding ("review").
 | S22 | GR2: a bulk batch is quarantined from injection/recall; the journal keeps it | offline | wild: pasted-doc + eval-env contamination (v0.5.x) |
 | S23 | GR4: skill bodies with agent-hijacking instructions are refused at write time | offline | wild: SkillSpector P1 flag; anti-poisoning |
 | S24 | GR3: a leaked eval/sandbox state dir warns loudly in `status` | offline | wild: eval-env contamination, 2026-07-05 |
+| S25 | retrospective backfill mines historical transcripts through the capture guardrails (dry-run, quarantine, idempotent) | offline | adopted from claude-autoskill ([comparison](evolve-vs-autoskill.md)) |
+| S26 | workflow distillation stays gated — create refused without a bundled eval and without ≥2-session evidence; candidate surfacing needs 2 sessions | offline | `/evolve-distill`; autoskill adaptation behind evolve's gates |
+| S27 | cross-tier skill inventory + overlap detection (repo/user/plugin) and the user→repo promotion gate (body + rationale + eval required) | offline | `/evolve-map`; skill ecosystem understanding + tier delineation |
 
 ## Conventions (the improvement loop)
 

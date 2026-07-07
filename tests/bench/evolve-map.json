@@ -1,0 +1,25 @@
+{
+  "skill": "evolve-map",
+  "budget": {"max_tokens": 140000, "max_cost_usd": 2.5, "max_duration_ms": 480000},
+  "scenarios": [
+    {
+      "id": "inventory-and-relate",
+      "prompt": "/evolve-map",
+      "phrasing": true,
+      "assert": "grep -qiE 'repo|user|plugin' result.txt && grep -qiE 'overlap|complement|compose|supersede|gap|relationship' result.txt",
+      "judge": "The response inventories skills across the repo/user/plugin tiers and draws relationships between them (overlaps, complements, composes, supersedes, gaps). It must respect tier delineation (repo = PR-gated, plugin = read-only), recommend augmenting existing skills before proposing new ones, and never claim to have written a skill or a repo file directly (this flow proposes and persists a map). Penalize duplicate-skill creation where an existing skill covers the intent, and any on-device edit of a repo or plugin skill."
+    }
+  ],
+  "triggers": {
+    "positive": [
+      "map how my skills relate",
+      "which of my skills overlap or duplicate each other",
+      "promote this user skill to the repo"
+    ],
+    "negative": [
+      "run the learning pass",
+      "distill a skill from this workflow",
+      "what do you know about me"
+    ]
+  }
+}

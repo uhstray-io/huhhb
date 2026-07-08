@@ -34,14 +34,15 @@ Tree for the full mechanics, including how a reported subscription tier can
 reorder this per session. Rule 6's gemini primary is capability/cost-based,
 not quota-based, and is never demoted by that reordering.
 
-## Model Tier Table (verified 2026-06-30; FRONTIER row added 2026-07-01)
+## Model Tier Table (verified 2026-06-30; FRONTIER row added 2026-07-01;
+opencode column added 2026-07-07)
 
-| Tier        | claude_code      | codex          | gemini                |
-|-------------|------------------|----------------|-----------------------|
-| FRONTIER    | claude-fable-5   | —              | —                     |
-| COMPLEX     | claude-opus-4-8  | gpt-5.5        | gemini-3.1-pro-preview |
-| STANDARD    | claude-sonnet-5  | gpt-5.4-mini   | gemini-3.5-flash       |
-| LIGHTWEIGHT | claude-haiku-4-5 | gpt-5.4-nano   | gemini-3.1-flash-lite  |
+| Tier        | claude_code      | codex          | gemini                 | opencode                |
+|-------------|------------------|----------------|------------------------|-------------------------|
+| FRONTIER    | claude-fable-5   | —              | —                      | —                       |
+| COMPLEX     | claude-opus-4-8  | gpt-5.5        | gemini-3.1-pro-preview | openrouter/z-ai/glm-5.2 |
+| STANDARD    | claude-sonnet-5  | gpt-5.4-mini   | gemini-3.5-flash       | —                       |
+| LIGHTWEIGHT | claude-haiku-4-5 | gpt-5.4-nano   | gemini-3.1-flash-lite  | —                       |
 
 ## Provider Strengths Summary
 
@@ -54,10 +55,12 @@ not quota-based, and is never demoted by that reordering.
   execution-shaped tasks, driven by model choice alone (this dispatch
   contract has no separate effort knob). Keep Opus for planning/architecture judgment
   (writing-plans, domain-modeling) where the bottleneck is judgment, not coding.
-- Note: claude-fable-5 (FRONTIER) is Anthropic's most capable model, for
-  exceptionally hard/long-horizon tasks beyond what Opus handles well — an
-  explicit escalation, not a default; see Model Tier Table and Calibration
-  Notes for the time-bound subscription/API-key access mechanism.
+- Note: claude-fable-5 (FRONTIER) is ORCHESTRATOR/ARCHITECT ONLY (operator
+  directive 2026-07-08): initial decomposition, architecture, and
+  plan-level judgment. Never development dispatches — implementation,
+  review, and exploration always run COMPLEX or lower. Metered per-token
+  ($10/$50 per MTok, separate API key) as of 2026-07-08 — every dispatch
+  is a real cost decision.
 
 **OpenAI (codex)**
 - Best: strict structured output, JSON schemas, tool routing, format contracts
@@ -78,6 +81,24 @@ upstream; confirmed via a successful live dispatch).
   gemini-3.5-flash/gemini-3.1-flash-lite (verified 2026-06-30, cross-vendor).
   2.5-pro/flash confirmed shutdown no earlier than 2026-10-16; flash-lite's
   status is disputed between sources. gemini-3.1-pro-preview is PREVIEW, not GA.
+
+**OpenCode (opencode)** — added 2026-07-07 (harness `opencode-native`,
+auth = user's OpenRouter credentials, verified via live boot + dispatch).
+- Best: cross-review diversity — GLM is a fourth model family, distinct from
+  Anthropic/OpenAI/Google, so it's the strongest independence pick when
+  reviewing any of the other three.
+- Best: cost-effective COMPLEX ALT on routing rule 3 (complex coding) —
+  operator-calibrated (2026-07-08) just below gemini-3.1-pro-preview at a
+  far lower per-token price; route real work there when Claude quota is
+  tight or metered cost dominates.
+- Weakness: still thinly benchmarked in this stack — the calibration is
+  operator-reported, not yet backed by observed dispatch history; treat its
+  output with the same cross-review rigor as any other worker's.
+- Note: one wired model, openrouter/z-ai/glm-5.2 (COMPLEX). The ID is
+  OpenCode's provider/model string, partitioned on the FIRST slash into
+  providerID/modelID — pass verbatim as args.model. Billing is metered
+  OpenRouter credits (pay-as-you-go, no flat subscription): the standing
+  quota tie-break never applies; every dispatch is a real per-token cost.
 
 ## Skill → Provider Affinity
 
@@ -217,12 +238,15 @@ independently where it genuinely fits, then were reconciled:
 
 | Implementer | Valid reviewers |
 |-------------|----------------|
-| claude_code | codex, gemini |
-| codex | claude_code, gemini |
-| gemini | claude_code, codex |
+| claude_code | codex, gemini, opencode |
+| codex | claude_code, gemini, opencode |
+| gemini | claude_code, codex, opencode |
+| opencode | claude_code, codex, gemini |
 
 Always prefer the reviewer whose model family differs from the implementer's.
 A same-harness-different-model review is weaker than a true cross-vendor review.
+opencode (GLM) differs from all three incumbent families at once — the
+maximal-diversity reviewer pick, at metered OpenRouter cost.
 
 ## Calibration Notes
 
@@ -235,11 +259,17 @@ Review and update this table quarterly or when a provider announces model change
   PREVIEW), gemini-3.5-flash (STANDARD, GA), gemini-3.1-flash-lite
   (LIGHTWEIGHT, GA). Re-check gemini-3.1-pro-preview for GA promotion
   quarterly — preview models can change without the same notice period.
-- claude-fable-5 is now GA (direct operator confirmation, 2026-07-01,
-  corroborated by Anthropic's own claude-api model catalog) — added as a
-  new FRONTIER tier, claude_code only, an escalation from COMPLEX for the
-  hardest reasoning/long-horizon agentic tasks, not a routing default.
-  Access is time-bound: usable via the existing Claude Max subscription
-  only through 2026-07-07; from 2026-07-08 it requires a separate API key
-  and per-token billing ($10/$50 per MTok), outside the flat subscription —
-  re-verify this cutover closer to the date.
+- claude-fable-5: FRONTIER tier, claude_code only, GA. ORCHESTRATOR/
+  ARCHITECT ONLY per operator directive 2026-07-08 — plan/architecture
+  judgment and initial decomposition; never implementation/review/explore
+  dispatches (those run COMPLEX or lower). The Claude Max flat-subscription
+  window ended 2026-07-07; from 2026-07-08 it requires a separate
+  ANTHROPIC_API_KEY and per-token billing ($10/$50 per MTok) — every
+  dispatch is a metered cost decision.
+- opencode/GLM added 2026-07-07: openrouter/z-ai/glm-5.2 confirmed present
+  in `opencode models` (opencode v1.17.15, openrouter auth). Operator
+  calibration 2026-07-08: performance just below gemini-3.1-pro-preview,
+  very cheap per token — promoted to cost-effective COMPLEX ALT on rule 3.
+  Only GLM 5.2 is wired — openrouter also lists glm-5, glm-5-turbo, glm-5.1
+  etc.; add tiers only when a real routing need appears. Re-check quarterly
+  like the rest.

@@ -19,9 +19,10 @@ routing rule 3 (complex coding), alongside its standing cross-review role.
 worker `opencode` (OpenCode CLI, harness `opencode-native`, auth = user's
 OpenRouter credentials). GLM is a fourth model family — its headline role is
 cross-review diversity (reviewer whose family differs from ALL three
-incumbents) plus deliberate ALT dispatch. Deliberately NOT wired into
-routing rules 1–9 yet — unbenchmarked in this stack; it earns routing slots
-on observed quality. Billing is metered OpenRouter credits, outside the
+incumbents) plus deliberate ALT dispatch. Initially not wired into any of
+routing rules 1–9 (unbenchmarked in this stack at the time) — SUPERSEDED by
+the 07-08 update above, which promotes it to the cost-effective COMPLEX ALT
+on routing rule 3. Billing is metered OpenRouter credits, outside the
 flat-subscription cost model the rest of this manifest assumes — the
 standing quota tie-break never applies to it.
 

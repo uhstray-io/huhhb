@@ -59,6 +59,20 @@ node ${CLAUDE_PLUGIN_ROOT}/scripts/evolve/honcho_client.ts init --local
 run the server and deriver worker with your own LLM keys (see honcho.dev
 docs), then `init --url http://your-host:8000` and `smoke`.
 
+**uhstray self-hosted instance** (agent-cloud, 2026-07-07): deployed at
+**`https://memory.uhstray.io`** — rootless podman (api + deriver + postgres/pgvector
++ redis), LLM via Gemini interim → skynet later, **JWT auth on `/v3`** with
+Authentik forward_auth only on `/docs`. Spec:
+`agent-cloud/plan/development/11-tududi-honcho-deployment.md`. Point evolve at it
+with `HONCHO_URL=https://memory.uhstray.io`, `HONCHO_WORKSPACE=uhstray`, and a
+workspace-scoped `HONCHO_API_KEY` (JWT — **not** OIDC; API callers are
+non-interactive). **Team collaboration:** one shared workspace (`uhstray`), each
+member a **peer** (stable id), a **session** per thread. Mint each member a
+workspace-scoped JWT (`generate_jwt.py --workspace uhstray` or `POST /v3/keys`),
+store it at OpenBao `secret/services/honcho/tokens/<member>`, and hand it to that
+member's evolve config — durable, shared-yet-scoped cross-session memory per
+teammate. This satisfies R8's "needs a Honcho" dependency (see Roadmap).
+
 **Managed** ([api.honcho.dev](https://honcho.dev)): `init --api-key <key>`.
 What the managed service means for your data (verified 2026-07-06 against
 honcho.dev, the privacy policy eff. 2025-04-24, and the ToS — re-verify

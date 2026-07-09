@@ -17,14 +17,14 @@ if unavailable, use claude_code or codex instead.
 
 | # | Condition | Provider | Tier |
 |---|-----------|----------|------|
-| 1 | Native video/audio/PDF/multimodal | gemini | COMPLEX |
+| 1 | Native video/audio/PDF/multimodal | gemini-complex | COMPLEX |
 | 2 | Native OpenAI tool (voice, image-gen, Assistants) | codex | COMPLEX |
 | 3 | Complex coding: multi-file refactor, deep debugging, long agentic execution | claude_code | COMPLEX |
 | 4 | Strict JSON/schema output, automation-grade instructions | codex | STANDARD |
 | 5 | User-facing prose or plans under a format contract | claude_code (codex ALT) | STANDARD |
-| 6 | Bulk classification/extraction/fanout (cost-dominant) | gemini (claude_code fallback if unavailable/quota-low) | LIGHTWEIGHT |
+| 6 | Bulk classification/extraction/fanout (cost-dominant) | gemini-lite (claude_code fallback if unavailable/quota-low) | LIGHTWEIGHT |
 | 7 | Context >200K tokens, code reasoning | claude_code or codex | COMPLEX |
-| 8 | Context >200K tokens, raw documents/media/search | gemini | COMPLEX |
+| 8 | Context >200K tokens, raw documents/media/search | gemini-complex | COMPLEX |
 | 9 | Default lightweight (no rule matched) | claude_code (cheapest available if unavailable) | LIGHTWEIGHT |
 
 Rules 5, 6 (fallback only), and 9 carry a slight quota-driven claude_code
@@ -33,6 +33,25 @@ preference (we pay for Claude Max but only Pro-tier Codex/Gemini) — see
 Tree for the full mechanics, including how a reported subscription tier can
 reorder this per session. Rule 6's gemini primary is capability/cost-based,
 not quota-based, and is never demoted by that reordering.
+
+## Gemini Worker Naming (ACP migration, 2026-07-08)
+
+buhhdy runs on stock upstream omnigent, which drives Gemini through its
+generic ACP harness. ACP cannot switch gemini models per-dispatch, so each
+tier is its own worker with the model baked into its ACP command:
+
+| Worker | Model | Tier |
+|---|---|---|
+| gemini-complex | gemini-3.1-pro-preview | COMPLEX |
+| gemini-standard | gemini-3.5-flash | STANDARD |
+| gemini-lite | gemini-3.1-flash-lite | LIGHTWEIGHT |
+
+Anywhere this guide (or any other skill) names "gemini" plus a tier or a
+model, dispatch the matching gemini-* worker and OMIT args.model — it is
+silently ignored for these workers. All three are ONE vendor sharing one
+binary and one auth: an availability failure applies to all three at once,
+and a gemini-* implementer can never be cross-reviewed by another gemini-*
+worker.
 
 ## Model Tier Table (verified 2026-06-30; FRONTIER row added 2026-07-01;
 opencode column added 2026-07-07)

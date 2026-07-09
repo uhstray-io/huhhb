@@ -16,10 +16,14 @@ anyone needs to read through.
    `sys_os_shell`. If red, re-dispatch the implementer to drive it green first;
    don't involve the reviewer yet.
 3. Dispatch a DIFFERENT-vendor sub-agent as reviewer (Claude built it →
-   `codex` or `gemini`; Codex built it → `claude_code` or `gemini`; Gemini built it →
-   `claude_code` or `codex`). Use a task-based title such as
+   `codex`, `gemini-*`, or `opencode`; Codex built it → `claude_code`,
+   `gemini-*`, or `opencode`; a gemini-* worker built it → `claude_code`,
+   `codex`, or `opencode`; opencode built it → `claude_code`, `codex`, or
+   `gemini-*`. The three gemini-* workers are ONE vendor and never review
+   each other; `gemini-*` defaults to gemini-standard, or gemini-complex
+   for large/multimodal diffs). Use a task-based title such as
    `review-auth-refactor`, never the raw vendor name:
-   `sys_session_send(agent="claude_code"|"codex"|"gemini", title="review-<task_slug>",
+   `sys_session_send(agent="claude_code"|"codex"|"gemini-standard"|"opencode", title="review-<task_slug>",
    args={purpose: "review", input: "<the diff> + <the acceptance contract>.
    Review ONLY against the contract. Report blocking / non-blocking /
    suggestions. Do not edit code."})`. Give it the diff as text — do NOT point
@@ -54,7 +58,7 @@ anyone needs to read through.
   human at the plan gate.
 - Give the reviewer ONLY the diff + contract — never the implementer's
   transcript or worktree. The cross-vendor independence is the whole point.
-- Review is a coding sub-agent (`claude_code`/`codex`/`gemini`) dispatched with
+- Review is a coding sub-agent (`claude_code`/`codex`/`gemini-*`/`opencode`) dispatched with
   `purpose: "review"` — a DIFFERENT vendor from the one that built the diff. It
   reports issues and never edits; only the implementer opens a PR, so a stray
   reviewer edit never reaches the deliverable.

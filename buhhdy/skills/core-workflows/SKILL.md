@@ -28,6 +28,13 @@ the OPPOSITE vendor. Never skip a review step silently — if it's cheap
 enough to not be worth it (noted per-step below), say so explicitly rather
 than omitting it.
 
+Gemini worker naming (ACP migration, 2026-07-08): every "gemini" dispatch
+below maps to a tier-pinned worker — gemini-complex (gemini-3.1-pro-preview),
+gemini-standard (gemini-3.5-flash), gemini-lite (gemini-3.1-flash-lite).
+Where a step names a gemini model or tier, dispatch the worker pinned to it
+and OMIT args.model (silently ignored for gemini-* workers). The three are
+one vendor for cross-review purposes.
+
 ## Workflow 1 — Planning & Research
 
 Trigger: adding new planning/research to a project — a fresh challenge or

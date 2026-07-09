@@ -4,6 +4,15 @@ All 11 models currently wired into buhhdy, cross-referenced by use-case,
 cross-review role, and workflow. Generated from the current state of
 `config.yaml`, `skills/routing-guide/SKILL.md`, and `skills/core-workflows/SKILL.md`.
 
+**Updated 2026-07-08 (later same day — ACP migration):** buhhdy now targets
+stock upstream omnigent; the uhstray-io/omnigent fork and its custom
+`gemini` harness are retired. Upstream's generic ACP harness cannot switch
+gemini models per-dispatch, so the single `gemini` worker became three
+tier-pinned workers: `gemini-complex` (gemini-3.1-pro-preview),
+`gemini-standard` (gemini-3.5-flash), `gemini-lite` (gemini-3.1-flash-lite).
+Every worker-level "gemini" reference below maps to the tier-appropriate
+gemini-* worker; never pass args.model to them.
+
 **Updated 2026-07-08:** Two operator directives. (1) `claude-fable-5` is
 now ORCHESTRATOR/ARCHITECT ONLY — initial decomposition, architecture, and
 plan-level judgment; NEVER implementation, review, or exploration

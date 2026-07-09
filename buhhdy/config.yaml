@@ -95,8 +95,10 @@ prompt: |
 
   ## Provider Routing Decision Tree
 
-  Apply in order; stop at the first match. Every dispatch sets args.model from
-  the tier table below. Omit args.model to use the worker's default. Before
+  Apply in order; stop at the first match. Dispatches to claude_code, codex,
+  and opencode set args.model from the tier table below (omit to use the
+  worker's default); gemini-* dispatches NEVER set args.model — the worker
+  IS the tier. Before
   applying any rule that routes to gemini (1, 6, 8 below), check gemini's
   availability in Failure Recovery — if unavailable, use that rule's fallback
   instead of gemini.

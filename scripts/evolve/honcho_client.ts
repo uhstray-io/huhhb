@@ -884,7 +884,11 @@ export async function cmd_status(_args: Record<string, any>): Promise<void> {
       const queue_fn = h.queueStatus ?? h.queue_status; // same fallback as wait_for_derivation
       if (!queue_fn) throw new Error("SDK exposes no queue-status method");
       const qs = await queue_fn.call(h);
-      console.log(`deriver queue : ${qs}`);
+      // the SDK returns {pending,inProgress,completed,total}WorkUnits (camel);
+      // the self-hosted deriver may also use snake — read either spelling
+      const pending = qs.pendingWorkUnits ?? qs.pending_work_units ?? 0;
+      const inProgress = qs.inProgressWorkUnits ?? qs.in_progress_work_units ?? 0;
+      console.log(`deriver queue : ${pending} pending, ${inProgress} in-progress`);
     } catch (e) {
       if (e instanceof SystemExit) throw e; // SDK missing exits 2, like Python's SystemExit
       console.log(`deriver queue : unreachable (${py_err(e)})`);

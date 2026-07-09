@@ -427,6 +427,26 @@ automation (headless library pass on a cadence; bench-regression →
 auto-staged refine proposal with before/after numbers); fleet parity
 (telemetry-driven curator PRs; per-skill eval sets in CI as the merge gate).
 
+**R10 — Hindsight as a complementary analytical layer** (future; no switch
+required): a second memory backend can run ALONGSIDE Honcho because the
+journal is the write-ahead log and every backend is a derived *view* of it —
+GR2 screens once, before any fan-out, and neither backend is ever authority.
+Roles, not replicas: **Honcho stays the who-layer** (peer representations,
+dialectic, injected session context — R8) and **Hindsight becomes the
+what-layer** (MIT server + TS client; entity/temporal/causal graph with
+four-way retrieval) serving the analytical queries Honcho is weakest at —
+"which corrections recur for skill X over time", cross-skill causal patterns,
+fleet-wide G2/F2 analytics. Adoption trigger: the day a G2/fleet query
+visibly strains Honcho, stand Hindsight up in server mode and hydrate it
+from the journal with the replay mechanism (idempotent, complete history —
+waiting costs zero data). Costs to accept: double LLM extraction per
+observation (its retain + Honcho's deriver) and a query-routing rule at the
+client choke point (user-context reads → Honcho; skill-analytics reads →
+Hindsight). Never point both at the SAME job — duplicate spend for two
+subtly divergent answers. Its Python-only embedded mode is unusable under
+the language policy; server mode is the only fit, so it competes with
+neither local mode nor the guardrail/gate layers.
+
 **Deliberate non-goals** (unchanged): DAG context compression (session
 context suffices); embedding retrieval; auto-merge without human approval;
 auto-writing skills to disk (sprawl + poisoning risk — everything routes
@@ -446,6 +466,18 @@ through gated proposals).
 
 Record every evolve change here: date, what changed, roadmap item or
 provenance.
+
+- **2026-07-09** — R8 device-level begun against the self-hosted instance:
+  SDK installed (--no-save; node_modules gitignored), the two SDK-gated
+  flusher tests ran for the first time (pass), and `flush.ts
+  --replay-journal` shipped — the cutover bootstrap that delivers the
+  pre-existing local journal to a new Honcho once (GR2-screened,
+  cursor-idempotent, evidence invariant intact). Live smoke is blocked on
+  infra, not code: Cloudflare challenges API clients on memory.uhstray.io
+  (403 before Honcho is reached — /health proves the service healthy via
+  Caddy-direct) and the phase-4 team JWT is not yet minted. R10 added:
+  Hindsight as a complementary analytical layer (who-layer/what-layer split,
+  journal fan-out, adoption trigger + costs) — future work, no switch.
 
 - **2026-07-07** — Roadmap batch shipped (R1, R2, R4, R5, R6, R7): derive-stage
   filters + delta-only derivation in the review/distill prose; four-axis merge

@@ -245,9 +245,68 @@ export function refresh_injection_local(state: Record<string, any>): void {
   write_cache(parts, " (local)");
 }
 
+/* R8 cutover bootstrap: deliver the pre-existing local-mode journal to a
+newly configured Honcho, once. GR2 holds quarantined sessions exactly as
+live delivery does; a cursor in state.json makes re-runs no-ops (new
+observations after cutover flow through the normal spool path — the cursor
+marks where replay ended and normal delivery began). Nothing is deleted:
+the journal stays the evidence store in both modes. */
+export async function replay_journal(
+  honcho: any,
+  state: Record<string, any>,
+): Promise<{ delivered: number; held: number; skipped: number }> {
+  const done = Number(state.journal_replayed_lines ?? 0);
+  const entries = hc.journal_entries();
+  if (entries.length <= done) {
+    return { delivered: 0, held: 0, skipped: entries.length };
+  }
+  const fresh = entries.slice(done);
+  // GR2: the same per-session quarantine decision that gates live delivery
+  const quarantined = new Set(
+    hc.quarantined_observations().map(([e]: [Record<string, any>, string]) => e.session_id),
+  );
+  const by_session = new Map<string, Record<string, any>[]>();
+  let held = 0;
+  for (const e of fresh) {
+    const sid = String(e.session_id ?? "unknown");
+    if (quarantined.has(sid)) {
+      held += 1;
+      continue;
+    }
+    if (!by_session.has(sid)) by_session.set(sid, []);
+    by_session.get(sid)!.push(e);
+  }
+  let delivered = 0;
+  for (const [sid, obs] of by_session) {
+    delivered += await hc.add_observations(honcho, state, sid, obs);
+  }
+  // cursor covers every fresh line, held ones included — quarantine is a
+  // view decision, not a retry queue; /evolve-review promotes if warranted
+  hc.state_lock(() => {
+    const s = hc.load_state();
+    s.journal_replayed_lines = entries.length;
+    hc.save_state(s);
+  });
+  return { delivered, held, skipped: done };
+}
+
 export async function main(): Promise<void> {
   const cfg = hc.load_config();
   if (!hc.configured(cfg)) {
+    return;
+  }
+  if (process.argv.includes("--replay-journal")) {
+    if (cfg.mode !== "honcho") {
+      hc.sys_exit("--replay-journal needs honcho mode (it bootstraps a new " +
+        "server from the local journal) — configure HONCHO_URL/API_KEY first");
+    }
+    const honcho = await hc.client(cfg);
+    const state = hc.load_state();
+    const r = await replay_journal(honcho, state);
+    console.log(
+      `replay: delivered ${r.delivered} observation(s), held ${r.held} ` +
+        `(quarantined), cursor previously covered ${r.skipped} line(s)`,
+    );
     return;
   }
   if (!acquire_lock()) {

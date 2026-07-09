@@ -1020,7 +1020,62 @@ describe("BackfillTests", () => {
   });
 });
 
+const _REPLAY_DRIVER = `
+import * as flush from ${JSON.stringify(pathToFileURL(path.join(EVOLVE, "flush.ts")).href)};
+import * as hc from ${JSON.stringify(pathToFileURL(path.join(EVOLVE, "honcho_client.ts")).href)};
+
+class FakePeer { message(content, metadata) { return { content }; } }
+const sent = [];
+class FakeSession { addMessages(msgs) { sent.push(...msgs); } }
+const fake = { peer: (_id) => new FakePeer(), session: (_id) => new FakeSession() };
+
+// seed a pre-cutover local journal: one clean session, one over-cap session
+hc.journal_append({ session_id: "clean", repo: "r", ts: "t", observations:
+  [{ type: "preference", target: "user", content: "clean-pref", trust: "stated" }] });
+hc.journal_append({ session_id: "bulk", repo: "r", ts: "t", observations:
+  Array.from({ length: 6 }, (_, i) => ({ type: "preference", target: "user",
+    content: \`bulk-\${i}\`, trust: "stated" })) });
+
+const first = await flush.replay_journal(fake, hc.load_state());
+const sent_after_first = sent.length;
+const second = await flush.replay_journal(fake, hc.load_state());
+console.log(JSON.stringify({
+  clean_delivered: first.delivered === 1 && sent_after_first === 1,
+  bulk_held: first.held === 6,
+  rerun_noop: second.delivered === 0 && sent.length === sent_after_first,
+  cursor_set: Number(hc.load_state().journal_replayed_lines) === 7,
+}));
+`;
+
 describe("HonchoDeliveryGuardTests", () => {
+  test("test_replay_journal_screens_and_is_idempotent", () => {
+    // R8 cutover: the pre-existing journal bootstraps a new Honcho once —
+    // GR2 holds the bulk session, and a second replay delivers nothing
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "honcho-replay-"));
+    try {
+      const env: Record<string, string | undefined> = {
+        ...process.env,
+        XDG_DATA_HOME: path.join(tmp, "data"),
+        XDG_CONFIG_HOME: path.join(tmp, "cfg"),
+      };
+      delete env.EVOLVE_MODE;
+      const driver = path.join(tmp, "driver.mjs");
+      fs.writeFileSync(driver, _REPLAY_DRIVER);
+      const r = spawnSync(process.execPath, [driver], {
+        encoding: "utf-8",
+        env: env as NodeJS.ProcessEnv,
+      });
+      assert.equal(r.status, 0, r.stderr);
+      const out = JSON.parse(r.stdout);
+      assert.ok(out.clean_delivered, "clean session must replay to the server");
+      assert.ok(out.bulk_held, "GR2 must hold the over-cap session from replay");
+      assert.ok(out.rerun_noop, "second replay must deliver nothing (cursor)");
+      assert.ok(out.cursor_set, "cursor must cover every raw journal line");
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
   test("test_gr2_gates_honcho_delivery_not_just_local_read", () => {
     // honcho mode pushes to a server via honcho_deliver; a bulk-anomaly
     // session must be held from delivery (journal still keeps it), the

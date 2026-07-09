@@ -892,6 +892,92 @@ export async function cmd_status(_args: Record<string, any>): Promise<void> {
   }
 }
 
+/* Ask one question with the typed answer hidden (secret entry). One readline
+interface owns stdin for the whole flow — mixing a second stdin reader loses
+buffered input on piped stdin. On a TTY the keystroke echo is muted (fully
+hidden); on a non-TTY (piped input, tests) there is no echo to mute and the
+line is read normally, so automation still works. Node stdlib only. */
+async function ask_masked(rl: any, query: string): Promise<string> {
+  const answer = rl.question(query); // prompt is emitted before we mute echo
+  const orig = rl._writeToOutput?.bind(rl);
+  rl._writeToOutput = (s: string): void => {
+    // suppress keystroke/refresh echo; let the terminating newline through
+    if (s.includes("\n")) rl.output.write("\n");
+  };
+  try {
+    return await answer;
+  } finally {
+    rl._writeToOutput = orig;
+  }
+}
+
+/* Interactive onboarding: prompt for the endpoint + key + workspace and write
+the same config `cmd_init` would. Blank endpoint chooses local mode. The key
+is read masked (see ask_masked) so it never appears on screen, and it lands
+only in the 0600 config file — never a flag, an env dump, or shell history.
+Guarded to a TTY / piped stdin; the flag form (init --url --api-key) remains
+for non-interactive callers. */
+export async function cmd_init_interactive(): Promise<void> {
+  console.log(
+    "evolve onboarding — connect this machine to a Honcho memory server.\n" +
+      "Leave the endpoint blank to use local mode (no server, no key).\n",
+  );
+  let url: string;
+  let workspace = "huhhb-evolve";
+  let api_key = "";
+  if (process.stdin.isTTY) {
+    // human at a terminal: readline for the visible fields, masked key entry
+    const readline = await import("node:readline/promises");
+    const rl = readline.createInterface({
+      input: process.stdin,
+      output: process.stdout,
+      terminal: true,
+    });
+    try {
+      url = (await rl.question("Honcho endpoint URL: ")).trim();
+      if (!url) {
+        cmd_init({ local: true });
+        return;
+      }
+      workspace = (await rl.question("Workspace [huhhb-evolve]: ")).trim() || "huhhb-evolve";
+      api_key = (await ask_masked(rl, "Honcho API key (JWT) — input hidden: ")).trim();
+    } finally {
+      rl.close();
+    }
+  } else {
+    // piped/automation (and the test suite): read the whole stream once and
+    // take answers positionally — url, workspace, key. No TTY, no masking.
+    const lines = fs.readFileSync(0, "utf8").split("\n");
+    url = (lines[0] ?? "").trim();
+    if (!url) {
+      cmd_init({ local: true });
+      return;
+    }
+    workspace = (lines[1] ?? "").trim() || "huhhb-evolve";
+    api_key = (lines[2] ?? "").trim();
+  }
+  if (!api_key) {
+    sys_exit("no API key entered — re-run `init` (or use --local for no server)");
+  }
+  cmd_init({ url, api_key, workspace });
+  // connectivity check (non-fatal): confirm the endpoint answers
+  try {
+    const res = await fetch(url.replace(/\/+$/, "") + "/health", {
+      signal: AbortSignal.timeout(10_000),
+    });
+    console.log(
+      res.ok
+        ? `endpoint reachable (/health ${res.status}) — run \`honcho_client.ts smoke\` to verify auth`
+        : `warning: /health returned ${res.status} — config saved; check the endpoint, then run smoke`,
+    );
+  } catch (e) {
+    console.log(
+      `warning: could not reach ${url}/health (${py_err(e)}) — config saved anyway; ` +
+        "verify connectivity, then run smoke",
+    );
+  }
+}
+
 export function cmd_init(args: Record<string, any>): void {
   if (args.local && (args.url || args.api_key)) {
     sys_exit("--local excludes --url/--api-key: local mode means no server");
@@ -950,10 +1036,26 @@ export async function main(): Promise<void> {
         { flag: "--workspace" },
         // no-server mode: journal + review-derived conclusions only
         { flag: "--local", store_true: true },
+        // guided prompt for endpoint + key (key entry masked); default when
+        // `init` is run bare on a terminal
+        { flag: "--interactive", store_true: true },
       ],
     },
     process.argv.slice(2),
   );
+  // `init` with no connection flags → guided onboarding (explicit --interactive,
+  // or a bare `init` on a terminal). The flag form stays fully non-interactive
+  // for agents/CI, and a bare `init` with no TTY falls through to cmd_init.
+  if (
+    args.cmd === "init" &&
+    !args.url &&
+    !args.api_key &&
+    !args.local &&
+    (args.interactive || process.stdin.isTTY)
+  ) {
+    await cmd_init_interactive();
+    return;
+  }
   const dispatch: Record<string, (a: Record<string, any>) => unknown> = {
     smoke: cmd_smoke,
     observe: cmd_observe,

@@ -44,6 +44,16 @@ context, before the first user turn) → **adapt** (`/evolve-review` — triage
 into overlays / repo-memory / conclusions) → **promote** (quality gates
 G0–G2 below).
 
+### Onboarding
+
+`node ${CLAUDE_PLUGIN_ROOT}/scripts/evolve/honcho_client.ts init` — run bare on
+a terminal, it prompts for the endpoint URL, the workspace, and the API key
+(**key entry is hidden** — never echoed, never a flag, never in shell history),
+writes the 0600 config, and does a `/health` connectivity check. A blank
+endpoint selects local mode. The flag form below stays the non-interactive path
+for automation/CI; `init --interactive` forces the prompt (reads piped
+answers positionally when not a TTY).
+
 ### Modes
 
 **Local (default — no server):** observations land in `journal.jsonl`; the
@@ -466,6 +476,13 @@ through gated proposals).
 
 Record every evolve change here: date, what changed, roadmap item or
 provenance.
+
+- **2026-07-09** — Interactive onboarding: `honcho_client.ts init` run bare on
+  a terminal now prompts for endpoint + workspace + API key (key entry hidden
+  via masked readline; positional piped read on non-TTY for automation/tests),
+  writes the 0600 config, and runs a /health check. Keeps the secret off the
+  agent transcript — the evolve skill directs users to run `init` rather than
+  paste a key into chat. 3 onboarding tests (88 total). Version 0.5.8.
 
 - **2026-07-09** — R8 device-level begun against the self-hosted instance:
   SDK installed (--no-save; node_modules gitignored), the two SDK-gated

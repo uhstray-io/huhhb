@@ -17,6 +17,12 @@ Everything here is inert when evolve is unconfigured — check with:
 node "${CLAUDE_PLUGIN_ROOT}/scripts/evolve/honcho_client.ts" status
 ```
 
+If `status` shows it is unconfigured, onboard with `honcho_client.ts init`
+(bare, on a terminal) — it prompts for the endpoint, workspace, and API key
+(key entry hidden), then stores them locally. A blank endpoint picks local
+mode. Don't ask the user to paste a key into chat; direct them to run `init`
+so the secret stays off the transcript.
+
 ## What this memory is (and is not)
 
 Three truth models coexist in huhhb; route by the *shape* of the knowledge,

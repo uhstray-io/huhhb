@@ -183,6 +183,40 @@ describe("ConfigTests", () => {
     });
     assert.equal(ids[0], ids[1]);
   });
+
+  test("test_interactive_onboarding_writes_server_config", () => {
+    // guided `init --interactive`: piped answers (url, workspace, key) land in
+    // a 0600 config; the unreachable URL keeps the connectivity check offline
+    const answers = "http://127.0.0.1:9\nuhstray\nJWT-onboarding-key\n";
+    const r = sb.run("honcho_client.ts", ["init", "--interactive"], { stdin: answers });
+    assert.equal(r.status, 0, r.stderr);
+    const cfgPath = path.join(sb.dir, "config", "huhhb", "evolve.json");
+    const cfg = JSON.parse(fs.readFileSync(cfgPath, "utf-8"));
+    assert.equal(cfg.url, "http://127.0.0.1:9");
+    assert.equal(cfg.api_key, "JWT-onboarding-key");
+    assert.equal(cfg.workspace, "uhstray");
+    assert.equal(fs.statSync(cfgPath).mode & 0o777, 0o600, "config must be 0600");
+    assert.ok(!r.stdout.includes("JWT-onboarding-key"), "key must never echo to stdout");
+  });
+
+  test("test_interactive_onboarding_blank_endpoint_is_local", () => {
+    // a blank endpoint chooses local mode — no server, no key required
+    const r = sb.run("honcho_client.ts", ["init", "--interactive"], { stdin: "\n" });
+    assert.equal(r.status, 0, r.stderr);
+    const cfg = JSON.parse(
+      fs.readFileSync(path.join(sb.dir, "config", "huhhb", "evolve.json"), "utf-8"),
+    );
+    assert.equal(cfg.mode, "local");
+  });
+
+  test("test_interactive_onboarding_missing_key_fails", () => {
+    // endpoint given but key blank → refuse (no half-configured honcho mode)
+    const r = sb.run("honcho_client.ts", ["init", "--interactive"], {
+      stdin: "http://127.0.0.1:9\nuhstray\n\n",
+    });
+    assert.notEqual(r.status, 0);
+    assert.ok(r.stderr.includes("no API key"), r.stderr);
+  });
 });
 
 // ---------------------------------------------------------------- C-04/05/06

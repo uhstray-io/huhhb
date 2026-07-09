@@ -1082,6 +1082,22 @@ console.log(JSON.stringify({
 `;
 
 describe("HonchoDeliveryGuardTests", () => {
+  test("test_replay_refuses_when_flush_lock_held", () => {
+    // a Stop-hook flush racing a manual replay must never both deliver —
+    // replay takes the same lock and exits loudly when it is held
+    const sb = new Sandbox("http://127.0.0.1:9");
+    try {
+      const lockDir = sb.data;
+      fs.mkdirSync(lockDir, { recursive: true });
+      fs.writeFileSync(path.join(lockDir, "flush.lock"), String(process.pid));
+      const r = sb.run("flush.ts", ["--replay-journal"]);
+      assert.notEqual(r.status, 0, "replay must refuse while the lock is held");
+      assert.ok(r.stderr.includes("another flush is in progress"), r.stderr);
+    } finally {
+      sb.cleanup();
+    }
+  });
+
   test("test_replay_journal_screens_and_is_idempotent", () => {
     // R8 cutover: the pre-existing journal bootstraps a new Honcho once —
     // GR2 holds the bulk session, and a second replay delivers nothing

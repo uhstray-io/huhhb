@@ -300,13 +300,29 @@ export async function main(): Promise<void> {
       hc.sys_exit("--replay-journal needs honcho mode (it bootstraps a new " +
         "server from the local journal) — configure HONCHO_URL/API_KEY first");
     }
-    const honcho = await hc.client(cfg);
-    const state = hc.load_state();
-    const r = await replay_journal(honcho, state);
-    console.log(
-      `replay: delivered ${r.delivered} observation(s), held ${r.held} ` +
-        `(quarantined), cursor previously covered ${r.skipped} line(s)`,
-    );
+    // same mutual exclusion as the drain path: a Stop-hook flush racing a
+    // manual replay (or two replays racing the cursor) must never both write
+    if (!acquire_lock()) {
+      hc.sys_exit("another flush is in progress — retry replay once it finishes");
+    }
+    try {
+      const honcho = await hc.client(cfg);
+      const state = hc.load_state();
+      const r = await replay_journal(honcho, state);
+      console.log(
+        `replay: delivered ${r.delivered} observation(s), held ${r.held} ` +
+          `(quarantined), cursor previously covered ${r.skipped} line(s)`,
+      );
+    } catch (e) {
+      if (e instanceof hc.SystemExit) throw e; // client() exit-2 UX, like drain
+      hc.sys_exit(`replay failed: ${hc.py_err(e)}`);
+    } finally {
+      try {
+        fs.unlinkSync(LOCK);
+      } catch {
+        // missing_ok=True
+      }
+    }
     return;
   }
   if (!acquire_lock()) {

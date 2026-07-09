@@ -912,6 +912,15 @@ buffered input on piped stdin. On a TTY the keystroke echo is muted (fully
 hidden); on a non-TTY (piped input, tests) there is no echo to mute and the
 line is read normally, so automation still works. Node stdlib only. */
 async function ask_masked(rl: any, query: string): Promise<string> {
+  // rl._writeToOutput is an UNDOCUMENTED readline internal — the least-bad
+  // way to suppress echo. If a Node upgrade removes it, fail LOUD (tell the
+  // user their input will be visible) rather than silently echoing a secret.
+  if (typeof rl._writeToOutput !== "function") {
+    process.stdout.write(
+      "(warning: this Node build cannot mask input — the key WILL be visible)\n",
+    );
+    return rl.question(query);
+  }
   const answer = rl.question(query); // prompt is emitted before we mute echo
   const orig = rl._writeToOutput?.bind(rl);
   rl._writeToOutput = (s: string): void => {

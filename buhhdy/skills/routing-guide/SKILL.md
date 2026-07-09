@@ -74,12 +74,16 @@ opencode column added 2026-07-07)
   execution-shaped tasks, driven by model choice alone (this dispatch
   contract has no separate effort knob). Keep Opus for planning/architecture judgment
   (writing-plans, domain-modeling) where the bottleneck is judgment, not coding.
-- Note: claude-fable-5 (FRONTIER) is ORCHESTRATOR/ARCHITECT ONLY (operator
-  directive 2026-07-08): initial decomposition, architecture, and
-  plan-level judgment. Never development dispatches — implementation,
-  review, and exploration always run COMPLEX or lower. Metered per-token
-  ($10/$50 per MTok, separate API key) as of 2026-07-08 — every dispatch
-  is a real cost decision.
+- Note: claude-fable-5 (FRONTIER) is ESCALATION-ONLY (operator directives
+  2026-07-08, tightened later same day): never development dispatches —
+  implementation, review, and exploration always run COMPLEX or lower —
+  and NOT the default for planning/orchestration either. Routine planning
+  and decomposition run claude-opus-4-8 (or claude-sonnet-5 when stakes
+  are modest); Fable is reserved for the most complex work only — large
+  multi-workstream decomposition, novel/hard-to-reverse architecture, or
+  the heaviest cross-agent orchestration — with a stated one-line reason
+  why Opus is insufficient. Metered per-token ($10/$50 per MTok, separate
+  API key) as of 2026-07-08 — every dispatch is a real cost decision.
 
 **OpenAI (codex)**
 - Best: strict structured output, JSON schemas, tool routing, format contracts
@@ -278,10 +282,14 @@ Review and update this table quarterly or when a provider announces model change
   PREVIEW), gemini-3.5-flash (STANDARD, GA), gemini-3.1-flash-lite
   (LIGHTWEIGHT, GA). Re-check gemini-3.1-pro-preview for GA promotion
   quarterly — preview models can change without the same notice period.
-- claude-fable-5: FRONTIER tier, claude_code only, GA. ORCHESTRATOR/
-  ARCHITECT ONLY per operator directive 2026-07-08 — plan/architecture
-  judgment and initial decomposition; never implementation/review/explore
-  dispatches (those run COMPLEX or lower). The Claude Max flat-subscription
+- claude-fable-5: FRONTIER tier, claude_code only, GA. ESCALATION-ONLY per
+  operator directives 2026-07-08 (tightened later same day) — never
+  implementation/review/explore dispatches (those run COMPLEX or lower),
+  and not the planning default either: routine planning/decomposition runs
+  claude-opus-4-8 or lower. Reserve Fable for the most complex work only
+  (large multi-workstream decomposition, novel/hard-to-reverse
+  architecture, heaviest cross-agent orchestration), each dispatch with a
+  one-line reason why Opus is insufficient. The Claude Max flat-subscription
   window ended 2026-07-07; from 2026-07-08 it requires a separate
   ANTHROPIC_API_KEY and per-token billing ($10/$50 per MTok) — every
   dispatch is a metered cost decision.

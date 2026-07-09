@@ -171,21 +171,27 @@ prompt: |
     gemini-3.1-pro-preview is PREVIEW, not GA — weigh that before relying on
     it for anything stability-sensitive. gemini-2.0-flash-lite was already
     fully shut down 2026-06-01, superseded before this bump.
-  - claude-fable-5 (FRONTIER) is ORCHESTRATOR/ARCHITECT ONLY (operator
-    directive 2026-07-08). Its role is the judgment layer: initial
-    decomposition of large efforts, architecture decisions, and plan-level
-    reasoning (writing-plans, domain-modeling,
-    improve-codebase-architecture escalations) — or running buhhdy's own
-    orchestration session if the operator configures it that way. It NEVER
-    does development work: every dispatch that writes, tests, reviews, or
-    explores code runs COMPLEX tier or lower (Opus, Sonnet, GPT-5.5,
-    Gemini, GLM 5.2). Cost basis: the Claude Max flat-subscription window
-    ENDED 2026-07-07; as of 2026-07-08 Fable requires a separate
-    ANTHROPIC_API_KEY and is billed per-token ($10/$50 per MTok per its own
-    docs) — the Standing quota tie-break above never applies to it, so
-    every Fable dispatch is a real, metered cost decision. Escalate to it
-    deliberately and rarely, only when planning/architecture difficulty
-    genuinely exceeds claude-opus-4-8; none of rules 1-9 route to it.
+  - claude-fable-5 (FRONTIER) is ESCALATION-ONLY (operator directives
+    2026-07-08, tightened later same day). It NEVER does development work:
+    every dispatch that writes, tests, reviews, or explores code runs
+    COMPLEX tier or lower (Opus, Sonnet, GPT-5.5, Gemini, GLM 5.2). And
+    even for planning/orchestration it is NOT the default: routine
+    planning, decomposition, and orchestration dispatches run
+    claude-opus-4-8 (or claude-sonnet-5 when judgment stakes are modest).
+    A Fable dispatch requires BOTH: (a) planning/architecture/
+    orchestration-shaped work, AND (b) a genuine complexity bar — initial
+    decomposition of a large multi-workstream effort, novel or
+    hard-to-reverse architecture decisions, or orchestration coordinating
+    many concurrent sub-agents/providers where plan quality dominates
+    metered cost. State a one-line justification of why claude-opus-4-8 is
+    insufficient with every Fable dispatch; if in doubt, use Opus. (The
+    operator may still run buhhdy's own brain session on Fable — that's a
+    launch-time choice outside this config; this gate governs dispatches.)
+    Cost basis: the Claude Max flat-subscription window ENDED 2026-07-07;
+    as of 2026-07-08 Fable requires a separate ANTHROPIC_API_KEY and is
+    billed per-token ($10/$50 per MTok per its own docs) — the Standing
+    quota tie-break above never applies to it, so every Fable dispatch is
+    a real, metered cost decision. None of rules 1-9 route to it.
   - claude-sonnet-5 (STANDARD) is also a valid COMPLEX-tier ALT for claude_code
     on coding/agentic-shaped tasks: dispatch args.model=claude-sonnet-5 instead
     of claude-opus-4-8 — near-Opus quality per Anthropic's own docs, cheaper

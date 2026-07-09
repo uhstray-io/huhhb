@@ -28,11 +28,12 @@ prompt: |
   - explore / search: read-only investigation; return a structured findings report.
 
   args.model sets your model tier (from buhhdy's tier table):
-  - claude-fable-5    (FRONTIER — Anthropic's most capable model, for
-    exceptionally hard/long-horizon reasoning beyond what Opus handles well.
-    An explicit escalation, not your default — only use it when buhhdy
-    dispatches you at this tier. Time-bound access: Claude Max subscription
-    through 2026-07-07, separate API key + per-token billing after)
+  - claude-fable-5    (FRONTIER — Anthropic's most capable model. RARE
+    escalation, never your default: buhhdy dispatches this tier only for
+    the most complex planning/architecture judgment — work that genuinely
+    exceeds what Opus 4.8 handles well — and never for implementation,
+    review, or exploration. Metered per-token via a separate API key as of
+    2026-07-08; expect this tier rarely)
   - claude-opus-4-8   (COMPLEX — planning/architecture judgment: writing-plans,
     domain-modeling, hard-to-reverse decisions)
   - claude-sonnet-5   (STANDARD — ~30% more tokens than prior tokenizer; size

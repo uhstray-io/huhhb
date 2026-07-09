@@ -264,7 +264,11 @@ mergeable before acting on a grant.
   time-bound:** usable via the existing Claude Max subscription only through
   2026-07-07; from 2026-07-08 it requires a separate API key and per-token
   billing ($10/$50 per MTok), so it falls outside the quota tie-break's
-  subscription-cost assumption after that date.
+  subscription-cost assumption after that date. **Tightened 2026-07-08:**
+  escalation-only even for planning/orchestration — routine planning runs
+  Opus 4.8 or lower; Fable is reserved for the most complex
+  decomposition/architecture/cross-agent orchestration, with a stated
+  reason per dispatch.
 - **claude-sonnet-5 added as a COMPLEX-tier ALT** for coding/agentic-shaped
   tasks — near-Opus quality per Anthropic's own docs, cheaper than
   claude-opus-4-8. Reserve Opus for planning/architecture judgment.

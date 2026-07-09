@@ -17,13 +17,13 @@ anyone needs to read through.
    don't involve the reviewer yet.
 3. Dispatch a DIFFERENT-vendor sub-agent as reviewer (Claude built it →
    `codex`, `gemini-*`, or `opencode`; Codex built it → `claude_code`,
-   `gemini-*`, or `opencode`; a gemini-* worker built it → `claude_code`,
+   `gemini-*`, or `opencode`; a `gemini-*` worker built it → `claude_code`,
    `codex`, or `opencode`; opencode built it → `claude_code`, `codex`, or
-   `gemini-*`. The three gemini-* workers are ONE vendor and never review
+   `gemini-*`. The three `gemini-*` workers are ONE vendor and never review
    each other; `gemini-*` defaults to gemini-standard, or gemini-complex
    for large/multimodal diffs). Use a task-based title such as
    `review-auth-refactor`, never the raw vendor name:
-   `sys_session_send(agent="claude_code"|"codex"|"gemini-standard"|"opencode", title="review-<task_slug>",
+   `sys_session_send(agent="claude_code"|"codex"|"gemini-standard"|"gemini-complex"|"opencode", title="review-<task_slug>",
    args={purpose: "review", input: "<the diff> + <the acceptance contract>.
    Review ONLY against the contract. Report blocking / non-blocking /
    suggestions. Do not edit code."})`. Give it the diff as text — do NOT point

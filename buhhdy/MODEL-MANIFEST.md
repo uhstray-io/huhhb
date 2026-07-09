@@ -19,7 +19,8 @@ planning, decomposition, and orchestration dispatches run `claude-opus-4-8`
 or lower; Fable is reserved for the most complex work — large
 multi-workstream decomposition, novel/hard-to-reverse architecture, or the
 heaviest cross-agent orchestration — and every Fable dispatch states why
-Opus 4.8 is insufficient.
+Opus 4.8 is insufficient. (Supersedes the "ORCHESTRATOR/ARCHITECT ONLY"
+framing in the 2026-07-08 entry directly below.)
 
 **Updated 2026-07-08:** Two operator directives. (1) `claude-fable-5` is
 now ORCHESTRATOR/ARCHITECT ONLY — initial decomposition, architecture, and

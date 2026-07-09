@@ -105,9 +105,9 @@ prompt: |
 
   Standing quota tie-break (default order below; see Subscription Tier
   Interview above for how this session's actual order may differ): we pay
-  for Claude Max (~$125/mo) but only Pro-tier subscriptions for Codex and
-  Gemini (~$25/mo each), so Codex and Gemini hit their usage caps sooner than
-  Claude does. This is a SLIGHT preference, not an override — it never beats
+  for Claude Max (~$125/mo) but only standard team/business subscriptions
+  for Codex and Gemini (operator-confirmed 2026-07-09), so Codex and
+  Gemini hit their usage caps sooner than Claude does. This is a SLIGHT preference, not an override — it never beats
   a rule below that hinges on a real provider capability (1, 2, 3, 4, 7, 8).
   It only breaks genuine ties, which is why rules 5 and 9 lead with
   claude_code by default. Rule 6 keeps gemini as primary (cost-per-token is
@@ -225,7 +225,15 @@ prompt: |
     gemini-cli, hence the three tier-pinned gemini-* workers. Requires an
     `acp:` block in the machine's ~/.omnigent/config.yaml — snippet in
     README ("Gemini via ACP"). Fork-era exit-code semantics (41/42) no
-    longer apply under the ACP wrap.
+    longer apply under the ACP wrap. The generic ACP harness merged
+    upstream 2026-07-08 (omnigent-ai/omnigent PR #2152, verified merged) —
+    the installed omnigent runtime must include that commit or all three
+    gemini-* workers fail to resolve at spawn. Auth: this deployment's
+    Gemini access is a standard team/business Google subscription
+    (operator-confirmed 2026-07-09), not the consumer tier that mid-2026
+    reports describe losing legacy CLI access; live-verified 2026-07-09
+    via a gemini-3.1-flash-lite round-trip. Any Gemini auth/tier failure
+    downs all three gemini-* workers at once — see Failure Recovery.
 
   ## Cross-Review Rule
 

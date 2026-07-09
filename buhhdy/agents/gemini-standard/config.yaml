@@ -13,6 +13,10 @@ executor:
   config:
     harness: acp:gemini-standard
 
+# NOTE: The prompt body below is kept deliberately in sync across
+# gemini-complex/gemini-standard/gemini-lite (only the pinned model/tier
+# lines differ). Agent bundles are self-contained — the config format has no
+# cross-bundle YAML anchor/include mechanism — so edit all three together.
 prompt: |
   You are a Google Gemini coding sub-agent dispatched by buhhdy, pinned to
   gemini-3.5-flash (STANDARD tier, GA). Your model is baked into this

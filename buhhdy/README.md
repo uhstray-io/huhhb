@@ -53,7 +53,14 @@ Then sign in to each:
   [Google AI Studio](https://aistudio.google.com/apikey), pay-as-you-go) or
   **Vertex AI**. Google auth flows are the part most likely to drift over
   time — if "Sign in with Google" ever stops working for your account tier,
-  fall back to the API key. (An earlier headless-OAuth failure — token
+  fall back to the API key. **Tier callout:** mid-2026 reports describe
+  Google restricting legacy `gemini` CLI access for consumer tiers
+  (free/Pro/Ultra), with team/business (Workspace/Code Assist) licenses and
+  paid API keys as the carve-outs. This deployment runs a team/business
+  Google subscription and was live-verified working 2026-07-09
+  (`gemini -m gemini-3.1-flash-lite -p` round-trip) — re-verify after any
+  Google plan change; a tier/auth failure downs all three `gemini-*`
+  workers at once. (An earlier headless-OAuth failure — token
   refresh needs a browser — was resolved as of 2026-06-30. If Gemini auth
   fails headlessly again, all three gemini-* workers are down together; see
   Failure Recovery in `config.yaml`.)
@@ -84,7 +91,13 @@ Entry names slugify to `gemini-complex` / `gemini-standard` / `gemini-lite`
 — these must match the `harness: acp:<slug>` lines in
 `agents/gemini-*/config.yaml`. (Upstream docs may still show the deprecated
 `--experimental-acp` spelling; `--acp` is current.) Never pass `args.model`
-to a gemini-* worker — it is silently ignored; the worker IS the tier.
+to a `gemini-*` worker — it is silently ignored; the worker IS the tier.
+
+The generic ACP harness landed upstream on 2026-07-08
+([omnigent-ai/omnigent#2152](https://github.com/omnigent-ai/omnigent/pull/2152),
+verified merged) — install/update the omnigent runtime from upstream main at
+or after that date, or `harness: acp:<slug>` will fail to resolve for all
+three `gemini-*` workers.
 
 Verify all four are on PATH:
 

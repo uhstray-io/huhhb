@@ -28,7 +28,8 @@ if unavailable, use claude_code or codex instead.
 | 9 | Default lightweight (no rule matched) | claude_code (cheapest available if unavailable) | LIGHTWEIGHT |
 
 Rules 5, 6 (fallback only), and 9 carry a slight quota-driven claude_code
-preference (we pay for Claude Max but only Pro-tier Codex/Gemini) — see
+preference (we pay for Claude Max but only standard team/business-tier
+Codex/Gemini) — see
 `config.yaml`'s Subscription Tier Interview and Provider Routing Decision
 Tree for the full mechanics, including how a reported subscription tier can
 reorder this per session. Rule 6's gemini primary is capability/cost-based,
@@ -47,10 +48,10 @@ tier is its own worker with the model baked into its ACP command:
 | gemini-lite | gemini-3.1-flash-lite | LIGHTWEIGHT |
 
 Anywhere this guide (or any other skill) names "gemini" plus a tier or a
-model, dispatch the matching gemini-* worker and OMIT args.model — it is
+model, dispatch the matching `gemini-*` worker and OMIT args.model — it is
 silently ignored for these workers. All three are ONE vendor sharing one
 binary and one auth: an availability failure applies to all three at once,
-and a gemini-* implementer can never be cross-reviewed by another gemini-*
+and a `gemini-*` implementer can never be cross-reviewed by another `gemini-*`
 worker.
 
 ## Model Tier Table (verified 2026-06-30; FRONTIER row added 2026-07-01;

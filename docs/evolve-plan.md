@@ -421,7 +421,7 @@ boundary; Honcho output is *signal, never authority*.
 workspace where **each repo skill is a peer** whose representation is what
 the fleet has learned about it; devices are observer peers with
 observe-others isolation. Devices deliver screened observations
-(`skill:<name>` targets — the channel already exists); the deriver builds
+(`skill__<name>` targets — the channel already exists); the deriver builds
 per-skill representations; dialectic queries ("what corrections recur for
 skill X?") feed G2/F2 and the curator's improvement queue; distilled
 conclusions land as evidence in refine PRs. Hard trust boundary the
@@ -476,6 +476,20 @@ through gated proposals).
 
 Record every evolve change here: date, what changed, roadmap item or
 provenance.
+
+- **2026-07-09** — First live writes to the team instance (R8): smoke found a
+  real contract violation — Honcho constrains peer/session ids to
+  ^[a-zA-Z0-9_-]+$, so the id scheme moved from `:` to `__`
+  (`agent__claude-code`; legacy `:` input auto-normalized via to_peer_id).
+  Journal replay hydrated `uhstray`: 220 observations across 163 sessions
+  delivered, 21 GR2-quarantined held, re-run idempotent (0). Storage verified
+  by round-trip read; **deriver is not consuming** (queue stuck at 222
+  pending / 0 completed — server-side, .190 deriver worker or its Gemini
+  config). First real /evolve-distill pass: 16 healthy skill-usage classes
+  (correctly no create), one friction class (superpowers:executing-plans, 2
+  sessions → future review patch), and one genuine gap distilled —
+  coderabbit-review-triage overlay proposal staged in pending/ with bundled
+  eval (2-session evidence). status now prints deriver queue counts.
 
 - **2026-07-09** — Interactive onboarding: `honcho_client.ts init` run bare on
   a terminal now prompts for endpoint + workspace + API key (key entry hidden

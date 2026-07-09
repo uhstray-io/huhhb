@@ -32,7 +32,9 @@ of a stack trace.`;
 // (mirrors Python's lazy `from honcho import Honcho` + ImportError hint)
 export const HONCHO_PKG = "@honcho-ai/sdk";
 export const HONCHO_PIN = HONCHO_PKG; // name kept for parity with the Python module
-export const AGENT_PEER = "agent:claude-code";
+// Honcho constrains peer/session ids to ^[a-zA-Z0-9_-]+$ (no colons) —
+// found live by smoke against 2.x; "__" is the namespace separator.
+export const AGENT_PEER = "agent__claude-code";
 export const LESSONS_SESSION = "lessons";
 
 export const CONFIG_PATH = path.join(
@@ -428,15 +430,21 @@ export function save_state(state: Record<string, any>): void {
 // ---------------------------------------------------------------- naming
 
 export function user_peer_id(state?: Record<string, any>): string {
-  return `user:${(state || load_state()).profile_id}`;
+  return `user__${(state || load_state()).profile_id}`;
 }
 
 export function skill_peer_id(name: string): string {
-  return `skill:${name}`;
+  return to_peer_id(`skill__${name}`);
 }
 
 export function cc_session_id(claude_session_id: string): string {
-  return `cc:${claude_session_id}`;
+  return to_peer_id(`cc__${claude_session_id}`);
+}
+
+/* Normalize any id (incl. legacy colon-style user input like
+"skill:writing-plans") to Honcho's ^[a-zA-Z0-9_-]+$ constraint. */
+export function to_peer_id(id: string): string {
+  return id.replace(/:/g, "__").replace(/[^a-zA-Z0-9_-]/g, "-");
 }
 
 // ---------------------------------------------------------------- client
@@ -665,7 +673,7 @@ export async function cmd_smoke(_args: Record<string, any>): Promise<void> {
   let probe_user: any;
   let probe_agent: any;
   try {
-    probe_user = await h.peer("user:smoke-probe");
+    probe_user = await h.peer("user__smoke-probe");
     probe_agent = await h.peer(AGENT_PEER);
   } catch (e) {
     fail(`cannot reach Honcho: ${py_err(e)}`);
@@ -675,12 +683,12 @@ export async function cmd_smoke(_args: Record<string, any>): Promise<void> {
   // 2. seed observations (incl. one failure-mode-phrased-as-fix — the
   //    schema's living example, and step 6's grounding target)
   step(2, "seed observations");
-  const sid = `cc:smoke-${Math.floor(Date.now() / 1000)}`;
+  const sid = `cc__smoke-${Math.floor(Date.now() / 1000)}`;
   try {
     const session = await h.session(sid);
     await session.addMessages([
       probe_user.message(
-        "[preference] user:smoke-probe — Prefers conventional commits " +
+        "[preference] user__smoke-probe — Prefers conventional commits " +
           "with no emoji in commit subjects; stated explicitly.",
       ),
       probe_agent.message(
@@ -797,8 +805,10 @@ export async function cmd_query(args: Record<string, any>): Promise<void> {
     return;
   }
   const h = await client(cfg);
-  const me = await h.peer(args.perspective || user_peer_id(state));
-  const target = args.target;
+  const me = await h.peer(
+    args.perspective ? to_peer_id(args.perspective) : user_peer_id(state),
+  );
+  const target = args.target ? to_peer_id(args.target) : args.target;
   if (args.what === "card") {
     const cardFn = me.getCard ?? me.card; // TS SDK documents getCard()
     const card = target ? await cardFn.call(me, { target }) : await cardFn.call(me);

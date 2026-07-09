@@ -12,17 +12,21 @@ repository-specific technical question.
 ## Procedure
 1. Decompose the question into one or more bounded investigation tasks. Prefer
    two independent lenses for ambiguous or high-stakes questions.
-2. Dispatch each task to `claude_code`, `codex`, or `gemini`:
-   `sys_session_send(agent="claude_code"|"codex"|"gemini",
+2. Dispatch each task to `claude_code`, `codex`, or a `gemini-*` worker
+   (gemini-standard by default; gemini-lite for bulk sweeps; gemini-complex
+   for multimodal/large-corpus — model is baked into each `gemini-*` worker,
+   so never pass args.model to them):
+   `sys_session_send(agent="claude_code"|"codex"|"gemini-standard"|"gemini-lite"|"gemini-complex",
    title="explore-<task_slug>", args={purpose: "explore", input: "<question +
    exact scope + evidence requested>"})`. Use a task-based title such as
    `explore-ci-flake`, never the raw vendor name. Use `purpose: "search"` only
-   when the task is primarily external/document search. Prefer `gemini` when a
-   third lens or a non-Claude/GPT model is wanted. Any worker takes an optional
-   `args.model` (`sys_list_models` shows what each worker can run; an invalid
+   when the task is primarily external/document search. Prefer a `gemini-*`
+   worker when a third lens or a non-Claude/GPT model is wanted. claude_code and codex take an optional
+   `args.model` (`sys_list_models` shows what each can run; an invalid
    model/worker combination fails loud at dispatch, and `model` only applies on
    the dispatch that CREATES the session — a send that continues an existing
-   title rejects it).
+   title rejects it); NEVER pass args.model to a `gemini-*` worker — the
+   model is baked into the worker.
    Tell the worker to edit nothing and return file,
    command, URL, or line evidence. Emit these `sys_session_send` calls in the
    SAME turn — do not end a turn having only said you will dispatch.

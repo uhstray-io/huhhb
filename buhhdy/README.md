@@ -1,8 +1,9 @@
 # buhhdy
 
-A three-provider Polly orchestration config that routes tasks across
-**Claude (Anthropic)**, **OpenAI (ChatGPT/Codex)**, and **Google Gemini**
-based on task complexity, context requirements, and provider strengths.
+A four-provider Polly orchestration config that routes tasks across
+**Claude (Anthropic)**, **OpenAI (ChatGPT/Codex)**, **Google Gemini**, and
+**OpenCode (Zhipu GLM via OpenRouter)** based on task complexity, context
+requirements, and provider strengths.
 
 Built through a three-round collaborative design process: each provider's
 research agent proposed its own model tier strategy, challenged the other
@@ -12,26 +13,22 @@ two proposals, and converged on the routing rules in this config.
 
 New here? Follow this in order — it's a one-time setup per machine.
 
-### 1. Install the omnigent runtime — the fork, not upstream
+### 1. Install the omnigent runtime (stock upstream)
 
-buhhdy needs the **`uhstray-io/omnigent` fork**, not the public
-`omnigent-ai/omnigent` repo. The fork has a real, tested `gemini` harness
-(a dedicated integration that runs the standalone Gemini CLI as a
-subprocess) that upstream's harness allowlist doesn't have — loading buhhdy
-against upstream silently drops the gemini sub-agent at load time instead
-of erroring, so this is easy to get wrong without noticing.
+buhhdy runs on the public **`omnigent-ai/omnigent`** runtime. The old
+`uhstray-io/omnigent` fork — which existed to carry a custom `gemini`
+harness — is retired as of 2026-07-08: upstream's generic ACP harness
+replaced it (see "Gemini via ACP" below). If you still have the fork
+installed, reinstall from upstream.
 
 ```bash
-# Recommended: uv tool install, straight from the fork's git repo
-uv tool install git+https://github.com/uhstray-io/omnigent.git
-
-# Confirm you actually have the fork (not upstream) once installed
-pip show -f omnigent | grep -i location
+# Recommended: uv tool install, straight from upstream
+uv tool install git+https://github.com/omnigent-ai/omnigent.git
 ```
 
 ### 2. Install and sign in to each CLI
 
-buhhdy dispatches real work to three separate coding CLIs. Install and
+buhhdy dispatches real work to four separate coding CLIs. Install and
 authenticate each one before your first run — a one-time step per machine.
 
 | Provider | Install | Docs |
@@ -56,15 +53,56 @@ Then sign in to each:
   [Google AI Studio](https://aistudio.google.com/apikey), pay-as-you-go) or
   **Vertex AI**. Google auth flows are the part most likely to drift over
   time — if "Sign in with Google" ever stops working for your account tier,
-  fall back to the API key. (An earlier headless-OAuth failure specific to
-  the gemini harness below — exit code 41, `FatalAuthenticationError` — was
-  resolved upstream as of 2026-06-30, confirmed via a successful live
-  dispatch; see Failure Recovery in `config.yaml` if it regresses.)
+  fall back to the API key. **Tier callout:** mid-2026 reports describe
+  Google restricting legacy `gemini` CLI access for consumer tiers
+  (free/Pro/Ultra), with team/business (Workspace/Code Assist) licenses and
+  paid API keys as the carve-outs. This deployment runs a team/business
+  Google subscription and was live-verified working 2026-07-09
+  (`gemini -m gemini-3.1-flash-lite -p` round-trip) — re-verify after any
+  Google plan change; a tier/auth failure downs all three `gemini-*`
+  workers at once. (An earlier headless-OAuth failure — token
+  refresh needs a browser — was resolved as of 2026-06-30. If Gemini auth
+  fails headlessly again, all three gemini-* workers are down together; see
+  Failure Recovery in `config.yaml`.)
 
-Verify all three are on PATH:
+**OpenCode** — the fourth worker (`opencode`, Zhipu GLM 5.2 via
+OpenRouter) needs the `opencode` CLI on PATH with your OpenRouter
+credentials configured — see `agents/opencode/config.yaml` for the wiring;
+billing is metered OpenRouter credits, not a subscription.
+
+### Gemini via ACP (one-time machine config)
+
+Upstream omnigent drives Gemini through its generic ACP harness: it spawns
+`gemini --acp` as a subprocess and bridges tool calls over the ACP
+protocol. ACP cannot switch models per-dispatch, so buhhdy ships three
+tier-pinned gemini workers (`gemini-complex` / `gemini-standard` /
+`gemini-lite`), each pointing at its own `acp:` entry with the model baked
+into the command. Add this block to `~/.omnigent/config.yaml`:
+
+```yaml
+acp:
+  agents:
+    - {name: Gemini Complex, command: "gemini --acp -m gemini-3.1-pro-preview"}
+    - {name: Gemini Standard, command: "gemini --acp -m gemini-3.5-flash"}
+    - {name: Gemini Lite, command: "gemini --acp -m gemini-3.1-flash-lite"}
+```
+
+Entry names slugify to `gemini-complex` / `gemini-standard` / `gemini-lite`
+— these must match the `harness: acp:<slug>` lines in
+`agents/gemini-*/config.yaml`. (Upstream docs may still show the deprecated
+`--experimental-acp` spelling; `--acp` is current.) Never pass `args.model`
+to a `gemini-*` worker — it is silently ignored; the worker IS the tier.
+
+The generic ACP harness landed upstream on 2026-07-08
+([omnigent-ai/omnigent#2152](https://github.com/omnigent-ai/omnigent/pull/2152),
+verified merged) — install/update the omnigent runtime from upstream main at
+or after that date, or `harness: acp:<slug>` will fail to resolve for all
+three `gemini-*` workers.
+
+Verify all four are on PATH:
 
 ```bash
-command -v claude codex gemini
+command -v claude codex gemini opencode
 ```
 
 ### 3. Run buhhdy
@@ -103,15 +141,18 @@ Tier Interview" and "Provider Routing Decision Tree" sections of
 buhhdy/
 ├── config.yaml                    ← Main orchestrator (buhhdy brain)
 ├── agents/
-│   ├── claude_code/config.yaml    ← Anthropic Claude sub-agent
-│   ├── codex/config.yaml          ← OpenAI Codex sub-agent
-│   └── gemini/config.yaml         ← Google Gemini sub-agent
+│   ├── claude_code/config.yaml      ← Anthropic Claude sub-agent
+│   ├── codex/config.yaml            ← OpenAI Codex sub-agent
+│   ├── gemini-complex/config.yaml   ← Gemini COMPLEX (gemini-3.1-pro-preview, ACP)
+│   ├── gemini-standard/config.yaml  ← Gemini STANDARD (gemini-3.5-flash, ACP)
+│   ├── gemini-lite/config.yaml      ← Gemini LIGHTWEIGHT (gemini-3.1-flash-lite, ACP)
+│   └── opencode/config.yaml         ← OpenCode GLM 5.2 sub-agent (OpenRouter)
 ├── skills/
 │   ├── routing-guide/SKILL.md    ← Provider routing reference (load on demand)
 │   ├── core-workflows/SKILL.md   ← The two standard planning/dev workflows
 │   ├── investigate/SKILL.md      ← Vendored from omnigent's examples/polly bundle
-│   ├── fanout/SKILL.md           ← Vendored, adapted for buhhdy's 3-provider roster
-│   └── cross-review/SKILL.md     ← Vendored, adapted for buhhdy's 3-provider roster
+│   ├── fanout/SKILL.md           ← Vendored, adapted for buhhdy's 4-provider roster
+│   └── cross-review/SKILL.md     ← Vendored, adapted for buhhdy's 4-provider roster
 └── README.md                      ← This file
 ```
 
@@ -137,8 +178,8 @@ for the only conditions under which buhhdy merges one itself.
 | Complex multi-file coding, agentic runs | Claude | claude-opus-4-8 |
 | Strict JSON/schema, format contracts | OpenAI | gpt-5.4-mini |
 | User-facing prose, explanations | OpenAI | gpt-5.4-mini |
-| Multimodal, video/audio/PDF | Gemini | gemini-3.1-pro-preview |
-| Bulk classification, high-volume fanout | Gemini | gemini-3.1-flash-lite |
+| Multimodal, video/audio/PDF | Gemini (`gemini-complex`) | gemini-3.1-pro-preview |
+| Bulk classification, high-volume fanout | Gemini (`gemini-lite`) | gemini-3.1-flash-lite |
 | Standard implementation | Claude | claude-sonnet-5 |
 | Standard structured tasks | OpenAI | gpt-5.4-mini |
 | Lightweight default | cheapest tier | see routing-guide |
@@ -191,9 +232,12 @@ External skills (referenced, not bundled — must be installed separately):
 
 | Implementer | Valid reviewers |
 |-------------|----------------|
-| claude_code | codex, gemini |
-| codex | claude_code, gemini |
-| gemini | claude_code, codex |
+| claude_code | codex, gemini-*, opencode |
+| codex | claude_code, gemini-*, opencode |
+| gemini-* | claude_code, codex, opencode |
+| opencode | claude_code, codex, gemini-* |
+
+The three gemini-* workers are one vendor — they never review each other.
 
 The reviewer is always a different vendor than the implementer. PRs are the
 deliverable; the human merges by default. Exception: buhhdy may open a PR
@@ -233,12 +277,21 @@ mergeable before acting on a grant.
   time-bound:** usable via the existing Claude Max subscription only through
   2026-07-07; from 2026-07-08 it requires a separate API key and per-token
   billing ($10/$50 per MTok), so it falls outside the quota tie-break's
-  subscription-cost assumption after that date.
+  subscription-cost assumption after that date. **Tightened 2026-07-08:**
+  escalation-only even for planning/orchestration — routine planning runs
+  Opus 4.8 or lower; Fable is reserved for the most complex
+  decomposition/architecture/cross-agent orchestration, with a stated
+  reason per dispatch.
 - **claude-sonnet-5 added as a COMPLEX-tier ALT** for coding/agentic-shaped
   tasks — near-Opus quality per Anthropic's own docs, cheaper than
   claude-opus-4-8. Reserve Opus for planning/architecture judgment.
 - **Gemini is available again (2026-06-30)** — the earlier headless-OAuth
   failure (exit code 41) was resolved upstream, confirmed via a successful
   live dispatch. buhhdy routes across all three providers again.
+- **Gemini migrated to upstream ACP (2026-07-08)** — the uhstray-io/omnigent
+  fork and its custom gemini harness are retired; buhhdy targets stock
+  upstream omnigent. One tier-pinned worker per gemini model (ACP can't
+  switch models per-dispatch); requires the `acp:` block above. Fork-era
+  exit-code semantics (41/42) no longer apply.
 
 Review the routing-guide skill and this README quarterly as providers evolve.

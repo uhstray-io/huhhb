@@ -4,6 +4,24 @@ All 11 models currently wired into buhhdy, cross-referenced by use-case,
 cross-review role, and workflow. Generated from the current state of
 `config.yaml`, `skills/routing-guide/SKILL.md`, and `skills/core-workflows/SKILL.md`.
 
+**Updated 2026-07-08 (later same day — ACP migration):** buhhdy now targets
+stock upstream omnigent; the uhstray-io/omnigent fork and its custom
+`gemini` harness are retired. Upstream's generic ACP harness cannot switch
+gemini models per-dispatch, so the single `gemini` worker became three
+tier-pinned workers: `gemini-complex` (gemini-3.1-pro-preview),
+`gemini-standard` (gemini-3.5-flash), `gemini-lite` (gemini-3.1-flash-lite).
+Every worker-level "gemini" reference below maps to the tier-appropriate
+gemini-* worker; never pass args.model to them.
+
+**Updated 2026-07-08 (third directive — Fable tightened):** `claude-fable-5`
+is now ESCALATION-ONLY even within planning/orchestration: routine
+planning, decomposition, and orchestration dispatches run `claude-opus-4-8`
+or lower; Fable is reserved for the most complex work — large
+multi-workstream decomposition, novel/hard-to-reverse architecture, or the
+heaviest cross-agent orchestration — and every Fable dispatch states why
+Opus 4.8 is insufficient. (Supersedes the "ORCHESTRATOR/ARCHITECT ONLY"
+framing in the 2026-07-08 entry directly below.)
+
 **Updated 2026-07-08:** Two operator directives. (1) `claude-fable-5` is
 now ORCHESTRATOR/ARCHITECT ONLY — initial decomposition, architecture, and
 plan-level judgment; NEVER implementation, review, or exploration
@@ -67,7 +85,7 @@ words the dispatch, not a different command. `loop-me` ships
 
 | Model | Provider · Tier | Status | Primary use-cases | Cross-review / pre-pass role | Workflow(s) |
 |---|---|---|---|---|---|
-| **claude-fable-5** | Claude · FRONTIER | GA (metered per-token as of 2026-07-08) | ORCHESTRATOR/ARCHITECT ONLY (operator directive 2026-07-08): initial decomposition, architecture decisions, plan-level judgment (writing-plans / domain-modeling escalations). NEVER implementation, review, or exploration — development dispatches always run COMPLEX or lower. | None pinned — any review of its output follows the general worker-level cross-vendor rule. | Not wired into either core workflow — deliberate escalation for planning-judgment steps only (W1), never W2 execution steps. |
+| **claude-fable-5** | Claude · FRONTIER | GA (metered per-token as of 2026-07-08) | ESCALATION-ONLY (operator directives 2026-07-08, tightened later same day): reserved for the MOST complex work — large multi-workstream decomposition, novel/hard-to-reverse architecture, heaviest cross-agent orchestration — with a stated reason why claude-opus-4-8 is insufficient. Routine planning/decomposition runs Opus 4.8 (or Sonnet 5 when stakes are modest). NEVER implementation, review, or exploration — development dispatches always run COMPLEX or lower. | None pinned — any review of its output follows the general worker-level cross-vendor rule. | Not wired into either core workflow — rare deliberate escalation for the hardest planning-judgment steps only (W1), never W2 execution steps. |
 | **claude-opus-4-8** | Claude · COMPLEX | GA | Decision-tree rule 3 (complex coding); rule 7 (context >200K, code reasoning, preferred over codex). `writing-plans` (W1 step 4). `executing-plans` (W2 step 2 — see `claude-sonnet-5` ALT). `handoff`, `domain-modeling`, `improve-codebase-architecture` (mattpocock, general). COMPLEX fanout tasks (W2 step 4). | Reviews `codex`'s `explaining-plans`/`to-issues`/`to-prd`/`triage`(deep)/`strict-simplify` — worker-level only. `writing-plans`'s output (its own W1 step 4) is now reviewed at ★ step 5 by **codex + gemini in parallel**, not codex alone. | W1 (step 4); W2 (step 2, step 4 fanout) |
 | **claude-sonnet-5** | Claude · STANDARD (+ COMPLEX ALT) | GA | `brainstorming` (W1), `investigate` (W1/W2, default synthesis model), `grilling` (W1), `codebase-design` (W1), `grill-me`, `loop-me`, `writing-shape` (mattpocock). **COMPLEX ALT:** `executing-plans` (W2 step 2), cheaper than Opus for coding/agentic work. | Same worker-level review role as claude-opus-4-8. Its `investigate` synthesis now consumes a ★ gemini breadth pre-pass (`gemini-3.5-flash`) when the codebase is large/unfamiliar — an input, not a replacement. | W1 (1,2,3,7); W2 (1, 2-ALT) |
 | **claude-haiku-4-5** | Claude · LIGHTWEIGHT | GA | Decision-tree rule 9 (default cheapest). Named gemini-down fallback target (no longer needed — gemini is up). | None pinned. | General only |

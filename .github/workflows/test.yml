@@ -1,0 +1,19 @@
+name: Tests
+on:
+  pull_request:
+  push:
+    branches: [main]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.22"
+      - name: G0 skill lint
+        run: node scripts/skill-lint.ts
+      - name: Unit suite
+        run: node --test tests/test_evolve.test.ts
+      - name: Offline scenario catalog
+        run: node scripts/evolve/evals.ts

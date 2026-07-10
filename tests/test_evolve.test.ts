@@ -601,6 +601,9 @@ describe("LocalModeTests", () => {
     assert.ok(injection.includes("local mode"), injection);
     assert.ok(injection.includes("uv for python deps"), injection);
     assert.ok(!injection.includes("command not found"), "anti-capture holds end to end");
+    // R5: every injected context carries the standing skepticism preamble
+    assert.ok(injection.includes("Historical experience, not absolute truth"),
+      "injection must carry the skepticism preamble");
 
     const [proc1, took1] = sb.hook("evolve-inject.sh");
     assert.ok(took1 < HOOK_BUDGET_SECS, `took ${took1}s`);
@@ -691,6 +694,19 @@ describe("OverlayTests", () => {
   });
   afterEach(() => {
     sb.cleanup();
+  });
+
+  test("test_set_status_enforces_transition_table", () => {
+    // R7: validated/active are earned via record(); set-status may demote
+    // anything and re-promote only a deprecated overlay
+    o(["scaffold", "sm-local", "--description", "d", "--signal", "s"]);
+    let r = o(["set-status", "sm-local", "active"]);
+    assert.notEqual(r.status, 0, "new -> active must be refused");
+    assert.ok(r.stderr.includes("illegal transition"), r.stderr);
+    r = o(["set-status", "sm-local", "deprecated"]);
+    assert.equal(r.status, 0, r.stderr);
+    r = o(["set-status", "sm-local", "active"]);
+    assert.equal(r.status, 0, "deprecated -> active is the re-promotion path");
   });
 
   function o(args: string[], stdin?: string): Proc {
@@ -1195,6 +1211,20 @@ describe("DistillationGateTests", () => {
   function _propose(obj: Record<string, any>): Proc {
     return sb.run("overlay.ts", ["propose"], { stdin: JSON.stringify(obj) });
   }
+
+  test("test_hypothesis_requires_variable_and_expected_delta", () => {
+    // R7 ledger: a hypothesis, when attached, must be complete — one variable,
+    // one expected delta — or the bench can never mark it confirmed/rejected
+    const base = { kind: "overlay-patch", name: "x-local", summary: "s", signal: "sig" };
+    const bad = _propose({ ...base, hypothesis: { variable: "shorter body" } });
+    assert.notEqual(bad.status, 0);
+    assert.ok(bad.stderr.includes("expected_delta"), bad.stderr);
+    const good = _propose({
+      ...base,
+      hypothesis: { variable: "shorter body", expected_delta: "tokens -20%" },
+    });
+    assert.equal(good.status, 0, good.stderr);
+  });
 
   test("test_create_requires_bundled_eval", () => {
     const r = _propose({

@@ -143,6 +143,12 @@ export const CACHE_FRESH_SECS = 900; // skip refresh when no new work and cache 
 export const USER_BLOCK_CHARS = 2400; // ~600 tokens — the injection budget from the plan
 export const SKILL_LINE_CHARS = 200;
 
+// R5: every injected context carries the standing skepticism preamble —
+// memory guides, reality decides; deviations are new signal, not disobedience.
+export const SKEPTICISM =
+  "_Historical experience, not absolute truth: when reality deviates from " +
+  "anything below, exit the guidance and record the deviation as new signal._\n";
+
 /* Prefetch path: rebuild context/injection.md after a flush.
 
 This file is the whole reason injection costs zero (Law 3): the
@@ -154,7 +160,7 @@ export async function refresh_injection(honcho: any, state: Record<string, any>)
   const parts = [
     `# evolve memory (cached from Honcho)\n_refreshed: ${hc.now_iso()} — ` +
       "inferred knowledge, not ground truth; verify low-confidence items. " +
-      "Run /evolve-status for freshness._\n",
+      "Run /evolve-status for freshness._\n" + SKEPTICISM,
   ];
   try {
     const user = await honcho.peer(hc.user_peer_id(state));
@@ -218,7 +224,7 @@ export function refresh_injection_local(state: Record<string, any>): void {
   const parts = [
     `# evolve memory (local mode, cached)\n_refreshed: ${hc.now_iso()} — ` +
       "conclusions are derived by /evolve-review; run it to distill " +
-      "recent sessions. Inferred knowledge, not ground truth._\n",
+      "recent sessions. Inferred knowledge, not ground truth._\n" + SKEPTICISM,
   ];
   const rep = hc.local_representation();
   if (rep) {

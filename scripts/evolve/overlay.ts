@@ -240,8 +240,26 @@ export function cmd_record(args: Record<string, any>): void {
   );
 }
 
+// R7: the lifecycle is a declared state machine, not a free-text field.
+// validated/active are EARNED via record() (successes, confidence >= 0.5) —
+// set-status can demote anything and re-promote only a deprecated overlay.
+export const VALID_TRANSITIONS: Record<string, readonly string[]> = {
+  new: ["deprecated"],
+  validated: ["deprecated"],
+  active: ["deprecated"],
+  deprecated: ["active"],
+};
+
 export function cmd_set_status(args: Record<string, any>): void {
   const [meta, p] = load_meta(args.name);
+  const from = meta.status ?? "new";
+  if (!(VALID_TRANSITIONS[from] ?? []).includes(args.status)) {
+    sys_exit(
+      `illegal transition ${from} -> ${args.status}: valid from '${from}' is ` +
+        `[${(VALID_TRANSITIONS[from] ?? []).join(", ")}] — validated/active are ` +
+        "earned through record() outcomes, never set by hand",
+    );
+  }
   meta.status = args.status;
   save_meta(meta, p);
   console.log(`${args.name}: status=${args.status}`);
@@ -377,6 +395,18 @@ export function cmd_propose(_args: Record<string, any>): void {
   for (const body_field of ["body", "content"]) {
     if (proposal[body_field]) {
       guard_skill_content(proposal.name ?? kind, proposal[body_field]);
+    }
+  }
+  // R7 hypothesis ledger: a refine proposal may carry the one-variable
+  // hypothesis it tests; when present it must be complete so the bench can
+  // later mark it confirmed/rejected against the baseline
+  if (proposal.hypothesis !== undefined) {
+    const h = proposal.hypothesis;
+    if (!(h && typeof h === "object" && !Array.isArray(h) && h.variable && h.expected_delta)) {
+      sys_exit(
+        "proposal.hypothesis must carry non-empty 'variable' and 'expected_delta' " +
+          "(one variable per patch — the regression-attribution ledger)",
+      );
     }
   }
   // eval fields are executable surface too: 'assert' runs via sh -c in the

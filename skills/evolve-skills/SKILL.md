@@ -43,7 +43,7 @@ Every skill in `marketplace.json` and every overlay resolves to exactly one:
 |---|---|---|
 | `healthy` | used, no correction pressure, bench stable, lint clean | nothing — most skills, most passes |
 | `refine` | recurring corrections after use, bench regression, grandfathered lint debt, stale upstream sync | patch proposal with the signal quoted; hub skills → PR, overlays → `overlay.ts patch` |
-| `merge` | overlapping descriptions (lint S5 near-misses) or the same task class split across skills | one general variant absorbs; others → archive proposal. Conservative: merging destroys trigger surface — require evidence both actually fire on the same intents |
+| `merge` | overlapping descriptions (lint S5 near-misses) or the same task class split across skills | judge on four axes (R2): job-to-be-done, deliverable type, hard constraints, tools/workflow — merge only when the same capability remains after removing instance details; **an unsafe merge degrades to keeping both skills separate** (`healthy`, no merge), and low-confidence judgment falls back to the structural overlap score. One general variant absorbs; others → archive proposal |
 | `prune` | ~60 days unused AND confidence < 0.3, or consistently failing | archive proposal (never delete; pinned exempt) |
 | `create` | see creation protocol below | scaffold + eval + register |
 

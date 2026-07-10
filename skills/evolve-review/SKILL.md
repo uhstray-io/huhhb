@@ -182,6 +182,15 @@ After triage, do what the deriver would have done:
   line replaces it (that's the self-healing Honcho would do). Keep every line
   sourced (session-id, date). Keep the file under ~60 lines — it feeds the
   injected context, and injection has a token budget.
+- **Derive-stage filters (R1/R6)**: before writing any conclusion, apply the
+  de-identification reuse test — strip case-specific entities; if what
+  remains is generic advice, write nothing (empty output is the default
+  success). Distinguish WHAT (instance data — discard) from HOW
+  (policy/workflow — keep). Emit deltas only: never re-state unchanged
+  conclusions. Never invent steps the user didn't demonstrate.
+- **Cite evidence for outcomes (R4)**: a triage verdict must point at its
+  journal line or artifact (session-id, file, exit code) — a verdict without
+  a citation is a vibe, and the next pass can't check it.
 - The journal (`journal.jsonl`) is your only evidence source — there is no
   `query chat`, no semantic search; the dialectic budget is moot. Everything
   else (triage, routing, thresholds, pending flow) is unchanged.

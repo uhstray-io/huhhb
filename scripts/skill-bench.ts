@@ -40,8 +40,12 @@ const HISTORY = process.env.SKILL_BENCH_HISTORY
 const RATIO_TOKENS = 1.5;
 const RATIO_TIME = 2.0;
 const RATIO_TURNS = 1.5;
+// R4 evidence-cited verification: the judge must ground its score in a
+// concrete quote/artifact from the response — scores without evidence drift.
 const JUDGE_TEMPLATE =
-  "Score 1-5 how well this response satisfies the rubric. Reply with ONLY the digit.\n" +
+  "Score 1-5 how well this response satisfies the rubric. First line: the " +
+  "shortest verbatim quote from the response that justifies your score " +
+  "(or NONE if nothing does — that implies 1-2). Second line: ONLY the digit.\n" +
   "RUBRIC: {rubric}\nRESPONSE:\n{response}";
 const MAX_BUFFER = 64 * 1024 * 1024; // stream-json transcripts outgrow node's 1MB default
 
@@ -151,9 +155,12 @@ export function runScenario(scenario: Scenario, runs: number, baseline: boolean)
 function judge(rubric: string, response: string): number {
   const data = runClaude(
     JUDGE_TEMPLATE.replace("{rubric}", rubric).replace("{response}", response));
-  for (const ch of String(data.result ?? "")) {
-    if (ch >= "0" && ch <= "9") return Number(ch);
-  }
+  // the score is the FINAL line, bare 1-5 only — the evidence quote above
+  // may itself contain digits, and a scavenged digit recorded as a score is
+  // worse than failing closed (0 fails the B3 gate loudly)
+  const lines = String(data.result ?? "").trim().split(/\r?\n/);
+  const score_line = lines[lines.length - 1]?.trim();
+  if (/^[1-5]$/.test(score_line ?? "")) return Number(score_line);
   return 0;
 }
 

@@ -17,6 +17,12 @@ Everything here is inert when evolve is unconfigured — check with:
 node "${CLAUDE_PLUGIN_ROOT}/scripts/evolve/honcho_client.ts" status
 ```
 
+If `status` shows it is unconfigured, onboard with `honcho_client.ts init`
+(bare, on a terminal) — it prompts for the endpoint, workspace, and API key
+(key entry hidden), then stores them locally. A blank endpoint picks local
+mode. Don't ask the user to paste a key into chat; direct them to run `init`
+so the secret stays off the transcript.
+
 ## What this memory is (and is not)
 
 Three truth models coexist in huhhb; route by the *shape* of the knowledge,
@@ -34,9 +40,10 @@ written into inferred memory can be *un-learned* by the deriver; an inferred
 hunch committed to git looks authoritative forever. Wrong stratum = wrong
 failure mode.
 
-Peer model inside Honcho: the user (`user:<profile-id>`), the agent
-(`agent:claude-code`), each huhhb skill (`skill:<name>`), and each repo
-(`project:<slug>`) are all *peers*. Representations answer "what does X know
+Peer model inside Honcho: the user (`user__<profile-id>`), the agent
+(`agent__claude-code`), each huhhb skill (`skill__<name>`), and each repo
+(`project__<slug>`) are all *peers* (ids use `__` — Honcho allows only
+letters/digits/underscore/hyphen; legacy `:` input is auto-normalized). Representations answer "what does X know
 about Y" — e.g. the agent's own model of a skill it keeps misusing.
 
 ## Cost ladder — always climb from the top
@@ -58,7 +65,7 @@ side and is **never** used reflexively.
    node .../honcho_client.ts query search --q "pytest flags" --max 5
    ```
 4. **Targeted representation** — another peer's view:
-   `query rep --target skill:writing-plans --perspective agent:claude-code`
+   `query rep --target skill__writing-plans --perspective agent__claude-code`
 5. **Dialectic chat (LLM — last resort).** Only inside `/evolve-review` runs
    or when the user explicitly asks a synthesis question. Keep
    `--level minimal` or `low` for lookups; `medium`+ only for multi-aspect

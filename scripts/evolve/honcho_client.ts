@@ -814,19 +814,20 @@ export async function cmd_query(args: Record<string, any>): Promise<void> {
     const card = target ? await cardFn.call(me, { target }) : await cardFn.call(me);
     console.log(card && card.length ? card.join("\n") : "(no card yet)");
   } else if (args.what === "rep") {
-    console.log(
-      (await me.representation({
-        target,
-        searchQuery: args.q,
-        searchTopK: args.max,
-      })) || "(empty)",
-    );
+    // the SDK's zod schema rejects explicit nulls — only include set options
+    const opts: Record<string, any> = {};
+    if (target) opts.target = target;
+    if (args.q) opts.searchQuery = args.q;
+    if (args.max) opts.searchTopK = args.max;
+    console.log((await me.representation(opts)) || "(empty)");
   } else if (args.what === "search") {
     for (const r of (await me.search(args.q, { limit: args.max || 5 })) ?? []) {
       console.log(`- ${r}`);
     }
   } else if (args.what === "chat") {
-    console.log(await me.chat(args.q, { target, reasoningLevel: args.level || "low" }));
+    const chat_opts: Record<string, any> = { reasoningLevel: args.level || "low" };
+    if (target) chat_opts.target = target;
+    console.log(await me.chat(args.q, chat_opts));
   }
 }
 

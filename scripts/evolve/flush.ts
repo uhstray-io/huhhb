@@ -169,7 +169,7 @@ export async function refresh_injection(honcho: any, state: Record<string, any>)
     if (card) {
       block.push(...card);
     }
-    const rep = await user.representation({ max_conclusions: 12 });
+    const rep = await user.representation({ searchTopK: 12 });
     if (rep && String(rep).trim()) {
       block.push(String(rep).trim());
     }
@@ -187,7 +187,7 @@ export async function refresh_injection(honcho: any, state: Record<string, any>)
       try {
         const rep = await agent.representation({
           target: hc.skill_peer_id(skill),
-          max_conclusions: 2,
+          searchTopK: 2,
         });
         if (rep && String(rep).trim()) {
           const first = hc.py_cut(

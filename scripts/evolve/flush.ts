@@ -265,28 +265,47 @@ export async function replay_journal(
   const quarantined = new Set(
     hc.quarantined_observations().map(([e]: [Record<string, any>, string]) => e.session_id),
   );
+  // Map observations by session, tracking which journal lines each session owns
   const by_session = new Map<string, Record<string, any>[]>();
+  const line_to_session = new Map<number, string>(); // abs line -> session id
   let held = 0;
-  for (const e of fresh) {
+  for (let i = 0; i < fresh.length; i++) {
+    const e = fresh[i];
+    const abs_line = done + i;
     const sid = String(e.session_id ?? "unknown");
     if (quarantined.has(sid)) {
       held += 1;
+      // Quarantined lines are still tracked — cursor covers them (view decision)
+      line_to_session.set(abs_line, sid);
       continue;
     }
     if (!by_session.has(sid)) by_session.set(sid, []);
     by_session.get(sid)!.push(e);
+    line_to_session.set(abs_line, sid);
   }
   let delivered = 0;
+  const processed_sessions = new Set<string>();
+  // Process each session's observations; checkpoint after each successful
+  // delivery to reflect the highest contiguous line we've fully processed
   for (const [sid, obs] of by_session) {
     delivered += await hc.add_observations(honcho, state, sid, obs);
+    processed_sessions.add(sid);
+    // Find the highest line index where all sessions up to that line have been
+    // processed (or quarantined), enabling safe incremental checkpointing
+    let checkpoint_line = done - 1;
+    for (let line = done; line < done + fresh.length; line++) {
+      const line_sid = line_to_session.get(line);
+      if (line_sid && !quarantined.has(line_sid) && !processed_sessions.has(line_sid)) {
+        break; // unprocessed session blocks advancement
+      }
+      checkpoint_line = line;
+    }
+    hc.state_lock(() => {
+      const s = hc.load_state();
+      s.journal_replayed_lines = checkpoint_line + 1;
+      hc.save_state(s);
+    });
   }
-  // cursor covers every fresh line, held ones included — quarantine is a
-  // view decision, not a retry queue; /evolve-review promotes if warranted
-  hc.state_lock(() => {
-    const s = hc.load_state();
-    s.journal_replayed_lines = entries.length;
-    hc.save_state(s);
-  });
   return { delivered, held, skipped: done };
 }
 

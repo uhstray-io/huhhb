@@ -477,6 +477,14 @@ through gated proposals).
 Record every evolve change here: date, what changed, roadmap item or
 provenance.
 
+- **2026-07-12** — Replay hardening (review finding on the re-land PR): the
+  cursor now checkpoints after every delivered session — advancing to the
+  highest contiguous line whose session is delivered-or-quarantined — so a
+  mid-batch delivery failure never resends earlier sessions on retry.
+  All-quarantined batches still advance the cursor (view decision, not a
+  retry queue). Failure-path test proves exactly-once delivery across a
+  fail-and-retry cycle.
+
 - **2026-07-09** — First live writes to the team instance (R8): smoke found a
   real contract violation — Honcho constrains peer/session ids to
   ^[a-zA-Z0-9_-]+$, so the id scheme moved from `:` to `__`

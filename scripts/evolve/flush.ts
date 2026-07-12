@@ -285,13 +285,14 @@ export async function replay_journal(
   }
   let delivered = 0;
   const processed_sessions = new Set<string>();
-  // Process each session's observations; checkpoint after each successful
-  // delivery to reflect the highest contiguous line we've fully processed
-  for (const [sid, obs] of by_session) {
-    delivered += await hc.add_observations(honcho, state, sid, obs);
-    processed_sessions.add(sid);
-    // Find the highest line index where all sessions up to that line have been
-    // processed (or quarantined), enabling safe incremental checkpointing
+  // Checkpoint = the highest CONTIGUOUS line whose session is delivered or
+  // quarantined. Interleaved lines from an undelivered session block
+  // advancement, so a mid-batch failure never skips undelivered lines; the
+  // sessions delivered before the failure inside the contiguous prefix are
+  // never resent on retry. (Delivered sessions whose lines sit BEYOND the
+  // first undelivered session are redelivered on retry — acceptable for a
+  // bootstrap: the journal is small and delivery is additive.)
+  const checkpoint = (): void => {
     let checkpoint_line = done - 1;
     for (let line = done; line < done + fresh.length; line++) {
       const line_sid = line_to_session.get(line);
@@ -305,6 +306,20 @@ export async function replay_journal(
       s.journal_replayed_lines = checkpoint_line + 1;
       hc.save_state(s);
     });
+  };
+  // Process each session's observations; checkpoint after each successful
+  // delivery to reflect the highest contiguous line we've fully processed
+  for (const [sid, obs] of by_session) {
+    delivered += await hc.add_observations(honcho, state, sid, obs);
+    processed_sessions.add(sid);
+    checkpoint();
+  }
+  // A batch that was entirely quarantined delivers nothing but is still
+  // PROCESSED — without this the cursor never advances past held lines and
+  // every future replay rescans them (quarantine is a view decision, not a
+  // retry queue; /evolve-review promotes if warranted).
+  if (by_session.size === 0 && fresh.length > 0) {
+    checkpoint();
   }
   return { delivered, held, skipped: done };
 }

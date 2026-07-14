@@ -477,6 +477,14 @@ through gated proposals).
 Record every evolve change here: date, what changed, roadmap item or
 provenance.
 
+- **2026-07-14** — R3 shipped: champion/challenger benching. The champion is
+  the latest fully-passing history row from a different version of the same
+  skill+scenario; a challenger must hold its pass rate and stay within 1.1x
+  of its tokens or the bench gates FAIL ("no victory, no replacement").
+  First-ever lineages print INCUBATING and set the bar instead of being
+  gated by one. History rows record champion_version for attribution.
+  (Recovered post-#26: originally stranded on feat/evolve-r8-device.)
+
 - **2026-07-12** — Replay hardening (review finding on the re-land PR): the
   cursor now checkpoints after every delivered session — advancing to the
   highest contiguous line whose session is delivered-or-quarantined — so a

@@ -1096,6 +1096,7 @@ console.log(JSON.stringify({
   retry_delivered: r2.delivered,           // exactly clean2
   no_redelivery: sent.filter((c) => c === "one").length === 1
     && sent.filter((c) => c === "two").length === 1,
+  bulk_never_sent: sent.every((c) => !c.startsWith("b-")),
   final_cursor: Number(hc.load_state().journal_replayed_lines ?? 0),
 }));
 `;
@@ -1160,6 +1161,7 @@ describe("HonchoDeliveryGuardTests", () => {
       const r = spawnSync(process.execPath, [driver], {
         encoding: "utf-8",
         env: env as NodeJS.ProcessEnv,
+        timeout: 120_000, // Sandbox.run's budget — a stalled driver fails fast
       });
       assert.equal(r.status, 0, r.stderr);
       const out = JSON.parse(r.stdout);
@@ -1189,6 +1191,7 @@ describe("HonchoDeliveryGuardTests", () => {
       const r = spawnSync(process.execPath, [driver], {
         encoding: "utf-8",
         env: env as NodeJS.ProcessEnv,
+        timeout: 120_000, // Sandbox.run's budget — a stalled driver fails fast
       });
       assert.equal(r.status, 0, r.stderr);
       const out = JSON.parse(r.stdout);
@@ -1198,6 +1201,8 @@ describe("HonchoDeliveryGuardTests", () => {
       assert.ok(out.clean1_sent_once, "pre-failure session delivered exactly once");
       assert.equal(out.retry_delivered, 1, "retry delivers only the failed session");
       assert.ok(out.no_redelivery, "no observation is ever delivered twice");
+      assert.ok(out.bulk_never_sent,
+        "GR2-held observations must never be delivered, even across retries");
       assert.equal(out.final_cursor, 8, "cursor covers everything after recovery");
     } finally {
       fs.rmSync(tmp, { recursive: true, force: true });
@@ -1222,6 +1227,7 @@ describe("HonchoDeliveryGuardTests", () => {
       const r = spawnSync(process.execPath, [driver], {
         encoding: "utf-8",
         env: env as NodeJS.ProcessEnv,
+        timeout: 120_000, // Sandbox.run's budget — a stalled driver fails fast
       });
       assert.equal(r.status, 0, r.stderr);
       const out = JSON.parse(r.stdout);

@@ -122,9 +122,11 @@ prompt: |
   2. **repo-memory** — the TARGET repo's committed memory, managed via
      huhhb's existing `repo-memory` skill: .claude/memory/ at the repo
      root (MEMORY.md index + one fact per file, Claude Code memory
-     format, committed to git). Load that skill for the read/save flows.
-     READ during `investigate`; WRITTEN during Workflow 2's grounding
-     step. Holds codebase conventions learned, past gotchas, and provider
+     format, committed to git). Load that skill for the read/save flows;
+     agent-written records follow its Record Contract section (kind/
+     status/promote fields, observational-only write lint, supersede-
+     never-delete). READ during `investigate`; WRITTEN during Workflow 2's
+     grounding step. Holds codebase conventions learned, past gotchas, and provider
      performance per subsystem — knowledge that belongs to that repo and
      its team.
   3. **evolve-suite** — huhhb's evolve / evolve-review / evolve-status

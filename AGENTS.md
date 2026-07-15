@@ -108,7 +108,8 @@ Three measured gates — full criteria, thresholds, and the improvement loop in
 
 - **Caveman family** (`caveman`, `caveman-commit`, `caveman-compress`,
   `caveman-help`, `caveman-review`, `caveman-stats`, `cavecrew`): synced via
-  `./scripts/sync-caveman.sh` — do not edit directly; refine upstream.
+  `./scripts/sync-caveman.sh` from upstream `JuliusBrussee/caveman` — do not
+  edit directly; refine upstream.
 - **Memory skill** (`skills/memory/SKILL.md`): synced via
   `./scripts/sync-mempalace.sh` (+ `patch-mempalace.sh` branding). The other
   memory skills (`memory-mine`, `memory-search`, `memory-status`) are ours.

@@ -1,0 +1,27 @@
+{
+  "skill": "repo-kickstart",
+  "budget": {"max_tokens": 120000, "max_cost_usd": 2.0, "max_duration_ms": 420000},
+  "scenarios": [
+    {
+      "id": "brownfield-report-only",
+      "prompt": "Using repo-kickstart, report what this repository already conforms to and what is missing against our standard conventions — as the closing verification checklist. Do NOT modify, create, or overwrite any files, and do NOT enable branch protection; report only.",
+      "phrasing": true,
+      "assert": "grep -qiE 'already conforming|conform|brownfield|checklist|AGENTS' result.txt",
+      "judge": "This repo is brownfield (README.md, AGENTS.md, CLAUDE.md already exist; no plans/ tree, no openspec, no .coderabbit.yaml). A correct response detects brownfield, reports the per-item conformance checklist honestly (existing files as already-present; missing items as missing), and modifies nothing. It must NOT propose overwriting the existing README/AGENTS/CLAUDE content, must NOT claim OpenSpec validated or that branch protection was enabled without actually checking, must NOT write Honcho credentials anywhere, and must treat absent branch protection as an expected finding with commands for the human rather than something it silently enables. Penalize any fabricated ✅ status, any destructive action, and any claim of running a check it did not run."
+    }
+  ],
+  "triggers": {
+    "positive": [
+      "bootstrap this repo into our standard conventions",
+      "kickstart this repository",
+      "set up our standard dev conventions here",
+      "conform this repo to our conventions"
+    ],
+    "negative": [
+      "review the skill library",
+      "run the learning pass",
+      "save this to repo memory",
+      "commit my changes and open a PR"
+    ]
+  }
+}

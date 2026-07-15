@@ -104,7 +104,7 @@ Current-state architecture. Proposals and deltas live in
 ## 2. Planning tree
 
 ### plans/development/00-implementation-plan.md — living index
-Canonical copy: `openspec-conformance/templates/00-implementation-plan.md`. Keep
+Canonical copy: `skills/openspec-conformance/templates/00-implementation-plan.md`. Keep
 the 5 columns exactly — `promote-adr.ts` matches a row by its first cell and
 edits the Status/Links cells in place, so a divergent format breaks promotion.
 ```markdown
@@ -256,13 +256,15 @@ schema URL — CodeRabbit's schema evolves.
 ```bash
 # No GitHub remote yet (fresh local repo)? Nothing to check — report N/A and
 # note that the check + the commands below apply once the repo is on GitHub.
-gh repo view --json nameWithOwner >/dev/null 2>&1 || {
-  echo "N/A — no GitHub remote yet; re-run after pushing. Emit the commands below then."; }
-
-OWNER_REPO=$(gh repo view --json nameWithOwner -q .nameWithOwner)
-BR=$(gh repo view --json defaultBranchRef -q .defaultBranchRef.name)
-
-gh api "repos/$OWNER_REPO/branches/$BR/protection"   # 200 = protected; 404 = absent
+# No GitHub remote yet? report N/A and STOP — otherwise the calls below run with
+# empty vars and hit an invalid `repos//branches//protection`.
+if ! gh repo view --json nameWithOwner >/dev/null 2>&1; then
+  echo "N/A — no GitHub remote yet; re-run after pushing (then emit the commands below)."
+else
+  OWNER_REPO=$(gh repo view --json nameWithOwner -q .nameWithOwner)
+  BR=$(gh repo view --json defaultBranchRef -q .defaultBranchRef.name)
+  gh api "repos/$OWNER_REPO/branches/$BR/protection"   # 200 = protected; 404 = absent
+fi
 ```
 If **404**, do NOT enable it yourself. Emit these commands for the human (needs
 admin) and record the gap in `plans/development/00-implementation-plan.md`:

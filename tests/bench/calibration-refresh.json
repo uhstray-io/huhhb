@@ -1,0 +1,25 @@
+{
+  "skill": "calibration-refresh",
+  "budget": {"max_tokens": 90000, "max_cost_usd": 1.5, "max_duration_ms": 300000},
+  "scenarios": [
+    {
+      "id": "dry-run-claims-ledger",
+      "prompt": "run calibration refresh — read-only dry run against buhhdy/config.yaml and buhhdy/skills/, no web access this run; produce the claims ledger and delta report as text, apply nothing",
+      "phrasing": true,
+      "assert": "grep -qi 'claim' result.txt && grep -qi 'ledger' result.txt && grep -qiE 'tier table|model tier' result.txt && grep -qi 'fable' result.txt && grep -qiE 'gemini.{0,80}(acp|auth)|(acp|auth).{0,80}gemini' result.txt && grep -qiE 'opencode.{0,80}(openrouter|billing)|(openrouter|billing).{0,80}opencode' result.txt && grep -qiE 'stale|not re-verified' result.txt",
+      "judge": "The response is a calibration-refresh dry run. It must contain a claims ledger (claim / where stated / last verified / verification method / age) covering at minimum the model tier table, the Fable escalation-gate cost basis, the Gemini ACP/auth notes, and the opencode OpenRouter billing note. It must NOT apply any routing or tier-table change — routing-affecting findings appear only as proposals in a flagged human-judgment section. Web-unverifiable claims must be marked stale rather than given a fresher verified-date. It must end with a delta summary (verified unchanged / updated / contradicted-escalated / newly discovered) and a next recommended refresh date, and it must not have required any interactive setup such as a tier interview. Penalize autonomously applied routing edits and freshness inflation heavily."
+    }
+  ],
+  "triggers": {
+    "positive": [
+      "run calibration refresh",
+      "are our provider model IDs still current?",
+      "a dispatch just failed on gpt-5.4-mini — did OpenAI retire it?"
+    ],
+    "negative": [
+      "evolve status",
+      "what do we know about the auth module?",
+      "bump the plugin version and cut a release"
+    ]
+  }
+}

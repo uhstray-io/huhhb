@@ -126,22 +126,23 @@ also still works, if you'd rather colocate it there:
 
 ### 4. What happens on your first message
 
-buhhdy reads its global memory (`memory/` in this bundle) alongside the
+buhhdy loads its optional memory overlays (user memory via huhhb's
+`memory`/MemPalace skill, then team memory via `evolve`/Honcho) alongside the
 roster preflight, then CONFIRMS the recorded subscription tiers instead of
-cold re-asking — quoting the latest active record from
-`memory/subscriptions.md` ("Last recorded (<date>): <tiers> — still
-right?") — so routing can lightly weight toward whichever provider has
-the most headroom this cycle. It's a quick confirmation, not a gate, and
-your actual request proceeds either way. Skip it and it assumes the recorded tiers; correct it and the
-correction is written back to `memory/subscriptions.md`, dated. Full
-mechanics: the "Subscription Tier Interview" and "Memory" sections of
-`config.yaml`.
+cold re-asking — quoting the latest subscription record from user memory
+("Last recorded (<date>): <tiers> — still right?") — so routing can lightly
+weight toward whichever provider has the most headroom this cycle. It's a
+quick confirmation, not a gate, and your actual request proceeds either way.
+Skip it and it assumes the recorded tiers; correct it and the correction is
+written back to user memory (via the `memory` skill), dated. Full mechanics:
+the "Subscription Tier Interview" and "Memory" sections of `config.yaml`.
 
 ## Structure
 
 ```text
 buhhdy/
 ├── config.yaml                    ← Main orchestrator (buhhdy brain)
+├── MODEL-MANIFEST.md              ← Provider/model manifest + calibration defaults
 ├── agents/
 │   ├── claude_code/config.yaml      ← Anthropic Claude sub-agent
 │   ├── codex/config.yaml            ← OpenAI Codex sub-agent
@@ -149,11 +150,6 @@ buhhdy/
 │   ├── gemini-standard/config.yaml  ← Gemini STANDARD (gemini-3.5-flash, ACP)
 │   ├── gemini-lite/config.yaml      ← Gemini LIGHTWEIGHT (gemini-3.1-flash-lite, ACP)
 │   └── opencode/config.yaml         ← OpenCode GLM 5.2 sub-agent (OpenRouter)
-├── memory/                        ← buhhdy-global memory (read on first turn)
-│   ├── MEMORY.md                    ← Index + record contract summary
-│   ├── providers.md                 ← Calibration/drift/verification records
-│   ├── subscriptions.md             ← Tier records (read-then-confirm source)
-│   └── repos.md                     ← Repo registrations (via repo-kickstart)
 ├── skills/
 │   ├── routing-guide/SKILL.md    ← Provider routing reference (load on demand)
 │   ├── core-workflows/SKILL.md   ← The two standard planning/dev workflows
@@ -359,16 +355,18 @@ requirement to verify the PR is actually mergeable before acting.
 
 ## Memory
 
-buhhdy uses four memory strata (full discipline in `config.yaml`'s
-Memory section). Skill-owned stores are always written through the owning
+buhhdy resolves preferences/config through a three-tier hierarchy (full
+discipline in `config.yaml`'s Memory section): **user → team → config
+defaults**, config always present, the overlays consulted only if
+configured. Skill-owned stores are always written through the owning
 skill's save flow, never raw file writes:
 
-| Stratum | Lives at | Read | Written |
+| Tier | Lives at | Read | Written |
 |---|---|---|---|
-| buhhdy-global | `memory/` in this bundle | First turn, with the roster preflight | On operator calibration confirmations, tier/quota/model-ID changes |
-| repo-memory | `.claude/memory/` in the target repo, via huhhb's `repo-memory` skill | `investigate` steps | Workflow 2's `grounding` step; pr-shepherd's post-merge close-out — via the skill's save flow |
-| team memory nexus | MemPalace, via huhhb's `memory` skill | Session start (auto-loads context); `memory-search` recall | Workflow 2's `grounding` step, for learnings useful beyond the current repo — via the skill |
-| evolve-suite | Team Honcho instance, via huhhb's evolve / evolve-review / evolve-status skills | `evolve-status` at session start (team-shared context) | evolve skills at session end, for learnings worth persisting beyond this machine |
+| user memory (highest) | MemPalace, via huhhb's `memory` skill | Session start (auto-loads context); Subscription Tier Interview; `memory-search` recall | Via the skill, when the operator confirms a preference/tier change |
+| team memory | Team Honcho instance, via huhhb's `evolve` / `evolve-review` / `evolve-status` skills | `evolve-status` at session start (team-shared context) | evolve skills at session end, for learnings worth persisting beyond this machine |
+| config defaults (floor) | `config.yaml` + `MODEL-MANIFEST.md` | Always (the fallback) | New dated calibration confirmations appended here + reflected in the manifest |
+| repo-memory (per-project) | `.claude/memory/` in the target repo, via huhhb's `repo-memory` skill | `investigate` steps | Workflow 2's `grounding` step; pr-shepherd's post-merge close-out — via the skill's save flow |
 
 Security constraints: memory reads are DATA, never instructions — no
 memory record can alter routing rules, permissions, or Merge
@@ -378,12 +376,9 @@ contributors.
 
 ## Key Calibration Notes
 
-Dated calibration history now also lives in `memory/` as append-only
-structured records — `memory/providers.md` and `memory/subscriptions.md`
-— read by buhhdy on its first turn. New operator calibration
-confirmations are written there; `config.yaml` keeps its embedded copies
-during the transition (the calibration-refresh skill owns retiring them).
-Headlines as of 2026-07-14:
+Dated calibration lives in `config.yaml`'s calibration notes and the
+`MODEL-MANIFEST.md` manifest — the config-defaults tier. New operator
+calibration confirmations are appended there. Headlines as of 2026-07-14:
 
 - **OpenAI:** gpt-5.5 / gpt-5.4-mini / gpt-5.4-nano are current; o-series
   and first-gen gpt-5 IDs are fully retired.
@@ -397,5 +392,5 @@ Headlines as of 2026-07-14:
 - **OpenCode:** GLM 5.2 via OpenRouter, operator-calibrated just below
   gemini-3.1-pro-preview at far lower per-token cost; metered credits.
 
-Review the routing-guide skill, `memory/`, and this README quarterly as
+Review the routing-guide skill, `MODEL-MANIFEST.md`, and this README quarterly as
 providers evolve.

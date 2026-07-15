@@ -32,7 +32,9 @@ of a stack trace.`;
 // (mirrors Python's lazy `from honcho import Honcho` + ImportError hint)
 export const HONCHO_PKG = "@honcho-ai/sdk";
 export const HONCHO_PIN = HONCHO_PKG; // name kept for parity with the Python module
-export const AGENT_PEER = "agent:claude-code";
+// Honcho constrains peer/session ids to ^[a-zA-Z0-9_-]+$ (no colons) —
+// found live by smoke against 2.x; "__" is the namespace separator.
+export const AGENT_PEER = "agent__claude-code";
 export const LESSONS_SESSION = "lessons";
 
 export const CONFIG_PATH = path.join(
@@ -428,15 +430,21 @@ export function save_state(state: Record<string, any>): void {
 // ---------------------------------------------------------------- naming
 
 export function user_peer_id(state?: Record<string, any>): string {
-  return `user:${(state || load_state()).profile_id}`;
+  return `user__${(state || load_state()).profile_id}`;
 }
 
 export function skill_peer_id(name: string): string {
-  return `skill:${name}`;
+  return to_peer_id(`skill__${name}`);
 }
 
 export function cc_session_id(claude_session_id: string): string {
-  return `cc:${claude_session_id}`;
+  return to_peer_id(`cc__${claude_session_id}`);
+}
+
+/* Normalize any id (incl. legacy colon-style user input like
+"skill:writing-plans") to Honcho's ^[a-zA-Z0-9_-]+$ constraint. */
+export function to_peer_id(id: string): string {
+  return id.replace(/:/g, "__").replace(/[^a-zA-Z0-9_-]/g, "-");
 }
 
 // ---------------------------------------------------------------- client
@@ -665,7 +673,7 @@ export async function cmd_smoke(_args: Record<string, any>): Promise<void> {
   let probe_user: any;
   let probe_agent: any;
   try {
-    probe_user = await h.peer("user:smoke-probe");
+    probe_user = await h.peer("user__smoke-probe");
     probe_agent = await h.peer(AGENT_PEER);
   } catch (e) {
     fail(`cannot reach Honcho: ${py_err(e)}`);
@@ -675,12 +683,12 @@ export async function cmd_smoke(_args: Record<string, any>): Promise<void> {
   // 2. seed observations (incl. one failure-mode-phrased-as-fix — the
   //    schema's living example, and step 6's grounding target)
   step(2, "seed observations");
-  const sid = `cc:smoke-${Math.floor(Date.now() / 1000)}`;
+  const sid = `cc__smoke-${Math.floor(Date.now() / 1000)}`;
   try {
     const session = await h.session(sid);
     await session.addMessages([
       probe_user.message(
-        "[preference] user:smoke-probe — Prefers conventional commits " +
+        "[preference] user__smoke-probe — Prefers conventional commits " +
           "with no emoji in commit subjects; stated explicitly.",
       ),
       probe_agent.message(
@@ -797,26 +805,29 @@ export async function cmd_query(args: Record<string, any>): Promise<void> {
     return;
   }
   const h = await client(cfg);
-  const me = await h.peer(args.perspective || user_peer_id(state));
-  const target = args.target;
+  const me = await h.peer(
+    args.perspective ? to_peer_id(args.perspective) : user_peer_id(state),
+  );
+  const target = args.target ? to_peer_id(args.target) : args.target;
   if (args.what === "card") {
     const cardFn = me.getCard ?? me.card; // TS SDK documents getCard()
     const card = target ? await cardFn.call(me, { target }) : await cardFn.call(me);
     console.log(card && card.length ? card.join("\n") : "(no card yet)");
   } else if (args.what === "rep") {
-    console.log(
-      (await me.representation({
-        target,
-        searchQuery: args.q,
-        searchTopK: args.max,
-      })) || "(empty)",
-    );
+    // the SDK's zod schema rejects explicit nulls — only include set options
+    const opts: Record<string, any> = {};
+    if (target) opts.target = target;
+    if (args.q) opts.searchQuery = args.q;
+    if (args.max) opts.searchTopK = args.max;
+    console.log((await me.representation(opts)) || "(empty)");
   } else if (args.what === "search") {
     for (const r of (await me.search(args.q, { limit: args.max || 5 })) ?? []) {
       console.log(`- ${r}`);
     }
   } else if (args.what === "chat") {
-    console.log(await me.chat(args.q, { target, reasoningLevel: args.level || "low" }));
+    const chat_opts: Record<string, any> = { reasoningLevel: args.level || "low" };
+    if (target) chat_opts.target = target;
+    console.log(await me.chat(args.q, chat_opts));
   }
 }
 
@@ -884,11 +895,110 @@ export async function cmd_status(_args: Record<string, any>): Promise<void> {
       const queue_fn = h.queueStatus ?? h.queue_status; // same fallback as wait_for_derivation
       if (!queue_fn) throw new Error("SDK exposes no queue-status method");
       const qs = await queue_fn.call(h);
-      console.log(`deriver queue : ${qs}`);
+      // the SDK returns {pending,inProgress,completed,total}WorkUnits (camel);
+      // the self-hosted deriver may also use snake — read either spelling
+      const pending = qs.pendingWorkUnits ?? qs.pending_work_units ?? 0;
+      const inProgress = qs.inProgressWorkUnits ?? qs.in_progress_work_units ?? 0;
+      console.log(`deriver queue : ${pending} pending, ${inProgress} in-progress`);
     } catch (e) {
       if (e instanceof SystemExit) throw e; // SDK missing exits 2, like Python's SystemExit
       console.log(`deriver queue : unreachable (${py_err(e)})`);
     }
+  }
+}
+
+/* Ask one question with the typed answer hidden (secret entry). One readline
+interface owns stdin for the whole flow — mixing a second stdin reader loses
+buffered input on piped stdin. On a TTY the keystroke echo is muted (fully
+hidden); on a non-TTY (piped input, tests) there is no echo to mute and the
+line is read normally, so automation still works. Node stdlib only. */
+async function ask_masked(rl: any, query: string): Promise<string> {
+  // rl._writeToOutput is an UNDOCUMENTED readline internal — the least-bad
+  // way to suppress echo. If a Node upgrade removes it, fail LOUD (tell the
+  // user their input will be visible) rather than silently echoing a secret.
+  if (typeof rl._writeToOutput !== "function") {
+    process.stdout.write(
+      "(warning: this Node build cannot mask input — the key WILL be visible)\n",
+    );
+    return rl.question(query);
+  }
+  const answer = rl.question(query); // prompt is emitted before we mute echo
+  const orig = rl._writeToOutput?.bind(rl);
+  rl._writeToOutput = (s: string): void => {
+    // suppress keystroke/refresh echo; let the terminating newline through
+    if (s.includes("\n")) rl.output.write("\n");
+  };
+  try {
+    return await answer;
+  } finally {
+    rl._writeToOutput = orig;
+  }
+}
+
+/* Interactive onboarding: prompt for the endpoint + key + workspace and write
+the same config `cmd_init` would. Blank endpoint chooses local mode. The key
+is read masked (see ask_masked) so it never appears on screen, and it lands
+only in the 0600 config file — never a flag, an env dump, or shell history.
+Guarded to a TTY / piped stdin; the flag form (init --url --api-key) remains
+for non-interactive callers. */
+export async function cmd_init_interactive(): Promise<void> {
+  console.log(
+    "evolve onboarding — connect this machine to a Honcho memory server.\n" +
+      "Leave the endpoint blank to use local mode (no server, no key).\n",
+  );
+  let url: string;
+  let workspace = "huhhb-evolve";
+  let api_key = "";
+  if (process.stdin.isTTY) {
+    // human at a terminal: readline for the visible fields, masked key entry
+    const readline = await import("node:readline/promises");
+    const rl = readline.createInterface({
+      input: process.stdin,
+      output: process.stdout,
+      terminal: true,
+    });
+    try {
+      url = (await rl.question("Honcho endpoint URL: ")).trim();
+      if (!url) {
+        cmd_init({ local: true });
+        return;
+      }
+      workspace = (await rl.question("Workspace [huhhb-evolve]: ")).trim() || "huhhb-evolve";
+      api_key = (await ask_masked(rl, "Honcho API key (JWT) — input hidden: ")).trim();
+    } finally {
+      rl.close();
+    }
+  } else {
+    // piped/automation (and the test suite): read the whole stream once and
+    // take answers positionally — url, workspace, key. No TTY, no masking.
+    const lines = fs.readFileSync(0, "utf8").split("\n");
+    url = (lines[0] ?? "").trim();
+    if (!url) {
+      cmd_init({ local: true });
+      return;
+    }
+    workspace = (lines[1] ?? "").trim() || "huhhb-evolve";
+    api_key = (lines[2] ?? "").trim();
+  }
+  if (!api_key) {
+    sys_exit("no API key entered — re-run `init` (or use --local for no server)");
+  }
+  cmd_init({ url, api_key, workspace });
+  // connectivity check (non-fatal): confirm the endpoint answers
+  try {
+    const res = await fetch(url.replace(/\/+$/, "") + "/health", {
+      signal: AbortSignal.timeout(10_000),
+    });
+    console.log(
+      res.ok
+        ? `endpoint reachable (/health ${res.status}) — run \`honcho_client.ts smoke\` to verify auth`
+        : `warning: /health returned ${res.status} — config saved; check the endpoint, then run smoke`,
+    );
+  } catch (e) {
+    console.log(
+      `warning: could not reach ${url}/health (${py_err(e)}) — config saved anyway; ` +
+        "verify connectivity, then run smoke",
+    );
   }
 }
 
@@ -950,10 +1060,26 @@ export async function main(): Promise<void> {
         { flag: "--workspace" },
         // no-server mode: journal + review-derived conclusions only
         { flag: "--local", store_true: true },
+        // guided prompt for endpoint + key (key entry masked); default when
+        // `init` is run bare on a terminal
+        { flag: "--interactive", store_true: true },
       ],
     },
     process.argv.slice(2),
   );
+  // `init` with no connection flags → guided onboarding (explicit --interactive,
+  // or a bare `init` on a terminal). The flag form stays fully non-interactive
+  // for agents/CI, and a bare `init` with no TTY falls through to cmd_init.
+  if (
+    args.cmd === "init" &&
+    !args.url &&
+    !args.api_key &&
+    !args.local &&
+    (args.interactive || process.stdin.isTTY)
+  ) {
+    await cmd_init_interactive();
+    return;
+  }
   const dispatch: Record<string, (a: Record<string, any>) => unknown> = {
     smoke: cmd_smoke,
     observe: cmd_observe,

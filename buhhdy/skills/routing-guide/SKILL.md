@@ -143,7 +143,8 @@ auth = user's OpenRouter credentials, verified via live boot + dispatch).
 | frontend-design             | claude_code  | gemini       | Aesthetic judgment |
 | investigate                 | claude_code  | —            | Exploration depth (gemini runs a cheap breadth pre-pass first on large/unfamiliar codebases — see Gemini Wiring below) |
 | fanout                      | claude_code  | gemini       | Parallel orchestration |
-| cross-review                | opposite vendor | —         | Always cross-vendor |
+| cross-review                | opposite vendor | —         | Always cross-vendor — runs LOCALLY, before the PR exists |
+| pr-shepherd                 | buhhdy-level | —            | Post-PR lifecycle owner (CI, CodeRabbit findings, human review, merge gate, close-out) — buhhdy runs it itself; only the fix-work it triages is dispatched, back to the original implementer |
 
 ## mattpocock/skills Routing
 

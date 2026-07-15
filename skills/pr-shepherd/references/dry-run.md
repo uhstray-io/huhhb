@@ -30,8 +30,8 @@ Workflow 2 left three PRs open: **#41, #42** (implementer PRs, worktrees
    `promote-adr.ts` (its index row flips to `archived`; one ADR lands in
    `plans/architecture/` if #38's design had a `## Decisions`); write the
    outcome via `repo-memory` to `.claude/memory/` (CI 0 / CodeRabbit 0 /
-   human 0; escalations 0); `git worktree remove` — #43 is buhhdy's own docs
-   commit with no task worktree, so skip that.
+   human 0; escalations 0). No `git worktree remove` is needed — #43 is
+   buhhdy's own docs commit with no task worktree.
 7. **Janitor.** `for-each-ref refs/heads/buhhdy/` lists `buhhdy/t-41`,
    `buhhdy/t-42`, and an old `buhhdy/t-12` (merged into `main` 120 days ago,
    no commits since). Only `t-12` is >90d **and merged** → deleted and logged.

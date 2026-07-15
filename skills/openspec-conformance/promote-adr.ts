@@ -62,6 +62,7 @@ const positional = flagIdx === -1
   : args.filter((_, i) => i !== flagIdx && i !== flagIdx + 1);
 const [plansDir, archivedDirname] = positional;
 if (!plansDir || !archivedDirname) die("usage: promote-adr.ts <plans-dir> <archived-dirname> [--change-url <url>]");
+if (/(^|[/\\])\.\.([/\\]|$)/.test(archivedDirname)) die(`invalid archived dirname (path traversal): ${archivedDirname}`);
 
 const archivedChangeDir = join(plansDir, "development", "openspec", "changes", "archive", archivedDirname);
 const designPath = join(archivedChangeDir, "design.md");
@@ -89,8 +90,10 @@ const sourceLink = changeUrl
   : `Change \`${slug}\` · full design: [design.md](${relDesign})`;
 
 // Idempotent: if this slug already has an ADR, a re-run promotes nothing new.
+const escapedSlug = slug.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+const adrFilePattern = new RegExp(`^\\d+-${escapedSlug}\\.md$`);
 const existingAdrFile = existsSync(archDir)
-  ? readdirSync(archDir).find((f) => f.endsWith(`-${slug}.md`))
+  ? readdirSync(archDir).find((f) => adrFilePattern.test(f))
   : undefined;
 
 let adrWritten = "";

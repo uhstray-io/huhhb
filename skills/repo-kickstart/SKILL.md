@@ -44,7 +44,7 @@ Create if missing; on brownfield, **propose a merge, don't overwrite**.
 
 ### 2. Planning tree
 - `plans/development/00-implementation-plan.md` — seed from the canonical
-  living-index template in `openspec-conformance/templates/` (5-column table:
+  living-index template in `skills/openspec-conformance/templates/` (5-column table:
   Change · Title · Status · Owner · Links — the exact shape `promote-adr.ts`
   reads/writes; do not diverge or promotion breaks).
 - `plans/development/README.md` and `plans/architecture/README.md` — one short

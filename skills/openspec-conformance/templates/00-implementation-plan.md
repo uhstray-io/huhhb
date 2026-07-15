@@ -1,7 +1,8 @@
 # Implementation Plan — living index
 
-The index over active OpenSpec changes under `openspec/changes/`. One row per
-change; the change's own `tasks.md` is the task detail, not this file.
+The index over OpenSpec changes under `openspec/changes/`, including archived
+history. One row per change; the change's own `tasks.md` is the task detail,
+not this file.
 
 **Update rules (who writes this file):**
 - **buhhdy Workflow 1, step 8 (`to-issues`)** adds a row when a change's tasks

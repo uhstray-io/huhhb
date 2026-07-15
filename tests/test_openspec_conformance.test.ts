@@ -76,3 +76,33 @@ test("no ## Decisions section promotes zero ADRs but still updates the index", (
   const idx = readFileSync(join(root, "plans", "development", "00-implementation-plan.md"), "utf-8");
   assert.match(idx, /\|\s*archived\s*\|/, "index row still flipped");
 });
+
+test("exact-slug match: an existing '001-add-widget.md' does not block promoting slug 'widget'", () => {
+  // Regression for the suffix-match bug: endsWith('-widget.md') would treat the
+  // unrelated add-widget ADR as widget's own → widget's ADR never written and
+  // its index row mislinked. Exact slug match must distinguish the two.
+  const root = mkdtempSync(join(tmpdir(), "opsx-"));
+  const arch = join(root, "plans", "architecture");
+  mkdirSync(arch, { recursive: true });
+  writeFileSync(join(arch, "001-add-widget.md"), "# 1. add-widget\n"); // a DIFFERENT change's ADR
+  const changeDir = join(root, "plans", "development", "openspec", "changes", "archive", "2026-07-16-widget");
+  mkdirSync(changeDir, { recursive: true });
+  writeFileSync(join(changeDir, "design.md"), WITH_DECISIONS);
+  writeFileSync(join(root, "plans", "development", "00-implementation-plan.md"),
+    "# idx\n\n| Change | Title | Status | Owner | Links |\n|--|--|--|--|--|\n" +
+    "| add-widget | W | archived | @j | [ADR 001](../architecture/001-add-widget.md) |\n" +
+    "| widget | Wid | in-review | @j | [tasks](t) |\n");
+
+  execFileSync("node", [SCRIPT, join(root, "plans"), "2026-07-16-widget"], { encoding: "utf-8" });
+
+  assert.deepEqual(readdirSync(arch).sort(), ["001-add-widget.md", "002-widget.md"],
+    "widget gets its own new ADR (002), not mislinked to the add-widget ADR");
+  const idx = readFileSync(join(root, "plans", "development", "00-implementation-plan.md"), "utf-8");
+  const widgetRow = idx.split("\n").find((l) => /^\|\s*widget\s*\|/.test(l)) ?? "";
+  assert.match(widgetRow, /archived/, "the widget row (not add-widget) flipped to archived");
+  assert.match(widgetRow, /ADR 002/, "widget row links its own ADR 002");
+  const addWidgetRow = idx.split("\n").find((l) => /^\|\s*add-widget\s*\|/.test(l)) ?? "";
+  assert.equal(addWidgetRow,
+    "| add-widget | W | archived | @j | [ADR 001](../architecture/001-add-widget.md) |",
+    "the unrelated add-widget row is left untouched");
+});

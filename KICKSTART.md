@@ -19,6 +19,7 @@ There is nothing to `npm install` for the runtime — Node stdlib only.
 node scripts/skill-lint.ts                 # G0 static lint (frontmatter, links, manifest sync)
 node scripts/skill-bench.ts <skill>        # G1 merge bench (real claude -p runs; costs tokens)
 node --test tests/test_evolve.test.ts      # offline evolve suite
+node --test tests/test_openspec_conformance.test.ts   # offline openspec-conformance suite
 ```
 
 ## Develop here

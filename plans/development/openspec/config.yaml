@@ -15,5 +15,5 @@ rules:
     - Every requirement uses SHALL/MUST and at least one "#### Scenario:" (WHEN/THEN).
   tasks:
     - Each "## <n>." phase ends with an explicit validation gate whose final task
-      names the spec scenario that proves the phase (that scenario is the
-      openspec-validate-enforced gate).
+      names the spec scenario that proves the phase (that scenario is the phase's
+      validation target; `openspec validate` enforces only the spec layer).

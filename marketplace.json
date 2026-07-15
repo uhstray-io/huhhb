@@ -3,7 +3,7 @@
   "publisher": "uhstray-io",
   "displayName": "Uhstray Skills Hub",
   "description": "Uhstray.io's curated Claude Code skills marketplace — workflows and automation for engineering teams.",
-  "version": "0.5.11",
+  "version": "0.5.12",
   "homepage": "https://github.com/uhstray-io/huhhb",
   "license": "MIT",
   "skills": [
@@ -301,6 +301,14 @@
       "description": "Use when a long session should pause for a checkpoint — surfaces in-flight work, runs /simplify + /security-review and test/build/lint health, checks the diff against the repo's documented conventions, and re-confirms goals. Fired by the grounding hook (default 2h, configurable) or run manually. Opt-in; offers a user-selectable check menu.",
       "category": "dev",
       "tags": ["dev", "checkpoint", "review", "conformance", "session"],
+      "version": "0.1.0"
+    },
+    {
+      "name": "calibration-refresh",
+      "path": "skills/calibration-refresh/SKILL.md",
+      "description": "Use when buhhdy's provider/model/auth facts need re-verifying — the operator says 'run calibration refresh', the monthly refresh is due, a dispatch just failed on a bad or retired model ID, or a provider announced a model change. Produces a claims ledger, verifies cheapest-first with cross-vendor confirmation for consequential claims, maintains facts as memory records, and proposes config prose-to-pointer migration; routing changes only ever appear as a flagged human-judgment PR section.",
+      "category": "ops",
+      "tags": ["ops", "buhhdy", "calibration", "providers", "models", "memory"],
       "version": "0.1.0"
     },
     {

@@ -228,8 +228,9 @@ prompt: |
   Calibration notes (verified 2026-06-30; migration in progress: these
   dated notes now also exist as structured records in
   memory/providers.md, read on the first turn — NEW operator calibration
-  confirmations are WRITTEN there, never appended here; the
-  calibration-refresh skill owns retiring this embedded copy):
+  confirmations are WRITTEN there, never appended here; huhhb's
+  calibration-refresh skill is these notes' maintenance owner — it
+  re-verifies them on its cadence and owns retiring this embedded copy):
   - OpenAI bumped 2026-06-30 (cross-vendor verified): gpt-5/gpt-5-mini/
     gpt-4.1-nano superseded by gpt-5.5/gpt-5.4-mini/gpt-5.4-nano. o3/o4-mini
     are fully retired — do not reference any o-series or first-gen gpt-5 ID.
@@ -415,6 +416,15 @@ prompt: |
   | loop-me                     | claude_code  | codex        |
   | writing-shape                | claude_code | codex        |
   | pr-shepherd                 | buhhdy-level | —            |
+  | calibration-refresh         | buhhdy-level | —            |
+
+  calibration-refresh (huhhb skill) keeps the provider/model/auth facts
+  current: claims ledger → cheapest-first verification (its own routing:
+  one LIGHTWEIGHT probe per provider, gemini-standard/codex web checks,
+  cross-vendor for consequential claims) → memory records → a
+  prose-to-pointer config PR. buhhdy-level — only its verification probes
+  are dispatched. Run monthly, on any failed model ID, or on a provider
+  announcement. It never changes routing autonomously.
 
   pr-shepherd (huhhb skill) owns the post-PR lifecycle: CI, CodeRabbit
   findings, human review comments, merge lifecycle, closing `Closes #N`
@@ -424,8 +434,9 @@ prompt: |
   It merges only under Merge Authorization (both conditions) and refuses
   to operate on unprotected default branches.
 
-  grounding, subagent-driven-development, dispatching-parallel-agents, and
-  pr-shepherd are buhhdy-level everywhere, not just in core-workflows —
+  grounding, subagent-driven-development, dispatching-parallel-agents,
+  pr-shepherd, and calibration-refresh are buhhdy-level everywhere, not
+  just in core-workflows —
   each skill's own file addresses "you" as the orchestrating session ("you
   delegate tasks... preserves your own context for coordination work"),
   confirmed by reading them directly. buhhdy loads and follows them

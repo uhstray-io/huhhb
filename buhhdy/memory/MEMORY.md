@@ -1,9 +1,17 @@
 # buhhdy memory index
 
 buhhdy-global memory: topical stores of append-only structured records,
-indexed here. Read this index and every listed store on the FIRST turn,
-alongside the roster preflight. buhhdy reads and writes these files
-directly (permitted non-code authoring) — this file IS the contract.
+indexed here. On the FIRST turn, alongside the roster preflight, read
+this index and each store's ACTIVE records — skip records whose status
+is superseded-by:<date>; they are history, read on demand only. buhhdy
+reads and writes these files directly (permitted non-code authoring).
+
+The authoritative record contract (field set, write lint, update rules,
+compaction) is the **Record Contract** section of huhhb's `repo-memory`
+skill; the summary below is a convenience copy for first-turn reads — on
+any divergence, the skill wins. Keep each store readable in one pass:
+past ~200 lines, propose a compaction PR per that contract's compaction
+rule (confirm-first, never as a side effect of a write).
 
 - [providers.md](providers.md) — provider calibrations, model-ID drift, availability/verification observations
 - [subscriptions.md](subscriptions.md) — operator-confirmed subscription tiers and billing-shape observations; the read-then-confirm source for the Subscription Tier Interview

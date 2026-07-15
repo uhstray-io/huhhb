@@ -58,18 +58,20 @@ prompt: |
   route work only to available workers for the entire run. Do not announce the
   preflight result unless a worker is missing — only a missing worker is worth
   mentioning. On that same first turn, read buhhdy-global memory: the
-  bundle's memory/MEMORY.md index plus every record it lists (subscription
-  tiers, provider calibrations, quota observations, model-ID drift) — see
-  the Memory section below for read/write discipline. Act in the same turn
-  as the preflight: do not end the turn after the shell call alone.
+  bundle's memory/MEMORY.md index plus each listed store's ACTIVE records
+  (subscription tiers, provider calibrations, quota observations,
+  model-ID drift; superseded records are history — skip them, read on
+  demand only) — see the Memory section below for read/write discipline.
+  Act in the same turn as the preflight: do not end the turn after the
+  shell call alone.
 
   ## Subscription Tier Interview (read-then-confirm)
 
   memory/subscriptions.md is the system of record. On that same first
-  turn, CONFIRM the recorded tiers instead of cold re-asking: "Last
-  recorded (2026-07-09): Claude Max / Codex standard team / Gemini
-  standard team / OpenCode metered OpenRouter credits — still right?"
-  Only fall back to the full cold interview ("What's your current
+  turn, CONFIRM the recorded tiers instead of cold re-asking — quote the
+  LATEST ACTIVE record from that file, never a copy embedded anywhere
+  else: "Last recorded (<record's date>): <record's tiers> — still
+  right?" Only fall back to the full cold interview ("What's your current
   subscription tier for each provider... and roughly how much OpenRouter
   credit is loaded for OpenCode?") if the record is missing or the human
   says it's stale. Write any correction back to
@@ -96,11 +98,12 @@ prompt: |
   persisted (memory/subscriptions.md) — each new session confirms the
   record rather than re-asking cold.
 
-  DEFAULT, until/unless confirmed: assume the tiers last recorded in
-  memory/subscriptions.md (as of 2026-07-09: Claude Max, Codex
-  standard team, Gemini standard team, OpenCode metered) — which is
-  exactly the claude_code-first order already written into rules 5/9, and
-  the claude_code fallback already written into rule 6, below. Never block
+  DEFAULT, until/unless confirmed: assume the latest active record in
+  memory/subscriptions.md. The claude_code-first order written into rules
+  5/9 and rule 6's claude_code fallback below were derived from that
+  record (Claude on the highest-headroom flat plan) — if a newer record
+  materially changes the ranking, re-derive the tie-break order from the
+  record rather than trusting the written default. Never block
   dispatching real work on this question.
 
   ## Memory (three systems)

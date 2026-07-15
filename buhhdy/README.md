@@ -128,11 +128,11 @@ also still works, if you'd rather colocate it there:
 
 buhhdy reads its global memory (`memory/` in this bundle) alongside the
 roster preflight, then CONFIRMS the recorded subscription tiers instead of
-cold re-asking — "Last recorded: Claude Max / Codex standard team / Gemini
-standard team / OpenCode metered — still right?" — so routing can lightly
-weight toward whichever provider has the most headroom this cycle. It's a
-quick confirmation, not a gate, and your actual request proceeds either
-way. Skip it and it assumes the recorded tiers; correct it and the
+cold re-asking — quoting the latest active record from
+`memory/subscriptions.md` ("Last recorded (<date>): <tiers> — still
+right?") — so routing can lightly weight toward whichever provider has
+the most headroom this cycle. It's a quick confirmation, not a gate, and
+your actual request proceeds either way. Skip it and it assumes the recorded tiers; correct it and the
 correction is written back to `memory/subscriptions.md`, dated. Full
 mechanics: the "Subscription Tier Interview" and "Memory" sections of
 `config.yaml`.
@@ -184,10 +184,11 @@ step) in `skills/core-workflows/SKILL.md`:
    ponytail:audit -> grounding (writes repo-memory) -> update docs ->
    commit + push -> open a PR -> pr-shepherd (terminal).
 
-Both end with deliverable PRs, never a merge. Any PR either workflow opens
-is handed to pr-shepherd after creation (pr-shepherd is Workflow 2's
-formal terminal step); a merge always requires an approving human review
-on the PR plus an explicit merge instruction (Merge Authorization below).
+Both end with deliverable PRs, never a merge. Workflow 2's PRs (the
+implementer PRs and the docs PR) are handed to pr-shepherd, its formal
+terminal step; Workflow 1's plan-doc PRs wait directly on the human.
+Either way a merge always requires an approving human review on the PR
+plus an explicit merge instruction (Merge Authorization below).
 
 ## Planning Layout (OpenSpec conformance — decision record, 2026-07-14)
 

@@ -139,16 +139,78 @@ After syncing, review the diff, bump versions, cut a release if changed.
 - Do not push non-trivial changes directly to main
 - Do not add AI attribution to commits or PRs
 
+## Key Files
+
+- `skills/` — all skills, one flat subdirectory per skill (`skills/<skill-name>/SKILL.md`)
+- `onboarding/` — onboarding flow triggered on first install
+- `hooks/` — plugin lifecycle hook scripts (SessionStart, PreToolUse, Stop)
+- `marketplace.json` — skill manifest (name, path, description, category, tags, version per skill)
+- `.claude-plugin/plugin.json` — plugin version read by Claude Code for update detection (keep in sync with `marketplace.json`)
+- `.claude-plugin/.mcp.json` — MCP server config (must match `plugin.json` mcpServers)
+- `scripts/skill-lint.ts`, `scripts/skill-bench.ts`, `scripts/skill-trends.ts` — the skill quality gates (see Skill Quality Bar)
+- `scripts/evolve/` — the `evolve` self-learning suite (TypeScript, MIT; optional integrations load dynamically, never vendored)
+- `scripts/sync-caveman.sh`, `scripts/sync-mempalace.sh`, `scripts/patch-mempalace.sh` — upstream sync/patch for vendored skills
+- `tests/` — `test_evolve.test.ts` + `test_openspec_conformance.test.ts` (offline, `node --test`) and `bench/` scenarios
+- `docs/evolve-plan.md` — the evolve living plan (architecture, guardrails, gates, roadmap; every evolve change recorded in its change log)
+- `CONTEXT.md` — project context for AI assistants
+- `CLAUDE.md` — a one-line pointer to this file (AGENTS.md is canonical)
+
+## Marketplace Manifest (`marketplace.json`)
+
+Every skill needs an entry; bump its `version` and `.claude-plugin/plugin.json` together on a behavior change:
+
+```json
+{
+  "name": "huhhb",
+  "publisher": "uhstray-io",
+  "version": "0.1.0",
+  "skills": [
+    {
+      "name": "skill-name",
+      "path": "skills/skill-name/SKILL.md",
+      "description": "...",
+      "category": "dev",
+      "tags": ["dev", "review"],
+      "version": "0.1.0"
+    }
+  ]
+}
+```
+
+## Onboarding
+
+First install runs `onboarding/welcome.md` — a short guided tour: what's installed, how to invoke (`/skill-name`), and where the full list lives (`onboarding/skills-list.md`). Keep it brief.
+
 ## Repo Memory
 
-Project knowledge lives in `.claude/memory/` (committed to git). At session
-start, read `.claude/memory/MEMORY.md` for the index; check memory before
-answering questions about project decisions, conventions, or context. Use
-`/repo-memory` to save or retrieve. Save: architectural decisions and
-rationale, team conventions, anti-patterns that were tried and failed,
-external references, environment quirks. Don't save: code patterns readable
-from the codebase, git history, ephemeral task state, anything already in
-this file.
+Project knowledge lives in `.claude/memory/` (committed to git) — huhhb's
+per-project **repo-memory** stratum, saved/retrieved via the `/repo-memory`
+skill. At session start, read `.claude/memory/MEMORY.md` for the index;
+**before answering questions about project decisions, conventions, or
+context, check `.claude/memory/` first** — it's the team's shared knowledge
+base.
+
+### When to save
+
+| What | Type |
+| ---- | ---- |
+| Architectural decisions and their rationale | `project` |
+| Chosen libraries/frameworks and why alternatives were rejected | `project` |
+| Team conventions; what to repeat or avoid | `feedback` |
+| Anti-patterns tried here that didn't work | `feedback` |
+| Preferred naming, code-style, and formatting rules | `feedback` |
+| Things Claude got wrong repeatedly and had to be corrected on | `feedback` |
+| Links to external systems, dashboards, docs, wikis | `reference` |
+| Environment setup notes (non-obvious deps, quirks, build steps) | `reference` |
+| Domain knowledge the user has that shouldn't be re-explained | `user` |
+| Personal preferences (gitignore `user_*.md` if private) | `user` |
+
+### What NOT to save
+
+- Code patterns readable from the codebase
+- Git history (`git log` / `git blame` are authoritative)
+- Ephemeral task state or in-progress work
+- Anything already in AGENTS.md
 
 ## Repo Conventions
 

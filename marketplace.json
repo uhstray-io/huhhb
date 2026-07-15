@@ -304,6 +304,14 @@
       "version": "0.1.0"
     },
     {
+      "name": "pr-shepherd",
+      "path": "skills/pr-shepherd/SKILL.md",
+      "description": "Use when buhhdy's Development workflow has open PRs that need driving from creation to merge and cleaned-up afterward — the terminal step once PRs are open. Monitors CI and CodeRabbit/human review, routes findings back to the original implementer, gates the merge on a human approval (never merges autonomously), then runs post-merge close-out: closes issues, updates the plan, archives the change, removes the worktree, and janitors stale buhhdy/* branches.",
+      "category": "review",
+      "tags": ["review", "pr", "ci", "coderabbit", "merge", "cleanup", "buhhdy"],
+      "version": "0.1.0"
+    },
+    {
       "name": "evolve",
       "path": "skills/evolve/SKILL.md",
       "description": "Cross-session memory protocol backed by Honcho — how to recall what evolve has learned about you, persist durable facts, and route knowledge to the right memory stratum. Inert until configured.",

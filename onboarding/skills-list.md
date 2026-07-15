@@ -51,6 +51,7 @@ managed setup; unconfigured machines behave as if it were not installed.
 | executing-plans | `/executing-plans` | Use when you have a written implementation plan to execute in a separate session with review checkpoints |
 | finishing-a-development-branch | `/finishing-a-development-branch` | Use when implementation is complete, all tests pass, and you need to decide how to integrate the work |
 | grounding | `/grounding` | Use when a long session should pause for a checkpoint — surfaces in-flight work, runs reviews + repo-conformance, and re-confirms goals (default 2h, configurable; opt-in, with a user-selectable check menu) |
+| pr-shepherd | `/pr-shepherd` | Use when buhhdy's Development workflow has open PRs to drive to merge — monitors CI + CodeRabbit + human review, routes findings back to the original implementer (2-attempts-then-human), gates the merge on a human approval (never merges autonomously), then runs post-merge close-out and a buhhdy/*-only branch janitor |
 | session-resume | `/session-resume` | Use when picking up prior work in a fresh session — verifies the continuation file against the repo, re-hydrates context, briefs, then acts |
 | session-save | `/session-save` | Use when ending or pausing a session and you want to resume cleanly later — writes a gitignored continuation file with the exact next action and chat-only context |
 | subagent-driven-development | `/subagent-driven-development` | Use when executing implementation plans with independent tasks in the current session |

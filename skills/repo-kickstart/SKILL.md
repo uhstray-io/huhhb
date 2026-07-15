@@ -78,10 +78,6 @@ below remain this skill's own:
   skills. **Credentials come from the environment** (`HONCHO_URL` /
   `HONCHO_API_KEY` / `HONCHO_WORKSPACE`) — **never write them into the repo.**
   Honcho unconfigured? report "skipped — Honcho not configured", don't fail.
-- **Honcho (team memory)** — scope the repo's workspace via the evolve-suite
-  skills. **Credentials come from the environment** (`HONCHO_URL` /
-  `HONCHO_API_KEY` / `HONCHO_WORKSPACE`) — **never write them into the repo.**
-  Honcho unconfigured? report "skipped — Honcho not configured", don't fail.
 
 ### 5. Review tooling
 - **`.coderabbit.yaml`** — generate from the template in `reference.md`, adapted

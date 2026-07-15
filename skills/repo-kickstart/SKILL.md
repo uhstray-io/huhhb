@@ -62,18 +62,22 @@ root (no symlinks). Commit the resulting `.openspec-store/store.yaml`, set
 From the repo root, OpenSpec commands need `--store <repo>`.
 
 ### 4. Memory kickstart — DELEGATED to memory-onboarding (project scope)
-Run huhhb's `memory-onboarding` skill, PROJECT scope, and append its
-matrix to this run's verification checklist — it owns repo-memory First
-Run setup, record health, and the path-separation sweep; do not
-reimplement them here. The kickstart-specific extras below remain this
-skill's own (memory-onboarding doesn't write them):
+Two strata (detail + headers in `reference.md`); registry-free — this skill
+does **not** track or register conformance anywhere. Run huhhb's
+`memory-onboarding` skill, PROJECT scope, and append its matrix to this
+run's verification checklist — it owns repo-memory First Run setup, record
+health, and the path-separation sweep (**hard rule: repo memory lives in
+`.claude/memory/` ONLY; `plans/` holds planning/architecture/development/
+specification documents — no memory of any kind is ever written under
+`plans/`**); do not reimplement them here. The kickstart-specific extras
+below remain this skill's own:
 - **Seed the kickstart outcome record** into `.claude/memory/` per the
   `repo-memory` skill's Record Contract (observational-only: facts,
   dates, outcomes — never instructions) with what this run learned.
-- **buhhdy global registry** — append a repo-registration record (name, path,
-  conventions version, kickstart date) to the buhhdy `memory/` registry.
-  Resolve its location via `$HUHHB_HOME` → plugin root → `./buhhdy/memory/`;
-  if none resolves, **print the record for manual filing** (never invent a path).
+- **Honcho (team memory)** — scope the repo's workspace via the evolve-suite
+  skills. **Credentials come from the environment** (`HONCHO_URL` /
+  `HONCHO_API_KEY` / `HONCHO_WORKSPACE`) — **never write them into the repo.**
+  Honcho unconfigured? report "skipped — Honcho not configured", don't fail.
 - **Honcho (team memory)** — scope the repo's workspace via the evolve-suite
   skills. **Credentials come from the environment** (`HONCHO_URL` /
   `HONCHO_API_KEY` / `HONCHO_WORKSPACE`) — **never write them into the repo.**
@@ -91,7 +95,7 @@ skill's own (memory-onboarding doesn't write them):
 
 ### 6. Verification checklist
 End by printing the pass/fail table (format in `reference.md`): convention
-files present, plans tree, OpenSpec validates, memory seeded (3 strata),
+files present, plans tree, OpenSpec validates, memory seeded (2 strata: .claude/memory/ + Honcho),
 CodeRabbit config, branch-protection status. Branch protection is expected
 **red with instructions** on a fresh repo — that is a pass for the run.
 

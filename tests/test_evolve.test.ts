@@ -183,6 +183,40 @@ describe("ConfigTests", () => {
     });
     assert.equal(ids[0], ids[1]);
   });
+
+  test("test_interactive_onboarding_writes_server_config", () => {
+    // guided `init --interactive`: piped answers (url, workspace, key) land in
+    // a 0600 config; the unreachable URL keeps the connectivity check offline
+    const answers = "http://127.0.0.1:9\nuhstray\nJWT-onboarding-key\n";
+    const r = sb.run("honcho_client.ts", ["init", "--interactive"], { stdin: answers });
+    assert.equal(r.status, 0, r.stderr);
+    const cfgPath = path.join(sb.dir, "config", "huhhb", "evolve.json");
+    const cfg = JSON.parse(fs.readFileSync(cfgPath, "utf-8"));
+    assert.equal(cfg.url, "http://127.0.0.1:9");
+    assert.equal(cfg.api_key, "JWT-onboarding-key");
+    assert.equal(cfg.workspace, "uhstray");
+    assert.equal(fs.statSync(cfgPath).mode & 0o777, 0o600, "config must be 0600");
+    assert.ok(!r.stdout.includes("JWT-onboarding-key"), "key must never echo to stdout");
+  });
+
+  test("test_interactive_onboarding_blank_endpoint_is_local", () => {
+    // a blank endpoint chooses local mode — no server, no key required
+    const r = sb.run("honcho_client.ts", ["init", "--interactive"], { stdin: "\n" });
+    assert.equal(r.status, 0, r.stderr);
+    const cfg = JSON.parse(
+      fs.readFileSync(path.join(sb.dir, "config", "huhhb", "evolve.json"), "utf-8"),
+    );
+    assert.equal(cfg.mode, "local");
+  });
+
+  test("test_interactive_onboarding_missing_key_fails", () => {
+    // endpoint given but key blank → refuse (no half-configured honcho mode)
+    const r = sb.run("honcho_client.ts", ["init", "--interactive"], {
+      stdin: "http://127.0.0.1:9\nuhstray\n\n",
+    });
+    assert.notEqual(r.status, 0);
+    assert.ok(r.stderr.includes("no API key"), r.stderr);
+  });
 });
 
 // ---------------------------------------------------------------- C-04/05/06
@@ -1020,7 +1054,161 @@ describe("BackfillTests", () => {
   });
 });
 
+const _REPLAY_FAILURE_DRIVER = `
+import * as flush from ${JSON.stringify(pathToFileURL(path.join(EVOLVE, "flush.ts")).href)};
+import * as hc from ${JSON.stringify(pathToFileURL(path.join(EVOLVE, "honcho_client.ts")).href)};
+
+class FakePeer { message(content, metadata) { return { content }; } }
+const sent = [];
+let failFor = null;
+class FakeSession {
+  constructor(id) { this.id = id; }
+  addMessages(msgs) {
+    if (failFor && this.id.includes(failFor)) throw new Error("delivery down");
+    sent.push(...msgs.map((m) => m.content));
+  }
+}
+const fake = { peer: (_id) => new FakePeer(), session: (id) => new FakeSession(id) };
+
+// journal layout: clean1 (line 0) · bulk quarantined (lines 1-6) · clean2 (line 7)
+hc.journal_append({ session_id: "clean1", repo: "r", ts: "t", observations:
+  [{ type: "preference", target: "user", content: "one", trust: "stated" }] });
+hc.journal_append({ session_id: "bulk", repo: "r", ts: "t", observations:
+  Array.from({ length: 6 }, (_, i) => ({ type: "preference", target: "user",
+    content: "b-" + i, trust: "stated" })) });
+hc.journal_append({ session_id: "clean2", repo: "r", ts: "t", observations:
+  [{ type: "preference", target: "user", content: "two", trust: "stated" }] });
+
+// run 1: clean2's delivery fails mid-batch
+failFor = "clean2";
+let threw = false;
+try { await flush.replay_journal(fake, hc.load_state()); } catch { threw = true; }
+const cursor_after_fail = Number(hc.load_state().journal_replayed_lines ?? 0);
+const sent_after_fail = [...sent];
+
+// run 2: delivery recovers — only clean2 may be (re)sent
+failFor = null;
+const r2 = await flush.replay_journal(fake, hc.load_state());
+console.log(JSON.stringify({
+  threw,
+  cursor_after_fail,                       // clean1 + quarantined bulk = lines 0..6 -> 7
+  clean1_sent_once: sent_after_fail.filter((c) => c === "one").length === 1,
+  retry_delivered: r2.delivered,           // exactly clean2
+  no_redelivery: sent.filter((c) => c === "one").length === 1
+    && sent.filter((c) => c === "two").length === 1,
+  bulk_never_sent: sent.every((c) => !c.startsWith("b-")),
+  final_cursor: Number(hc.load_state().journal_replayed_lines ?? 0),
+}));
+`;
+
+const _REPLAY_DRIVER = `
+import * as flush from ${JSON.stringify(pathToFileURL(path.join(EVOLVE, "flush.ts")).href)};
+import * as hc from ${JSON.stringify(pathToFileURL(path.join(EVOLVE, "honcho_client.ts")).href)};
+
+class FakePeer { message(content, metadata) { return { content }; } }
+const sent = [];
+class FakeSession { addMessages(msgs) { sent.push(...msgs); } }
+const fake = { peer: (_id) => new FakePeer(), session: (_id) => new FakeSession() };
+
+// seed a pre-cutover local journal: one clean session, one over-cap session
+hc.journal_append({ session_id: "clean", repo: "r", ts: "t", observations:
+  [{ type: "preference", target: "user", content: "clean-pref", trust: "stated" }] });
+hc.journal_append({ session_id: "bulk", repo: "r", ts: "t", observations:
+  Array.from({ length: 6 }, (_, i) => ({ type: "preference", target: "user",
+    content: \`bulk-\${i}\`, trust: "stated" })) });
+
+const first = await flush.replay_journal(fake, hc.load_state());
+const sent_after_first = sent.length;
+const second = await flush.replay_journal(fake, hc.load_state());
+console.log(JSON.stringify({
+  clean_delivered: first.delivered === 1 && sent_after_first === 1,
+  bulk_held: first.held === 6,
+  rerun_noop: second.delivered === 0 && sent.length === sent_after_first,
+  cursor_set: Number(hc.load_state().journal_replayed_lines) === 7,
+}));
+`;
+
 describe("HonchoDeliveryGuardTests", () => {
+  test("test_replay_refuses_when_flush_lock_held", () => {
+    // a Stop-hook flush racing a manual replay must never both deliver —
+    // replay takes the same lock and exits loudly when it is held
+    const sb = new Sandbox("http://127.0.0.1:9");
+    try {
+      const lockDir = sb.data;
+      fs.mkdirSync(lockDir, { recursive: true });
+      fs.writeFileSync(path.join(lockDir, "flush.lock"), String(process.pid));
+      const r = sb.run("flush.ts", ["--replay-journal"]);
+      assert.notEqual(r.status, 0, "replay must refuse while the lock is held");
+      assert.ok(r.stderr.includes("another flush is in progress"), r.stderr);
+    } finally {
+      sb.cleanup();
+    }
+  });
+
+  test("test_replay_journal_screens_and_is_idempotent", () => {
+    // R8 cutover: the pre-existing journal bootstraps a new Honcho once —
+    // GR2 holds the bulk session, and a second replay delivers nothing
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "honcho-replay-"));
+    try {
+      const env: Record<string, string | undefined> = {
+        ...process.env,
+        XDG_DATA_HOME: path.join(tmp, "data"),
+        XDG_CONFIG_HOME: path.join(tmp, "cfg"),
+      };
+      delete env.EVOLVE_MODE;
+      const driver = path.join(tmp, "driver.mjs");
+      fs.writeFileSync(driver, _REPLAY_DRIVER);
+      const r = spawnSync(process.execPath, [driver], {
+        encoding: "utf-8",
+        env: env as NodeJS.ProcessEnv,
+        timeout: 120_000, // Sandbox.run's budget — a stalled driver fails fast
+      });
+      assert.equal(r.status, 0, r.stderr);
+      const out = JSON.parse(r.stdout);
+      assert.ok(out.clean_delivered, "clean session must replay to the server");
+      assert.ok(out.bulk_held, "GR2 must hold the over-cap session from replay");
+      assert.ok(out.rerun_noop, "second replay must deliver nothing (cursor)");
+      assert.ok(out.cursor_set, "cursor must cover every raw journal line");
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  test("test_replay_partial_failure_never_redelivers", () => {
+    // R8 hardening (review finding): a mid-batch delivery failure must not
+    // resend already-delivered sessions on retry — the cursor checkpoints
+    // the contiguous delivered/quarantined prefix after each session
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "honcho-replay-fail-"));
+    try {
+      const env: Record<string, string | undefined> = {
+        ...process.env,
+        XDG_DATA_HOME: path.join(tmp, "data"),
+        XDG_CONFIG_HOME: path.join(tmp, "cfg"),
+      };
+      delete env.EVOLVE_MODE;
+      const driver = path.join(tmp, "driver.mjs");
+      fs.writeFileSync(driver, _REPLAY_FAILURE_DRIVER);
+      const r = spawnSync(process.execPath, [driver], {
+        encoding: "utf-8",
+        env: env as NodeJS.ProcessEnv,
+        timeout: 120_000, // Sandbox.run's budget — a stalled driver fails fast
+      });
+      assert.equal(r.status, 0, r.stderr);
+      const out = JSON.parse(r.stdout);
+      assert.ok(out.threw, "the failing session must surface its error");
+      assert.equal(out.cursor_after_fail, 7,
+        "cursor must cover the delivered+quarantined contiguous prefix");
+      assert.ok(out.clean1_sent_once, "pre-failure session delivered exactly once");
+      assert.equal(out.retry_delivered, 1, "retry delivers only the failed session");
+      assert.ok(out.no_redelivery, "no observation is ever delivered twice");
+      assert.ok(out.bulk_never_sent,
+        "GR2-held observations must never be delivered, even across retries");
+      assert.equal(out.final_cursor, 8, "cursor covers everything after recovery");
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
   test("test_gr2_gates_honcho_delivery_not_just_local_read", () => {
     // honcho mode pushes to a server via honcho_deliver; a bulk-anomaly
     // session must be held from delivery (journal still keeps it), the
@@ -1039,6 +1227,7 @@ describe("HonchoDeliveryGuardTests", () => {
       const r = spawnSync(process.execPath, [driver], {
         encoding: "utf-8",
         env: env as NodeJS.ProcessEnv,
+        timeout: 120_000, // Sandbox.run's budget — a stalled driver fails fast
       });
       assert.equal(r.status, 0, r.stderr);
       const out = JSON.parse(r.stdout);

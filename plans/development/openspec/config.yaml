@@ -1,0 +1,19 @@
+schema: spec-driven
+
+context: |
+  Stack: TypeScript run directly on Node ≥ 22.18 (native type stripping, no
+  build step); Node stdlib only, zero npm runtime deps. This repo is huhhb —
+  Uhstray.io's Claude Code skills marketplace (skills under skills/, manifest
+  in marketplace.json, quality gates in scripts/).
+  Conventions: Conventional Commits, no AI attribution. Cross-review by a
+  different-vendor agent before human review. Plans live under plans/.
+
+rules:
+  proposal:
+    - Include a "## Rollback Plan" section — how to revert (flag, migration, redeploy).
+  specs:
+    - Every requirement uses SHALL/MUST and at least one "#### Scenario:" (WHEN/THEN).
+  tasks:
+    - Each "## <n>." phase ends with an explicit validation gate whose final task
+      names the spec scenario that proves the phase (that scenario is the
+      openspec-validate-enforced gate).

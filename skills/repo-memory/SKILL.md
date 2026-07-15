@@ -114,8 +114,7 @@ records below have stricter update rules — supersede, never edit or delete.
 
 When an agent writes memory autonomously — buhhdy's Workflow 2 `grounding`
 step, pr-shepherd's post-merge close-out — the memory is a **record**: same
-one-file-per-fact format as above, plus these fields and constraints. (The
-same contract governs buhhdy's own global store, `buhhdy/memory/MEMORY.md`.)
+one-file-per-fact format as above, plus these fields and constraints.
 
 Extra frontmatter on a record:
 

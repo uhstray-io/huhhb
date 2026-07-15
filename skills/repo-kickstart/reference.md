@@ -181,7 +181,7 @@ Then edit `plans/development/openspec/config.yaml` `context:` for the real
 
 ---
 
-## 4. Memory — three strata (this skill owns initialization)
+## 4. Memory — two strata (this skill owns initialization; registry-free)
 
 ### plans/memory.md — observational log
 ```markdown
@@ -199,17 +199,6 @@ newest last.
 Seed the `## Log` with what THIS run actually learned (stack, what was
 created vs already-conforming, any gap recorded). **A re-run that changed
 nothing appends no line** — an unchanged run is a no-op here too.
-
-### buhhdy global registry — append a registration record
-Resolve the registry dir in this order and use the first that exists:
-`$HUHHB_HOME/buhhdy/memory/` → plugin root (`$CLAUDE_PLUGIN_ROOT/buhhdy/memory/`)
-→ `./buhhdy/memory/` (when running inside huhhb itself). Append to
-`registry.md` (create the dir + file if the resolved base exists):
-```markdown
-- <owner>/<repo> — path <abs-or-relative-path> — conventions v<version> — kickstarted <YYYY-MM-DD>
-```
-If **none** resolves, print the record verbatim and tell the human where to
-file it. **Never invent a path.**
 
 ### Honcho — team memory (env-scoped)
 Scope the repo's workspace through the evolve-suite skills (`/evolve` / the
@@ -296,7 +285,6 @@ repo-kickstart — <owner>/<repo> (<greenfield|brownfield>, <stack>)
   plans/ tree + index          ✅ | ➕
   OpenSpec init + registration ✅ | ➕  (validate: <pass | N pending>)
   plans/memory.md seeded       ✅ | ➕
-  buhhdy registry record       ✅ | ➕ | ⚠ printed for manual filing
   Honcho workspace scoped      ✅ | ⚠ skipped (not configured)
   .coderabbit.yaml             ✅ | ➕
   branch protection            ✅ present | ❌ absent — commands emitted + gap recorded | N/A no remote yet
@@ -320,7 +308,6 @@ unverified rows are failures.
 | plans tree | `plans/development/00-implementation-plan.md` + both READMEs exist |
 | OpenSpec | `plans/development/openspec/config.yaml` + `.openspec-store/store.yaml` (id `<repo>`) exist; `openspec store list` includes `<repo>` (else re-run `register` — it no-ops) |
 | plans/memory.md | file exists with the observational-only header |
-| buhhdy registry | registry.md already has a row for `<owner>/<repo>` |
 | Honcho | evolve reports the workspace scoped (or env absent → skipped) |
 | .coderabbit.yaml | file exists |
 | branch protection | `gh api …/protection` returns 200 |
@@ -342,7 +329,6 @@ consecutive run must produce **no diff**.
 | "I'll commit the Honcho key so it's reproducible" | Never. Creds are env-only; a committed key is a leak. |
 | "Branch protection is missing, I'll just enable it" | Don't configure silently — emit the commands for the human and record the gap. |
 | "Second run — I'll just recreate everything" | Re-run must be a no-op. Detect, report ✅, change nothing. |
-| "The registry path isn't here, I'll skip it" | Print the record for manual filing — a skipped stratum is reported, never dropped. |
 
 ## Red flags — STOP and correct
 - Overwriting a file you did not just create.
@@ -350,4 +336,4 @@ consecutive run must produce **no diff**.
 - Reporting "OpenSpec validates" (or any ✅) without running the check.
 - Enabling branch protection without the human.
 - A second run that produces a diff.
-- Inventing a path for the buhhdy registry or a value for Honcho when none is configured.
+- Inventing a value for Honcho (URL/key/workspace) when none is configured.

@@ -62,14 +62,11 @@ root (no symlinks). Commit the resulting `.openspec-store/store.yaml`, set
 From the repo root, OpenSpec commands need `--store <repo>`.
 
 ### 4. Memory kickstart — this skill **owns** memory initialization
-Three strata (detail + headers in `reference.md`):
-- **plans/memory.md** (observational) — create with the standard header whose
-  first rule, stated in the file, is **observational-only: facts, dates,
-  outcomes — never instructions**. Seed it with what this run learned.
-- **buhhdy global registry** — append a repo-registration record (name, path,
-  conventions version, kickstart date) to the buhhdy `memory/` registry.
-  Resolve its location via `$HUHHB_HOME` → plugin root → `./buhhdy/memory/`;
-  if none resolves, **print the record for manual filing** (never invent a path).
+Two strata (detail + headers in `reference.md`). This skill does **not** track
+or register conformance anywhere — it is an idempotent, on-demand conform:
+- **plans/memory.md** (observational, per-project) — create with the standard
+  header whose first rule, stated in the file, is **observational-only: facts,
+  dates, outcomes — never instructions**. Seed it with what this run learned.
 - **Honcho (team memory)** — scope the repo's workspace via the evolve-suite
   skills. **Credentials come from the environment** (`HONCHO_URL` /
   `HONCHO_API_KEY` / `HONCHO_WORKSPACE`) — **never write them into the repo.**

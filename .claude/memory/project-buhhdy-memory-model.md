@@ -1,21 +1,28 @@
 ---
 name: project-buhhdy-memory-model
-description: buhhdy's memory hierarchy and where each kind of knowledge lives (user/team/config + repo-memory), and the path-separation rule
+description: Records the memory-architecture decision from PR #34 — buhhdy's tiered resolution order (user/team/config + repo-memory) and the path-separation rule it adopted
 metadata:
   node_type: memory
   type: project
 ---
 
-buhhdy resolves any preference/config value through a three-tier hierarchy,
-highest precedence first — config always present, the overlays consulted only
-if configured:
+Records the memory-architecture decision made in PR #34 (memory redesign) and
+the huhhb-conformance PR — an observed project fact. The operative rules live in
+`buhhdy/config.yaml` (`## Memory`) and `AGENTS.md` (`## Repo Memory`); this record
+just captures what was decided and what changed.
 
-1. **user memory** — MemPalace, via the `memory` skill (subscription tiers, per-operator preferences).
-2. **team memory** — the team Honcho instance, via the `evolve` skills (team-wide preferences; written at Workflow 2's `grounding` step, and session end).
-3. **buhhdy config defaults (floor)** — `config.yaml` + `MODEL-MANIFEST.md`: the provider-mapping standard and calibration notes. Calibration is config-owned — memory overlays never override it. The `calibration-refresh` skill maintains these notes.
+**Decision.** buhhdy retired its bespoke `buhhdy/memory/` store in favor of a
+tiered resolution order, highest precedence first: user memory (MemPalace, via
+the `memory` skill) → team memory (Honcho, via the `evolve` skills) → buhhdy
+config floor (`config.yaml` + `MODEL-MANIFEST.md`). The config floor is always
+present; the two overlays are consulted only when configured. Calibration stayed
+config-owned (overlays never override it; `calibration-refresh` maintains it).
+Repo-scoped knowledge continued to live in `.claude/memory/` via the
+`repo-memory` skill.
 
-Separately, **repo-memory** is `.claude/memory/` (per-project, via the `repo-memory` skill).
-
-**Path separation (hard rule):** repo memory lives in `.claude/memory/` ONLY; MemPalace uses its own default path; `plans/` holds planning/architecture/development/specification documents — no memory of any kind is ever written under `plans/`.
-
-The bespoke `buhhdy/memory/` store was retired (providers → MODEL-MANIFEST, subscriptions → MemPalace, registry dropped). `repo-kickstart` is idempotent and registry-free — conformance is applied on-demand, never tracked. Established in PR #34 (memory redesign) and the huhhb-conformance PR.
+**Migration outcome.** Provider calibration moved to `MODEL-MANIFEST.md`,
+subscription records to MemPalace, and the registry was dropped — `repo-kickstart`
+became idempotent and registry-free, so conformance is applied on-demand rather
+than tracked. A path-separation rule was adopted at the same time: repo memory in
+`.claude/memory/` only, MemPalace on its own default path, and nothing
+memory-shaped under `plans/`.

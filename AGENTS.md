@@ -204,7 +204,12 @@ base.
 | Links to external systems, dashboards, docs, wikis | `reference` |
 | Environment setup notes (non-obvious deps, quirks, build steps) | `reference` |
 | Domain knowledge the user has that shouldn't be re-explained | `user` |
-| Personal preferences (gitignore `user_*.md` if private) | `user` |
+| Personal notes about this repo (gitignore `user_*.md` if private) | `user` |
+
+These are **repo-scoped** records. Cross-project personal preferences belong in
+MemPalace (user stratum) and cross-session team learnings in Honcho (team
+stratum) — not here; see
+[`project-buhhdy-memory-model.md`](.claude/memory/project-buhhdy-memory-model.md).
 
 ### What NOT to save
 

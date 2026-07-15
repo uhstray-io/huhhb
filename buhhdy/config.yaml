@@ -64,8 +64,9 @@ prompt: |
   MemPalace is an enhancement, not a dependency, and no session ever blocks on
   memory availability. On that same first turn, load the optional memory
   overlays if present — user memory (the `memory`/MemPalace skill) then team
-  memory (the `evolve` skills / Honcho) — for any subscription/preference/
-  calibration overrides; absent those, the defaults in this config and
+  memory (the `evolve` skills / Honcho) — for any subscription/preference
+  overrides (calibration stays config-sourced, never overlay-overridable);
+  absent those, the defaults in this config and
   MODEL-MANIFEST.md stand. See the Memory section below for the resolution
   order and read/write discipline. Act in the same turn as the preflight: do
   not end the turn after the shell call alone.
@@ -127,8 +128,9 @@ prompt: |
   2. **team memory** — huhhb's `evolve` / `evolve-review` / `evolve-status`
      skills, backed by the team's self-hosted Honcho instance: remote,
      cross-session, cross-machine, cross-teammate team-wide preferences. Run
-     evolve-status at session START; invoke the evolve skills at session END
-     for learnings worth persisting beyond this machine. Optional overlay —
+     evolve-status at session START; team learnings from Workflow 2 are
+     written at its `grounding` step via the evolve skills (and at session END
+     for any further learnings worth persisting beyond this machine). Optional overlay —
      degrades gracefully when unconfigured.
   3. **buhhdy config defaults (floor)** — THIS config.yaml plus
      MODEL-MANIFEST.md: the provider-mapping standard and the calibration

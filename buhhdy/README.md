@@ -177,8 +177,8 @@ step) in `skills/core-workflows/SKILL.md`:
    repo-memory) -> executing-plans -> subagent-driven-development (claims
    the issue) -> dispatching-parallel-agents (per task: implement -> local
    cross-review -> resolve -> PR with `Closes #N` + test evidence) ->
-   ponytail:audit -> grounding (writes repo-memory via its skill; nexus
-   saves via the `memory` skill, using MemPalace's own gates) -> update docs ->
+   ponytail:audit -> grounding (writes repo-memory via its skill; beyond-repo
+   learnings to team memory via `evolve`) -> update docs ->
    commit + push -> open a PR -> pr-shepherd (terminal).
 
 Both end with deliverable PRs, never a merge. Workflow 2's PRs (the
@@ -364,7 +364,7 @@ skill's save flow, never raw file writes:
 | Tier | Lives at | Read | Written |
 |---|---|---|---|
 | user memory (highest) | MemPalace, via huhhb's `memory` skill | Session start (auto-loads context); Subscription Tier Interview; `memory-search` recall | Via the skill, when the operator confirms a preference/tier change |
-| team memory | Team Honcho instance, via huhhb's `evolve` / `evolve-review` / `evolve-status` skills | `evolve-status` at session start (team-shared context) | evolve skills at session end, for learnings worth persisting beyond this machine |
+| team memory | Team Honcho instance, via huhhb's `evolve` / `evolve-review` / `evolve-status` skills | `evolve-status` at session start (team-shared context) | Workflow 2's `grounding` step (beyond-repo learnings) via the evolve skills, and session end for any further learnings worth persisting beyond this machine |
 | config defaults (floor) | `config.yaml` + `MODEL-MANIFEST.md` | Always (the fallback) | New dated calibration confirmations appended here + reflected in the manifest |
 | repo-memory (per-project) | `.claude/memory/` in the target repo, via huhhb's `repo-memory` skill | `investigate` steps | Workflow 2's `grounding` step; pr-shepherd's post-merge close-out — via the skill's save flow |
 

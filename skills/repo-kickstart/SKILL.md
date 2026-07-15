@@ -89,7 +89,7 @@ any kind is ever written under `plans/`.**
 
 ### 6. Verification checklist
 End by printing the pass/fail table (format in `reference.md`): convention
-files present, plans tree, OpenSpec validates, memory seeded (3 strata),
+files present, plans tree, OpenSpec validates, memory seeded (2 strata: .claude/memory/ + Honcho),
 CodeRabbit config, branch-protection status. Branch protection is expected
 **red with instructions** on a fresh repo — that is a pass for the run.
 

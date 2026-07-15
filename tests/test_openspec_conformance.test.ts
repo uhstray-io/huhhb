@@ -101,4 +101,8 @@ test("exact-slug match: an existing '001-add-widget.md' does not block promoting
   const widgetRow = idx.split("\n").find((l) => /^\|\s*widget\s*\|/.test(l)) ?? "";
   assert.match(widgetRow, /archived/, "the widget row (not add-widget) flipped to archived");
   assert.match(widgetRow, /ADR 002/, "widget row links its own ADR 002");
+  const addWidgetRow = idx.split("\n").find((l) => /^\|\s*add-widget\s*\|/.test(l)) ?? "";
+  assert.equal(addWidgetRow,
+    "| add-widget | W | archived | @j | [ADR 001](../architecture/001-add-widget.md) |",
+    "the unrelated add-widget row is left untouched");
 });

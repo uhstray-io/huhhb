@@ -366,6 +366,14 @@
       "category": "dev",
       "tags": ["dev", "bootstrap", "conventions", "onboarding", "memory", "openspec"],
       "version": "0.1.0"
+    },
+    {
+      "name": "openspec-conformance",
+      "path": "skills/openspec-conformance/SKILL.md",
+      "description": "Use when making OpenSpec conform to Uhstray's plans/development + plans/architecture layout — the once-per-repo store-registration setup, the house openspec/config.yaml rules, and the archive-time ADR promotion into plans/architecture/. The single source of truth repo-kickstart (setup) and pr-shepherd (archive) both call.",
+      "category": "dev",
+      "tags": ["dev", "openspec", "conventions", "adr", "planning", "buhhdy"],
+      "version": "0.1.0"
     }
   ]
 }

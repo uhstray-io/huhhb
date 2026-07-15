@@ -127,16 +127,16 @@ merge; report which one is missing and wait.
 1. **Close linked issues.** Verify each `Closes #N` actually resolved; if
    GitHub didn't auto-close it, close it manually with a reference to the
    merge commit.
-2. **Update the plan.** Set the corresponding status in
-   `plans/development/00-implementation-plan.md`.
-3. **Archive the change.** Run `openspec archive <slug> --store <repo>` for
-   the completed change (it moves to `openspec/changes/archive/`), per the
-   Planning Layout decision record (buhhdy's README). Promote its durable
-   design decisions into `plans/architecture/` as numbered ADRs.
-4. **Write the outcome record** to repo-memory (`plans/memory.md`): what
+2. **Archive + promote (owned by `openspec-conformance`).** Run `openspec
+   archive <slug> --store <repo> --yes`, then that skill's `promote-adr.ts`: it
+   writes exactly one `plans/architecture/NNN-<slug>.md` ADR from the design's
+   `## Decisions` (never the full doc) and flips that change's
+   `00-implementation-plan.md` row to `archived` + ADR link. No `## Decisions`
+   → no ADR (expected). Don't hand-edit the row — the promoter owns it.
+3. **Write the outcome record** to repo-memory (`plans/memory.md`): what
    merged, findings-per-channel counts (CI / CodeRabbit / human), and any
    escalations.
-5. **Remove the worktree** for the merged task:
+4. **Remove the worktree** for the merged task:
    ```bash
    git worktree remove .worktrees/<task_id>
    ```
@@ -204,11 +204,11 @@ Workflow 2 left three PRs open: **#41, #42** (implementer PRs, worktrees
    Human approves #43 and says "merge #43." Now (a)+(b)+(c)+(d) all hold →
    the human's grant is satisfied; merge #43. #41/#42 stay blocked until each
    gets BOTH a human approval and an explicit instruction.
-6. **Post-merge (#43).** Close `Closes #38`; set its row in
-   `plans/development/00-implementation-plan.md` to done; trigger the OpenSpec
-   archive; write the outcome to `plans/memory.md` (findings: CI 0 /
-   CodeRabbit 0 / human 0; escalations 0); `git worktree remove` — #43 is
-   buhhdy's own docs commit with no task worktree, so skip that line.
+6. **Post-merge (#43).** Close `Closes #38`; `openspec archive` + `promote-adr.ts`
+   (its index row flips to `archived`; one ADR lands in `plans/architecture/` if
+   #38's design had a `## Decisions`); write the outcome to `plans/memory.md`
+   (CI 0 / CodeRabbit 0 / human 0; escalations 0); `git worktree remove` — #43 is
+   buhhdy's own docs commit with no task worktree, so skip that.
 7. **Janitor.** `for-each-ref refs/heads/buhhdy/` lists `buhhdy/t-41`,
    `buhhdy/t-42`, and an old `buhhdy/t-12` (merged 120 days ago, no commits
    since). Only `t-12` is >90d → deleted and logged. `t-41`/`t-42` are recent

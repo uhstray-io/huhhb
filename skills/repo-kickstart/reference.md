@@ -294,7 +294,7 @@ repo-kickstart — <owner>/<repo> (<greenfield|brownfield>, <stack>)
   ARCHITECTURE.md              ✅ | ➕
   plans/ tree + index          ✅ | ➕
   OpenSpec init + registration ✅ | ➕  (validate: <pass | N pending>)
-  plans/memory.md seeded       ✅ | ➕
+  .claude/memory/ seeded       ✅ | ➕
   Honcho workspace scoped      ✅ | ⚠ skipped (not configured)
   .coderabbit.yaml             ✅ | ➕
   branch protection            ✅ present | ❌ absent — commands emitted + gap recorded | N/A no remote yet
@@ -317,7 +317,7 @@ unverified rows are failures.
 | KICKSTART / ARCHITECTURE | file exists |
 | plans tree | `plans/development/00-implementation-plan.md` + both READMEs exist |
 | OpenSpec | `plans/development/openspec/config.yaml` + `.openspec-store/store.yaml` (id `<repo>`) exist; `openspec store list` includes `<repo>` (else re-run `register` — it no-ops) |
-| plans/memory.md | file exists with the observational-only header |
+| .claude/memory/ | MEMORY.md exists; AGENTS.md carries the `## Repo Memory` block; a kickstart outcome record exists |
 | Honcho | evolve reports the workspace scoped (or env absent → skipped) |
 | .coderabbit.yaml | file exists |
 | branch protection | `gh api …/protection` returns 200 |

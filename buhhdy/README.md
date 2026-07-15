@@ -177,8 +177,8 @@ step) in `skills/core-workflows/SKILL.md`:
    repo-memory) -> executing-plans -> subagent-driven-development (claims
    the issue) -> dispatching-parallel-agents (per task: implement -> local
    cross-review -> resolve -> PR with `Closes #N` + test evidence) ->
-   ponytail:audit -> grounding (writes repo-memory via its skill; offers
-   nexus saves, human confirms) -> update docs ->
+   ponytail:audit -> grounding (writes repo-memory via its skill; nexus
+   saves via the `memory` skill, using MemPalace's own gates) -> update docs ->
    commit + push -> open a PR -> pr-shepherd (terminal).
 
 Both end with deliverable PRs, never a merge. Workflow 2's PRs (the

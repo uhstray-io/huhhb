@@ -6,6 +6,15 @@
 
 ---
 
+## Project conventions
+
+- **[AGENTS.md](AGENTS.md)** — canonical operating instructions for AI agents (`CLAUDE.md` mirrors it).
+- **[KICKSTART.md](KICKSTART.md)** — set up, run, and develop here.
+- **[ARCHITECTURE.md](ARCHITECTURE.md)** — current-state architecture.
+- **[plans/](plans/)** — development plans (OpenSpec store) and architecture ADRs.
+
+---
+
 ## Install
 
 ```bash

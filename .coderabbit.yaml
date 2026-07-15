@@ -1,0 +1,22 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+language: en-US
+reviews:
+  profile: chill
+  request_changes_workflow: false
+  high_level_summary: true
+  poem: false
+  review_status: true
+  auto_review:
+    enabled: true
+    drafts: false
+  path_instructions:
+    - path: "skills/**/SKILL.md"
+      instructions: "Check frontmatter (name, description with embedded trigger phrases; no triggers field), broken links, and body clarity. Do not nitpick prose style."
+    - path: "**/*.md"
+      instructions: "Prose clarity and broken links only; do not nitpick style."
+    - path: "scripts/**/*.ts"
+      instructions: "TypeScript run directly under Node type stripping — erasable syntax only (no enum/namespace), Node stdlib only, no new runtime deps. Flag anything that breaks those."
+  tools:
+    markdownlint: { enabled: true }
+    gitleaks: { enabled: true }
+    eslint: { enabled: true }

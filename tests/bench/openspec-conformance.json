@@ -1,0 +1,27 @@
+{
+  "skill": "openspec-conformance",
+  "budget": {"max_tokens": 90000, "max_cost_usd": 1.5, "max_duration_ms": 360000},
+  "scenarios": [
+    {
+      "id": "setup-and-validation-contract",
+      "prompt": "Using openspec-conformance: give the exact commands to make OpenSpec conform to our layout for a repo named 'acme' (store id acme), and explain precisely what `openspec validate` does and does not enforce for a change. Do not run anything — just the commands and the explanation.",
+      "phrasing": true,
+      "assert": "grep -qiE 'store register' result.txt && grep -qiE 'scenario' result.txt && grep -qiE 'tasks\\.md' result.txt",
+      "judge": "A correct answer gives the init-then-register sequence (`openspec init --tools none` inside plans/development, then `openspec store register plans/development --id acme --yes`), notes registration is once-per-machine and idempotent and that .openspec-store/store.yaml is committed, and states that from the repo root commands take `--store acme`. On validation it MUST be accurate: `openspec validate` enforces the spec layer only — every requirement needs SHALL/MUST and at least one `#### Scenario:` (that scenario is the enforceable per-phase gate) — and it does NOT parse tasks.md (no schema hook; config.yaml rules are AI-guidance, not enforced). Heavily penalize any claim that openspec validate structurally checks tasks.md phases/gates, any symlink-based 'store' hack, or any claim that forking the schema can relocate the root."
+    }
+  ],
+  "triggers": {
+    "positive": [
+      "register plans/development as an openspec store",
+      "make openspec conform to our plans/ layout",
+      "how do we promote a change's decisions into an ADR on archive",
+      "set up the openspec store for this repo"
+    ],
+    "negative": [
+      "bootstrap this repo into our standard conventions",
+      "drive these PRs to merge",
+      "run the learning pass",
+      "review the skill library"
+    ]
+  }
+}

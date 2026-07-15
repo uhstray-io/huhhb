@@ -3,7 +3,7 @@
   "publisher": "uhstray-io",
   "displayName": "Uhstray Skills Hub",
   "description": "Uhstray.io's curated Claude Code skills marketplace — workflows and automation for engineering teams.",
-  "version": "0.5.9",
+  "version": "0.5.10",
   "homepage": "https://github.com/uhstray-io/huhhb",
   "license": "MIT",
   "skills": [
@@ -304,6 +304,14 @@
       "version": "0.1.0"
     },
     {
+      "name": "pr-shepherd",
+      "path": "skills/pr-shepherd/SKILL.md",
+      "description": "Use when buhhdy's Development workflow has open PRs that need driving from creation to merge and cleaned-up afterward — the terminal step once PRs are open. Monitors CI and CodeRabbit/human review, routes findings back to the original implementer, gates the merge on a human approval (never merges autonomously), then runs post-merge close-out: closes issues, updates the plan, archives the change, removes the worktree, and janitors stale buhhdy/* branches.",
+      "category": "review",
+      "tags": ["review", "pr", "ci", "coderabbit", "merge", "cleanup", "buhhdy"],
+      "version": "0.1.0"
+    },
+    {
       "name": "evolve",
       "path": "skills/evolve/SKILL.md",
       "description": "Cross-session memory protocol backed by Honcho — how to recall what evolve has learned about you, persist durable facts, and route knowledge to the right memory stratum. Inert until configured.",
@@ -349,6 +357,22 @@
       "description": "Inventory every skill across tiers (repo/user/plugin), draw the relationships between them (overlaps, complements, composes, supersedes, gaps), recommend augment-vs-build, avoid duplicates, and promote a user skill to the repository.",
       "category": "memory",
       "tags": ["memory", "skills", "graph", "inventory", "interoperability"],
+      "version": "0.1.0"
+    },
+    {
+      "name": "repo-kickstart",
+      "path": "skills/repo-kickstart/SKILL.md",
+      "description": "Bootstrap any repo — greenfield or brownfield — into Uhstray's standard development conventions: the README/AGENTS/KICKSTART/ARCHITECTURE doc set, the plans/ tree, OpenSpec store registration, three-strata memory (plans/memory.md + buhhdy registry + Honcho), a CodeRabbit config, and a branch-protection check. Idempotent and non-destructive.",
+      "category": "dev",
+      "tags": ["dev", "bootstrap", "conventions", "onboarding", "memory", "openspec"],
+      "version": "0.1.0"
+    },
+    {
+      "name": "openspec-conformance",
+      "path": "skills/openspec-conformance/SKILL.md",
+      "description": "Use when making OpenSpec conform to Uhstray's plans/development + plans/architecture layout — the once-per-repo store-registration setup, the house openspec/config.yaml rules, and the archive-time ADR promotion into plans/architecture/. The single source of truth repo-kickstart (setup) and pr-shepherd (archive) both call.",
+      "category": "dev",
+      "tags": ["dev", "openspec", "conventions", "adr", "planning", "buhhdy"],
       "version": "0.1.0"
     }
   ]

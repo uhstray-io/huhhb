@@ -17,7 +17,7 @@ All available skills in the Uhstray.io marketplace.
 
 ## Memory Skills
 
-Powered by [MemPalace](https://github.com/mempalace/mempalace). Requires `uv tool install mempalace`.
+Powered by [MemPalace](https://github.com/mempalace/mempalace). Runs via the plugin's configured MCP (uvx) server, or install the CLI with `uv tool install mempalace` — either setup is valid; a configured MCP server without the CLI is not a missing install.
 
 | Skill | Command | Description |
 |-------|---------|-------------|

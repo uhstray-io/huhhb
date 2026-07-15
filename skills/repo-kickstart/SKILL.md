@@ -95,7 +95,7 @@ below remain this skill's own:
 
 ### 6. Verification checklist
 End by printing the pass/fail table (format in `reference.md`): convention
-files present, plans tree, OpenSpec validates, memory seeded (2 strata: .claude/memory/ + Honcho),
+files present, plans tree, OpenSpec validates, memory verified (memory-onboarding project-scope matrix appended + kickstart outcome record + Honcho scoping),
 CodeRabbit config, branch-protection status. Branch protection is expected
 **red with instructions** on a fresh repo — that is a pass for the run.
 

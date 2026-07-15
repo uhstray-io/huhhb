@@ -7,3 +7,7 @@ plan/
 .claude/CONTINUE.md
 .codex/
 .teach.zip
+
+# npm install --no-save vendoring for the optional Honcho SDK — never committed
+node_modules/
+package-lock.json

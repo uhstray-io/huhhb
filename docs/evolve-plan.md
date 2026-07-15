@@ -44,6 +44,16 @@ context, before the first user turn) → **adapt** (`/evolve-review` — triage
 into overlays / repo-memory / conclusions) → **promote** (quality gates
 G0–G2 below).
 
+### Onboarding
+
+`node ${CLAUDE_PLUGIN_ROOT}/scripts/evolve/honcho_client.ts init` — run bare on
+a terminal, it prompts for the endpoint URL, the workspace, and the API key
+(**key entry is hidden** — never echoed, never a flag, never in shell history),
+writes the 0600 config, and does a `/health` connectivity check. A blank
+endpoint selects local mode. The flag form below stays the non-interactive path
+for automation/CI; `init --interactive` forces the prompt (reads piped
+answers positionally when not a TTY).
+
 ### Modes
 
 **Local (default — no server):** observations land in `journal.jsonl`; the
@@ -58,6 +68,20 @@ node ${CLAUDE_PLUGIN_ROOT}/scripts/evolve/honcho_client.ts init --local
 **Self-hosted [Honcho](https://honcho.dev)** (privacy at full capability):
 run the server and deriver worker with your own LLM keys (see honcho.dev
 docs), then `init --url http://your-host:8000` and `smoke`.
+
+**uhstray self-hosted instance** (agent-cloud, 2026-07-07): deployed at
+**`https://memory.uhstray.io`** — rootless podman (api + deriver + postgres/pgvector
++ redis), LLM via Gemini interim → skynet later, **JWT auth on `/v3`** with
+Authentik forward_auth only on `/docs`. Spec:
+`agent-cloud/plan/development/11-tududi-honcho-deployment.md`. Point evolve at it
+with `HONCHO_URL=https://memory.uhstray.io`, `HONCHO_WORKSPACE=uhstray`, and a
+workspace-scoped `HONCHO_API_KEY` (JWT — **not** OIDC; API callers are
+non-interactive). **Team collaboration:** one shared workspace (`uhstray`), each
+member a **peer** (stable id), a **session** per thread. Mint each member a
+workspace-scoped JWT (`generate_jwt.py --workspace uhstray` or `POST /v3/keys`),
+store it at OpenBao `secret/services/honcho/tokens/<member>`, and hand it to that
+member's evolve config — durable, shared-yet-scoped cross-session memory per
+teammate. This satisfies R8's "needs a Honcho" dependency (see Roadmap).
 
 **Managed** ([api.honcho.dev](https://honcho.dev)): `init --api-key <key>`.
 What the managed service means for your data (verified 2026-07-06 against
@@ -397,7 +421,7 @@ boundary; Honcho output is *signal, never authority*.
 workspace where **each repo skill is a peer** whose representation is what
 the fleet has learned about it; devices are observer peers with
 observe-others isolation. Devices deliver screened observations
-(`skill:<name>` targets — the channel already exists); the deriver builds
+(`skill__<name>` targets — the channel already exists); the deriver builds
 per-skill representations; dialectic queries ("what corrections recur for
 skill X?") feed G2/F2 and the curator's improvement queue; distilled
 conclusions land as evidence in refine PRs. Hard trust boundary the
@@ -412,6 +436,26 @@ accumulating lessons across uses, loaded with the skill); refine-loop
 automation (headless library pass on a cadence; bench-regression →
 auto-staged refine proposal with before/after numbers); fleet parity
 (telemetry-driven curator PRs; per-skill eval sets in CI as the merge gate).
+
+**R10 — Hindsight as a complementary analytical layer** (future; no switch
+required): a second memory backend can run ALONGSIDE Honcho because the
+journal is the write-ahead log and every backend is a derived *view* of it —
+GR2 screens once, before any fan-out, and neither backend is ever authority.
+Roles, not replicas: **Honcho stays the who-layer** (peer representations,
+dialectic, injected session context — R8) and **Hindsight becomes the
+what-layer** (MIT server + TS client; entity/temporal/causal graph with
+four-way retrieval) serving the analytical queries Honcho is weakest at —
+"which corrections recur for skill X over time", cross-skill causal patterns,
+fleet-wide G2/F2 analytics. Adoption trigger: the day a G2/fleet query
+visibly strains Honcho, stand Hindsight up in server mode and hydrate it
+from the journal with the replay mechanism (idempotent, complete history —
+waiting costs zero data). Costs to accept: double LLM extraction per
+observation (its retain + Honcho's deriver) and a query-routing rule at the
+client choke point (user-context reads → Honcho; skill-analytics reads →
+Hindsight). Never point both at the SAME job — duplicate spend for two
+subtly divergent answers. Its Python-only embedded mode is unusable under
+the language policy; server mode is the only fit, so it competes with
+neither local mode nor the guardrail/gate layers.
 
 **Deliberate non-goals** (unchanged): DAG context compression (session
 context suffices); embedding retrieval; auto-merge without human approval;
@@ -432,6 +476,47 @@ through gated proposals).
 
 Record every evolve change here: date, what changed, roadmap item or
 provenance.
+
+- **2026-07-12** — Replay hardening (review finding on the re-land PR): the
+  cursor now checkpoints after every delivered session — advancing to the
+  highest contiguous line whose session is delivered-or-quarantined — so a
+  mid-batch delivery failure never resends earlier sessions on retry.
+  All-quarantined batches still advance the cursor (view decision, not a
+  retry queue). Failure-path test proves exactly-once delivery across a
+  fail-and-retry cycle.
+
+- **2026-07-09** — First live writes to the team instance (R8): smoke found a
+  real contract violation — Honcho constrains peer/session ids to
+  ^[a-zA-Z0-9_-]+$, so the id scheme moved from `:` to `__`
+  (`agent__claude-code`; legacy `:` input auto-normalized via to_peer_id).
+  Journal replay hydrated `uhstray`: 220 observations across 163 sessions
+  delivered, 21 GR2-quarantined held, re-run idempotent (0). Storage verified
+  by round-trip read; **deriver is not consuming** (queue stuck at 222
+  pending / 0 completed — server-side, .190 deriver worker or its Gemini
+  config). First real /evolve-distill pass: 16 healthy skill-usage classes
+  (correctly no create), one friction class (superpowers:executing-plans, 2
+  sessions → future review patch), and one genuine gap distilled —
+  coderabbit-review-triage overlay proposal staged in pending/ with bundled
+  eval (2-session evidence). status now prints deriver queue counts.
+
+- **2026-07-09** — Interactive onboarding: `honcho_client.ts init` run bare on
+  a terminal now prompts for endpoint + workspace + API key (key entry hidden
+  via masked readline; positional piped read on non-TTY for automation/tests),
+  writes the 0600 config, and runs a /health check. Keeps the secret off the
+  agent transcript — the evolve skill directs users to run `init` rather than
+  paste a key into chat. 3 onboarding tests (88 total). Version 0.5.8.
+
+- **2026-07-09** — R8 device-level begun against the self-hosted instance:
+  SDK installed (--no-save; node_modules gitignored), the two SDK-gated
+  flusher tests ran for the first time (pass), and `flush.ts
+  --replay-journal` shipped — the cutover bootstrap that delivers the
+  pre-existing local journal to a new Honcho once (GR2-screened,
+  cursor-idempotent, evidence invariant intact). Live smoke is blocked on
+  infra, not code: Cloudflare challenges API clients on memory.uhstray.io
+  (403 before Honcho is reached — /health proves the service healthy via
+  Caddy-direct) and the phase-4 team JWT is not yet minted. R10 added:
+  Hindsight as a complementary analytical layer (who-layer/what-layer split,
+  journal fan-out, adoption trigger + costs) — future work, no switch.
 
 - **2026-07-07** — Roadmap batch shipped (R1, R2, R4, R5, R6, R7): derive-stage
   filters + delta-only derivation in the review/distill prose; four-axis merge

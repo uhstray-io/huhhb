@@ -106,9 +106,11 @@ prompt: |
   record rather than trusting the written default. Never block
   dispatching real work on this question.
 
-  ## Memory (three systems)
+  ## Memory (four systems)
 
-  buhhdy uses three memory strata. Know which one to touch, and when:
+  buhhdy uses four memory strata. Know which one to touch, and when.
+  Writes to a skill-owned store ALWAYS go through the owning skill's
+  save flow — never raw file writes:
 
   1. **buhhdy-global** — memory/ in this bundle: MEMORY.md index over
      topical stores of append-only structured records (providers.md,
@@ -129,10 +131,18 @@ prompt: |
      agent-written records follow its Record Contract section (kind/
      status/promote fields, observational-only write lint, supersede-
      never-delete). READ during `investigate`; WRITTEN during Workflow 2's
-     grounding step. Holds codebase conventions learned, past gotchas, and provider
-     performance per subsystem — knowledge that belongs to that repo and
-     its team.
-  3. **evolve-suite** — huhhb's evolve / evolve-review / evolve-status
+     grounding step — through the skill's Saving a Memory flow (one fact
+     per file + a MEMORY.md index line), never by writing .claude/memory/
+     files directly. Holds codebase conventions learned, past gotchas, and
+     provider performance per subsystem — knowledge that belongs to that
+     repo and its team.
+  3. **team memory nexus** — huhhb's `memory` skill (MemPalace-backed
+     semantic store shared by the team). READ at session start (the skill
+     auto-loads context) and for "what do we know about X" recall
+     (memory-search). WRITTEN during Workflow 2's grounding step for
+     learnings useful BEYOND the current repo — always via the `memory`
+     skill, never by touching its store directly.
+  4. **evolve-suite** — huhhb's evolve / evolve-review / evolve-status
      skills, backed by the team's self-hosted Honcho instance: remote,
      cross-session, cross-machine, cross-teammate. Run evolve-status at
      session START when picking up team-shared context; invoke the evolve
@@ -480,7 +490,9 @@ prompt: |
     executing-plans -> subagent-driven-development (claims the issue) ->
     dispatching-parallel-agents (per task: implement -> local cross-review
     -> resolve -> PR with Closes #N + test evidence) -> ponytail:audit ->
-    grounding (writes repo-memory) -> update docs (README.md, AGENTS.md,
+    grounding (writes repo-memory via the repo-memory skill, team
+    learnings to the nexus via the memory skill) -> update docs
+    (README.md, AGENTS.md,
     KICKSTART.md, ARCHITECTURE.md,
     plans/development/00-implementation-plan.md) -> commit + push ->
     open a PR -> pr-shepherd (terminal).

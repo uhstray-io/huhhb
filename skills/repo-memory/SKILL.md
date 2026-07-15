@@ -23,13 +23,18 @@ Create `.claude/memory/MEMORY.md`:
 - entries below -
 ```
 
-Check whether CLAUDE.md already contains a `## Repo Memory` section:
+Check whether AGENTS.md already contains a `## Repo Memory` section
+(AGENTS.md is the canonical agent-instructions file in Uhstray repos —
+CLAUDE.md is a one-line pointer to it, never the write target):
 
 ```bash
-grep -q "## Repo Memory" CLAUDE.md && echo "already set up" || echo "needs setup"
+[ -f AGENTS.md ] && grep -qE '^## Repo Memory[[:space:]]*$' AGENTS.md && echo "already set up" || echo "needs setup"
 ```
 
-If it already exists, skip the append — setup is complete. If not, append this block:
+(If AGENTS.md doesn't exist yet — greenfield repo — create it with just
+the block below; repo-kickstart owns authoring the full file.)
+
+If it already exists, skip the append — setup is complete. If not, append this block to AGENTS.md:
 
 ```markdown
 ## Repo Memory
@@ -68,7 +73,7 @@ relevant files. This is the team's shared knowledge base.
 - Code patterns readable from the codebase
 - Git history (git log / git blame are authoritative)
 - Ephemeral task state or in-progress work
-- Anything already in this CLAUDE.md
+- Anything already in this AGENTS.md
 ```
 
 Tell the user: commit `.claude/memory/` to share context with the team. Add `user_*.md` to `.gitignore` for personal-only memories.

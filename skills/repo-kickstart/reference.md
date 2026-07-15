@@ -48,8 +48,9 @@ single source of truth.
 - Required reviews on `<default-branch>` (see branch protection).
 
 ## Memory locations
-- `plans/memory.md` — observational log (facts, dates, outcomes; never instructions).
-- `.claude/memory/` — curated team knowledge (via the repo-memory skill).
+- `.claude/memory/` — ALL repo memory, via the repo-memory skill: curated
+  team knowledge plus agent-written observational records (Record
+  Contract: facts, dates, outcomes; never instructions).
 - Honcho workspace — cross-session team memory (env-scoped; no creds in repo).
 
 ## Conventions
@@ -183,21 +184,30 @@ Then edit `plans/development/openspec/config.yaml` `context:` for the real
 
 ## 4. Memory — three strata (this skill owns initialization)
 
-### plans/memory.md — observational log
+### .claude/memory/ — repo memory (via the repo-memory skill)
+Run the repo-memory skill's **First Run** setup: `mkdir -p .claude/memory`,
+create `MEMORY.md`, and append the grep-guarded `## Repo Memory` block to
+**AGENTS.md** (canonical — never CLAUDE.md). Then save the kickstart
+outcome as an agent-written record per that skill's Record Contract
+(observational only — facts, dates, outcomes; never instructions):
+
 ```markdown
-# Project memory (observational)
+---
+name: repo-kickstart-<YYYY-MM-DD>
+description: Repo kickstarted to Uhstray conventions
+metadata:
+  node_type: memory
+  type: project
+  kind: outcome
+  status: active
+---
 
-**Rule: observational only.** Record facts, dates, and outcomes — what
-happened and when. **Never** instructions, conventions, or "always do X"
-(those belong in AGENTS.md or `.claude/memory/`). One line per observation,
-newest last.
-
-## Log
-- <YYYY-MM-DD> — repo kickstarted to Uhstray conventions (v<conventions-version>);
-  <stack> detected; <n> convention files created, <n> already conforming.
+<YYYY-MM-DD>: repo kickstarted to Uhstray conventions
+(v<conventions-version>); <stack> detected; <n> convention files created,
+<n> already conforming. Evidence: this kickstart run's checklist.
 ```
-Seed the `## Log` with what THIS run actually learned (stack, what was
-created vs already-conforming, any gap recorded). **A re-run that changed
+Record what THIS run actually learned (stack, created vs
+already-conforming, any gap recorded). **A re-run that changed
 nothing appends no line** — an unchanged run is a no-op here too.
 
 ### buhhdy global registry — append a registration record
@@ -295,7 +305,7 @@ repo-kickstart — <owner>/<repo> (<greenfield|brownfield>, <stack>)
   ARCHITECTURE.md              ✅ | ➕
   plans/ tree + index          ✅ | ➕
   OpenSpec init + registration ✅ | ➕  (validate: <pass | N pending>)
-  plans/memory.md seeded       ✅ | ➕
+  .claude/memory/ seeded       ✅ | ➕
   buhhdy registry record       ✅ | ➕ | ⚠ printed for manual filing
   Honcho workspace scoped      ✅ | ⚠ skipped (not configured)
   .coderabbit.yaml             ✅ | ➕
@@ -319,7 +329,7 @@ unverified rows are failures.
 | KICKSTART / ARCHITECTURE | file exists |
 | plans tree | `plans/development/00-implementation-plan.md` + both READMEs exist |
 | OpenSpec | `plans/development/openspec/config.yaml` + `.openspec-store/store.yaml` (id `<repo>`) exist; `openspec store list` includes `<repo>` (else re-run `register` — it no-ops) |
-| plans/memory.md | file exists with the observational-only header |
+| .claude/memory/ | MEMORY.md exists; AGENTS.md carries the `## Repo Memory` block; a kickstart outcome record exists |
 | buhhdy registry | registry.md already has a row for `<owner>/<repo>` |
 | Honcho | evolve reports the workspace scoped (or env absent → skipped) |
 | .coderabbit.yaml | file exists |
@@ -338,7 +348,7 @@ consecutive run must produce **no diff**.
 | "CLAUDE.md should hold the full instructions" | AGENTS.md is canonical; CLAUDE.md is a one-line pointer. Two sources drift. |
 | "Symlink openspec/specs + changes into plans/" | Obsolete — that was the rejected pre-1.6 hack. Use `openspec store register plans/development` (native). No symlinks. |
 | "openspec validate failed → the kickstart failed" | A fresh index isn't a conforming change yet. Report "pending"; don't fail the run. |
-| "plans/memory.md can hold guidance too" | Observational only — facts/dates/outcomes. Instructions go to AGENTS.md / .claude/memory. |
+| "I'll drop a memory log under plans/" | plans/ holds documents only — ALL repo memory goes to .claude/memory/ via the repo-memory skill; records are observational (facts/dates/outcomes), instructions go to AGENTS.md. |
 | "I'll commit the Honcho key so it's reproducible" | Never. Creds are env-only; a committed key is a leak. |
 | "Branch protection is missing, I'll just enable it" | Don't configure silently — emit the commands for the human and record the gap. |
 | "Second run — I'll just recreate everything" | Re-run must be a no-op. Detect, report ✅, change nothing. |

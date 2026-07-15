@@ -133,9 +133,9 @@ merge; report which one is missing and wait.
    `## Decisions` (never the full doc) and flips that change's
    `00-implementation-plan.md` row to `archived` + ADR link. No `## Decisions`
    → no ADR (expected). Don't hand-edit the row — the promoter owns it.
-3. **Write the outcome record** to repo-memory (`plans/memory.md`): what
-   merged, findings-per-channel counts (CI / CodeRabbit / human), and any
-   escalations.
+3. **Write the outcome record** via the `repo-memory` skill (buhhdy's repo
+   memory standard — `.claude/memory/`, committed to git): what merged,
+   findings-per-channel counts (CI / CodeRabbit / human), and escalations.
 4. **Remove the worktree** for the merged task:
    ```bash
    git worktree remove .worktrees/<task_id>
@@ -164,15 +164,14 @@ while read -r branch ts; do
 done
 ```
 
-Log every deletion (branch + age) to repo-memory (`plans/memory.md`).
-**Never janitor a branch outside the `buhhdy/*` namespace.**
+Log every deletion (branch + age) via the `repo-memory` skill
+(`.claude/memory/`). **Never janitor a branch outside the `buhhdy/*` namespace.**
 
 ## Provider routing
 
-Shepherding is buhhdy-level (monitoring, `gh` plumbing, docs/memory writes —
-permitted non-code authoring, not dispatched). Fix-tasks route through the
+Shepherding is buhhdy-level (not dispatched). Fix-tasks route through the
 standard Provider Routing Decision Tree; re-reviews follow the Cross-Review
-Rule (opposite vendor from the implementer). Suggested tiers:
+Rule (opposite vendor). Suggested tiers:
 
 | Activity | Tier |
 |----------|------|
@@ -206,8 +205,8 @@ Workflow 2 left three PRs open: **#41, #42** (implementer PRs, worktrees
    gets BOTH a human approval and an explicit instruction.
 6. **Post-merge (#43).** Close `Closes #38`; `openspec archive` + `promote-adr.ts`
    (its index row flips to `archived`; one ADR lands in `plans/architecture/` if
-   #38's design had a `## Decisions`); write the outcome to `plans/memory.md`
-   (CI 0 / CodeRabbit 0 / human 0; escalations 0); `git worktree remove` — #43 is
+   #38's design had a `## Decisions`); write the outcome via `repo-memory` to
+   `.claude/memory/` (CI 0 / CodeRabbit 0 / human 0; escalations 0); `git worktree remove` — #43 is
    buhhdy's own docs commit with no task worktree, so skip that.
 7. **Janitor.** `for-each-ref refs/heads/buhhdy/` lists `buhhdy/t-41`,
    `buhhdy/t-42`, and an old `buhhdy/t-12` (merged 120 days ago, no commits

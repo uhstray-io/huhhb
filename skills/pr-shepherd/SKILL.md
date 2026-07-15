@@ -53,7 +53,8 @@ is warn-and-continue.
    ```bash
    gh api -X PUT repos/{owner}/{repo}/branches/{branch}/protection --input - <<'JSON'
    {"required_status_checks": null, "enforce_admins": true,
-    "required_pull_request_reviews": {"required_approving_review_count": 1},
+    "required_pull_request_reviews": {"required_approving_review_count": 1,
+                                      "dismiss_stale_reviews": true},
     "restrictions": null}
    JSON
    ```
@@ -74,7 +75,7 @@ per-PR, in order.
 | 4 | **Fix** | Dispatched | the **ORIGINAL implementer** sub-agent (same model, same worktree/branch/title) | implement | per task | Re-dispatch the same conversation so it keeps its worktree and updates its existing PR (see `cross-review` step 5). A fresh title spawns a memoryless worker — never do that |
 | 5 | **Re-review the fix** | Dispatched | opposite vendor (Cross-Review Rule) | review | STANDARD | The fix diff is cross-reviewed by a different vendor, same discipline as the original. Reviewer surfaces, never edits |
 | 6 | **Escalation gate** | buhhdy-level | buhhdy | — | — | 2-attempts-then-human (below). No autonomous attempt #3 |
-| 7 | **Merge gate** | buhhdy-level | **human merges** | — | — | All four conditions below hold. There is no autonomous-merge path |
+| 7 | **Merge gate** | buhhdy-level | **human authorizes; buhhdy executes** | — | — | All four conditions below hold. There is no autonomous-merge path |
 | 8 | **Post-merge close-out** | buhhdy-level | buhhdy | — | — | The ordered checklist below |
 | 9 | **Branch janitor** | buhhdy-level | buhhdy | — | LIGHTWEIGHT | Once per run, across `buhhdy/*` only (below) |
 
@@ -104,18 +105,23 @@ buhhdy may merge a PR **only** when ALL of these hold:
 
 Conditions (c) and (d) are separate and both required: a GitHub review
 approval never substitutes for the instruction, and the instruction never
-substitutes for the per-PR review. Condition (c) means a **human** — CodeRabbit
-and other bots post reviews too; filter them out. An approval from
-`coderabbitai[bot]` or any `*[bot]` / `Bot`-type author does **not** satisfy
-(c) (guard `is_bot` and a `[bot]` login suffix, defaulting a missing `is_bot`
-to non-bot so an absent field can't slip through):
+substitutes for the per-PR review. Two traps in condition (c):
+
+- **Humans only.** CodeRabbit and other bots post reviews too; an approval
+  from `coderabbitai[bot]` or any `*[bot]` login does **not** count.
+- **Current head only.** An approval on an earlier commit is stale — a push
+  after it must re-earn approval. Count only approvals whose `commit_id` is
+  the PR's current head, and set `dismiss_stale_reviews: true` in the
+  branch-protection payload (Preconditions) so GitHub enforces it too.
 
 ```bash
-gh pr view <pr> --json reviews \
-  --jq '[.reviews[] | select(.state=="APPROVED"
-          and ((.author.is_bot // false) | not)
-          and ((.author.login // "") | endswith("[bot]") | not))] | length'
+head=$(gh pr view <pr> --json headRefOid --jq '.headRefOid')
+gh api repos/{owner}/{repo}/pulls/<pr>/reviews --paginate \
+  --jq "[.[] | select(.state==\"APPROVED\" and .commit_id==\"$head\"
+          and ((.user.login) | endswith(\"[bot]\") | not))] | length"
 ```
+
+A non-zero count = a current, human approval exists (condition (c)).
 
 **Human review is always required. There is no autonomous-merge path.**
 buhhdy's autonomy over commit/push/PR-create does **not** extend to merge —
@@ -144,7 +150,10 @@ merge; report which one is missing and wait.
 ## Branch retention & janitor
 
 **Retention, not deletion-on-merge.** A merged branch is kept even when
-inactive. A branch is deleted **only** after **90 days with no commits**.
+inactive. A branch is deleted **only** after **90 days with no commits** AND
+only if it is already **merged into the default branch** — an unmerged stale
+branch may hold recoverable work, so it is skipped and reported, never
+force-deleted.
 
 Each pr-shepherd run does one janitor pass. The namespace guard is structural:
 the ref pattern enumerates **only** `refs/heads/buhhdy/`, so nothing outside
@@ -155,17 +164,24 @@ before deletion as a belt-and-suspenders guard.
 # ponytail: git for-each-ref over refs/heads/buhhdy/ can only ever yield
 # buhhdy/* branches — non-buhhdy branches are unreachable by construction.
 cutoff=$(( $(date +%s) - 90*24*3600 ))
+default=$(git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null | sed 's#^origin/##')
+default=${default:-main}
 git for-each-ref --format='%(refname:short) %(committerdate:unix)' refs/heads/buhhdy/ |
 while read -r branch ts; do
-  case "$branch" in buhhdy/*) ;; *) continue ;; esac   # re-assert namespace
-  [ "$ts" -lt "$cutoff" ] || continue                  # keep if <90d inactive
-  git branch -D "$branch"
-  echo "janitored $branch (last commit $(( ( $(date +%s) - ts ) / 86400 ))d ago)"
+  case "$branch" in buhhdy/*) ;; *) continue ;; esac       # re-assert namespace
+  [ "$ts" -lt "$cutoff" ] || continue                      # keep if <90d inactive
+  if git merge-base --is-ancestor "$branch" "origin/$default"; then
+    git branch -D "$branch"                                # merged → safe to delete
+    echo "janitored $branch (merged, last commit $(( ($(date +%s) - ts) / 86400 ))d ago)"
+  else
+    echo "SKIP $branch — >90d but NOT merged into $default; reporting, not deleting"
+  fi
 done
 ```
 
-Log every deletion (branch + age) via the `repo-memory` skill
-(`.claude/memory/`). **Never janitor a branch outside the `buhhdy/*` namespace.**
+Log every deletion (branch + age) and every skipped-unmerged branch via the
+`repo-memory` skill (`.claude/memory/`). **Never janitor a branch outside the
+`buhhdy/*` namespace, and never force-delete an unmerged branch.**
 
 ## Provider routing
 
@@ -181,42 +197,12 @@ Rule (opposite vendor). Suggested tiers:
 
 ## Dry-run — a 3-PR fanout (acceptance narrative)
 
-Workflow 2 left three PRs open: **#41, #42** (implementer PRs, worktrees
-`.worktrees/t-41`, `.worktrees/t-42`) and **#43** (buhhdy's docs PR).
-
-1. **Preflight.** Branch protection on `main` requires 1 review → passes.
-   `.coderabbit.yaml` present. Stage-1 cross-review records exist for all
-   three branches. Shepherd all three concurrently.
-2. **Monitor.** Set timers; end the turn. Wakes: #41 CI red (1 test);
-   CodeRabbit leaves 2 findings on #42; #43 clean, no findings.
-3. **#41 — fix attempt 1.** Re-dispatch the original implementer (same model,
-   `title=t-41`) to fix the failing test. It pushes; CI still red. **Attempt
-   2** (same model): CI green. Fix diff cross-reviewed by the opposite vendor
-   → clean.
-4. **#42 — fixes.** Both CodeRabbit findings dispatched to #42's original
-   implementer; cross-reviewed clean. CI green.
-5. **Merge gate.**
-   - #43: checks green, no CHANGES_REQUESTED, **but no human approval yet** →
-     **merge blocked.** Report "waiting on human review," wait.
-   - #41/#42: green and no CHANGES_REQUESTED, but no human approval → also
-     blocked.
-   Human approves #43 and says "merge #43." Now (a)+(b)+(c)+(d) all hold →
-   the human's grant is satisfied; merge #43. #41/#42 stay blocked until each
-   gets BOTH a human approval and an explicit instruction.
-6. **Post-merge (#43).** Close `Closes #38`; `openspec archive` + `promote-adr.ts`
-   (its index row flips to `archived`; one ADR lands in `plans/architecture/` if
-   #38's design had a `## Decisions`); write the outcome via `repo-memory` to
-   `.claude/memory/` (CI 0 / CodeRabbit 0 / human 0; escalations 0); `git worktree remove` — #43 is
-   buhhdy's own docs commit with no task worktree, so skip that.
-7. **Janitor.** `for-each-ref refs/heads/buhhdy/` lists `buhhdy/t-41`,
-   `buhhdy/t-42`, and an old `buhhdy/t-12` (merged 120 days ago, no commits
-   since). Only `t-12` is >90d → deleted and logged. `t-41`/`t-42` are recent
-   → **retained**. A `feature/other` branch never enters the loop.
-
-Demonstrated: correct ordering; 2-attempts-then-human escalation shape; merge
-blocked until a human approval **and** an explicit instruction exist;
-post-merge checklist executed in order; worktree removed; branches retained
-with age logged; janitor structurally confined to `buhhdy/*`.
+A full worked example — 3 PRs through monitor → fix → merge-gate → post-merge
+→ janitor, demonstrating correct ordering, 2-attempts-then-human escalation,
+a merge blocked until a current-head human approval **and** an explicit
+instruction exist, the post-merge checklist, and the janitor deleting only
+merged+inactive `buhhdy/*` branches — lives in
+[references/dry-run.md](references/dry-run.md).
 
 ## Red flags — STOP
 
@@ -227,5 +213,8 @@ with age logged; janitor structurally confined to `buhhdy/*`.
 - A third autonomous fix attempt → **stop and escalate** instead.
 - Busy-polling `gh pr checks` in a loop → use timers/inbox.
 - Any branch delete where the name doesn't start with `buhhdy/` → **stop.**
+- Force-deleting a stale branch that isn't merged into the default branch →
+  **stop**, skip and report it instead.
 - Deleting a merged branch that's <90 days inactive → retention, not
   deletion-on-merge.
+- Counting a stale (pre-last-push) or bot `APPROVED` review as condition (c).

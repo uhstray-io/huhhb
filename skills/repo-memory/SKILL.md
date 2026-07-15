@@ -157,10 +157,12 @@ Conforming rewrite:
 
 **Update rules for records (this is the whole update contract):**
 
-- Append-only: never edit a record's fact in place and never delete it.
-  Correct or refresh by writing a NEW record and flipping the old one's
-  `status` to `superseded-by:<date>` — the old record stays as history,
-  pointing forward.
+- Append-only applies to a record's content: `statement`, `evidence`, and
+  dates are immutable once written, and records are never deleted. Correct
+  or refresh by writing a replacement record. The ONE permitted in-place
+  change to an existing record is the supersession flip — a metadata-only
+  update setting the old record's `status` to `superseded-by:<date>` when
+  its replacement lands — so it stays as history, pointing forward.
 - Compaction: when a superseded chain is long-dead, a human-visible PR may
   collapse it (keep the latest record, summarize the chain in its body).
   Confirm-first; never as a side effect of a write.

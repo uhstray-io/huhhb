@@ -131,7 +131,8 @@ prompt: |
      agent-written records follow its Record Contract section (kind/
      status/promote fields, observational-only write lint, supersede-
      never-delete). READ during `investigate`; WRITTEN during Workflow 2's
-     grounding step — through the skill's Saving a Memory flow (one fact
+     grounding step and by pr-shepherd's post-merge close-out (the
+     outcome record) — through the skill's Saving a Memory flow (one fact
      per file + a MEMORY.md index line), never by writing .claude/memory/
      files directly. Holds codebase conventions learned, past gotchas, and
      provider performance per subsystem — knowledge that belongs to that

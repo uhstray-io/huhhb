@@ -25,7 +25,9 @@ front rather than discovering the cap mid-fanout.
    `fix-sse-error`, never the raw vendor name. State the scope and that it must
    work only inside `.worktrees/<task_id>`. The worker drives the task to
    green, running the tests and capturing the evidence (commands run +
-   results) — it does NOT open a PR yet; the PR comes after local
+   results), and COMMITS all of its work on the branch — cross-review
+   refuses a dirty worktree (anything staged, unstaged, or untracked) —
+   but it does NOT open a PR yet; the PR comes after local
    cross-review passes (step 4). Do not add any co-author/attribution
    trailer naming an AI tool or platform to its commits or PR description —
    normal commit messages only.

@@ -17,13 +17,20 @@ duplicated here), and pr-shepherd owns everything after PR creation
 (layer 3).
 
 ## Procedure
-1. Get the task's diff from the implementer's worktree —
+1. Verify the worktree is fully committed BEFORE taking the diff:
+   `sys_os_shell("git -C .worktrees/<task_id> status --porcelain")` must
+   return EMPTY. Staged, unstaged, or untracked files mean the branch diff
+   would miss work — send the task back to the implementer to commit
+   everything first; never review a dirty worktree. Then get the diff —
    `sys_os_shell("git -C .worktrees/<task_id> diff main...HEAD")`. (Only
    for a PR that already exists — e.g. re-reviewing a fix pushed to an
    open PR under pr-shepherd — use `gh pr diff <pr>` instead.)
 2. Run the deterministic gates first — tests / lint / typecheck via
-   `sys_os_shell`. If red, re-dispatch the implementer to drive it green first;
-   don't involve the reviewer yet.
+   `sys_os_shell`, executed FROM the task's worktree (e.g.
+   `sys_os_shell("cd .worktrees/<task_id> && <test cmd>")`) so they
+   validate the diff under review, never buhhdy's own checkout — gates run
+   anywhere else are false-green evidence. If red, re-dispatch the
+   implementer to drive it green first; don't involve the reviewer yet.
 3. Dispatch a DIFFERENT-vendor sub-agent as reviewer (Claude built it →
    `codex`, `gemini-*`, or `opencode`; Codex built it → `claude_code`,
    `gemini-*`, or `opencode`; a `gemini-*` worker built it → `claude_code`,

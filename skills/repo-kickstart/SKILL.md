@@ -64,8 +64,8 @@ From the repo root, OpenSpec commands need `--store <repo>`.
 ### 4. Memory kickstart — this skill **owns** memory initialization
 Three strata (detail + headers in `reference.md`). Path separation (hard
 rule): repo memory lives in `.claude/memory/` ONLY; `plans/` holds
-planning/architecture documents — no memory of any kind is ever written
-under `plans/`.
+planning/architecture/development/specification documents — no memory of
+any kind is ever written under `plans/`.
 - **repo-memory (`.claude/memory/`)** — run the `repo-memory` skill's
   First Run setup (MEMORY.md index; `## Repo Memory` block appended to
   AGENTS.md, grep-guarded). Agent-written records follow that skill's

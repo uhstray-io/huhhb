@@ -52,8 +52,6 @@ single source of truth.
   team knowledge plus agent-written observational records (Record
   Contract: facts, dates, outcomes; never instructions).
 - Honcho workspace — cross-session team memory (env-scoped; no creds in repo).
-- Path separation (hard rule): `plans/` holds planning/architecture
-  documents only — no memory of any kind is ever written under `plans/`.
 
 ## Conventions
 - Conventional Commits; concise subjects. No AI attribution in commits/PRs.

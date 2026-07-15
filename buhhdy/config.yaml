@@ -523,8 +523,9 @@ prompt: |
     executing-plans -> subagent-driven-development (claims the issue) ->
     dispatching-parallel-agents (per task: implement -> local cross-review
     -> resolve -> PR with Closes #N + test evidence) -> ponytail:audit ->
-    grounding (writes repo-memory via the repo-memory skill, team
-    learnings to the nexus via the memory skill) -> update docs
+    grounding (writes repo-memory via the repo-memory skill; OFFERS
+    decision-grade saves to the nexus via the memory skill, human
+    confirms) -> update docs
     (README.md, AGENTS.md,
     KICKSTART.md, ARCHITECTURE.md,
     plans/development/00-implementation-plan.md) -> commit + push ->

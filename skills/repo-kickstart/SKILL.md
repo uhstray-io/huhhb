@@ -63,10 +63,15 @@ From the repo root, OpenSpec commands need `--store <repo>`.
 
 ### 4. Memory kickstart — this skill **owns** memory initialization
 Two strata (detail + headers in `reference.md`). This skill does **not** track
-or register conformance anywhere — it is an idempotent, on-demand conform:
-- **plans/memory.md** (observational, per-project) — create with the standard
-  header whose first rule, stated in the file, is **observational-only: facts,
-  dates, outcomes — never instructions**. Seed it with what this run learned.
+or register conformance anywhere — an idempotent, on-demand conform. **Path
+separation (hard rule): repo memory lives in `.claude/memory/` ONLY; `plans/`
+holds planning/architecture/development/specification documents — no memory of
+any kind is ever written under `plans/`.**
+- **repo-memory (`.claude/memory/`)** — run the `repo-memory` skill's First Run
+  (MEMORY.md index; the `## Repo Memory` block appended to AGENTS.md,
+  grep-guarded). Records follow that skill's Record Contract, whose first rule
+  is **observational-only: facts, dates, outcomes — never instructions**. Seed
+  a kickstart outcome record with what this run learned.
 - **Honcho (team memory)** — scope the repo's workspace via the evolve-suite
   skills. **Credentials come from the environment** (`HONCHO_URL` /
   `HONCHO_API_KEY` / `HONCHO_WORKSPACE`) — **never write them into the repo.**
@@ -84,7 +89,7 @@ or register conformance anywhere — it is an idempotent, on-demand conform:
 
 ### 6. Verification checklist
 End by printing the pass/fail table (format in `reference.md`): convention
-files present, plans tree, OpenSpec validates, memory seeded (3 strata),
+files present, plans tree, OpenSpec validates, memory seeded (2 strata: .claude/memory/ + Honcho),
 CodeRabbit config, branch-protection status. Branch protection is expected
 **red with instructions** on a fresh repo — that is a pass for the run.
 

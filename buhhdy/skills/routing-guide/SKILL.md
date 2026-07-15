@@ -145,6 +145,7 @@ auth = user's OpenRouter credentials, verified via live boot + dispatch).
 | fanout                      | claude_code  | gemini       | Parallel orchestration |
 | cross-review                | opposite vendor | —         | Always cross-vendor — runs LOCALLY, before the PR exists |
 | pr-shepherd                 | buhhdy-level | —            | Post-PR lifecycle owner (CI, CodeRabbit findings, human review, merge gate, close-out) — buhhdy runs it itself; only the fix-work it triages is dispatched, back to the original implementer |
+| calibration-refresh         | buhhdy-level | —            | Provider/model/auth fact maintenance (claims ledger → verification → memory records → config prose-to-pointer PR) — buhhdy runs it itself; only verification probes are dispatched (one LIGHTWEIGHT per provider; gemini-standard/codex STANDARD web checks, cross-vendor for consequential claims). Never changes routing autonomously |
 
 ## mattpocock/skills Routing
 

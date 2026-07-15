@@ -39,11 +39,7 @@
 
 - [ ] **Step 1 — extract the 4 unique records.** From `buhhdy/memory/providers.md`, the records dated **2026-06-01, 2026-07-09, 2026-07-14, 2026-10-16** are NOT in `MODEL-MANIFEST.md` (verified). Read each in full.
 - [ ] **Step 2 — fold them into `MODEL-MANIFEST.md`.** Add them as dated `**Updated <date>:**` calibration entries in the manifest's existing dated-directives block (top of file), matching the existing entry style. Preserve their `statement`/`evidence` substance verbatim (e.g. the 2026-10-16 gemini-2.5 shutdown-window fact, the 2026-06-01 gemini-2.0-flash-lite shutdown).
-- [ ] **Step 3 — verify no calibration fact is lost.** Run:
-```bash
-for d in 2026-06-01 2026-07-09 2026-07-14 2026-10-16; do echo -n "$d in manifest: "; grep -q "$d" buhhdy/MODEL-MANIFEST.md && echo yes || echo MISSING; done
-```
-Expected: all `yes`.
+- [ ] **Step 3 — verify no calibration fact is lost.** For each of the four records, compare its `statement`/`evidence` **content** against the corresponding manifest entry — not just the date string (a matching date with altered/missing content still loses the fact). Only then delete `providers.md`.
 - [ ] **Step 4 — delete `providers.md`.** `git rm buhhdy/memory/providers.md`.
 - [ ] **Step 5 — commit.** `git add -A && git commit -m "refactor(buhhdy): fold provider calibration into MODEL-MANIFEST, retire providers.md"`
 
@@ -88,13 +84,13 @@ Expected: `clean ✅`.
 
 **Files:** Modify `skills/repo-kickstart/SKILL.md` (step 4), `skills/repo-kickstart/reference.md` (§4 memory), `skills/repo-memory/SKILL.md:118`. Bump `marketplace.json` + `.claude-plugin/plugin.json`.
 
-- [ ] **Step 1 — SKILL.md step 4.** Remove the "buhhdy global registry — append a repo-registration record" bullet entirely. Memory step becomes two strata: **plans/memory.md** (per-project observational seed) and **Honcho (team, optional; env-scoped, skip if unconfigured)**. State explicitly: repo-kickstart does NOT track or register conformance anywhere; it is an idempotent on-demand conform.
-- [ ] **Step 2 — reference.md §4.** Delete the "buhhdy global registry — append a repo-registration record / resolve `$HUHHB_HOME` → plugin root → `./buhhdy/memory/`" subsection and its idempotency-matrix row + any rationalization/red-flag line about the registry. Keep the plans/memory.md and Honcho subsections.
+- [ ] **Step 1 — SKILL.md step 4.** Remove the "buhhdy global registry — append a repo-registration record" bullet entirely. Memory step becomes two strata: **.claude/memory/** (per-project repo-memory, via the repo-memory skill's First Run) and **Honcho (team, optional; env-scoped, skip if unconfigured)**. Path separation: repo memory lives in `.claude/memory/` only — never under `plans/`. State explicitly: repo-kickstart does NOT track or register conformance anywhere; it is an idempotent on-demand conform.
+- [ ] **Step 2 — reference.md §4.** Delete the "buhhdy global registry — append a repo-registration record / resolve `$HUHHB_HOME` → plugin root → `./buhhdy/memory/`" subsection and its idempotency-matrix row + any rationalization/red-flag line about the registry. Keep the `.claude/memory/` and Honcho subsections.
 - [ ] **Step 3 — repo-memory/SKILL.md:118.** Remove the incidental example "(…the same contract governs buhhdy's own global store, `buhhdy/memory/MEMORY.md`.)" — buhhdy no longer has that store.
 - [ ] **Step 4 — bump versions** in `marketplace.json` and `.claude-plugin/plugin.json` to the next patch (0.5.11 → 0.5.12), same value in both.
 - [ ] **Step 5 — verify lint + no registry remnants.** Run:
 ```bash
-node scripts/skill-lint.ts 2>&1 | grep -E 'repo-kickstart|FAIL |skills —'
+node scripts/skill-lint.ts   # must exit 0 with 0 FAIL (read the count directly — piping to grep masks the exit status)
 grep -rn 'buhhdy/memory\|global registry\|repo-registration record' skills/repo-kickstart/ || echo "clean ✅"
 ```
 Expected: 0 FAIL; `clean ✅`.
@@ -136,11 +132,11 @@ See **[AGENTS.md](AGENTS.md)** — the canonical agent operating instructions fo
 - [ ] **Step 2 — verify no unique content was lost.** For each former CLAUDE.md section, confirm its substance is in AGENTS.md (from B1). Run `node scripts/skill-lint.ts` (broken-link check passes; the `[AGENTS.md](AGENTS.md)` link resolves).
 - [ ] **Step 3 — commit.** `git commit -m "docs: slim CLAUDE.md to a one-line pointer to AGENTS.md"`
 
-### Task B3: Seed `plans/memory.md`
+### Task B3: Record the outcome in `.claude/memory/`
 
-**Files:** Modify `plans/memory.md`.
+**Files:** add a record under `.claude/memory/` via the `repo-memory` skill (path separation — no memory under `plans/`).
 
-- [ ] **Step 1 — append one observational log entry** under `## Log` (observational only — facts/dates/outcomes, no instructions):
+- [ ] **Step 1 — save one observational record** (repo-memory format; observational only — facts/dates/outcomes, no instructions), e.g.:
 ```markdown
 - 2026-07-15 — memory model set: user (MemPalace) → team (Honcho) → buhhdy config defaults; buhhdy/memory store retired (providers→MODEL-MANIFEST, subscriptions→MemPalace, registry dropped). repo-kickstart is now idempotent + registry-free. huhhb: CLAUDE.md slimmed to a pointer, AGENTS.md canonical.
 ```
@@ -156,7 +152,7 @@ See **[AGENTS.md](AGENTS.md)** — the canonical agent operating instructions fo
 ### Task B5: Part-B verification + cross-review + PR-2
 
 - [ ] **Step 1 — lint + validate.** `node scripts/skill-lint.ts` (0 FAIL, version drift clean); `openspec validate --all --store huhhb --no-interactive` (report result).
-- [ ] **Step 2 — re-run idempotency check:** a dry-run of repo-kickstart against huhhb now reports **all ✅ / already conforming** (no registry item, since that's dropped) — confirm it's a no-op.
+- [ ] **Step 2 — re-run idempotency check:** a dry-run of repo-kickstart against huhhb now reports **all ✅ / already conforming**. Only the buhhdy *conformance* registry is dropped (registry-free); the OpenSpec store checks (`.openspec-store/store.yaml`, `openspec store list`) remain required — confirm it's a no-op.
 - [ ] **Step 3 — cross-review** the diff (different-vendor sub-agent).
 - [ ] **Step 4 — open PR-2** off `main` (after PR-1 merges), description carries the verification checklist + "decisions made during merge" (CLAUDE→AGENTS reconciliation, branch-protection left for human).
 

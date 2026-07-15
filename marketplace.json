@@ -3,7 +3,7 @@
   "publisher": "uhstray-io",
   "displayName": "Uhstray Skills Hub",
   "description": "Uhstray.io's curated Claude Code skills marketplace — workflows and automation for engineering teams.",
-  "version": "0.5.12",
+  "version": "0.5.13",
   "homepage": "https://github.com/uhstray-io/huhhb",
   "license": "MIT",
   "skills": [
@@ -304,6 +304,14 @@
       "version": "0.1.0"
     },
     {
+      "name": "calibration-refresh",
+      "path": "skills/calibration-refresh/SKILL.md",
+      "description": "Use when buhhdy's provider/model/auth facts need re-verifying — the operator says 'run calibration refresh', the monthly refresh is due, a dispatch just failed on a bad or retired model ID, or a provider announced a model change. Produces a claims ledger, verifies cheapest-first with cross-vendor confirmation for consequential claims, maintains facts as memory records, and proposes config prose-to-pointer migration; routing changes only ever appear as a flagged human-judgment PR section.",
+      "category": "ops",
+      "tags": ["ops", "buhhdy", "calibration", "providers", "models", "memory"],
+      "version": "0.1.0"
+    },
+    {
       "name": "pr-shepherd",
       "path": "skills/pr-shepherd/SKILL.md",
       "description": "Use when buhhdy's Development workflow has open PRs that need driving from creation to merge and cleaned-up afterward — the terminal step once PRs are open. Monitors CI and CodeRabbit/human review, routes findings back to the original implementer, gates the merge on a human approval (never merges autonomously), then runs post-merge close-out: closes issues, updates the plan, archives the change, removes the worktree, and janitors stale buhhdy/* branches.",
@@ -362,7 +370,7 @@
     {
       "name": "repo-kickstart",
       "path": "skills/repo-kickstart/SKILL.md",
-      "description": "Bootstrap any repo — greenfield or brownfield — into Uhstray's standard development conventions: the README/AGENTS/KICKSTART/ARCHITECTURE doc set, the plans/ tree, OpenSpec store registration, memory setup (plans/memory.md + optional Honcho), a CodeRabbit config, and a branch-protection check. Idempotent, registry-free, and non-destructive.",
+      "description": "Bootstrap any repo — greenfield or brownfield — into Uhstray's standard development conventions: the README/AGENTS/KICKSTART/ARCHITECTURE doc set, the plans/ tree, OpenSpec store registration, memory setup (.claude/memory/ via repo-memory + optional Honcho), a CodeRabbit config, and a branch-protection check. Idempotent, registry-free, and non-destructive.",
       "category": "dev",
       "tags": ["dev", "bootstrap", "conventions", "onboarding", "memory", "openspec"],
       "version": "0.1.0"

@@ -126,13 +126,15 @@ also still works, if you'd rather colocate it there:
 
 ### 4. What happens on your first message
 
-buhhdy asks which subscription tier you have for each provider (Claude /
-Codex / Gemini) so it can lightly weight routing toward whichever has the
-most headroom before hitting its usage cap this cycle — it's a quick
-question, not a gate, and your actual request proceeds either way. Skip it
-and it defaults to Claude Max / Codex Pro / Gemini Pro. Not persisted —
-expect the question again next session. Full mechanics: the "Subscription
-Tier Interview" and "Provider Routing Decision Tree" sections of
+buhhdy reads its global memory (`memory/` in this bundle) alongside the
+roster preflight, then CONFIRMS the recorded subscription tiers instead of
+cold re-asking — quoting the latest active record from
+`memory/subscriptions.md` ("Last recorded (<date>): <tiers> — still
+right?") — so routing can lightly weight toward whichever provider has
+the most headroom this cycle. It's a quick confirmation, not a gate, and
+your actual request proceeds either way. Skip it and it assumes the recorded tiers; correct it and the
+correction is written back to `memory/subscriptions.md`, dated. Full
+mechanics: the "Subscription Tier Interview" and "Memory" sections of
 `config.yaml`.
 
 ## Structure
@@ -147,6 +149,11 @@ buhhdy/
 │   ├── gemini-standard/config.yaml  ← Gemini STANDARD (gemini-3.5-flash, ACP)
 │   ├── gemini-lite/config.yaml      ← Gemini LIGHTWEIGHT (gemini-3.1-flash-lite, ACP)
 │   └── opencode/config.yaml         ← OpenCode GLM 5.2 sub-agent (OpenRouter)
+├── memory/                        ← buhhdy-global memory (read on first turn)
+│   ├── MEMORY.md                    ← Index + record contract summary
+│   ├── providers.md                 ← Calibration/drift/verification records
+│   ├── subscriptions.md             ← Tier records (read-then-confirm source)
+│   └── repos.md                     ← Repo registrations (via repo-kickstart)
 ├── skills/
 │   ├── routing-guide/SKILL.md    ← Provider routing reference (load on demand)
 │   ├── core-workflows/SKILL.md   ← The two standard planning/dev workflows
@@ -156,20 +163,110 @@ buhhdy/
 └── README.md                      ← This file
 ```
 
+The `pr-shepherd` skill referenced throughout lives in huhhb's own
+`skills/pr-shepherd/`, not this bundle — it's a huhhb skill buhhdy loads
+and runs itself as Workflow 2's terminal step.
+
 ## Core Workflows
 
 Two fixed, repeatable sequences — full detail (provider/purpose/tier/gate per
 step) in `skills/core-workflows/SKILL.md`:
 
-1. **Planning & Research** — brainstorming -> investigate -> grilling ->
-   writing-plans -> gate (test/validation coverage) -> explaining-plans ->
-   codebase-design -> to-issues -> simplify -> ponytail:review.
-2. **Development** (from an existing plan) — investigate -> executing-plans ->
-   subagent-driven-development -> dispatching-parallel-agents ->
-   ponytail:audit -> grounding -> update docs -> commit + push -> open a PR.
+1. **Planning & Research** — brainstorming (opens an OpenSpec change) ->
+   investigate -> grilling -> writing-plans -> gate (`openspec validate`,
+   then test/validation coverage review) -> explaining-plans ->
+   codebase-design -> to-issues (tasks.md + tracker issues +
+   00-implementation-plan.md) -> simplify -> ponytail:review.
+2. **Development** (from an existing plan) — investigate (reads
+   repo-memory) -> executing-plans -> subagent-driven-development (claims
+   the issue) -> dispatching-parallel-agents (per task: implement -> local
+   cross-review -> resolve -> PR with `Closes #N` + test evidence) ->
+   ponytail:audit -> grounding (writes repo-memory + team nexus, each
+   via its skill) -> update docs ->
+   commit + push -> open a PR -> pr-shepherd (terminal).
 
-Both end with a deliverable PR, not a merge — see Merge Authorization below
-for the only conditions under which buhhdy merges one itself.
+Both end with deliverable PRs, never a merge. Workflow 2's PRs (the
+implementer PRs and the docs PR) are handed to pr-shepherd, its formal
+terminal step; Workflow 1's plan-doc PRs wait directly on the human.
+Either way a merge always requires an approving human review on the PR
+plus an explicit merge instruction (Merge Authorization below).
+
+## Planning Layout (OpenSpec conformance — decision record, 2026-07-14)
+
+Uhstray repos use one canonical planning layout, referenced from each
+repo's README.md / AGENTS.md / KICKSTART.md / ARCHITECTURE.md:
+
+- `plans/development/00-implementation-plan.md` — the living work/todo
+  index
+- `plans/development/` — active development plans
+- `plans/architecture/` — durable ADR-style architecture records
+
+OpenSpec (`@fission-ai/openspec`) is the spec framework, and it conforms
+to this layout rather than the reverse. Two native mechanisms were
+investigated (live, against openspec 1.6.0):
+
+1. **Store registration — CHOSEN.** `openspec store register
+   plans/development --id <repo> --yes` registers `plans/development` as a
+   standalone OpenSpec root ("store"). Verified live: `openspec new change
+   <slug> --store <repo>` then creates the change at
+   `plans/development/openspec/changes/<slug>/`, with specs at
+   `plans/development/openspec/specs/` and archive at
+   `plans/development/openspec/changes/archive/` — everything under
+   `plans/development/`, exactly where the convention wants it (one extra
+   `openspec/` nesting level is the only concession). The committed
+   `.openspec-store/store.yaml` keeps the store id stable; registration
+   itself is per-machine (`~/.local/share/openspec/stores/registry.yaml`),
+   so each machine runs the one-line register once. From the repo root,
+   openspec commands take `--store <repo>` (root resolution only walks
+   ancestors — verified: without the flag, commands at the repo root
+   don't find the nested root).
+2. **Custom schema (`openspec schema fork spec-driven uhstray`) —
+   rejected as the relocation mechanism.** Verified: a forked schema's
+   `artifacts[].generates` controls artifact filenames RELATIVE to the
+   change directory (plus templates and instructions) — it can rename and
+   re-template artifacts, but cannot move the root or place artifacts
+   outside the change directory. Useful later if artifact naming should
+   match house style; useless for layout conformance. Not forked today
+   (nothing needs renaming yet).
+
+What OpenSpec doesn't model, buhhdy's workflows carry as a promotion
+pattern on top: `00-implementation-plan.md` is the index over active
+changes (status, link to each change's `tasks.md`, issue numbers), and on
+archive (pr-shepherd's post-merge close-out), durable design decisions are
+promoted into `plans/architecture/` as numbered ADRs.
+
+`docs/superpowers/specs/` is retired as a write target — Workflow 1's
+brainstorming opens an OpenSpec change and writes its `proposal.md`
+instead, and all plan authoring/editing happens in the change's
+`design.md`/`specs/`. Workflow 1's gate runs `openspec validate` as a
+deterministic schema check before any judgment review spends tokens.
+
+## Review Pipeline
+
+Three independent layers, in fixed order — each is a separate channel, and
+none substitutes for another:
+
+```text
+implement (own worktree, tests green, evidence captured)
+        │
+        ▼
+1. buhhdy cross-review ──── LOCAL, before any PR exists
+        │      ▲                (different-vendor reviewer, diff + contract)
+   blocking    │ fix (original implementer;
+   findings ───┘      2 attempts, then human)
+        │ clean
+        ▼
+   open PR  (body: Closes #N + test-run evidence)
+        │
+        ▼
+2. CodeRabbit ────────────── independent, post-PR; never pre-empted
+        │
+        ▼
+3. pr-shepherd ───────────── owns PR → merge → cleanup: CI, CodeRabbit
+        │                    findings, human review comments, close-out
+        ▼
+   human: GitHub review approval + explicit merge instruction → merge
+```
 
 ## Provider Routing at a Glance
 
@@ -239,59 +336,66 @@ External skills (referenced, not bundled — must be installed separately):
 
 The three gemini-* workers are one vendor — they never review each other.
 
-The reviewer is always a different vendor than the implementer. PRs are the
-deliverable; the human merges by default. Exception: buhhdy may open a PR
+The reviewer is always a different vendor than the implementer, and the
+review runs locally BEFORE the PR is opened (Review Pipeline above). PRs
+are the deliverable; the human merges. Exception: buhhdy may open a PR
 for its own direct docs/config commits (non-code authoring, not a delegated
 coding task).
 
-## Merge Authorization
+## Merge Authorization (tightened 2026-07-14)
 
-Default: buhhdy never merges. This flips ONLY on an explicit grant from
-the human in the conversation — either a specific request ("merge PR #13")
-or a standing permission grant, scoped to exactly what was said. Vague
-approval ("looks good", "ship it") never counts. Never inferred from
-silence or context. See `config.yaml`'s Merge Authorization section for the
-full protocol, including the requirement to verify the PR is actually
-mergeable before acting on a grant.
+buhhdy and its sub-agents commit, push, and open PRs autonomously — that's
+the deliverable path. Merging always requires a human: BOTH an approving
+human review on the PR itself (GitHub review approval — chat approval
+doesn't count, bot approvals don't count) AND an explicit merge
+instruction naming the target ("merge PR #13"). Each alone is
+insufficient; vague approval ("looks good", "ship it") never counts; a
+chat-level standing grant never substitutes for the per-PR review
+approval. Never inferred from silence or context. GitHub branch protection
+(required reviews) is the mechanism-layer backstop, and pr-shepherd
+refuses to operate on unprotected default branches. See `config.yaml`'s
+Merge Authorization section for the full protocol, including the
+requirement to verify the PR is actually mergeable before acting.
 
-## Key Calibration Notes (2026-06-30)
+## Memory
 
-- **gpt-5.5/gpt-5.4-mini/gpt-5.4-nano supersede gpt-5/gpt-5-mini/gpt-4.1-nano**
-  (verified 2026-06-30, cross-vendor checked against OpenAI's own GPT-5.4
-  mini/nano announcement). o3/o4-mini are fully retired.
-- **claude-sonnet-5 tokenizer** — ~30% heavier than Sonnet 4; account for
-  cost and context-fit when sizing tasks.
-- **Gemini 2M context** — Vertex AI enterprise only; standard API caps at 1M.
-  Do not route standard API tasks expecting 2M context.
-- **Gemini bumped to the 3.x family** (verified 2026-06-30, cross-vendor:
-  codex + gemini itself, both citing Google's own docs) —
-  gemini-2.5-pro/flash/flash-lite superseded by
-  gemini-3.1-pro-preview/gemini-3.5-flash/gemini-3.1-flash-lite. 2.5-pro/flash
-  have a confirmed shutdown no earlier than 2026-10-16; flash-lite's exact
-  status is disputed between sources. gemini-3.1-pro-preview is PREVIEW, not
-  GA. gemini-2.0-flash-lite was fully shut down 2026-06-01.
-- **claude-fable-5 is now GA** (direct operator confirmation, 2026-07-01,
-  corroborated by Anthropic's own model catalog) — added as a new FRONTIER
-  tier, claude_code only, an escalation from COMPLEX for the hardest
-  reasoning/long-horizon agentic tasks, not a routing default. **Access is
-  time-bound:** usable via the existing Claude Max subscription only through
-  2026-07-07; from 2026-07-08 it requires a separate API key and per-token
-  billing ($10/$50 per MTok), so it falls outside the quota tie-break's
-  subscription-cost assumption after that date. **Tightened 2026-07-08:**
-  escalation-only even for planning/orchestration — routine planning runs
-  Opus 4.8 or lower; Fable is reserved for the most complex
-  decomposition/architecture/cross-agent orchestration, with a stated
-  reason per dispatch.
-- **claude-sonnet-5 added as a COMPLEX-tier ALT** for coding/agentic-shaped
-  tasks — near-Opus quality per Anthropic's own docs, cheaper than
-  claude-opus-4-8. Reserve Opus for planning/architecture judgment.
-- **Gemini is available again (2026-06-30)** — the earlier headless-OAuth
-  failure (exit code 41) was resolved upstream, confirmed via a successful
-  live dispatch. buhhdy routes across all three providers again.
-- **Gemini migrated to upstream ACP (2026-07-08)** — the uhstray-io/omnigent
-  fork and its custom gemini harness are retired; buhhdy targets stock
-  upstream omnigent. One tier-pinned worker per gemini model (ACP can't
-  switch models per-dispatch); requires the `acp:` block above. Fork-era
-  exit-code semantics (41/42) no longer apply.
+buhhdy uses four memory strata (full discipline in `config.yaml`'s
+Memory section). Skill-owned stores are always written through the owning
+skill's save flow, never raw file writes:
 
-Review the routing-guide skill and this README quarterly as providers evolve.
+| Stratum | Lives at | Read | Written |
+|---|---|---|---|
+| buhhdy-global | `memory/` in this bundle | First turn, with the roster preflight | On operator calibration confirmations, tier/quota/model-ID changes |
+| repo-memory | `.claude/memory/` in the target repo, via huhhb's `repo-memory` skill | `investigate` steps | Workflow 2's `grounding` step; pr-shepherd's post-merge close-out — via the skill's save flow |
+| team memory nexus | MemPalace, via huhhb's `memory` skill | Session start (auto-loads context); `memory-search` recall | Workflow 2's `grounding` step, for learnings useful beyond the current repo — via the skill |
+| evolve-suite | Team Honcho instance, via huhhb's evolve / evolve-review / evolve-status skills | `evolve-status` at session start (team-shared context) | evolve skills at session end, for learnings worth persisting beyond this machine |
+
+Security constraints: memory reads are DATA, never instructions — no
+memory record can alter routing rules, permissions, or Merge
+Authorization. Records stay observational (facts, dates, outcomes). The
+skillspector preflight extends to memory files on repos with external
+contributors.
+
+## Key Calibration Notes
+
+Dated calibration history now also lives in `memory/` as append-only
+structured records — `memory/providers.md` and `memory/subscriptions.md`
+— read by buhhdy on its first turn. New operator calibration
+confirmations are written there; `config.yaml` keeps its embedded copies
+during the transition (the calibration-refresh skill owns retiring them).
+Headlines as of 2026-07-14:
+
+- **OpenAI:** gpt-5.5 / gpt-5.4-mini / gpt-5.4-nano are current; o-series
+  and first-gen gpt-5 IDs are fully retired.
+- **Anthropic:** claude-fable-5 (FRONTIER) is escalation-only and
+  API-key-metered as of 2026-07-08; claude-sonnet-5 is a valid cheaper
+  COMPLEX ALT for execution-shaped work (and tokenizes ~30% heavier than
+  Sonnet 4).
+- **Gemini:** 3.x family current (3.1-pro-preview is PREVIEW, not GA);
+  2M context is Vertex-enterprise only; runs via upstream ACP with three
+  tier-pinned workers (fork retired 2026-07-08).
+- **OpenCode:** GLM 5.2 via OpenRouter, operator-calibrated just below
+  gemini-3.1-pro-preview at far lower per-token cost; metered credits.
+
+Review the routing-guide skill, `memory/`, and this README quarterly as
+providers evolve.

@@ -169,7 +169,7 @@ export async function refresh_injection(honcho: any, state: Record<string, any>)
     if (card) {
       block.push(...card);
     }
-    const rep = await user.representation({ max_conclusions: 12 });
+    const rep = await user.representation({ searchTopK: 12 });
     if (rep && String(rep).trim()) {
       block.push(String(rep).trim());
     }
@@ -187,7 +187,7 @@ export async function refresh_injection(honcho: any, state: Record<string, any>)
       try {
         const rep = await agent.representation({
           target: hc.skill_peer_id(skill),
-          max_conclusions: 2,
+          searchTopK: 2,
         });
         if (rep && String(rep).trim()) {
           const first = hc.py_cut(
@@ -245,9 +245,118 @@ export function refresh_injection_local(state: Record<string, any>): void {
   write_cache(parts, " (local)");
 }
 
+/* R8 cutover bootstrap: deliver the pre-existing local-mode journal to a
+newly configured Honcho, once. GR2 holds quarantined sessions exactly as
+live delivery does; a cursor in state.json makes re-runs no-ops (new
+observations after cutover flow through the normal spool path — the cursor
+marks where replay ended and normal delivery began). Nothing is deleted:
+the journal stays the evidence store in both modes. */
+export async function replay_journal(
+  honcho: any,
+  state: Record<string, any>,
+): Promise<{ delivered: number; held: number; skipped: number }> {
+  const done = Number(state.journal_replayed_lines ?? 0);
+  const entries = hc.journal_entries();
+  if (entries.length <= done) {
+    return { delivered: 0, held: 0, skipped: entries.length };
+  }
+  const fresh = entries.slice(done);
+  // GR2: the same per-session quarantine decision that gates live delivery
+  const quarantined = new Set(
+    hc.quarantined_observations().map(([e]: [Record<string, any>, string]) => e.session_id),
+  );
+  // Map observations by session, tracking which journal lines each session owns
+  const by_session = new Map<string, Record<string, any>[]>();
+  const line_to_session = new Map<number, string>(); // abs line -> session id
+  let held = 0;
+  for (let i = 0; i < fresh.length; i++) {
+    const e = fresh[i];
+    const abs_line = done + i;
+    const sid = String(e.session_id ?? "unknown");
+    if (quarantined.has(sid)) {
+      held += 1;
+      // Quarantined lines are still tracked — cursor covers them (view decision)
+      line_to_session.set(abs_line, sid);
+      continue;
+    }
+    if (!by_session.has(sid)) by_session.set(sid, []);
+    by_session.get(sid)!.push(e);
+    line_to_session.set(abs_line, sid);
+  }
+  let delivered = 0;
+  const processed_sessions = new Set<string>();
+  // Checkpoint = the highest CONTIGUOUS line whose session is delivered or
+  // quarantined. Interleaved lines from an undelivered session block
+  // advancement, so a mid-batch failure never skips undelivered lines; the
+  // sessions delivered before the failure inside the contiguous prefix are
+  // never resent on retry. (Delivered sessions whose lines sit BEYOND the
+  // first undelivered session are redelivered on retry — acceptable for a
+  // bootstrap: the journal is small and delivery is additive.)
+  const checkpoint = (): void => {
+    let checkpoint_line = done - 1;
+    for (let line = done; line < done + fresh.length; line++) {
+      const line_sid = line_to_session.get(line);
+      if (line_sid && !quarantined.has(line_sid) && !processed_sessions.has(line_sid)) {
+        break; // unprocessed session blocks advancement
+      }
+      checkpoint_line = line;
+    }
+    hc.state_lock(() => {
+      const s = hc.load_state();
+      s.journal_replayed_lines = checkpoint_line + 1;
+      hc.save_state(s);
+    });
+  };
+  // Process each session's observations; checkpoint after each successful
+  // delivery to reflect the highest contiguous line we've fully processed
+  for (const [sid, obs] of by_session) {
+    delivered += await hc.add_observations(honcho, state, sid, obs);
+    processed_sessions.add(sid);
+    checkpoint();
+  }
+  // A batch that was entirely quarantined delivers nothing but is still
+  // PROCESSED — without this the cursor never advances past held lines and
+  // every future replay rescans them (quarantine is a view decision, not a
+  // retry queue; /evolve-review promotes if warranted).
+  if (by_session.size === 0 && fresh.length > 0) {
+    checkpoint();
+  }
+  return { delivered, held, skipped: done };
+}
+
 export async function main(): Promise<void> {
   const cfg = hc.load_config();
   if (!hc.configured(cfg)) {
+    return;
+  }
+  if (process.argv.includes("--replay-journal")) {
+    if (cfg.mode !== "honcho") {
+      hc.sys_exit("--replay-journal needs honcho mode (it bootstraps a new " +
+        "server from the local journal) — configure HONCHO_URL/API_KEY first");
+    }
+    // same mutual exclusion as the drain path: a Stop-hook flush racing a
+    // manual replay (or two replays racing the cursor) must never both write
+    if (!acquire_lock()) {
+      hc.sys_exit("another flush is in progress — retry replay once it finishes");
+    }
+    try {
+      const honcho = await hc.client(cfg);
+      const state = hc.load_state();
+      const r = await replay_journal(honcho, state);
+      console.log(
+        `replay: delivered ${r.delivered} observation(s), held ${r.held} ` +
+          `(quarantined), cursor previously covered ${r.skipped} line(s)`,
+      );
+    } catch (e) {
+      if (e instanceof hc.SystemExit) throw e; // client() exit-2 UX, like drain
+      hc.sys_exit(`replay failed: ${hc.py_err(e)}`);
+    } finally {
+      try {
+        fs.unlinkSync(LOCK);
+      } catch {
+        // missing_ok=True
+      }
+    }
     return;
   }
   if (!acquire_lock()) {

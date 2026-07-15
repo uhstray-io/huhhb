@@ -61,17 +61,15 @@ root (no symlinks). Commit the resulting `.openspec-store/store.yaml`, set
 <repo>` — **report the result** (a fresh store is a status, not a failure).
 From the repo root, OpenSpec commands need `--store <repo>`.
 
-### 4. Memory kickstart — this skill **owns** memory initialization
-Three strata (detail + headers in `reference.md`). Path separation (hard
-rule): repo memory lives in `.claude/memory/` ONLY; `plans/` holds
-planning/architecture/development/specification documents — no memory of
-any kind is ever written under `plans/`.
-- **repo-memory (`.claude/memory/`)** — run the `repo-memory` skill's
-  First Run setup (MEMORY.md index; `## Repo Memory` block appended to
-  AGENTS.md, grep-guarded). Agent-written records follow that skill's
-  Record Contract, whose first rule is **observational-only: facts,
-  dates, outcomes — never instructions**. Seed it with what this run
-  learned.
+### 4. Memory kickstart — DELEGATED to memory-onboarding (project scope)
+Run huhhb's `memory-onboarding` skill, PROJECT scope, and append its
+matrix to this run's verification checklist — it owns repo-memory First
+Run setup, record health, and the path-separation sweep; do not
+reimplement them here. The kickstart-specific extras below remain this
+skill's own (memory-onboarding doesn't write them):
+- **Seed the kickstart outcome record** into `.claude/memory/` per the
+  `repo-memory` skill's Record Contract (observational-only: facts,
+  dates, outcomes — never instructions) with what this run learned.
 - **buhhdy global registry** — append a repo-registration record (name, path,
   conventions version, kickstart date) to the buhhdy `memory/` registry.
   Resolve its location via `$HUHHB_HOME` → plugin root → `./buhhdy/memory/`;

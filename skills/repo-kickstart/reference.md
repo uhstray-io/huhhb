@@ -182,7 +182,7 @@ Then edit `plans/development/openspec/config.yaml` `context:` for the real
 
 ---
 
-## 4. Memory — three strata (this skill owns initialization)
+## 4. Memory — three strata (setup/verification delegated to memory-onboarding; kickstart extras below)
 
 ### .claude/memory/ — repo memory (via the repo-memory skill)
 Run the repo-memory skill's **First Run** setup: `mkdir -p .claude/memory`,

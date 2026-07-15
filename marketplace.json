@@ -3,7 +3,7 @@
   "publisher": "uhstray-io",
   "displayName": "Uhstray Skills Hub",
   "description": "Uhstray.io's curated Claude Code skills marketplace — workflows and automation for engineering teams.",
-  "version": "0.5.12",
+  "version": "0.5.13",
   "homepage": "https://github.com/uhstray-io/huhhb",
   "license": "MIT",
   "skills": [
@@ -309,6 +309,14 @@
       "description": "Use when buhhdy's provider/model/auth facts need re-verifying — the operator says 'run calibration refresh', the monthly refresh is due, a dispatch just failed on a bad or retired model ID, or a provider announced a model change. Produces a claims ledger, verifies cheapest-first with cross-vendor confirmation for consequential claims, maintains facts as memory records, and proposes config prose-to-pointer migration; routing changes only ever appear as a flagged human-judgment PR section.",
       "category": "ops",
       "tags": ["ops", "buhhdy", "calibration", "providers", "models", "memory"],
+      "version": "0.1.0"
+    },
+    {
+      "name": "memory-onboarding",
+      "path": "skills/memory-onboarding/SKILL.md",
+      "description": "Use when checking or setting up the four-strata memory system on this machine and in the current project — 'is my memory set up right', after a fresh machine or repo, or when repo-kickstart or buhhdy's preflight reports memory degradation. Diagnoses first (pass/warn/fail matrix, at most three next actions), then guides fixes; only repo-memory first-run setup ever auto-applies, and credentials never transit chat.",
+      "category": "ops",
+      "tags": ["ops", "memory", "onboarding", "diagnostics", "mempalace", "evolve", "buhhdy"],
       "version": "0.1.0"
     },
     {

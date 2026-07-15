@@ -22,6 +22,7 @@ Powered by [MemPalace](https://github.com/mempalace/mempalace). Requires `uv too
 | Skill | Command | Description |
 |-------|---------|-------------|
 | memory | `/memory` | Access, search, and manage the team memory nexus — store and recall project context via MCP |
+| memory-onboarding | `/memory-onboarding` | Use when checking or setting up the four-strata memory system on this machine and in the current project — "is my memory set up right", a fresh machine/repo, or a preflight memory-degradation report. Pass/warn/fail matrix + at most three next actions; diagnose-then-ask (only repo-memory first-run auto-applies); credentials never transit chat |
 | memory-search | `/memory-search` | Semantic search across the memory nexus |
 | memory-mine | `/memory-mine` | Ingest a project directory or text into the nexus |
 | memory-status | `/memory-status` | Nexus stats — drawer count, wings, rooms |

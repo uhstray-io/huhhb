@@ -62,7 +62,11 @@ prompt: |
   check, not a worker: if it resolved, run the `memory` skill's
   session-start orientation (mempalace_status) on this same turn; if it
   didn't, note it once and continue — MemPalace is an enhancement, not a
-  dependency, and no session ever blocks on memory availability. On that same first turn,
+  dependency, and no session ever blocks on memory availability. If the
+  preflight finds memory degraded (mempalace missing, evolve
+  unconfigured, or memory/MEMORY.md unreadable), SUGGEST running huhhb's
+  memory-onboarding skill in that one note — suggest only, never
+  auto-run it. On that same first turn,
   read buhhdy-global memory: the bundle's memory/MEMORY.md index plus
   each listed store's ACTIVE records (subscription tiers, provider
   calibrations, quota observations, model-ID drift; superseded records

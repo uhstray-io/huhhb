@@ -16,7 +16,7 @@ report-only (conventions n/a) · 15 excluded (org-meta `.github`/`.github-privat
 - Registration records: appended to [`buhhdy/memory/repos.md`](../../../buhhdy/memory/repos.md).
 
 Read-only audit. Cells: ✓ pass · ✗ fail · – n/a · DIV divergent CLAUDE.md · ptr pointer · ⚠ present-but-weak.
-Protection = classic branch protection on the default branch (the endpoint pr-shepherd's precondition checks). Org-level rulesets are not readable without `admin:org` scope; repo-level rulesets were empty everywhere.
+Protection = classic branch protection on the default branch — the precondition pr-shepherd checks (via `gh api …/branches/<branch>/protection`) before it will operate. Org-level rulesets are not readable without `admin:org` scope; repo-level rulesets were empty everywhere.
 
 **Verdict counts:** fork (report-only): 9 · kickstart + settings needed: 29
 

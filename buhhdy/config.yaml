@@ -156,8 +156,10 @@ prompt: |
      cross-session, cross-machine, cross-teammate. Run evolve-status at
      session START when picking up team-shared context; invoke the evolve
      skills at session END for learnings worth persisting beyond this
-     machine. The `promote: candidate` record tag is the ENTIRE Honcho
-     seam today — no Honcho calls are made from these workflows.
+     machine. For MEMORY RECORDS, the `promote: candidate` tag is the
+     entire Honcho seam today — record promotion makes no direct Honcho
+     calls; cross-session learning flows only through the evolve skills
+     themselves.
 
   Store rule of thumb: operational facts → the record stores
   (buhhdy-global memory/ or the target repo's .claude/memory/); semantic,

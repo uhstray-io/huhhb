@@ -28,8 +28,11 @@ Check whether AGENTS.md already contains a `## Repo Memory` section
 CLAUDE.md is a one-line pointer to it, never the write target):
 
 ```bash
-grep -q "## Repo Memory" AGENTS.md && echo "already set up" || echo "needs setup"
+[ -f AGENTS.md ] && grep -q "## Repo Memory" AGENTS.md && echo "already set up" || echo "needs setup"
 ```
+
+(If AGENTS.md doesn't exist yet — greenfield repo — create it with just
+the block below; repo-kickstart owns authoring the full file.)
 
 If it already exists, skip the append — setup is complete. If not, append this block to AGENTS.md:
 

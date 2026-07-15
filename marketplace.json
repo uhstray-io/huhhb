@@ -370,7 +370,7 @@
     {
       "name": "repo-kickstart",
       "path": "skills/repo-kickstart/SKILL.md",
-      "description": "Bootstrap any repo — greenfield or brownfield — into Uhstray's standard development conventions: the README/AGENTS/KICKSTART/ARCHITECTURE doc set, the plans/ tree, OpenSpec store registration, three-strata memory (plans/memory.md + buhhdy registry + Honcho), a CodeRabbit config, and a branch-protection check. Idempotent and non-destructive.",
+      "description": "Bootstrap any repo — greenfield or brownfield — into Uhstray's standard development conventions: the README/AGENTS/KICKSTART/ARCHITECTURE doc set, the plans/ tree, OpenSpec store registration, three-strata memory (.claude/memory/ via repo-memory + buhhdy registry + Honcho workspace scoping), a CodeRabbit config, and a branch-protection check. Idempotent and non-destructive.",
       "category": "dev",
       "tags": ["dev", "bootstrap", "conventions", "onboarding", "memory", "openspec"],
       "version": "0.1.0"

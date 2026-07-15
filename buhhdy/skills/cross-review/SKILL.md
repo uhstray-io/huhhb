@@ -1,6 +1,6 @@
 ---
 name: cross-review
-description: Verify an implementer's diff with an INDEPENDENT, different-vendor sub-agent (diff plus contract only); turn blocking issues into fix-tasks and loop until clean.
+description: Verify an implementer's diff with an INDEPENDENT, different-vendor sub-agent (diff plus contract only), LOCALLY and BEFORE the PR is opened; turn blocking issues into fix-tasks and loop until clean — only then does the implementer open its PR.
 ---
 
 # cross-review — independent verification
@@ -9,9 +9,18 @@ The implementer never signs off on its own work — a different model does, and
 review is a sub-agent that returns a structured report, not a transcript
 anyone needs to read through.
 
+Cross-review runs LOCALLY, BEFORE the PR is created (config.yaml's
+Cross-Review Rule, layer 1). The implementer resolves every blocking
+finding first; only a clean review earns the PR. CodeRabbit then reviews
+the PR independently after creation (layer 2 — never pre-empted or
+duplicated here), and pr-shepherd owns everything after PR creation
+(layer 3).
+
 ## Procedure
-1. Get the task's diff — `sys_os_shell("gh pr diff <pr>")` (or
-   `git -C .worktrees/<task_id> diff main...HEAD`).
+1. Get the task's diff from the implementer's worktree —
+   `sys_os_shell("git -C .worktrees/<task_id> diff main...HEAD")`. (Only
+   for a PR that already exists — e.g. re-reviewing a fix pushed to an
+   open PR under pr-shepherd — use `gh pr diff <pr>` instead.)
 2. Run the deterministic gates first — tests / lint / typecheck via
    `sys_os_shell`. If red, re-dispatch the implementer to drive it green first;
    don't involve the reviewer yet.
@@ -40,14 +49,18 @@ anyone needs to read through.
    same worktree, and send the concrete fixes back to the SAME implementer
    conversation via `sys_session_send` — reuse the original implementer's
    `agent` + `title` (or address it by `session_id`) with
-   `purpose: "implement"`, so the worker keeps its worktree/branch context and
-   updates its existing PR. A new title would spawn a fresh worker with no
-   memory of the task. Then loop to step 1.
-6. When gates are green AND there are zero blocking issues, the PR passes
-   review — mark it ready in the registry (with its PR URL) and leave it for
-   the human to merge. buhhdy does NOT merge it.
-7. If the contract can't be satisfied after a few loops, stop and escalate to
-   the user with specifics.
+   `purpose: "implement"`, so the worker keeps its worktree/branch context.
+   A new title would spawn a fresh worker with no memory of the task. Then
+   loop to step 1.
+6. When gates are green AND there are zero blocking issues, the diff passes
+   review — NOW the implementer opens its PR (body carrying `Closes #N`
+   for its tracker issue and the test-run evidence from step 2: commands
+   run + results; verify both are present before counting it deliverable).
+   Record the PR URL in the registry and hand the PR to pr-shepherd.
+   buhhdy does NOT merge it.
+7. If the contract can't be satisfied within the escalation rule's budget
+   (two fix attempts by the original implementer — see core-workflows'
+   shared notes), stop and escalate to the human with specifics, and WAIT.
 
 ## Notes
 - Cross-review requires a reviewer from a DIFFERENT vendor than the implementer,

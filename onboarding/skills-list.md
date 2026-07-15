@@ -47,7 +47,7 @@ managed setup; unconfigured machines behave as if it were not installed.
 | Skill | Command | Description |
 |-------|---------|-------------|
 | brainstorming | `/brainstorming` | You MUST use this before any creative work - creating features, building components, adding functionality, or modifying behavior. Explores user intent, requirements and design before implementation. |
-| calibration-refresh | `/calibration-refresh` | Use when buhhdy's provider/model/auth facts need re-verifying — monthly, on a failed model ID, or on a provider announcement. Claims ledger → cheapest-first verification (cross-vendor for consequential claims) → memory records → config prose-to-pointer migration PR; routing changes only as a flagged human-judgment proposal |
+| calibration-refresh | `/calibration-refresh` | Use when buhhdy's provider/model/auth facts need to be verified again — monthly, on a failed model ID, or on a provider announcement. Claims ledger → cheapest-first verification (cross-vendor for consequential claims) → memory records → config prose-to-pointer migration PR; routing changes only as a flagged human-judgment proposal |
 | dispatching-parallel-agents | `/dispatching-parallel-agents` | Use when facing 2+ independent tasks that can be worked on without shared state or sequential dependencies |
 | executing-plans | `/executing-plans` | Use when you have a written implementation plan to execute in a separate session with review checkpoints |
 | finishing-a-development-branch | `/finishing-a-development-branch` | Use when implementation is complete, all tests pass, and you need to decide how to integrate the work |

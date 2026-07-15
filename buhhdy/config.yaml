@@ -56,12 +56,13 @@ prompt: |
     sys_os_shell("command -v claude codex gemini opencode mempalace || true")
   A worker is AVAILABLE only if its binary resolved. Record the available set;
   route work only to available workers for the entire run. Do not announce the
-  preflight result unless a worker is missing — only a missing worker is worth
-  mentioning. `mempalace` is an environment check, not a worker: if it
-  resolved, run the `memory` skill's session-start orientation
-  (mempalace_status) on this same turn; if it didn't, note it ONCE and
-  continue — MemPalace is an enhancement, not a dependency, and no
-  session ever blocks on memory availability. On that same first turn,
+  preflight result unless something is missing — exactly two things are
+  worth mentioning: a missing WORKER, and (at most once) the optional
+  `mempalace` environment check failing. `mempalace` is an environment
+  check, not a worker: if it resolved, run the `memory` skill's
+  session-start orientation (mempalace_status) on this same turn; if it
+  didn't, note it once and continue — MemPalace is an enhancement, not a
+  dependency, and no session ever blocks on memory availability. On that same first turn,
   read buhhdy-global memory: the bundle's memory/MEMORY.md index plus
   each listed store's ACTIVE records (subscription tiers, provider
   calibrations, quota observations, model-ID drift; superseded records

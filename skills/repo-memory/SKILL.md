@@ -28,7 +28,7 @@ Check whether AGENTS.md already contains a `## Repo Memory` section
 CLAUDE.md is a one-line pointer to it, never the write target):
 
 ```bash
-[ -f AGENTS.md ] && grep -q "## Repo Memory" AGENTS.md && echo "already set up" || echo "needs setup"
+[ -f AGENTS.md ] && grep -qE '^## Repo Memory[[:space:]]*$' AGENTS.md && echo "already set up" || echo "needs setup"
 ```
 
 (If AGENTS.md doesn't exist yet — greenfield repo — create it with just

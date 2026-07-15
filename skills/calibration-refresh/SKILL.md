@@ -42,6 +42,15 @@ things — source contradictions and routing-change proposals.
 | 4 | **Config migration** | buhhdy-level, cross-reviewed | opposite-vendor local review before the PR | For claims now covered by memory records, propose `config.yaml` diffs that REPLACE the embedded dated prose with a one-line pointer to the store. NEVER rewrite a routing rule, the tier table, a gate, or Merge Authorization autonomously — if verification implies a routing change (a model retired out of a tier slot, a repricing that breaks a cost-basis assumption), it goes in the PR under a clearly flagged **`## ROUTING CHANGES — HUMAN JUDGMENT REQUIRED`** section as a proposal with the evidence, never as an applied edit. Low confidence → escalate instead of proposing. One PR per refresh run, standard pipeline: local cross-review → PR → CodeRabbit → pr-shepherd |
 | 5 | **Report** | buhhdy-level | — | Delta summary: **verified unchanged** (count + ledger refs) / **updated** (old → new, record written) / **contradicted → escalated** (both sources) / **newly discovered** (e.g. a new model or tier worth evaluating — surfaced, not wired). End with the next recommended refresh date (default: +1 month) |
 
+**Dry-run semantics.** If invoked as a read-only/dry run, or web access
+is unavailable or forbidden this run: execute the inventory and whatever
+verification the mode allows, and produce the full ledger + delta report
+— but apply NO side effects. No memory records are written, no config PR
+is opened; step 3 and step 4 outputs are reported as
+proposed-and-unapplied text instead. Existing verified-dates are
+preserved and every web-dependent claim is marked
+`stale — not re-verified this run`. Normal (non-dry) runs are unchanged.
+
 ## Cadence and triggers
 
 - **Default: monthly.** Also run immediately when a provider announces a

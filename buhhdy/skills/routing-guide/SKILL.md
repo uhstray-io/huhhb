@@ -144,8 +144,8 @@ auth = user's OpenRouter credentials, verified via live boot + dispatch).
 | investigate                 | claude_code  | —            | Exploration depth (gemini runs a cheap breadth pre-pass first on large/unfamiliar codebases — see Gemini Wiring below) |
 | fanout                      | claude_code  | gemini       | Parallel orchestration |
 | cross-review                | opposite vendor | —         | Always cross-vendor — runs LOCALLY, before the PR exists |
-| pr-shepherd                 | buhhdy-level | —            | Post-PR lifecycle owner (CI, CodeRabbit findings, human review, merge gate, close-out) — buhhdy runs it itself; only the fix-work it triages is dispatched, back to the original implementer |
-| calibration-refresh         | buhhdy-level | —            | Provider/model/auth fact maintenance (claims ledger → verification → memory records → config prose-to-pointer PR) — buhhdy runs it itself; only verification probes are dispatched (one LIGHTWEIGHT per provider; gemini-standard/codex STANDARD web checks, cross-vendor for consequential claims). Never changes routing autonomously |
+| pr-shepherd                 | buhhdy-level | —            | Post-PR lifecycle owner (CI, CodeRabbit findings, human review, merge gate, close-out — the OpenSpec/index/ADR close-out steps are conformance-conditional, skip-with-note on repos not yet adopted) — buhhdy runs it itself; only the fix-work it triages is dispatched, back to the original implementer |
+| calibration-refresh         | buhhdy-level | —            | Provider/model/auth fact maintenance (claims ledger → staged verification: local CLI/harness checks, then one LIGHTWEIGHT probe per provider, then gemini-standard/codex web checks → in-place updates to the config/MODEL-MANIFEST calibration defaults, one PR per run) — buhhdy runs it itself; only verification probes are dispatched (one LIGHTWEIGHT per provider; gemini-standard/codex STANDARD web checks, cross-vendor for consequential claims). Never changes routing autonomously |
 
 ## mattpocock/skills Routing
 
@@ -253,8 +253,8 @@ independently where it genuinely fits, then were reconciled:
 
 | Plugin | Source | When to use |
 |--------|--------|-------------|
-| ponytail | DietrichGebert/ponytail | All implementation tasks (YAGNI, smallest diff) |
-| improve | shadcn/improve | Before fanout when spec is ambiguous — writes plans/ |
+| ponytail | DietrichGebert/ponytail | All implementation tasks (YAGNI, smallest diff). Note: `ponytail:review`/`ponytail:audit` in buhhdy's tables denote the plugin's `ponytail-review`/`ponytail-audit` skills — dispatch inputs use the literal `/ponytail-review` / `/ponytail-audit` commands |
+| improve | shadcn/improve | Before fanout when spec is ambiguous — writes the adopted planning location (plans/ or docs/plans/) |
 | skillspector | nvidia/skillspector | Preflight before importing any third-party skill |
 | frontend-design | anthropics/skills | Any user-facing component implementation |
 | huhhb/* | uhstray-io/huhhb | See skill dispatch table above |

@@ -99,7 +99,13 @@ description: Use when [specific triggering conditions] — embed trigger phrases
 | `memory-search` | `/memory-search` | Semantic search across the nexus |
 | `memory-mine` | `/memory-mine` | Ingest a project directory into the nexus |
 | `memory-status` | `/memory-status` | Nexus stats — drawer count, wings, rooms |
-| `repo-memory` | `/repo-memory` | Repo-local memory in `.claude/memory/` — committed to git, no external service |
+| `repo-memory` | `/repo-memory` | Repo-local memory in `.claude/memory/` — committed to git, no external service. Owns the agent-written Record Contract (observational lint, supersede-never-edit, quarantine, `promote:` lifecycle) |
+| `memory-onboarding` | `/memory-onboarding` | "Is my memory set up right?" — diagnoses all four strata on this machine + repo into a pass/warn/fail matrix; diagnose-then-ask, credentials never transit chat |
+
+Knowledge-shaped content (preferences, calibrations) resolves **user
+memory → team memory → config defaults** (LD-2); policy is memory-immune.
+The authoritative statement lives in `buhhdy/config.yaml`'s Memory
+section; stratum truth-models live in the `evolve` skill's strata table.
 
 ### Self-Learning (evolve)
 
@@ -136,6 +142,24 @@ configured**; setup, privacy model, and purge in [docs/evolve-plan.md](docs/evol
 | `using-git-worktrees` | `/using-git-worktrees` | Isolate feature work in a separate git worktree to avoid conflicting with the current workspace |
 | `finishing-a-development-branch` | `/finishing-a-development-branch` | Decide how to integrate completed work — merge, PR, squash, or clean up |
 | `writing-skills` | `/writing-skills` | Author, edit, or validate a new huhhb skill before shipping it |
+
+### buhhdy Orchestration
+
+[`buhhdy/`](buhhdy/) is a four-provider coding orchestrator (Claude,
+Codex, Gemini, OpenCode) built on the omnigent runtime: it routes work by
+complexity/cost, enforces local cross-vendor review BEFORE any PR,
+CodeRabbit after, and human-gated merges. Its two core workflows and full
+routing tables live in [`buhhdy/README.md`](buhhdy/README.md). The
+plans/OpenSpec planning conventions it can use are **opt-in per repo**
+(adopted via `repo-kickstart`); buhhdy detects adoption and degrades
+gracefully elsewhere. These huhhb skills serve that stack:
+
+| Skill | Trigger | Purpose |
+|-------|---------|---------|
+| `repo-kickstart` | `/repo-kickstart` | Opt a repo into Uhstray conventions — doc set, plans/ tree, OpenSpec store, memory, CodeRabbit; idempotent and non-destructive |
+| `openspec-conformance` | `/openspec-conformance` | The OpenSpec mechanism itself — store registration, house rules, archive-time ADR promotion (one ADR per change) |
+| `pr-shepherd` | `/pr-shepherd` | Drive open PRs to human-authorized merge — CI + CodeRabbit + review triage, 2-attempts-then-human escalation, post-merge close-out, branch janitor |
+| `calibration-refresh` | `/calibration-refresh` | Re-verify provider/model/auth facts on cadence — claims ledger, cross-vendor confirmation, config prose-to-pointer PRs; routing changes only as human-flagged proposals |
 
 ### Explanation
 

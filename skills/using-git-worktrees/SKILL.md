@@ -13,6 +13,23 @@ Git worktrees create isolated workspaces sharing the same repository, allowing w
 
 **Announce at start:** "I'm using the using-git-worktrees skill to set up an isolated workspace."
 
+## When to use one (Uhstray lifecycle convention, 2026-07-16)
+
+Worktrees are RECOMMENDED, never mandatory — the default is toggleable in
+`~/.config/huhhb/worktrees.json`:
+
+```json
+{ "default": "on", "projects": { "owner/repo": "off" } }
+```
+
+A project entry beats the user default; no file means `on` for agents.
+When on, agent sessions take a worktree per branch and leave the main
+checkout alone (parallel sessions sharing one checkout collide). A
+worktree's lifetime is its branch's lifetime: remove it when the branch
+merges (pr-shepherd owns this for `<agent>/*` task branches; the session
+that created it otherwise). A stray worktree whose branch is merged is
+REPORTED as removable — never auto-removed; it may hold uncommitted work.
+
 ## Directory Selection Process
 
 Follow this priority order:

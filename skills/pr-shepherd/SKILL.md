@@ -114,7 +114,10 @@ buhhdy may merge a PR **only** when ALL of these hold:
 - **(c)** an approving **human** review exists on the PR; and
 - **(d)** an explicit merge instruction **naming this PR**, per buhhdy's
   **Merge Authorization** (`config.yaml`) — not vague approval ("looks
-  good"), and not a chat-level standing grant on its own.
+  good"), and not a chat-level standing grant on its own;
+- **(e)** version reconciled: if `main`'s manifest version moved past this
+  PR's claim, re-bump to the next free number (final pre-merge commit)
+  per AGENTS.md's Release Checklist. Docs-only PRs carry no bump — skip.
 
 Conditions (c) and (d) are separate and both required: a GitHub review
 approval never substitutes for the instruction, and the instruction never

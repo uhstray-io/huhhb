@@ -1,9 +1,9 @@
 ---
-name: calibration-refresh
+name: buhhdy-model-calibration-refresh
 description: Use when buhhdy's provider/model/auth facts need re-verifying — the operator says "run calibration refresh", the monthly refresh is due, a dispatch just failed on a bad or retired model ID, or a provider announced a model change. Covers model-ID drift, deprecation/shutdown dates, per-token pricing, auth/tier/billing status, and CLI/harness behavior claims going stale in buhhdy's `config.yaml` and `MODEL-MANIFEST.md`.
 ---
 
-# calibration-refresh
+# buhhdy-model-calibration-refresh
 
 Keeps buhhdy's provider/model/auth facts current, maintained in the
 config-defaults tier — the dated calibration notes in `config.yaml` and the

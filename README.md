@@ -159,7 +159,7 @@ gracefully elsewhere. These huhhb skills serve that stack:
 | `repo-kickstart` | `/repo-kickstart` | Opt a repo into Uhstray conventions — doc set, plans/ tree, OpenSpec store, memory, CodeRabbit; idempotent and non-destructive |
 | `openspec-conformance` | `/openspec-conformance` | The OpenSpec mechanism itself — store registration, house rules, archive-time ADR promotion (one ADR per change) |
 | `pr-shepherd` | `/pr-shepherd` | Drive open PRs to human-authorized merge — CI + CodeRabbit + review triage, 2-attempts-then-human escalation, post-merge close-out, branch janitor |
-| `calibration-refresh` | `/calibration-refresh` | Re-verify provider/model/auth facts on cadence — claims ledger, cross-vendor confirmation, config prose-to-pointer PRs; routing changes only as human-flagged proposals |
+| `buhhdy-model-calibration-refresh` | `/buhhdy-model-calibration-refresh` | Re-verify provider/model/auth facts on cadence — claims ledger, cross-vendor confirmation, config prose-to-pointer PRs; routing changes only as human-flagged proposals |
 
 ### Explanation
 

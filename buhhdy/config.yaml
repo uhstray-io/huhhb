@@ -268,7 +268,7 @@ prompt: |
   still the FLOOR of the Memory section's precedence — user/team memory
   may override any of these at read time (LD-2). NEW operator calibration
   confirmations are appended HERE and reflected in MODEL-MANIFEST.md;
-  huhhb's `calibration-refresh` skill is these notes' maintenance owner —
+  huhhb's `buhhdy-model-calibration-refresh` skill is these notes' maintenance owner —
   it re-verifies them on its cadence:
   - OpenAI bumped 2026-06-30 (cross-vendor verified): gpt-5/gpt-5-mini/
     gpt-4.1-nano superseded by gpt-5.5/gpt-5.4-mini/gpt-5.4-nano. o3/o4-mini
@@ -455,9 +455,9 @@ prompt: |
   | loop-me                     | claude_code  | codex        |
   | writing-shape                | claude_code | codex        |
   | pr-shepherd                 | buhhdy-level | —            |
-  | calibration-refresh         | buhhdy-level | —            |
+  | buhhdy-model-calibration-refresh         | buhhdy-level | —            |
 
-  calibration-refresh (huhhb skill) keeps the provider/model/auth facts
+  buhhdy-model-calibration-refresh (huhhb skill) keeps the provider/model/auth facts
   current: claims ledger → cheapest-first verification (its own routing:
   local CLI/harness checks first, then one LIGHTWEIGHT probe per
   provider, then gemini-standard/codex web checks — cross-vendor before a
@@ -479,7 +479,7 @@ prompt: |
   to operate on unprotected default branches.
 
   grounding, subagent-driven-development, dispatching-parallel-agents,
-  pr-shepherd, and calibration-refresh are buhhdy-level everywhere, not
+  pr-shepherd, and buhhdy-model-calibration-refresh are buhhdy-level everywhere, not
   just in core-workflows —
   each skill's own file addresses "you" as the orchestrating session ("you
   delegate tasks... preserves your own context for coordination work"),

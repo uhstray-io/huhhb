@@ -1,11 +1,17 @@
 ---
 name: pr-shepherd
-description: Use when buhhdy's Development workflow has open PRs that need driving from creation through merge and cleanup — the terminal step once PRs are open. Triggers on "shepherd this PR", "drive the PR to merge", "babysit the PRs", "monitor the PR to merge", and post-merge close-out (close linked issues, archive the change, remove the worktree, janitor stale buhhdy/* branches). Also load to verify PR-lifecycle preconditions (branch protection, CodeRabbit) before shepherding.
+description: Use when any orchestrating agent's development workflow — buhhdy's Workflow 2 is the canonical caller — has open PRs that need driving from creation through merge and cleanup — the terminal step once PRs are open. Triggers on "shepherd this PR", "drive the PR to merge", "babysit the PRs", "monitor the PR to merge", and post-merge close-out (close linked issues, archive the change, remove the worktree, janitor stale buhhdy/* branches). Also load to verify PR-lifecycle preconditions (branch protection, CodeRabbit) before shepherding.
 ---
 
 # pr-shepherd
 
-The terminal step of buhhdy's Development workflow (Workflow 2). It begins
+The terminal step of an orchestrating agent's development workflow —
+AGENT-AGNOSTIC: any agent that opens PRs can run it. buhhdy's Workflow 2
+is the canonical caller and the worked example throughout; "buhhdy-level"
+below means "the calling orchestrator itself" (named for that canonical
+caller — substitute your agent), and every buhhdy artifact named here
+(`config.yaml` Merge Authorization / Cross-Review Rule, `core-workflows`)
+maps to the calling agent's equivalent policy. It begins
 exactly where that workflow ends — the implementer PRs and the docs PR are
 open — and finishes with each PR **merged under human authority**, its issues
 closed, its change archived (on repos that adopted the plans/OpenSpec
@@ -20,7 +26,8 @@ dispatched. Two kinds of step appear below, same as buhhdy's `core-workflows`:
 
 - **buhhdy-level** — buhhdy runs it itself (Skill tool / `sys_os_*` / `gh`).
   Never dispatch pr-shepherd itself to a sub-agent.
-- **Dispatched** — buhhdy sends a fix/review task to a sub-agent via
+- **Dispatched** — the orchestrator re-engages a worker through its own
+  dispatch mechanism; buhhdy sends a fix/review task to a sub-agent via
   `sys_session_send`.
 
 ## Position in the review pipeline (fixed — do not reorder)
@@ -168,29 +175,15 @@ only if it is already **merged into the default branch** — an unmerged stale
 branch may hold recoverable work, so it is skipped and reported, never
 force-deleted.
 
-Each pr-shepherd run does one janitor pass. The namespace guard is structural:
-the ref pattern enumerates **only** `refs/heads/buhhdy/`, so nothing outside
-`buhhdy/*` can ever appear in the loop — and each candidate is re-checked
+Each pr-shepherd run does one janitor pass, confined to the ORCHESTRATOR'S
+OWN branch prefix (buhhdy's is `buhhdy/*` — substitute your agent's prefix
+in the pattern below; never a bare `refs/heads/`). The namespace guard is
+structural: the ref pattern enumerates **only** that prefix, so nothing
+outside it can ever appear in the loop — and each candidate is re-checked
 before deletion as a belt-and-suspenders guard.
 
-```bash
-# ponytail: git for-each-ref over refs/heads/buhhdy/ can only ever yield
-# buhhdy/* branches — non-buhhdy branches are unreachable by construction.
-cutoff=$(( $(date +%s) - 90*24*3600 ))
-default=$(git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null | sed 's#^origin/##')
-default=${default:-main}
-git for-each-ref --format='%(refname:short) %(committerdate:unix)' refs/heads/buhhdy/ |
-while read -r branch ts; do
-  case "$branch" in buhhdy/*) ;; *) continue ;; esac       # re-assert namespace
-  [ "$ts" -lt "$cutoff" ] || continue                      # keep if <90d inactive
-  if git merge-base --is-ancestor "$branch" "origin/$default"; then
-    git branch -D "$branch"                                # merged → safe to delete
-    echo "janitored $branch (merged, last commit $(( ($(date +%s) - ts) / 86400 ))d ago)"
-  else
-    echo "SKIP $branch — >90d but NOT merged into $default; reporting, not deleting"
-  fi
-done
-```
+The runnable script — with the substitute-your-prefix rule — lives in
+`references/janitor.md`.
 
 Log every deletion (branch + age) and every skipped-unmerged branch via the
 `repo-memory` skill (`.claude/memory/`). **Never janitor a branch outside the

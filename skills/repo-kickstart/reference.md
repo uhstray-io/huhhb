@@ -112,8 +112,10 @@ edits the Status/Links cells in place, so a divergent format breaks promotion.
 # Implementation Plan — living index
 
 The index over active OpenSpec changes under `openspec/changes/`. One row per
-change. buhhdy Workflow 1 step 8 adds the row; pr-shepherd post-merge flips it
-to `archived` and links the promoted ADR (via `promote-adr.ts`, not by hand).
+change. Four writer roles, canonically enumerated in
+`openspec-conformance` (seed = this kickstart; add = W1 to-issues;
+refresh = W2 step 7; flip-to-archived = pr-shepherd's `promote-adr.ts`,
+never by hand).
 
 | Change | Title | Status | Owner | Links |
 |--------|-------|--------|-------|-------|

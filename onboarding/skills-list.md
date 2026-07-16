@@ -62,6 +62,7 @@ managed setup; unconfigured machines behave as if it were not installed.
 | systematic-debugging | `/systematic-debugging` | Use when encountering any bug, test failure, or unexpected behavior, before proposing fixes |
 | test-driven-development | `/test-driven-development` | Use when implementing any feature or bugfix, before writing implementation code |
 | using-git-worktrees | `/using-git-worktrees` | Use when starting feature work that needs isolation from current workspace or before executing implementation plans |
+| using-superpowers | `/using-superpowers` | Use when starting any conversation — establishes how to find and use skills, requiring Skill tool invocation before any response |
 | verification-before-completion | `/verification-before-completion` | Use when about to claim work is complete, fixed, or passing, before committing or creating PRs |
 | writing-plans | `/writing-plans` | Use when you have a spec or requirements for a multi-step task, before touching code |
 | writing-skills | `/writing-skills` | Use when creating new skills, editing existing skills, or verifying skills work before deployment |

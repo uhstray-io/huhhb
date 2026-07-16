@@ -26,7 +26,8 @@ Workflow 2 left three PRs open: **#41, #42** (implementer PRs, worktrees
    #43." Now (a)+(b)+(c)+(d) all hold → buhhdy executes the merge of #43.
    #41/#42 stay blocked until each gets BOTH a current-head human approval and
    an explicit instruction.
-6. **Post-merge (#43).** Close `Closes #38`; `openspec archive` +
+6. **Post-merge (#43).** Close `Closes #38`; the conformance probe finds
+   `plans/development/00-implementation-plan.md`, so `openspec archive` +
    `promote-adr.ts` (its index row flips to `archived`; one ADR lands in
    `plans/architecture/` if #38's design had a `## Decisions`); write the
    outcome via `repo-memory` to `.claude/memory/` (CI 0 / CodeRabbit 0 /
@@ -44,3 +45,9 @@ blocked until a current-head human approval **and** an explicit instruction
 exist; post-merge checklist executed in order; worktree removed; only
 merged+inactive branches deleted (unmerged stale ones skipped); janitor
 structurally confined to `buhhdy/*`.
+
+**Non-conforming variant:** on a repo without
+`plans/development/00-implementation-plan.md`, step 6's archive/promote/index
+work is skipped with the note "archive/ADR/index skipped — conventions not
+yet adopted"; issue closing, the repo-memory outcome record, worktree
+removal, and the janitor all still run. Nothing fails.

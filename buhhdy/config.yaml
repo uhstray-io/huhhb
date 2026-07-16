@@ -148,9 +148,12 @@ prompt: |
      notes below. Always present; the fallback when no user/team override
      applies. NEW dated calibration confirmations are written HERE and
      reflected in MODEL-MANIFEST.md — never to a separate memory store —
-     but as DEFAULTS they remain read-time-overridable by user/team memory
-     (operator-confirmed calibrations written here carry USER authority
-     when they conflict with team observations).
+     and as DEFAULTS they remain read-time-overridable by user/team
+     memory. The floor itself never outranks the tiers above it: when the
+     OPERATOR confirms a calibration, ALSO record that confirmation in
+     user memory via the `memory` skill's save flow — the operator's
+     decision then carries user authority through the user stratum (LD-2)
+     while this floor stays a pure default.
 
   Worked example (LD-2, 2026-07-16): the user's MemPalace preference
   "route docs-ingestion subtasks on repo X to gemini" OVERRIDES a Honcho

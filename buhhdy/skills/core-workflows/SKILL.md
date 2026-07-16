@@ -59,6 +59,12 @@ root.
   a one-line note; and buhhdy suggests running repo-kickstart ONCE per
   session — a suggestion, never a mandate, never auto-run. The repo is
   "not yet adopted", never "non-compliant".
+On non-conforming repos, `docs/plans/<slug>.md` is the SINGLE plan
+document for the whole workflow: step 1 writes the proposal into it,
+steps 4/6/7 author, enrich, and sharpen it IN PLACE (no
+`design.md`/`specs/` split), and step 8 derives and publishes the
+tracker issues directly from its task breakdown (no `tasks.md`) — every
+Workflow 1 step stays executable, only the artifact shape changes.
 `docs/superpowers/specs/` is RETIRED as a write target — everywhere,
 regardless of conformance.
 

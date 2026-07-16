@@ -182,14 +182,16 @@ Then edit `plans/development/openspec/config.yaml` `context:` for the real
 
 ---
 
-## 4. Memory — two strata (this skill owns initialization; registry-free)
 
-### .claude/memory/ — repo memory (via the repo-memory skill)
-Run the repo-memory skill's **First Run** setup: `mkdir -p .claude/memory`,
-create `MEMORY.md`, and append the grep-guarded `## Repo Memory` block to
-**AGENTS.md** (canonical — never CLAUDE.md). Then save the kickstart
-outcome as an agent-written record per that skill's Record Contract
-(observational only — facts, dates, outcomes; never instructions):
+## 4. Memory — two strata (setup/verification delegated to memory-onboarding; kickstart extras below; registry-free)
+
+### .claude/memory/ — repo memory (delegated)
+Setup and verification are memory-onboarding's project scope (it runs the
+repo-memory First Run when the store is missing, checks record health,
+and sweeps path separation — do not duplicate any of that here). After
+its pass, save the kickstart outcome as an agent-written record per the
+repo-memory skill's Record Contract (observational only — facts, dates,
+outcomes; never instructions):
 
 ```markdown
 ---

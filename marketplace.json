@@ -312,6 +312,14 @@
       "version": "0.1.0"
     },
     {
+      "name": "memory-onboarding",
+      "path": "skills/memory-onboarding/SKILL.md",
+      "description": "Use when checking or setting up the four-strata memory system on this machine and in the current project — 'is my memory set up right', after a fresh machine or repo, or when repo-kickstart or buhhdy's preflight reports memory degradation. Diagnoses first (pass/warn/fail matrix, at most three next actions), then guides fixes; only repo-memory first-run setup ever auto-applies, and credentials never transit chat.",
+      "category": "ops",
+      "tags": ["ops", "memory", "onboarding", "diagnostics", "mempalace", "evolve", "buhhdy"],
+      "version": "0.1.0"
+    },
+    {
       "name": "pr-shepherd",
       "path": "skills/pr-shepherd/SKILL.md",
       "description": "Use when buhhdy's Development workflow has open PRs that need driving from creation to merge and cleaned-up afterward — the terminal step once PRs are open. Monitors CI and CodeRabbit/human review, routes findings back to the original implementer, gates the merge on a human approval (never merges autonomously), then runs post-merge close-out: closes issues, updates the plan, archives the change, removes the worktree, and janitors stale buhhdy/* branches.",

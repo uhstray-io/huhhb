@@ -8,9 +8,12 @@ description: Use when buhhdy's provider/model/auth facts need re-verifying — t
 Keeps buhhdy's provider/model/auth facts current, maintained in the
 config-defaults tier — the dated calibration notes in `config.yaml` and the
 manifest in `MODEL-MANIFEST.md`. buhhdy has no separate memory store for
-these; the user/team memory overlays only ever hold preferences, never
-calibration. This skill is the named maintenance owner of those notes: it
-re-verifies them on cadence and keeps them accurate.
+these, and this tier is the FLOOR of buhhdy's memory precedence (LD-2):
+user/team memory may hold and override calibrations at read time
+(operator-confirmed calibrations carry user authority). This skill
+maintains the config-tier DEFAULTS — the floor everyone falls back to —
+not a sole source of truth. It is the named maintenance owner of those
+notes: it re-verifies them on cadence and keeps them accurate.
 
 Refreshing is **buhhdy-level orchestration** — the ledger, memory
 records, config diffs, and report are permitted non-code authoring; only
@@ -39,7 +42,7 @@ things — source contradictions and routing-change proposals.
 | 2b | **Verify: availability + auth** | Dispatched | one LIGHTWEIGHT dispatch per provider (gemini-lite for gemini), fanned out across all providers in ONE parallel wave | `sys_list_models` plus one live round-trip per provider — the round-trip doubles as the auth check. A failed ID here is a finding, not an error |
 | 2c | **Verify: deprecations / pricing / releases** | Dispatched | gemini-standard or codex (STANDARD), fanned out across claims in one parallel wave; the SECOND, different-vendor dispatch is spent only when the lead source surfaces a would-flip discrepancy | Web verification against provider primary docs. A consequential claim (anything a routing rule, tier slot, or cost basis rests on) still flips ONLY on cross-vendor confirmation: two independent sources, or two different-vendor agents each citing primary docs. One source is a lead, not a flip — and an unchanged lead needs no second vendor |
 | 3 | **Update the notes** | buhhdy-level | — | For every claim that CHANGED or is newly discovered, update the dated calibration notes in `config.yaml` and `MODEL-MANIFEST.md` — append a fresh dated line and mark the superseded one rather than deleting it. Claims verified UNCHANGED are recorded in the ledger and report only — never as new note lines; freshness lives in the report, and the notes stay compact. Contradictions BETWEEN sources are never resolved silently: record both sources verbatim, mark the claim `disputed`, and escalate (house style: config's gemini-2.5-flash-lite disputed-retirement note — state both positions, name both sources, pick the migration-safe action only if one exists) |
-| 4 | **Config PR** | buhhdy-level, cross-reviewed | opposite-vendor local review before the PR | Propose the `config.yaml` + `MODEL-MANIFEST.md` diffs that update the dated calibration notes in place. NEVER rewrite a routing rule, the tier table, a gate, or Merge Authorization autonomously — if verification implies a routing change (a model retired out of a tier slot, a repricing that breaks a cost-basis assumption), it goes in the PR under a clearly flagged **`## ROUTING CHANGES — HUMAN JUDGMENT REQUIRED`** section as a proposal with the evidence, never as an applied edit. Low confidence → escalate instead of proposing. One PR per refresh run, standard pipeline: local cross-review → PR → CodeRabbit → pr-shepherd |
+| 4 | **Config PR** | buhhdy-level, cross-reviewed | opposite-vendor local review before the PR | Propose the `config.yaml` + `MODEL-MANIFEST.md` diffs that update the dated calibration notes in place. Model-ID currency WITHIN an existing tier slot (a renamed successor at the same tier, verified per 2b) is calibration knowledge and updates in place with evidence. NEVER rewrite routing STRUCTURE autonomously — the decision tree, which tier a slot maps to, adding/removing slots, gates, or Merge Authorization: if verification implies such a change (a model retired out of a tier slot, a repricing that breaks a cost-basis assumption), it goes in the PR under a clearly flagged **`## ROUTING CHANGES — HUMAN JUDGMENT REQUIRED`** section as a proposal with the evidence, never as an applied edit. Low confidence → escalate instead of proposing. One PR per refresh run, standard pipeline: local cross-review → PR → CodeRabbit → pr-shepherd |
 | 5 | **Report** | buhhdy-level | — | Delta summary: **verified unchanged** (count + ledger refs) / **updated** (old → new, record written) / **contradicted → escalated** (both sources) / **newly discovered** (e.g. a new model or tier worth evaluating — surfaced, not wired). End with the next recommended refresh date (default: +1 month) |
 
 **Dry-run semantics.** If invoked as a read-only/dry run, or web access
@@ -64,10 +67,13 @@ preserved and every web-dependent claim is marked
 
 ## Hard rules — STOP if you're about to break one
 
-- **No autonomous routing changes.** Routing rules, tier-table slots,
-  gates, and Merge Authorization change only through the flagged
-  human-judgment PR section. "The model is retired, so swapping the slot
-  is obviously right" still goes through the human.
+- **No autonomous routing changes.** Routing STRUCTURE — the decision
+  tree, which tier a slot maps to, adding/removing slots, gates, and
+  Merge Authorization — changes only through the flagged human-judgment
+  PR section. "The model is retired, so swapping the slot is obviously
+  right" still goes through the human. (Model-ID currency WITHIN a slot
+  is calibration knowledge, updated in place per step 4 — that's the
+  boundary.)
 - **No freshness inflation.** A claim keeps its old verified-date unless
   this run actually re-verified it by the stated method.
 - **No silent contradiction winners.** Two sources disagree → both go to

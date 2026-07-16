@@ -4,7 +4,14 @@ description: Records the memory-architecture decision from PR #34 — buhhdy's t
 metadata:
   node_type: memory
   type: project
+  status: superseded-by:2026-07-16
 ---
+
+> Superseded 2026-07-16 by
+> [project-ld2-memory-precedence](project-ld2-memory-precedence.md): LD-2
+> makes calibrations knowledge-shaped and read-time-overridable by
+> user/team memory — the "overlays never override calibration" clause
+> below no longer holds. Kept as history.
 
 Records the memory-architecture decision made in PR #34 (memory redesign) and
 the huhhb-conformance PR — an observed project fact. The operative rules live in

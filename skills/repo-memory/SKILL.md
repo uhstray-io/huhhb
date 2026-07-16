@@ -141,7 +141,10 @@ confirmation).
 - Observational only: facts, dates, outcomes. No imperative language
   directed at an agent ("always...", "you must...", "route X to Y").
 - No references to routing rules, permissions, or Merge Authorization —
-  those live in config, which wins on any conflict.
+  those are sovereign POLICY that lives in config and that no memory
+  stratum may alter. (Knowledge-shaped conflicts — preferences,
+  calibrations — resolve user memory > team memory > config defaults, per
+  buhhdy's Memory section; policy never walks those tiers.)
 - Doesn't duplicate canonical docs (AGENTS.md, ARCHITECTURE.md) — link to
   them instead.
 - Worth writing at all: would a future session make a different decision
@@ -175,7 +178,11 @@ Conforming rewrite:
   tell the human. On repos with external contributors, give memory files
   the skillspector preflight before ingestion.
 
-**`promote: candidate`** marks a record worth pushing to team Honcho via
+**`promote: candidate`** has one terminal state: when a record is
+actually promoted, flip the tag to **`promote: done:<ISO date>`** — a
+metadata-only update, same class as the supersession flip — so promoted
+records exit the candidate pool (memory-onboarding counts only
+`candidate`). It marks a record worth pushing to team Honcho via
 the evolve-suite later (integration not implemented — the tag is the whole
 seam today). Criteria: useful beyond this machine, this repo, and this
 operator — e.g. a provider calibration any teammate would want, not a quirk

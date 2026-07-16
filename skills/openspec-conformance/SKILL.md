@@ -1,17 +1,27 @@
 ---
 name: openspec-conformance
-description: Use when making OpenSpec conform to Uhstray's plans/development + plans/architecture layout — the store-registration setup a repo runs once, the house openspec/config.yaml rules, and the archive-time ADR promotion into plans/architecture/. Triggers on "openspec conformance", "register the openspec store", "plans/ layout", "promote an ADR", "openspec store setup", "conform openspec to plans". The single source of truth repo-kickstart (setup) and pr-shepherd (archive) both call.
+description: Use when a repo OPTS INTO Uhstray's plans/development + plans/architecture conventions — the store-registration setup an adopting repo runs once, the house openspec/config.yaml rules, and the archive-time ADR promotion into plans/architecture/. Triggers on "openspec conformance", "register the openspec store", "plans/ layout", "promote an ADR", "openspec store setup", "conform openspec to plans". The single source of truth repo-kickstart (adoption) and pr-shepherd (archive, on adopted repos) both call.
 ---
 
 # openspec-conformance
 
-The one place that defines how OpenSpec conforms to Uhstray's canonical planning
-layout. `repo-kickstart` calls the **Setup** section per repo; `pr-shepherd`
-calls the **Promotion** section on archive. buhhdy's `core-workflows` drives the
-change lifecycle in between. Decision record: `buhhdy/README.md` → "Planning
+The one place that defines how OpenSpec conforms to Uhstray's planning
+layout — a mechanism, not a mandate: the layout is OPT-IN per repo (LD-1;
+adopted via `repo-kickstart` on repos we choose). `repo-kickstart` calls
+the **Setup** section when a repo adopts; `pr-shepherd` calls the
+**Promotion** section on archive — on adopted repos only (its own probe
+skips-with-note elsewhere). buhhdy's `core-workflows` drives the change
+lifecycle in between. Decision record: `buhhdy/README.md` → "Planning
 Layout (OpenSpec conformance)".
 
-**Layout (fixed):**
+**Index writers (canonical enumeration — the four roles, nothing else
+writes `00-implementation-plan.md`):** `repo-kickstart` SEEDS the file
+from this skill's template; Workflow 1's `to-issues` ADDS a change's row;
+Workflow 2 step 7 REFRESHES statuses/links; `promote-adr.ts`
+(pr-shepherd's post-merge) FLIPS a row to `archived`. Reference this
+list; don't restate subsets.
+
+**Layout (what adopted repos use):**
 - `plans/development/openspec/changes/<slug>/` — active changes (proposal, specs, design, tasks)
 - `plans/development/00-implementation-plan.md` — living index over active changes
 - `plans/architecture/NNN-<slug>.md` — durable ADRs (promoted on archive)

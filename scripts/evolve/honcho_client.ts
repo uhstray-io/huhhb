@@ -759,7 +759,11 @@ export async function cmd_observe(args: Record<string, any>): Promise<void> {
     content: args.content,
     explicit: true,
   };
-  if (args.target.startsWith("skill:")) {
+  if (args.target.startsWith("skill__")) {
+    obs.skill = args.target.slice("skill__".length);
+    obs.type = obs.type || "skill-usage";
+  } else if (args.target.startsWith("skill:")) {
+    // legacy separator — accepted and normalized, canonical form is skill__
     obs.skill = args.target.slice(args.target.indexOf(":") + 1);
     obs.type = obs.type || "skill-usage";
   }

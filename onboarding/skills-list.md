@@ -48,7 +48,7 @@ managed setup; unconfigured machines behave as if it were not installed.
 | Skill | Command | Description |
 |-------|---------|-------------|
 | brainstorming | `/brainstorming` | You MUST use this before any creative work - creating features, building components, adding functionality, or modifying behavior. Explores user intent, requirements and design before implementation. |
-| calibration-refresh | `/calibration-refresh` | Use when buhhdy's provider/model/auth facts need to be verified again — monthly, on a failed model ID, or on a provider announcement. Claims ledger → cheapest-first verification (cross-vendor for consequential claims) → memory records → config prose-to-pointer migration PR; routing changes only as a flagged human-judgment proposal |
+| calibration-refresh | `/calibration-refresh` | Use when buhhdy's provider/model/auth facts need to be verified again — monthly, on a failed model ID, or on a provider announcement. Claims ledger → cheapest-first verification (cross-vendor for consequential claims) → in-place updates to the config/MODEL-MANIFEST calibration defaults, one PR per run; routing-structure changes only as a flagged human-judgment proposal |
 | dispatching-parallel-agents | `/dispatching-parallel-agents` | Use when facing 2+ independent tasks that can be worked on without shared state or sequential dependencies |
 | executing-plans | `/executing-plans` | Use when you have a written implementation plan to execute in a separate session with review checkpoints |
 | finishing-a-development-branch | `/finishing-a-development-branch` | Use when implementation is complete, all tests pass, and you need to decide how to integrate the work |
@@ -62,6 +62,7 @@ managed setup; unconfigured machines behave as if it were not installed.
 | systematic-debugging | `/systematic-debugging` | Use when encountering any bug, test failure, or unexpected behavior, before proposing fixes |
 | test-driven-development | `/test-driven-development` | Use when implementing any feature or bugfix, before writing implementation code |
 | using-git-worktrees | `/using-git-worktrees` | Use when starting feature work that needs isolation from current workspace or before executing implementation plans |
+| using-superpowers | `/using-superpowers` | Use when starting any conversation — establishes how to find and use skills, requiring Skill tool invocation before any response |
 | verification-before-completion | `/verification-before-completion` | Use when about to claim work is complete, fixed, or passing, before committing or creating PRs |
 | writing-plans | `/writing-plans` | Use when you have a spec or requirements for a multi-step task, before touching code |
 | writing-skills | `/writing-skills` | Use when creating new skills, editing existing skills, or verifying skills work before deployment |

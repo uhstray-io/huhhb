@@ -18,6 +18,11 @@ huhhb/
 │   └── <skill-name>/    #   each holds SKILL.md (+ optional principles.md / scripts)
 │       └── SKILL.md
 ├── onboarding/          # First-run experience (welcome flow, skills list)
+├── buhhdy/              # Four-provider coding orchestrator (omnigent config +
+│                        #   its own skills/ + MODEL-MANIFEST.md); huhhb ops
+│                        #   skills (pr-shepherd, repo-kickstart, openspec-
+│                        #   conformance, calibration-refresh, memory-onboarding)
+│                        #   serve this stack — see buhhdy/README.md
 ├── .claude-plugin/      # plugin.json (version + hooks), marketplace.json, hook scripts
 ├── marketplace.json     # Skill manifest — source of truth for discovery
 ├── CLAUDE.md            # Instructions for Claude Code in this repo

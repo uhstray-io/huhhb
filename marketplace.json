@@ -3,7 +3,7 @@
   "publisher": "uhstray-io",
   "displayName": "Uhstray Skills Hub",
   "description": "Uhstray.io's curated Claude Code skills marketplace — workflows and automation for engineering teams.",
-  "version": "0.5.13",
+  "version": "0.5.14",
   "homepage": "https://github.com/uhstray-io/huhhb",
   "license": "MIT",
   "skills": [
@@ -306,7 +306,7 @@
     {
       "name": "calibration-refresh",
       "path": "skills/calibration-refresh/SKILL.md",
-      "description": "Use when buhhdy's provider/model/auth facts need re-verifying — the operator says 'run calibration refresh', the monthly refresh is due, a dispatch just failed on a bad or retired model ID, or a provider announced a model change. Produces a claims ledger, verifies cheapest-first with cross-vendor confirmation for consequential claims, maintains facts as memory records, and proposes config prose-to-pointer migration; routing changes only ever appear as a flagged human-judgment PR section.",
+      "description": "Use when buhhdy's provider/model/auth facts need re-verifying — the operator says 'run calibration refresh', the monthly refresh is due, a dispatch just failed on a model ID, or a provider announced a change. Produces a claims ledger, verifies cheapest-first with cross-vendor confirmation for consequential claims, updates the config/MODEL-MANIFEST calibration defaults in place via one PR per run; routing-structure changes only ever appear as a flagged human-judgment PR section.",
       "category": "ops",
       "tags": ["ops", "buhhdy", "calibration", "providers", "models", "memory"],
       "version": "0.1.0"

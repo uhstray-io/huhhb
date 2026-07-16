@@ -108,6 +108,6 @@ never present a fresh distilled skill as proven.
 - **No eval, no registration.** Enforced mechanically at `propose`.
 - **Class-level names; hub skills are read-only.** A distilled skill is always
   a user-scope `*-local` overlay. A gap in a *hub* skill routes to the fleet
-  channel (`observe --target skill:<name>`), never a local edit.
+  channel (`observe --target skill__<name>`), never a local edit.
 - **Distill from success; strip the session.** The failure mode you are
   guarding against is baking one run's specifics into a "reusable" skill.

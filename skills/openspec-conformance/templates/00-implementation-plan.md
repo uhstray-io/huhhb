@@ -4,13 +4,11 @@ The index over OpenSpec changes under `openspec/changes/`, including archived
 history. One row per change; the change's own `tasks.md` is the task detail,
 not this file.
 
-**Update rules (who writes this file):**
-- **buhhdy Workflow 1, step 8 (`to-issues`)** adds a row when a change's tasks
-  and tracker issues are cut — status `proposed`/`in-progress`, with links to the
-  change's `tasks.md` and its issue number(s).
-- **pr-shepherd post-merge close-out** flips the row to `archived` and appends
-  the promoted `plans/architecture/NNN-<slug>.md` ADR link (via
-  `promote-adr.ts` — do not hand-edit the status/ADR link).
+**Update rules (who writes this file):** the four writer roles are
+canonically enumerated in `openspec-conformance` ("Index writers") —
+kickstart SEEDS, W1 `to-issues` ADDS a row, W2 step 7 REFRESHES
+status/links, and pr-shepherd's `promote-adr.ts` FLIPS a row to
+`archived` (do not hand-edit the status/ADR link).
 
 Keep the columns exactly as below — `promote-adr.ts` matches a row by its first
 cell (the change slug) and edits the Status and Links cells in place.

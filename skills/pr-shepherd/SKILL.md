@@ -8,8 +8,9 @@ description: Use when buhhdy's Development workflow has open PRs that need drivi
 The terminal step of buhhdy's Development workflow (Workflow 2). It begins
 exactly where that workflow ends — the implementer PRs and the docs PR are
 open — and finishes with each PR **merged under human authority**, its issues
-closed, its change archived, its worktree removed, and stale branches
-janitored. buhhdy never merges on its own authority: a merge happens only
+closed, its change archived (on repos that adopted the plans/OpenSpec
+conventions — see the conditional in close-out step 2), its worktree
+removed, and stale branches janitored. buhhdy never merges on its own authority: a merge happens only
 once a human has BOTH approved the PR (a GitHub review) AND given an explicit
 merge instruction — pr-shepherd then executes that merge and does the
 cleanup. There is no autonomous-merge path.
@@ -37,8 +38,9 @@ routes what they surface.
 
 ## Preconditions — refuse to operate if unmet
 
-Check both before shepherding anything. The first is a hard gate; the second
-is warn-and-continue.
+Check all three before shepherding anything. The first is a hard gate
+(safety, not conformance — it applies on every repo); the second and
+third are warn-and-continue.
 
 1. **Default-branch protection with required human review.** This is the
    mechanism-layer backstop for the human-merge rule — if the branch itself
@@ -58,7 +60,11 @@ is warn-and-continue.
     "restrictions": null}
    JSON
    ```
-2. **`.coderabbit.yaml` present.** If absent, warn that PR coverage is reduced
+2. **GitHub "Automatically delete head branches" is OFF** — check
+   `gh api repos/{owner}/{repo} --jq .delete_branch_on_merge` (must be
+   `false`; UI: Settings → General → Pull requests). Else the retention
+   policy below is void. `true` → warn with that path and continue.
+3. **`.coderabbit.yaml` present.** If absent, warn that PR coverage is reduced
    (stage 2 above is weakened) and continue.
 
 ## Lifecycle per PR
@@ -133,12 +139,19 @@ merge; report which one is missing and wait.
 1. **Close linked issues.** Verify each `Closes #N` actually resolved; if
    GitHub didn't auto-close it, close it manually with a reference to the
    merge commit.
-2. **Archive + promote (owned by `openspec-conformance`).** Run `openspec
-   archive <slug> --store <repo> --yes`, then that skill's `promote-adr.ts`: it
-   writes exactly one `plans/architecture/NNN-<slug>.md` ADR from the design's
+2. **Archive + promote (owned by `openspec-conformance`) — conforming
+   repos only (LD-1).** Probe:
+   `plans/development/00-implementation-plan.md` exists. Absent → SKIP
+   with the note "archive/ADR/index skipped — conventions not yet
+   adopted" and continue (same warn-and-continue as `.coderabbit.yaml`);
+   never fail or force-create.
+   When conforming: run `openspec archive <slug> --store <repo> --yes`,
+   then that skill's `promote-adr.ts`: it writes exactly one
+   `plans/architecture/NNN-<slug>.md` ADR from the design's
    `## Decisions` (never the full doc) and flips that change's
-   `00-implementation-plan.md` row to `archived` + ADR link. No `## Decisions`
-   → no ADR (expected). Don't hand-edit the row — the promoter owns it.
+   `00-implementation-plan.md` row to `archived` + ADR link. No
+   `## Decisions` → no ADR (expected). Don't hand-edit the row — the
+   promoter owns it.
 3. **Write the outcome record** via the `repo-memory` skill (buhhdy's repo
    memory standard — `.claude/memory/`, committed to git): what merged,
    findings-per-channel counts (CI / CodeRabbit / human), and escalations.

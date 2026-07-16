@@ -50,4 +50,6 @@ structurally confined to `buhhdy/*`.
 `plans/development/00-implementation-plan.md`, step 6's archive/promote/index
 work is skipped with the note "archive/ADR/index skipped — conventions not
 yet adopted"; issue closing, the repo-memory outcome record, worktree
-removal, and the janitor all still run. Nothing fails.
+removal, and the janitor all still run. The missing index never fails the
+archive/ADR handling — other steps (the branch-protection hard gate, CI,
+merge conditions) can still fail on their own terms.

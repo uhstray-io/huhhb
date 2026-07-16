@@ -111,8 +111,10 @@ edits the Status/Links cells in place, so a divergent format breaks promotion.
 ```markdown
 # Implementation Plan — living index
 
-The index over active OpenSpec changes under `openspec/changes/`. One row per
-change. Who writes it: see `openspec-conformance`'s "Index writers" —
+The index over ALL OpenSpec changes under `openspec/changes/` — including
+archived history: a row is never removed, its Status flips to `archived`
+so `promote-adr.ts` can find and update it. One row per change. Who
+writes it: see `openspec-conformance`'s "Index writers" —
 the canonical four-role enumeration; never restate it, never hand-edit
 the status/ADR cells.
 

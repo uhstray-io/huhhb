@@ -60,9 +60,10 @@ third are warn-and-continue.
     "restrictions": null}
    JSON
    ```
-2. **GitHub "Automatically delete head branches" is OFF** — else the
-   retention policy below is void (GitHub deletes each head branch at
-   merge). On → warn with the settings path and continue.
+2. **GitHub "Automatically delete head branches" is OFF** — check
+   `gh api repos/{owner}/{repo} --jq .delete_branch_on_merge` (must be
+   `false`; UI: Settings → General → Pull requests). Else the retention
+   policy below is void. `true` → warn with that path and continue.
 3. **`.coderabbit.yaml` present.** If absent, warn that PR coverage is reduced
    (stage 2 above is weakened) and continue.
 

@@ -162,6 +162,15 @@ const rowMsg = rowUpdated
   ? "updated → archived"
   : rowFound
     ? "already archived — no change"
-    : "NOT found (add it manually)";
+    : "NOT found";
 console.log(`promote-adr: ${adrMsg}`);
 console.log(`promote-adr: index row for '${slug}' ${rowMsg}`);
+if (!rowFound) {
+  // A missing row means archive would complete without the status flip —
+  // fail loudly so the caller (pr-shepherd close-out) surfaces it instead
+  // of reporting a clean archive.
+  console.error(
+    `promote-adr: FAIL — no index row for '${slug}' in 00-implementation-plan.md; add the row (see openspec-conformance "Index writers") and re-run`,
+  );
+  process.exit(1);
+}

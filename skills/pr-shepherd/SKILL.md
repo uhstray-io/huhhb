@@ -8,18 +8,16 @@ description: Use when any orchestrating agent's development workflow — buhhdy'
 The terminal step of an orchestrating agent's development workflow —
 AGENT-AGNOSTIC: any agent that opens PRs can run it. buhhdy's Workflow 2
 is the canonical caller and the worked example throughout; "buhhdy-level"
-below means "the calling orchestrator itself" (named for that canonical
-caller — substitute your agent), and every buhhdy artifact named here
+below means "the calling orchestrator itself", and every buhhdy artifact named here
 (`config.yaml` Merge Authorization / Cross-Review Rule, `core-workflows`)
 maps to the calling agent's equivalent policy. It begins
 exactly where that workflow ends — the implementer PRs and the docs PR are
 open — and finishes with each PR **merged under human authority**, its issues
 closed, its change archived (on repos that adopted the plans/OpenSpec
 conventions — see the conditional in close-out step 2), its worktree
-removed, and stale branches janitored. buhhdy never merges on its own authority: a merge happens only
-once a human has BOTH approved the PR (a GitHub review) AND given an explicit
-merge instruction — pr-shepherd then executes that merge and does the
-cleanup. There is no autonomous-merge path.
+removed, and stale branches janitored. buhhdy never merges on its own
+authority — the Merge gate below holds every condition; there is no
+autonomous-merge path.
 
 Shepherding itself is **buhhdy-level orchestration**; only the fix-work is
 dispatched. Two kinds of step appear below, same as buhhdy's `core-workflows`:
@@ -165,6 +163,9 @@ merge; report which one is missing and wait.
 3. **Write the outcome record** via the `repo-memory` skill (buhhdy's repo
    memory standard — `.claude/memory/`, committed to git): what merged,
    findings-per-channel counts (CI / CodeRabbit / human), and escalations.
+   A leftover `.claude/memory/wip/<branch-slug>.md` journal (PR created
+   outside Claude Code) is consolidated into this record and deleted —
+   the repo-memory hook fallback.
 4. **Remove the worktree** for the merged task:
    ```bash
    git worktree remove .worktrees/<task_id>

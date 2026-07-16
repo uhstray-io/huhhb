@@ -1,0 +1,14 @@
+#!/usr/bin/env sh
+# repo-memory mechanical lint (vendor-agnostic pre-commit variant).
+#
+# Runs the same structural checks as the Claude Code PreToolUse gate over
+# staged .claude/memory/ files: an in-place edit to an agent record's
+# content (anything beyond status:/promote: metadata flips) blocks the
+# commit. Degrades to a no-op when node is unavailable.
+
+command -v node >/dev/null 2>&1 || exit 0
+root=$(git rev-parse --show-toplevel 2>/dev/null) || exit 0
+script="$root/scripts/repo-memory-lint.ts"
+[ -f "$script" ] || exit 0
+
+exec node "$script" --staged

@@ -74,6 +74,10 @@ below remain this skill's own:
 - **Seed the kickstart outcome record** into `.claude/memory/` per the
   `repo-memory` skill's Record Contract (observational-only: facts,
   dates, outcomes — never instructions) with what this run learned.
+- **Activate the repo's git hooks**: seed `.githooks/` (post-commit
+  capture + pre-commit memory lint, templates from huhhb) and run
+  `git config core.hooksPath .githooks` — per the repo-memory skill's
+  Hooks section.
 - **Honcho (team memory)** — scope the repo's workspace via the evolve-suite
   skills. **Credentials come from the environment** (`HONCHO_URL` /
   `HONCHO_API_KEY` / `HONCHO_WORKSPACE`) — **never write them into the repo.**

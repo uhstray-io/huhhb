@@ -1,6 +1,6 @@
 ---
 name: openspec-conformance
-description: Use when making OpenSpec conform to Uhstray's plans/development + plans/architecture layout — the store-registration setup a repo runs once, the house openspec/config.yaml rules, and the archive-time ADR promotion into plans/architecture/. Triggers on "openspec conformance", "register the openspec store", "plans/ layout", "promote an ADR", "openspec store setup", "conform openspec to plans". The single source of truth repo-kickstart (setup) and pr-shepherd (archive) both call.
+description: Use when a repo OPTS INTO Uhstray's plans/development + plans/architecture conventions — the store-registration setup an adopting repo runs once, the house openspec/config.yaml rules, and the archive-time ADR promotion into plans/architecture/. Triggers on "openspec conformance", "register the openspec store", "plans/ layout", "promote an ADR", "openspec store setup", "conform openspec to plans". The single source of truth repo-kickstart (adoption) and pr-shepherd (archive, on adopted repos) both call.
 ---
 
 # openspec-conformance

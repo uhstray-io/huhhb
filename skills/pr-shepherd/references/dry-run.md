@@ -7,7 +7,7 @@ Workflow 2 left three PRs open: **#41, #42** (implementer PRs, worktrees
 `.worktrees/t-41`, `.worktrees/t-42`) and **#43** (buhhdy's docs PR).
 
 1. **Preflight.** Branch protection on `main` requires 1 review → passes.
-   `.coderabbit.yaml` present. Stage-1 cross-review records exist for all
+   `.coderabbit.yaml` present; GitHub auto-delete-head-branches is OFF. Stage-1 cross-review records exist for all
    three branches. Shepherd all three concurrently.
 2. **Monitor.** Set timers; end the turn. Wakes: #41 CI red (1 test);
    CodeRabbit leaves 2 findings on #42; #43 clean, no findings.
@@ -46,7 +46,7 @@ exist; post-merge checklist executed in order; worktree removed; only
 merged+inactive branches deleted (unmerged stale ones skipped); janitor
 structurally confined to `buhhdy/*`.
 
-**Non-conforming variant:** on a repo without
+**Not-yet-adopted variant:** on a repo without
 `plans/development/00-implementation-plan.md`, step 6's archive/promote/index
 work is skipped with the note "archive/ADR/index skipped — conventions not
 yet adopted"; issue closing, the repo-memory outcome record, worktree

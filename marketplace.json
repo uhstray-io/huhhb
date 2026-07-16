@@ -2,7 +2,7 @@
   "name": "huhhb",
   "publisher": "uhstray-io",
   "displayName": "Uhstray Skills Hub",
-  "description": "Uhstray.io's curated Claude Code skills marketplace — workflows and automation for engineering teams.",
+  "description": "Uhstray.io's curated Claude Code skills marketplace \u2014 workflows and automation for engineering teams.",
   "version": "0.6.17",
   "homepage": "https://github.com/uhstray-io/huhhb",
   "license": "MIT",
@@ -10,25 +10,41 @@
     {
       "name": "session-save",
       "path": "skills/session-save/SKILL.md",
-      "description": "Use when ending or pausing a session and you want to resume cleanly later — writes a gitignored continuation file (.claude/CONTINUE.md) with the exact next action, conversation context, and working-tree state.",
+      "description": "Use when ending or pausing a session and you want to resume cleanly later \u2014 writes a gitignored continuation file (.claude/CONTINUE.md) with the exact next action, conversation context, and working-tree state.",
       "category": "dev",
-      "tags": ["continuity", "session", "save", "context"],
+      "tags": [
+        "continuity",
+        "session",
+        "save",
+        "context"
+      ],
       "version": "0.1.0"
     },
     {
       "name": "session-resume",
       "path": "skills/session-resume/SKILL.md",
-      "description": "Use when picking up prior work in a fresh session — consumes the continuation file written by session-save: verifies it against the repo, re-hydrates context, briefs, deletes the file, then acts.",
+      "description": "Use when picking up prior work in a fresh session \u2014 consumes the continuation file written by session-save: verifies it against the repo, re-hydrates context, briefs, deletes the file, then acts.",
       "category": "dev",
-      "tags": ["continuity", "session", "resume", "context"],
+      "tags": [
+        "continuity",
+        "session",
+        "resume",
+        "context"
+      ],
       "version": "0.1.0"
     },
     {
       "name": "memory",
       "path": "skills/memory/SKILL.md",
-      "description": "Access, search, and manage the team memory nexus — powered by MemPalace. Store and recall project context via MCP.",
+      "description": "Access, search, and manage the team memory nexus \u2014 powered by MemPalace. Store and recall project context via MCP.",
       "category": "memory",
-      "tags": ["memory", "ai", "context", "rag", "nexus"],
+      "tags": [
+        "memory",
+        "ai",
+        "context",
+        "rag",
+        "nexus"
+      ],
       "version": "0.1.0"
     },
     {
@@ -36,7 +52,11 @@
       "path": "skills/memory-search/SKILL.md",
       "description": "Semantic search across the team memory nexus.",
       "category": "memory",
-      "tags": ["memory", "search", "semantic"],
+      "tags": [
+        "memory",
+        "search",
+        "semantic"
+      ],
       "version": "0.1.0"
     },
     {
@@ -44,31 +64,45 @@
       "path": "skills/memory-mine/SKILL.md",
       "description": "Mine a project directory or text into the memory nexus.",
       "category": "memory",
-      "tags": ["memory", "mining", "indexing"],
+      "tags": [
+        "memory",
+        "mining",
+        "indexing"
+      ],
       "version": "0.1.0"
     },
     {
       "name": "memory-status",
       "path": "skills/memory-status/SKILL.md",
-      "description": "Show memory nexus statistics — drawer count, wings, rooms.",
+      "description": "Show memory nexus statistics \u2014 drawer count, wings, rooms.",
       "category": "memory",
-      "tags": ["memory", "status"],
+      "tags": [
+        "memory",
+        "status"
+      ],
       "version": "0.1.0"
     },
     {
       "name": "repo-memory",
       "path": "skills/repo-memory/SKILL.md",
-      "description": "Save and retrieve project knowledge in .claude/memory/ — triggers on 'remember', 'don't forget', 'recall', 'what do we know about', and similar phrases.",
+      "description": "Save and retrieve project knowledge in .claude/memory/ \u2014 triggers on 'remember', 'don't forget', 'recall', 'what do we know about', and similar phrases.",
       "category": "memory",
-      "tags": ["memory", "local", "git", "context"],
-      "version": "0.1.0"
+      "tags": [
+        "memory",
+        "local",
+        "git",
+        "context"
+      ],
+      "version": "0.2.0"
     },
     {
       "name": "huhhb-welcome",
       "path": "onboarding/welcome.md",
       "description": "First-run tour of huhhb skills.",
       "category": "onboarding",
-      "tags": ["onboarding"],
+      "tags": [
+        "onboarding"
+      ],
       "version": "0.1.0"
     },
     {
@@ -76,7 +110,10 @@
       "path": "onboarding/skills-list.md",
       "description": "List all available huhhb skills.",
       "category": "onboarding",
-      "tags": ["onboarding", "discovery"],
+      "tags": [
+        "onboarding",
+        "discovery"
+      ],
       "version": "0.1.0"
     },
     {
@@ -84,7 +121,12 @@
       "path": "skills/onboarding/SKILL.md",
       "description": "Use when setting up Claude Code for the first time, configuring auto mode, enabling agent teams, or when user says set up Claude or onboard me",
       "category": "onboarding",
-      "tags": ["onboarding", "setup", "auto-mode", "agent-teams"],
+      "tags": [
+        "onboarding",
+        "setup",
+        "auto-mode",
+        "agent-teams"
+      ],
       "version": "0.1.0"
     },
     {
@@ -92,7 +134,10 @@
       "path": "skills/using-superpowers/SKILL.md",
       "description": "Use when starting any conversation - establishes how to find and use skills, requiring Skill tool invocation before ANY response including clarifying questions",
       "category": "dev",
-      "tags": ["superpowers", "meta"],
+      "tags": [
+        "superpowers",
+        "meta"
+      ],
       "version": "0.1.0"
     },
     {
@@ -100,7 +145,10 @@
       "path": "skills/brainstorming/SKILL.md",
       "description": "You MUST use this before any creative work - creating features, building components, adding functionality, or modifying behavior. Explores user intent, requirements and design before implementation.",
       "category": "dev",
-      "tags": ["superpowers", "design"],
+      "tags": [
+        "superpowers",
+        "design"
+      ],
       "version": "0.1.0"
     },
     {
@@ -108,7 +156,10 @@
       "path": "skills/dispatching-parallel-agents/SKILL.md",
       "description": "Use when facing 2+ independent tasks that can be worked on without shared state or sequential dependencies",
       "category": "dev",
-      "tags": ["superpowers", "agents"],
+      "tags": [
+        "superpowers",
+        "agents"
+      ],
       "version": "0.1.0"
     },
     {
@@ -116,7 +167,10 @@
       "path": "skills/executing-plans/SKILL.md",
       "description": "Use when you have a written implementation plan to execute in a separate session with review checkpoints",
       "category": "dev",
-      "tags": ["superpowers", "planning"],
+      "tags": [
+        "superpowers",
+        "planning"
+      ],
       "version": "0.1.0"
     },
     {
@@ -124,7 +178,10 @@
       "path": "skills/finishing-a-development-branch/SKILL.md",
       "description": "Use when implementation is complete, all tests pass, and you need to decide how to integrate the work - guides completion of development work by presenting structured options for merge, PR, or cleanup",
       "category": "dev",
-      "tags": ["superpowers", "git"],
+      "tags": [
+        "superpowers",
+        "git"
+      ],
       "version": "0.1.0"
     },
     {
@@ -132,7 +189,10 @@
       "path": "skills/subagent-driven-development/SKILL.md",
       "description": "Use when executing implementation plans with independent tasks in the current session",
       "category": "dev",
-      "tags": ["superpowers", "agents"],
+      "tags": [
+        "superpowers",
+        "agents"
+      ],
       "version": "0.1.0"
     },
     {
@@ -140,7 +200,10 @@
       "path": "skills/systematic-debugging/SKILL.md",
       "description": "Use when encountering any bug, test failure, or unexpected behavior, before proposing fixes",
       "category": "dev",
-      "tags": ["superpowers", "debugging"],
+      "tags": [
+        "superpowers",
+        "debugging"
+      ],
       "version": "0.1.0"
     },
     {
@@ -148,7 +211,10 @@
       "path": "skills/test-driven-development/SKILL.md",
       "description": "Use when implementing any feature or bugfix, before writing implementation code",
       "category": "dev",
-      "tags": ["superpowers", "testing"],
+      "tags": [
+        "superpowers",
+        "testing"
+      ],
       "version": "0.1.0"
     },
     {
@@ -156,7 +222,10 @@
       "path": "skills/using-git-worktrees/SKILL.md",
       "description": "Use when starting feature work that needs isolation from current workspace or before executing implementation plans - creates isolated git worktrees with smart directory selection and safety verification",
       "category": "dev",
-      "tags": ["superpowers", "git"],
+      "tags": [
+        "superpowers",
+        "git"
+      ],
       "version": "0.1.0"
     },
     {
@@ -164,7 +233,10 @@
       "path": "skills/verification-before-completion/SKILL.md",
       "description": "Use when about to claim work is complete, fixed, or passing, before committing or creating PRs - requires running verification commands and confirming output before making any success claims; evidence before assertions always",
       "category": "dev",
-      "tags": ["superpowers", "quality"],
+      "tags": [
+        "superpowers",
+        "quality"
+      ],
       "version": "0.1.0"
     },
     {
@@ -172,7 +244,10 @@
       "path": "skills/writing-plans/SKILL.md",
       "description": "Use when you have a spec or requirements for a multi-step task, before touching code",
       "category": "dev",
-      "tags": ["superpowers", "planning"],
+      "tags": [
+        "superpowers",
+        "planning"
+      ],
       "version": "0.1.0"
     },
     {
@@ -180,7 +255,10 @@
       "path": "skills/writing-skills/SKILL.md",
       "description": "Use when creating new skills, editing existing skills, or verifying skills work before deployment",
       "category": "dev",
-      "tags": ["superpowers", "skills"],
+      "tags": [
+        "superpowers",
+        "skills"
+      ],
       "version": "0.1.0"
     },
     {
@@ -188,7 +266,10 @@
       "path": "skills/receiving-code-review/SKILL.md",
       "description": "Use when receiving code review feedback, before implementing suggestions, especially if feedback seems unclear or technically questionable - requires technical rigor and verification, not performative agreement or blind implementation",
       "category": "review",
-      "tags": ["superpowers", "review"],
+      "tags": [
+        "superpowers",
+        "review"
+      ],
       "version": "0.1.0"
     },
     {
@@ -196,15 +277,23 @@
       "path": "skills/requesting-code-review/SKILL.md",
       "description": "Use when completing tasks, implementing major features, or before merging to verify work meets requirements",
       "category": "review",
-      "tags": ["superpowers", "review"],
+      "tags": [
+        "superpowers",
+        "review"
+      ],
       "version": "0.1.0"
     },
     {
       "name": "training",
       "path": "skills/training/SKILL.md",
-      "description": "Socratic teaching mode (Sensei). Never writes new code — guides users through problems by describing approaches, naming APIs, linking docs, and asking questions that lead to the answer.",
+      "description": "Socratic teaching mode (Sensei). Never writes new code \u2014 guides users through problems by describing approaches, naming APIs, linking docs, and asking questions that lead to the answer.",
       "category": "persona",
-      "tags": ["training", "learning", "teaching", "sensei"],
+      "tags": [
+        "training",
+        "learning",
+        "teaching",
+        "sensei"
+      ],
       "version": "0.1.0"
     },
     {
@@ -212,15 +301,23 @@
       "path": "skills/caveman/SKILL.md",
       "description": "Ultra-compressed communication mode sourced from JuliusBrussee/caveman. Cuts token usage ~75% while keeping full technical accuracy. Supports lite, full, ultra, and wenyan intensity levels.",
       "category": "persona",
-      "tags": ["caveman", "tokens", "compression"],
+      "tags": [
+        "caveman",
+        "tokens",
+        "compression"
+      ],
       "version": "0.1.0"
     },
     {
       "name": "caveman-commit",
       "path": "skills/caveman-commit/SKILL.md",
-      "description": "Ultra-compressed commit message generator. Conventional Commits format, subject ≤50 chars, body only when why isn't obvious.",
+      "description": "Ultra-compressed commit message generator. Conventional Commits format, subject \u226450 chars, body only when why isn't obvious.",
       "category": "persona",
-      "tags": ["caveman", "git", "commits"],
+      "tags": [
+        "caveman",
+        "git",
+        "commits"
+      ],
       "version": "0.1.0"
     },
     {
@@ -228,7 +325,10 @@
       "path": "skills/caveman-review/SKILL.md",
       "description": "Ultra-compressed code review comments. One line per finding: location, problem, fix. No throat-clearing.",
       "category": "persona",
-      "tags": ["caveman", "review"],
+      "tags": [
+        "caveman",
+        "review"
+      ],
       "version": "0.1.0"
     },
     {
@@ -236,7 +336,11 @@
       "path": "skills/caveman-compress/SKILL.md",
       "description": "Compress natural language memory files (CLAUDE.md, todos) into caveman format to save input tokens. Preserves all technical substance.",
       "category": "persona",
-      "tags": ["caveman", "compression", "memory"],
+      "tags": [
+        "caveman",
+        "compression",
+        "memory"
+      ],
       "version": "0.1.0"
     },
     {
@@ -244,23 +348,34 @@
       "path": "skills/caveman-help/SKILL.md",
       "description": "Quick-reference card for all caveman modes, skills, and commands.",
       "category": "persona",
-      "tags": ["caveman", "help"],
+      "tags": [
+        "caveman",
+        "help"
+      ],
       "version": "0.1.0"
     },
     {
       "name": "caveman-stats",
       "path": "skills/caveman-stats/SKILL.md",
-      "description": "Real-time token usage metrics for the current session. Requires caveman plugin hooks to function — install via JuliusBrussee/caveman for full functionality.",
+      "description": "Real-time token usage metrics for the current session. Requires caveman plugin hooks to function \u2014 install via JuliusBrussee/caveman for full functionality.",
       "category": "persona",
-      "tags": ["caveman", "stats", "tokens"],
+      "tags": [
+        "caveman",
+        "stats",
+        "tokens"
+      ],
       "version": "0.1.0"
     },
     {
       "name": "cavecrew",
       "path": "skills/cavecrew/SKILL.md",
-      "description": "Use when delegating code tasks to compressed subagents — investigator, builder, and reviewer — to preserve main context length.",
+      "description": "Use when delegating code tasks to compressed subagents \u2014 investigator, builder, and reviewer \u2014 to preserve main context length.",
       "category": "dev",
-      "tags": ["caveman", "agents", "context"],
+      "tags": [
+        "caveman",
+        "agents",
+        "context"
+      ],
       "version": "0.1.0"
     },
     {
@@ -268,103 +383,179 @@
       "path": "skills/strict-simplify/SKILL.md",
       "description": "Replace redundant or verbose logic with a provably-equivalent simpler form, apply the edits, and show the diff. Strict: no restructuring, renaming, reformatting, optimizing, or bug-fixing.",
       "category": "review",
-      "tags": ["review", "simplify", "refactor"],
+      "tags": [
+        "review",
+        "simplify",
+        "refactor"
+      ],
       "version": "0.1.0"
     },
     {
       "name": "strict-refactor",
       "path": "skills/strict-refactor/SKILL.md",
-      "description": "Decompose large functions into named single-purpose units — extract computation blocks, guard clauses, or setup phases, or move a function to a better module. Strict: verbatim extraction only, no logic changes, no renames.",
+      "description": "Decompose large functions into named single-purpose units \u2014 extract computation blocks, guard clauses, or setup phases, or move a function to a better module. Strict: verbatim extraction only, no logic changes, no renames.",
       "category": "review",
-      "tags": ["review", "refactor", "extract", "decompose"],
+      "tags": [
+        "review",
+        "refactor",
+        "extract",
+        "decompose"
+      ],
       "version": "0.1.0"
     },
     {
       "name": "explaining-plans",
       "path": "skills/explaining-plans/SKILL.md",
-      "description": "Use when augmenting or explaining a plan, spec, or RFC — enriches the document in place with decision criteria, cited source context, target-outcome framing, and prose-introduced mermaid diagrams. Composes with writing-plans rather than replacing it.",
+      "description": "Use when augmenting or explaining a plan, spec, or RFC \u2014 enriches the document in place with decision criteria, cited source context, target-outcome framing, and prose-introduced mermaid diagrams. Composes with writing-plans rather than replacing it.",
       "category": "dev",
-      "tags": ["explanation", "planning", "mermaid", "education", "diagrams"],
+      "tags": [
+        "explanation",
+        "planning",
+        "mermaid",
+        "education",
+        "diagrams"
+      ],
       "version": "0.1.0"
     },
     {
       "name": "explaining-changes",
       "path": "skills/explaining-changes/SKILL.md",
-      "description": "Use during implementation to narrate changes as they happen — explains each logical change, each completed plan task, and every commit, using brief prose plus simple ASCII diagrams. Chat/CLI only.",
+      "description": "Use during implementation to narrate changes as they happen \u2014 explains each logical change, each completed plan task, and every commit, using brief prose plus simple ASCII diagrams. Chat/CLI only.",
       "category": "dev",
-      "tags": ["explanation", "dev", "ascii", "education", "diagrams"],
+      "tags": [
+        "explanation",
+        "dev",
+        "ascii",
+        "education",
+        "diagrams"
+      ],
       "version": "0.1.0"
     },
     {
       "name": "grounding",
       "path": "skills/grounding/SKILL.md",
-      "description": "Use when a long session should pause for a checkpoint — surfaces in-flight work, runs /simplify + /security-review and test/build/lint health, checks the diff against the repo's documented conventions, and re-confirms goals. Fired by the grounding hook (default 2h, configurable) or run manually. Opt-in; offers a user-selectable check menu.",
+      "description": "Use when a long session should pause for a checkpoint \u2014 surfaces in-flight work, runs /simplify + /security-review and test/build/lint health, checks the diff against the repo's documented conventions, and re-confirms goals. Fired by the grounding hook (default 2h, configurable) or run manually. Opt-in; offers a user-selectable check menu.",
       "category": "dev",
-      "tags": ["dev", "checkpoint", "review", "conformance", "session"],
+      "tags": [
+        "dev",
+        "checkpoint",
+        "review",
+        "conformance",
+        "session"
+      ],
       "version": "0.1.0"
     },
     {
       "name": "buhhdy-model-calibration-refresh",
       "path": "skills/buhhdy-model-calibration-refresh/SKILL.md",
-      "description": "Use when buhhdy's provider/model/auth facts need re-verifying — the operator says 'run calibration refresh', the monthly refresh is due, a dispatch just failed on a model ID, or a provider announced a change. Produces a claims ledger, verifies cheapest-first with cross-vendor confirmation for consequential claims, updates the config/MODEL-MANIFEST calibration defaults in place via one PR per run; routing-structure changes only ever appear as a flagged human-judgment PR section.",
+      "description": "Use when buhhdy's provider/model/auth facts need re-verifying \u2014 the operator says 'run calibration refresh', the monthly refresh is due, a dispatch just failed on a model ID, or a provider announced a change. Produces a claims ledger, verifies cheapest-first with cross-vendor confirmation for consequential claims, updates the config/MODEL-MANIFEST calibration defaults in place via one PR per run; routing-structure changes only ever appear as a flagged human-judgment PR section.",
       "category": "ops",
-      "tags": ["ops", "buhhdy", "calibration", "providers", "models", "memory"],
+      "tags": [
+        "ops",
+        "buhhdy",
+        "calibration",
+        "providers",
+        "models",
+        "memory"
+      ],
       "version": "0.1.0"
     },
     {
       "name": "memory-onboarding",
       "path": "skills/memory-onboarding/SKILL.md",
-      "description": "Use when checking or setting up the four-strata memory system on this machine and in the current project — 'is my memory set up right', after a fresh machine or repo, or when repo-kickstart or buhhdy's preflight reports memory degradation. Diagnoses first (pass/warn/fail matrix, at most three next actions), then guides fixes; only repo-memory first-run setup ever auto-applies, and credentials never transit chat.",
+      "description": "Use when checking or setting up the four-strata memory system on this machine and in the current project \u2014 'is my memory set up right', after a fresh machine or repo, or when repo-kickstart or buhhdy's preflight reports memory degradation. Diagnoses first (pass/warn/fail matrix, at most three next actions), then guides fixes; only repo-memory first-run setup ever auto-applies, and credentials never transit chat.",
       "category": "ops",
-      "tags": ["ops", "memory", "onboarding", "diagnostics", "mempalace", "evolve", "buhhdy"],
-      "version": "0.1.0"
+      "tags": [
+        "ops",
+        "memory",
+        "onboarding",
+        "diagnostics",
+        "mempalace",
+        "evolve",
+        "buhhdy"
+      ],
+      "version": "0.2.0"
     },
     {
       "name": "pr-shepherd",
       "path": "skills/pr-shepherd/SKILL.md",
-      "description": "Use when buhhdy's Development workflow has open PRs that need driving from creation to merge and cleaned-up afterward — the terminal step once PRs are open. Monitors CI and CodeRabbit/human review, routes findings back to the original implementer, gates the merge on a human approval (never merges autonomously), then runs post-merge close-out: closes issues, updates the plan, archives the change, removes the worktree, and janitors stale buhhdy/* branches.",
+      "description": "Use when buhhdy's Development workflow has open PRs that need driving from creation to merge and cleaned-up afterward \u2014 the terminal step once PRs are open. Monitors CI and CodeRabbit/human review, routes findings back to the original implementer, gates the merge on a human approval (never merges autonomously), then runs post-merge close-out: closes issues, updates the plan, archives the change, removes the worktree, and janitors stale buhhdy/* branches.",
       "category": "review",
-      "tags": ["review", "pr", "ci", "coderabbit", "merge", "cleanup", "buhhdy"],
-      "version": "0.1.0"
+      "tags": [
+        "review",
+        "pr",
+        "ci",
+        "coderabbit",
+        "merge",
+        "cleanup",
+        "buhhdy"
+      ],
+      "version": "0.2.0"
     },
     {
       "name": "evolve",
       "path": "skills/evolve/SKILL.md",
-      "description": "Cross-session memory protocol backed by Honcho — how to recall what evolve has learned about you, persist durable facts, and route knowledge to the right memory stratum. Inert until configured.",
+      "description": "Cross-session memory protocol backed by Honcho \u2014 how to recall what evolve has learned about you, persist durable facts, and route knowledge to the right memory stratum. Inert until configured.",
       "category": "memory",
-      "tags": ["memory", "honcho", "learning", "personalization"],
+      "tags": [
+        "memory",
+        "honcho",
+        "learning",
+        "personalization"
+      ],
       "version": "0.1.0"
     },
     {
       "name": "evolve-review",
       "path": "skills/evolve-review/SKILL.md",
-      "description": "The learning pass — triage captured session observations into overlay-skill patches, new overlays, or repo-memory entries, with diffs and approval; also approves proposals staged by headless runs.",
+      "description": "The learning pass \u2014 triage captured session observations into overlay-skill patches, new overlays, or repo-memory entries, with diffs and approval; also approves proposals staged by headless runs.",
       "category": "memory",
-      "tags": ["memory", "learning", "review", "overlays"],
+      "tags": [
+        "memory",
+        "learning",
+        "review",
+        "overlays"
+      ],
       "version": "0.1.0"
     },
     {
       "name": "evolve-status",
       "path": "skills/evolve-status/SKILL.md",
-      "description": "Health check for the evolve learning loop — spool depth, deriver queue, cache age, overlay confidence table, pending proposals.",
+      "description": "Health check for the evolve learning loop \u2014 spool depth, deriver queue, cache age, overlay confidence table, pending proposals.",
       "category": "memory",
-      "tags": ["memory", "status", "observability"],
+      "tags": [
+        "memory",
+        "status",
+        "observability"
+      ],
       "version": "0.1.0"
     },
     {
       "name": "evolve-skills",
       "path": "skills/evolve-skills/SKILL.md",
-      "description": "The library lifecycle pass — audits every skill against usage telemetry, bench history, and lint debt; issues refine/merge/prune/create verdicts and distills new skills from proven successful sessions, eval-gated.",
+      "description": "The library lifecycle pass \u2014 audits every skill against usage telemetry, bench history, and lint debt; issues refine/merge/prune/create verdicts and distills new skills from proven successful sessions, eval-gated.",
       "category": "memory",
-      "tags": ["memory", "lifecycle", "skills", "review", "distillation"],
+      "tags": [
+        "memory",
+        "lifecycle",
+        "skills",
+        "review",
+        "distillation"
+      ],
       "version": "0.1.0"
     },
     {
       "name": "evolve-distill",
       "path": "skills/evolve-distill/SKILL.md",
-      "description": "Distill a repeated, successful multi-step workflow from past sessions into a reusable overlay skill — eval-gated, ≥2-session evidence, human-approved; stages a proposal, never writes a skill directly.",
+      "description": "Distill a repeated, successful multi-step workflow from past sessions into a reusable overlay skill \u2014 eval-gated, \u22652-session evidence, human-approved; stages a proposal, never writes a skill directly.",
       "category": "memory",
-      "tags": ["memory", "distillation", "skills", "workflow", "creation"],
+      "tags": [
+        "memory",
+        "distillation",
+        "skills",
+        "workflow",
+        "creation"
+      ],
       "version": "0.1.0"
     },
     {
@@ -372,23 +563,43 @@
       "path": "skills/evolve-map/SKILL.md",
       "description": "Inventory every skill across tiers (repo/user/plugin), draw the relationships between them (overlaps, complements, composes, supersedes, gaps), recommend augment-vs-build, avoid duplicates, and promote a user skill to the repository.",
       "category": "memory",
-      "tags": ["memory", "skills", "graph", "inventory", "interoperability"],
+      "tags": [
+        "memory",
+        "skills",
+        "graph",
+        "inventory",
+        "interoperability"
+      ],
       "version": "0.1.0"
     },
     {
       "name": "repo-kickstart",
       "path": "skills/repo-kickstart/SKILL.md",
-      "description": "Bootstrap any repo — greenfield or brownfield — into Uhstray's standard development conventions: the README/AGENTS/KICKSTART/ARCHITECTURE doc set, the plans/ tree, OpenSpec store registration, memory setup (.claude/memory/ via repo-memory + optional Honcho), a CodeRabbit config, and a branch-protection check. Idempotent, registry-free, and non-destructive.",
+      "description": "Bootstrap any repo \u2014 greenfield or brownfield \u2014 into Uhstray's standard development conventions: the README/AGENTS/KICKSTART/ARCHITECTURE doc set, the plans/ tree, OpenSpec store registration, memory setup (.claude/memory/ via repo-memory + optional Honcho), a CodeRabbit config, and a branch-protection check. Idempotent, registry-free, and non-destructive.",
       "category": "dev",
-      "tags": ["dev", "bootstrap", "conventions", "onboarding", "memory", "openspec"],
-      "version": "0.1.0"
+      "tags": [
+        "dev",
+        "bootstrap",
+        "conventions",
+        "onboarding",
+        "memory",
+        "openspec"
+      ],
+      "version": "0.2.0"
     },
     {
       "name": "openspec-conformance",
       "path": "skills/openspec-conformance/SKILL.md",
-      "description": "Use when making OpenSpec conform to Uhstray's plans/development + plans/architecture layout — the once-per-repo store-registration setup, the house openspec/config.yaml rules, and the archive-time ADR promotion into plans/architecture/. The single source of truth repo-kickstart (setup) and pr-shepherd (archive) both call.",
+      "description": "Use when making OpenSpec conform to Uhstray's plans/development + plans/architecture layout \u2014 the once-per-repo store-registration setup, the house openspec/config.yaml rules, and the archive-time ADR promotion into plans/architecture/. The single source of truth repo-kickstart (setup) and pr-shepherd (archive) both call.",
       "category": "dev",
-      "tags": ["dev", "openspec", "conventions", "adr", "planning", "buhhdy"],
+      "tags": [
+        "dev",
+        "openspec",
+        "conventions",
+        "adr",
+        "planning",
+        "buhhdy"
+      ],
       "version": "0.1.0"
     }
   ]

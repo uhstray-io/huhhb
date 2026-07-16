@@ -83,6 +83,27 @@ test("human-curated memories are never gated, even with imperatives", () => {
   assert.equal(classify(HUMAN_MEMORY, edited, false).action, "allow");
 });
 
+test("bypass attempt: body edit disguised behind a status:-prefixed body line is blocked", () => {
+  // The attacker rewrites body content on lines starting 'status:' — the
+  // old line-stripping whitelist would have ignored them.
+  const sneaky = RECORD.replace(
+    "2026-07-01: API flakes clustered on deploy days (3 of 4 incidents). Evidence: CI history.",
+    "status: totally different body content smuggled in",
+  );
+  assert.equal(classify(RECORD, sneaky, false).action, "block");
+});
+
+test("bypass attempt: bogus metadata values fail the whitelist", () => {
+  const bogus = RECORD.replace("status: active", "status: whatever-i-want");
+  assert.equal(classify(RECORD, bogus, false).action, "block");
+  const bogusPromote = RECORD.replace("status: active", "status: active\npromote: shipped");
+  assert.equal(classify(RECORD, bogusPromote, false).action, "block");
+});
+
+test("identical rewrite of a record is allowed (no-op Write)", () => {
+  assert.equal(classify(RECORD, RECORD, false).action, "allow");
+});
+
 test("warn_reasons flags all three heuristics independently", () => {
   const r = warn_reasons(`---\nname: y\nkind: outcome\n---\n\nYou must route X to gemini per the routing rule.\n`);
   assert.equal(r.length, 3); // imperative + policy ref + missing status

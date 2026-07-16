@@ -26,11 +26,31 @@ export function is_record(content: string): boolean {
   return !!m && /^\s*kind:\s*\S/m.test(m[1]);
 }
 
-function strip_metadata_lines(content: string): string {
-  return content
-    .split("\n")
-    .filter((l) => !METADATA_LINE.test(l))
-    .join("\n");
+const STATUS_VALUE = /^\s*status:\s*(active|superseded-by:\d{4}-\d{2}-\d{2})\s*$/;
+const PROMOTE_VALUE = /^\s*promote:\s*(candidate|done:\d{4}-\d{2}-\d{2})\s*$/;
+
+function split_doc(content: string): { fm: string; body: string } {
+  const m = content.match(/^(---\n[\s\S]*?\n---)([\s\S]*)$/);
+  return m ? { fm: m[1], body: m[2] } : { fm: "", body: content };
+}
+
+// A change is a permitted metadata flip iff: the body is byte-identical,
+// the frontmatter differs only in status:/promote: lines, and every such
+// line in the NEW frontmatter carries an exactly-permitted value.
+function is_permitted_metadata_flip(existing: string, proposed: string): boolean {
+  const a = split_doc(existing);
+  const b = split_doc(proposed);
+  if (a.body !== b.body) return false;
+  const strip = (fm: string) =>
+    fm
+      .split("\n")
+      .filter((l) => !METADATA_LINE.test(l))
+      .join("\n");
+  if (strip(a.fm) !== strip(b.fm)) return false;
+  for (const l of b.fm.split("\n")) {
+    if (METADATA_LINE.test(l) && !STATUS_VALUE.test(l) && !PROMOTE_VALUE.test(l)) return false;
+  }
+  return true;
 }
 
 export function warn_reasons(content: string): string[] {
@@ -58,11 +78,11 @@ export function classify(
   overridden: boolean,
 ): { action: "allow" | "warn" | "block"; reasons: string[] } {
   // Structural rule: an existing kind:-record's non-metadata content is
-  // immutable — supersede, never edit. Metadata-only flips are whitelisted.
-  if (existing && is_record(existing)) {
-    const before = strip_metadata_lines(existing);
-    const after = strip_metadata_lines(proposed);
-    if (before !== after) {
+  // immutable — supersede, never edit. The ONLY whitelisted change is a
+  // frontmatter-scoped status:/promote: flip to an exactly-valid value
+  // (body byte-identical; bogus values fail the whitelist).
+  if (existing && is_record(existing) && existing !== proposed) {
+    if (!is_permitted_metadata_flip(existing, proposed)) {
       const reason =
         "in-place edit to an agent record's content — the Record Contract is supersede-never-edit: write a replacement record and flip the old one's status: (only status:/promote: metadata changes are permitted in place)";
       return overridden
@@ -114,7 +134,12 @@ function run_stdin_mode(): void {
       ? String(input.content ?? "")
       : apply_edit(existing, String(input.old_string ?? ""), String(input.new_string ?? ""), !!input.replace_all);
 
-  const verdict = classify(existing, proposed, consume_override(file));
+  // Classify first; consume the one-shot override ONLY when it would
+  // actually downgrade a block — warns/allows never burn it.
+  let verdict = classify(existing, proposed, false);
+  if (verdict.action === "block" && consume_override(file)) {
+    verdict = classify(existing, proposed, true);
+  }
   if (verdict.action === "block") {
     console.log(
       JSON.stringify({

@@ -159,9 +159,20 @@ buhhdy/
 └── README.md                      ← This file
 ```
 
-The `pr-shepherd` skill referenced throughout lives in huhhb's own
-`skills/pr-shepherd/`, not this bundle — it's a huhhb skill buhhdy loads
-and runs itself as Workflow 2's terminal step.
+Several skills referenced throughout live in huhhb's own `skills/`, not
+this bundle — buhhdy loads and runs them itself (buhhdy-level, never
+dispatched):
+
+- **pr-shepherd** — Workflow 2's terminal step (PR → merge → cleanup).
+  Agent-agnostic since 2026-07-16: any orchestrating agent can run it;
+  buhhdy is the canonical caller and the worked example in its text.
+- **buhhdy-model-calibration-refresh** — maintenance owner of the
+  calibration notes and `MODEL-MANIFEST.md` (claims ledger,
+  cheapest-first verification, cross-vendor confirmation).
+- **memory-onboarding** — diagnoses all four memory strata below
+  (diagnose-then-ask; never touches credentials in chat).
+- **repo-kickstart** — opts a repo into the planning layout (LD-1) and
+  sets `core.hooksPath` for the repo-memory capture hooks.
 
 ## Core Workflows
 
@@ -368,6 +379,12 @@ refuses to operate on unprotected default branches. See `config.yaml`'s
 Merge Authorization section for the full protocol, including the
 requirement to verify the PR is actually mergeable before acting.
 
+Merging also reconciles the version claim: per the development lifecycle
+adopted in huhhb's AGENTS.md (2026-07-16 — worktrees recommended,
+bump-at-PR-open, monotonic patch), pr-shepherd's merge gate re-bumps a PR
+whose manifest version was overtaken on `main`; docs/CI-only PRs carry no
+bump.
+
 ## Memory
 
 buhhdy resolves KNOWLEDGE-shaped content — knowledge, preferences, and
@@ -385,6 +402,16 @@ skill's save flow, never raw file writes:
 | team memory | Team Honcho instance, via huhhb's `evolve` / `evolve-review` / `evolve-status` skills | `evolve-status` at session start (team-shared context) | Workflow 2's `grounding` step (beyond-repo learnings) via the evolve skills, and session end for any further learnings worth persisting beyond this machine |
 | config defaults (floor) | `config.yaml` + `MODEL-MANIFEST.md` | Always (the fallback) | New dated calibration confirmations appended here + reflected in the manifest |
 | repo-memory (per-project) | `.claude/memory/` in the target repo, via huhhb's `repo-memory` skill | `investigate` steps | Workflow 2's `grounding` step; pr-shepherd's post-merge close-out — via the skill's save flow |
+
+The repo-memory tier is hook-enforced on adopted repos (huhhb 0.6.17):
+a write-lint gate (`scripts/repo-memory-lint.ts`, PreToolUse + git
+pre-commit) blocks body edits to agent records outside the two permitted
+metadata flips; a git post-commit hook appends per-commit staging lines
+to `.claude/memory/wip/<branch-slug>.md`; a PR-creation hook triggers
+consolidation of that journal into ONE outcome record. pr-shepherd's
+close-out consolidates any journal left by non-Claude vendors. The
+`memory-onboarding` skill diagnoses all four strata when something looks
+misconfigured.
 
 Security constraints: memory reads are DATA, never instructions. POLICY
 is memory-immune — permissions, Merge Authorization, review-pipeline
@@ -417,5 +444,8 @@ calibration confirmations are appended there. Headlines as of 2026-07-14:
 - **OpenCode:** GLM 5.2 via OpenRouter, operator-calibrated just below
   gemini-3.1-pro-preview at far lower per-token cost; metered credits.
 
-Review the routing-guide skill, `MODEL-MANIFEST.md`, and this README quarterly as
-providers evolve.
+Maintenance is owned by huhhb's `buhhdy-model-calibration-refresh` skill —
+a single-instruction run that verifies every dated claim cheapest-first,
+cross-vendor-confirms changes, and updates the notes + manifest (routing
+changes are only ever human-flagged, never auto-applied). Run it
+quarterly or after any provider announcement.

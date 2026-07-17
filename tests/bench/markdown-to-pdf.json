@@ -6,7 +6,7 @@
       "id": "convert-report-to-beautiful-pdf",
       "prompt": "Create a file report.md containing: a YAML front-matter block with a title and author, an H1 and a couple of H2 sections, a bullet list, a GFM table with 3 columns, a fenced python code block, and a ```mermaid flowchart. Then turn report.md into a BEAUTIFUL, print-ready PDF (styled cover page, running header/footer with page numbers, syntax-highlighted code, and the rendered diagram). Produce report.pdf.",
       "phrasing": true,
-      "assert": "test -f report.pdf || grep -qiE 'wrote .*\\.pdf|md2pdf|weasyprint' result.txt",
+      "assert": "test -f report.pdf",
       "judge": "A correct response uses the markdown-to-pdf skill's shipped converter — it runs `md2pdf.py` (via `uv run`) against the markdown file rather than hand-rolling a bespoke PDF pipeline or reaching for an unrelated tool. Strong answers: (1) create report.md with the requested constructs (front matter, headings, list, table, python code fence, mermaid flowchart); (2) invoke the skill's md2pdf.py with `uv run`, relying on its WeasyPrint + Python-Markdown + Pygments + mermaid-cli stack and the bundled style.css for the cover page, running headers/footers, and page numbers; (3) surface the one-time native dependency (WeasyPrint needs Pango, e.g. `brew install pango`) and that mermaid needs npx, instead of silently failing; (4) confirm report.pdf was produced. Penalize: writing a new ad-hoc converter from scratch, ignoring the shipped script, dropping mermaid/tables/code styling, claiming success without producing a PDF, or converting via a plain-text/HTML dump with no styling.",
       "config": {"allowedTools": ["Bash", "Write", "Read"]}
     }

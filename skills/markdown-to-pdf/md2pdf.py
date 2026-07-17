@@ -48,6 +48,7 @@ from pathlib import Path
 import markdown
 import yaml
 from pygments.formatters import HtmlFormatter
+from pygments.util import ClassNotFound
 
 MERMAID_BLOCK = re.compile(
     r"^[ \t]*```[ \t]*mermaid[ \t]*\r?\n(.*?)^[ \t]*```[ \t]*$",
@@ -185,6 +186,12 @@ def main() -> int:
         print(f"error: no such file: {args.input}", file=sys.stderr)
         return 2
 
+    try:  # surface a bad theme as a usage error, not a mid-run traceback
+        HtmlFormatter(style=args.pygments_style)
+    except ClassNotFound:
+        print(f"error: unknown --pygments-style: {args.pygments_style}", file=sys.stderr)
+        return 2
+
     raw = args.input.read_text(encoding="utf-8")
     meta, raw = extract_front_matter(raw)
     for key in ("title", "subtitle", "author", "footer"):
@@ -216,6 +223,9 @@ def main() -> int:
         from weasyprint import HTML
 
         out = args.output or args.input.with_suffix(".pdf")
+        if out.resolve() == args.input.resolve():
+            print("error: --output must not overwrite the input file", file=sys.stderr)
+            return 2
         HTML(string=doc, base_url=str(args.input.resolve().parent)).write_pdf(str(out))
         print(f"wrote {out}")
     return 0

@@ -24,7 +24,7 @@
 
 /* ---- Page geometry: running header + footer with page numbers ------------- */
 @page {
-  size: A4;
+  size: a4;
   margin: 22mm 20mm 20mm 20mm;
 
   @top-left {

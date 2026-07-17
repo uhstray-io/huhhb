@@ -3,7 +3,7 @@
   "publisher": "uhstray-io",
   "displayName": "Uhstray Skills Hub",
   "description": "Uhstray.io's curated Claude Code skills marketplace \u2014 workflows and automation for engineering teams.",
-  "version": "0.5.17",
+  "version": "0.6.17",
   "homepage": "https://github.com/uhstray-io/huhhb",
   "license": "MIT",
   "skills": [
@@ -93,7 +93,7 @@
         "git",
         "context"
       ],
-      "version": "0.1.0"
+      "version": "0.2.0"
     },
     {
       "name": "huhhb-welcome",
@@ -474,7 +474,7 @@
         "evolve",
         "buhhdy"
       ],
-      "version": "0.1.0"
+      "version": "0.2.0"
     },
     {
       "name": "pr-shepherd",
@@ -490,7 +490,7 @@
         "cleanup",
         "buhhdy"
       ],
-      "version": "0.1.0"
+      "version": "0.2.0"
     },
     {
       "name": "evolve",
@@ -585,7 +585,7 @@
         "memory",
         "openspec"
       ],
-      "version": "0.1.0"
+      "version": "0.2.0"
     },
     {
       "name": "openspec-conformance",

@@ -188,6 +188,29 @@ seam today). Criteria: useful beyond this machine, this repo, and this
 operator — e.g. a provider calibration any teammate would want, not a quirk
 of one checkout.
 
+## Hooks (enforcement + capture — adopted 2026-07-16)
+
+The contract above is enforced and fed by three hooks (plan:
+`plans/development/2026-07-16-repo-memory-hooks-plan.md`):
+
+- **Write-lint gate** — plugin PreToolUse on Write/Edit under
+  `.claude/memory/` (`scripts/repo-memory-lint.ts`): BLOCKS in-place
+  edits to an agent record's content (only `status:`/`promote:` metadata
+  flips pass), WARNS on prose heuristics. Human override: say "override
+  the memory lint" → the agent touches `.claude/memory/.lint-override`
+  (single-use). A `.githooks/pre-commit` variant runs the same checks for
+  non-Claude committers.
+- **Per-commit capture** — `.githooks/post-commit` appends 1–2
+  outcome-framed lines per commit to the branch's staging journal
+  `.claude/memory/wip/<branch-slug>.md` (activate once per clone:
+  `git config core.hooksPath .githooks`).
+- **PR consolidation** — a PostToolUse hook on `gh pr create` instructs
+  the session to consolidate + `/simplify` the journal into ONE
+  `kind: outcome` record via this skill's save flow, deleting the journal
+  in the same commit; pr-shepherd's close-out is the fallback for PRs
+  created outside Claude Code. `wip/` journals are staging — exempt from
+  the Record Contract until consolidated.
+
 ## Searching Memory
 
 Read `MEMORY.md` for the index, then open specific files. For full-text search:

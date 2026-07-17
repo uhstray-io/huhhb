@@ -1,7 +1,7 @@
 {
   "name": "huhhb",
-  "version": "0.5.17",
-  "description": "Uhstray.io skills marketplace — curated Claude Code skills including uhh:memory.",
+  "version": "0.6.17",
+  "description": "Uhstray.io skills marketplace \u2014 curated Claude Code skills including uhh:memory.",
   "author": {
     "name": "Uhstray.io",
     "url": "https://github.com/uhstray-io"
@@ -10,7 +10,9 @@
   "mcpServers": {
     "memory": {
       "command": "uvx",
-      "args": ["mempalace-mcp"]
+      "args": [
+        "mempalace-mcp"
+      ]
     }
   },
   "hooks": {
@@ -45,6 +47,16 @@
             "timeout": 5
           }
         ]
+      },
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh -c '[ -f \"$0\" ] && exec sh \"$0\" || exit 0' \"${CLAUDE_PLUGIN_ROOT}/hooks/repo-memory-lint.sh\"",
+            "timeout": 5
+          }
+        ]
       }
     ],
     "Stop": [
@@ -68,8 +80,26 @@
           }
         ]
       }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh -c '[ -f \"$0\" ] && exec sh \"$0\" || exit 0' \"${CLAUDE_PLUGIN_ROOT}/hooks/repo-memory-pr-consolidate.sh\"",
+            "timeout": 5
+          }
+        ]
+      }
     ]
   },
-  "keywords": ["memory", "skills", "ai", "uhstray", "marketplace"],
+  "keywords": [
+    "memory",
+    "skills",
+    "ai",
+    "uhstray",
+    "marketplace"
+  ],
   "repository": "https://github.com/uhstray-io/huhhb"
 }

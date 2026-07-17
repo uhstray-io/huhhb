@@ -6,6 +6,10 @@
 # content (anything beyond status:/promote: metadata flips) blocks the
 # commit. Degrades to a no-op when node is unavailable.
 
+# Cheap gate first: most commits stage nothing under .claude/memory/, so
+# skip the node boot entirely on that common path (one quiet git call).
+git diff --cached --quiet -- '.claude/memory' 2>/dev/null && exit 0
+
 command -v node >/dev/null 2>&1 || exit 0
 root=$(git rev-parse --show-toplevel 2>/dev/null) || exit 0
 script="$root/scripts/repo-memory-lint.ts"

@@ -10,7 +10,11 @@
 payload=$(cat)
 
 # Cheap pre-filter: only engage when the payload targets the memory store.
-printf '%s' "$payload" | grep -q '\.claude/memory/' || exit 0
+# Shell-builtin match — this path runs on every Write/Edit, zero forks.
+case "$payload" in
+  *'.claude/memory/'*) ;;
+  *) exit 0 ;;
+esac
 
 command -v node >/dev/null 2>&1 || exit 0
 script="${CLAUDE_PLUGIN_ROOT}/scripts/repo-memory-lint.ts"

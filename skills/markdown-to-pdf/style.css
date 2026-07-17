@@ -1,0 +1,210 @@
+/* ============================================================================
+   style.css — beautiful print stylesheet for md2pdf.py (WeasyPrint / CSS Paged Media)
+   Tune the tokens in :root, then everything else follows. Fonts are chosen from
+   families WeasyPrint can find on most systems; override --font-* if you have
+   brand fonts installed. See SKILL.md for how to pass a custom stylesheet.
+   ========================================================================== */
+
+:root {
+  --accent:        #3b4cca;   /* primary brand color (headings, links, rules) */
+  --accent-soft:   #eef0fb;   /* tint for table headers, callouts            */
+  --ink:           #1f2430;   /* body text                                   */
+  --ink-soft:      #5b6473;   /* captions, footers, muted text               */
+  --rule:          #d9dee7;   /* hairlines and borders                       */
+  --code-bg:       #f6f8fa;   /* code block / inline code background         */
+  --code-ink:      #24292f;
+
+  --font-body:  "Charter", "Georgia", "Times New Roman", serif;
+  --font-head:  "Helvetica Neue", "Arial", "Liberation Sans", sans-serif;
+  --font-mono:  "SFMono-Regular", "Menlo", "Consolas", "Liberation Mono", monospace;
+
+  --fs-body: 10.5pt;
+  --lh-body: 1.55;
+}
+
+/* ---- Page geometry: running header + footer with page numbers ------------- */
+@page {
+  size: A4;
+  margin: 22mm 20mm 20mm 20mm;
+
+  @top-left {
+    content: string(doc-title);
+    font: 8pt var(--font-head);
+    color: var(--ink-soft);
+    vertical-align: bottom;
+    padding-bottom: 4mm;
+  }
+  @top-right {
+    content: string(section-title);
+    font: 8pt var(--font-head);
+    color: var(--ink-soft);
+    vertical-align: bottom;
+    padding-bottom: 4mm;
+  }
+  @bottom-left {
+    content: string(doc-footer);
+    font: 8pt var(--font-head);
+    color: var(--ink-soft);
+    vertical-align: top;
+    padding-top: 3mm;
+  }
+  @bottom-right {
+    content: "Page " counter(page) " of " counter(pages);
+    font: 8pt var(--font-head);
+    color: var(--ink-soft);
+    vertical-align: top;
+    padding-top: 3mm;
+  }
+}
+
+/* Hairline rules under the header / above the footer */
+@page {
+  @top-center    { content: ""; border-bottom: 0.4pt solid var(--rule); width: 100%; }
+  @bottom-center { content: ""; border-top:    0.4pt solid var(--rule); width: 100%; }
+}
+
+/* The cover page: full-bleed gradient painted on the page box itself (reliable
+   in WeasyPrint), no header/footer chrome. `content: none` removes each margin
+   box entirely. */
+@page cover {
+  margin: 0;
+  background: linear-gradient(155deg, #3b4cca 0%, #1b2478 100%);
+  @top-left { content: none; }
+  @top-right { content: none; }
+  @top-center { content: none; }
+  @bottom-left { content: none; }
+  @bottom-right { content: none; }
+  @bottom-center { content: none; }
+}
+
+/* ---- Base typography ------------------------------------------------------ */
+html { font-size: var(--fs-body); }
+body {
+  font-family: var(--font-body);
+  color: var(--ink);
+  line-height: var(--lh-body);
+  hyphens: auto;
+  -weasy-hyphens: auto;
+}
+
+p { margin: 0 0 0.7em; orphans: 3; widows: 3; }
+
+/* Feed the running-header strings. Absolutely positioned so this carrier never
+   occupies flow (a block-level carrier would claim a blank first page before the
+   cover). doc-title/doc-footer are set here; section-title tracks each H1/H2. */
+.doc-meta {
+  position: absolute;
+  width: 0; height: 0; overflow: hidden;
+  string-set: doc-title attr(data-title), doc-footer attr(data-footer);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-head);
+  color: var(--accent);
+  line-height: 1.2;
+  break-after: avoid;
+  margin: 1.4em 0 0.5em;
+}
+h1 { font-size: 1.9em; border-bottom: 2pt solid var(--accent); padding-bottom: 0.2em; string-set: section-title content(); }
+h2 { font-size: 1.45em; border-bottom: 0.6pt solid var(--rule); padding-bottom: 0.15em; string-set: section-title content(); }
+h3 { font-size: 1.2em; color: var(--ink); }
+h4 { font-size: 1.05em; color: var(--ink); }
+h5, h6 { font-size: 1em; color: var(--ink-soft); text-transform: uppercase; letter-spacing: 0.04em; }
+
+a { color: var(--accent); text-decoration: none; border-bottom: 0.4pt solid var(--rule); }
+
+strong { font-weight: 700; }
+em { font-style: italic; }
+
+hr { border: none; border-top: 0.6pt solid var(--rule); margin: 1.6em 0; }
+
+/* ---- Lists --------------------------------------------------------------- */
+ul, ol { margin: 0 0 0.7em; padding-left: 1.4em; }
+li { margin: 0.2em 0; }
+li > ul, li > ol { margin: 0.2em 0; }
+ul.task-list { list-style: none; padding-left: 0.4em; }
+ul.task-list li { padding-left: 1.2em; text-indent: -1.2em; }
+
+/* ---- Blockquotes / callouts --------------------------------------------- */
+blockquote {
+  margin: 1em 0;
+  padding: 0.4em 1em;
+  border-left: 3pt solid var(--accent);
+  background: var(--accent-soft);
+  color: var(--ink);
+  break-inside: avoid;
+}
+blockquote p:last-child { margin-bottom: 0; }
+
+/* ---- Code ---------------------------------------------------------------- */
+code, pre, kbd, samp { font-family: var(--font-mono); font-size: 0.86em; }
+code {
+  background: var(--code-bg);
+  color: var(--code-ink);
+  padding: 0.12em 0.35em;
+  border-radius: 3px;
+  border: 0.4pt solid var(--rule);
+}
+pre {
+  background: var(--code-bg);
+  color: var(--code-ink);
+  padding: 0.9em 1.1em;
+  border-radius: 5px;
+  border: 0.5pt solid var(--rule);
+  line-height: 1.45;
+  overflow-wrap: break-word;
+  white-space: pre-wrap;
+  break-inside: avoid;
+  margin: 1em 0;
+}
+pre code { background: none; border: none; padding: 0; }
+/* Pygments line-highlight wrapper */
+.highlight { break-inside: avoid; }
+
+/* ---- Tables -------------------------------------------------------------- */
+table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1em 0;
+  font-size: 0.92em;
+  break-inside: auto;
+}
+thead { display: table-header-group; }   /* repeat header on page break */
+tr { break-inside: avoid; }
+th, td { border: 0.5pt solid var(--rule); padding: 0.45em 0.7em; text-align: left; vertical-align: top; }
+th { background: var(--accent-soft); font-family: var(--font-head); color: var(--accent); font-weight: 700; }
+tbody tr:nth-child(even) { background: #fafbfc; }
+
+/* ---- Figures: images & mermaid diagrams ---------------------------------- */
+img { max-width: 100%; height: auto; }
+figure { margin: 1.2em 0; text-align: center; break-inside: avoid; }
+figure img, figure svg { max-width: 100%; }
+figure.mermaid img, figure.mermaid svg { max-height: 190mm; }
+figcaption { font-family: var(--font-head); font-size: 0.82em; color: var(--ink-soft); margin-top: 0.5em; }
+
+/* ---- Cover page ---------------------------------------------------------- */
+.cover {
+  page: cover;
+  break-after: page;
+  box-sizing: border-box;
+  min-height: 297mm;           /* fills the zero-margin A4 page (no vh/flex — WeasyPrint) */
+  padding: 105mm 28mm 30mm;
+  color: #fff;
+}
+.cover .eyebrow { font-family: var(--font-head); text-transform: uppercase; letter-spacing: 0.22em; font-size: 10pt; opacity: 0.85; margin-bottom: 8mm; }
+.cover h1 { font-family: var(--font-head); font-size: 34pt; color: #fff; border: none; margin: 0 0 6mm; padding: 0; line-height: 1.12; string-set: none; }
+.cover .subtitle { font-family: var(--font-head); font-size: 15pt; font-weight: 300; opacity: 0.92; margin-bottom: 26mm; }
+.cover .meta { font-family: var(--font-head); font-size: 10.5pt; opacity: 0.9; border-top: 0.6pt solid rgba(255,255,255,0.4); padding-top: 5mm; }
+.cover .meta div { margin: 1.5mm 0; }
+.cover .meta strong { font-weight: 700; }
+
+/* ---- Table of contents --------------------------------------------------- */
+nav.toc { break-after: page; }
+nav.toc h2 { border: none; }
+nav.toc ul { list-style: none; padding-left: 0; }
+nav.toc ul ul { padding-left: 1.2em; }
+nav.toc a { border: none; color: var(--ink); }
+nav.toc li { margin: 0.35em 0; }
+
+/* Footnotes */
+.footnote { font-size: 0.85em; color: var(--ink-soft); }

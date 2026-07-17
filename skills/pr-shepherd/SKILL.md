@@ -1,6 +1,6 @@
 ---
 name: pr-shepherd
-description: Use when any orchestrating agent's development workflow — buhhdy's Workflow 2 is the canonical caller — has open PRs that need driving from creation through merge and cleanup — the terminal step once PRs are open. Triggers on "shepherd this PR", "drive the PR to merge", "babysit the PRs", "monitor the PR to merge", and post-merge close-out (close linked issues, archive the change, remove the worktree, janitor stale buhhdy/* branches). Also load to verify PR-lifecycle preconditions (branch protection, CodeRabbit) before shepherding.
+description: Use when any orchestrating agent's development workflow — buhhdy's Workflow 2 is the canonical caller — has open PRs that need driving from creation through merge and cleanup — the terminal step once PRs are open. Triggers on "shepherd this PR", "drive the PR to merge", "babysit the PRs", "monitor the PR to merge", and post-merge close-out (close linked issues, archive the change, remove the worktree, janitor stale branches in the orchestrator's own prefix (buhhdy/* canonical)). Also load to verify PR-lifecycle preconditions (branch protection, CodeRabbit) before shepherding.
 ---
 
 # pr-shepherd
@@ -88,7 +88,7 @@ per-PR, in order.
 | 6 | **Escalation gate** | buhhdy-level | buhhdy | — | — | 2-attempts-then-human (below). No autonomous attempt #3 |
 | 7 | **Merge gate** | buhhdy-level | **human authorizes; buhhdy executes** | — | — | All four conditions below hold. There is no autonomous-merge path |
 | 8 | **Post-merge close-out** | buhhdy-level | buhhdy | — | — | The ordered checklist below |
-| 9 | **Branch janitor** | buhhdy-level | buhhdy | — | LIGHTWEIGHT | Once per run, across `buhhdy/*` only (below) |
+| 9 | **Branch janitor** | buhhdy-level | buhhdy | — | LIGHTWEIGHT | Once per run, confined to the orchestrator's own prefix — `buhhdy/*` canonical (below) |
 
 ## Escalation rule (inherited from buhhdy's `core-workflows`)
 
@@ -115,7 +115,7 @@ buhhdy may merge a PR **only** when ALL of these hold:
   good"), and not a chat-level standing grant on its own;
 - **(e)** version reconciled: if `main`'s manifest version moved past this
   PR's claim, re-bump to the next free number (final pre-merge commit)
-  per AGENTS.md's Release Checklist. Docs-only PRs carry no bump — skip.
+  per AGENTS.md's Release Checklist. Docs/CI-only PRs carry no bump — skip (e).
 
 Conditions (c) and (d) are separate and both required: a GitHub review
 approval never substitutes for the instruction, and the instruction never
@@ -139,7 +139,7 @@ A non-zero count = a current, human approval exists (condition (c)).
 
 **Human review is always required. There is no autonomous-merge path.**
 buhhdy's autonomy over commit/push/PR-create does **not** extend to merge —
-merge authority is the human's alone. If any of (a)–(d) is missing, do not
+merge authority is the human's alone. If any of (a)–(e) is missing, do not
 merge; report which one is missing and wait.
 
 ## Post-merge close-out — in this order
@@ -180,14 +180,16 @@ branch may hold recoverable work, so it is skipped and reported, never
 force-deleted.
 
 Each pr-shepherd run does one janitor pass, confined to the ORCHESTRATOR'S
-OWN branch prefix (buhhdy's is `buhhdy/*` — substitute your agent's prefix
-in the pattern below; never a bare `refs/heads/`). The namespace guard is
-structural: the ref pattern enumerates **only** that prefix, so nothing
-outside it can ever appear in the loop — and each candidate is re-checked
-before deletion as a belt-and-suspenders guard.
+OWN branch prefix via one validated `ORCHESTRATOR_PREFIX` variable
+(buhhdy's is `buhhdy`; never a bare `refs/heads/`). The guard is
+structural AND atomic: the ref pattern enumerates only that prefix, the
+default branch must resolve from `origin/HEAD` (else the pass deletes
+NOTHING — fail closed), and deletion is compare-and-delete against the
+inspected object id (`git update-ref -d`), so a branch that moved between
+inspection and deletion survives; success is logged only on actual
+deletion.
 
-The runnable script — with the substitute-your-prefix rule — lives in
-`references/janitor.md`.
+The runnable script lives in `references/janitor.md`.
 
 Log every deletion (branch + age) and every skipped-unmerged branch via the
 `repo-memory` skill (`.claude/memory/`). **Never janitor a branch outside the

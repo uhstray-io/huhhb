@@ -93,14 +93,39 @@ Three measured gates — full criteria, thresholds, and the improvement loop in
 - Keep descriptions backward-compatible — changing them changes auto-trigger
   behavior
 
+## Development Lifecycle (adopted 2026-07-16)
+
+worktrees → branches → PRs → human-authorized merge:
+
+- **Worktrees** — recommended, toggleable (user default + per-project list
+  in `~/.config/huhhb/worktrees.json`; see the `using-git-worktrees`
+  skill). Lifetime = the branch's lifetime; strays are reported, never
+  auto-removed.
+- **Branches** — conventional prefixes (`feat/ fix/ docs/ chore/
+  refactor/`) for first-class human-reviewed work; `<agent>/<task-id>`
+  for orchestrator task branches. The retention janitor operates ONLY
+  inside `<agent>/*`; human-prefixed branches are never auto-deleted.
+- **PRs** — one per deliverable (logical commits inside). Stacking is the
+  sanctioned dependency mechanism: base on the parent branch, declare it
+  in the body's first line, merge parents first.
+- **Merge** — human-authorized always (approving review + explicit
+  instruction), merge commits, GitHub delete-on-merge OFF.
+
 ## Release Checklist
 
-1. Bump version in `marketplace.json` and `.claude-plugin/plugin.json` (same
-   value)
-2. Open a PR; on merge to `main`, the Tag release workflow
+1. Bump version in `marketplace.json` and `.claude-plugin/plugin.json`
+   (same value) **when the PR opens**, to the next free number. Semantics
+   (adopted 2026-07-16): small feature or fix → **patch**; big feature →
+   **minor with patch carry-over** (0.5.17 → 0.6.17 — the patch counter
+   is monotonic and NEVER resets to zero); docs/CI-only PRs don't bump
+   and don't release; major waits for a deliberate 1.0.
+2. At merge, pr-shepherd's merge gate reconciles: if `main`'s version
+   moved past the PR's claim, re-bump to the next free number as the
+   final pre-merge commit.
+3. On merge to `main`, the Tag release workflow
    (`.github/workflows/tag-release.yml`) auto-creates `vX.Y.Z` + a GitHub
    Release when the version changes — no manual `git tag`
-3. To force a local update: `claude plugin uninstall huhhb && claude plugin
+4. To force a local update: `claude plugin uninstall huhhb && claude plugin
    install --scope user huhhb` (`install` silently skips if already
    installed)
 

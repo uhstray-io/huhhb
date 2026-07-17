@@ -1,5 +1,5 @@
 {
-  "skill": "calibration-refresh",
+  "skill": "buhhdy-model-calibration-refresh",
   "budget": {"max_tokens": 90000, "max_cost_usd": 1.5, "max_duration_ms": 300000},
   "scenarios": [
     {

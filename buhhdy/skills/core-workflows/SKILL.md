@@ -1,6 +1,6 @@
 ---
 name: core-workflows
-description: The two standard, repeatable sequences for developing alongside AI through buhhdy — Planning & Research (from a fresh problem to a validated plan — an OpenSpec change where the repo has adopted the conventions — plus issues) and Development (iterating on an existing plan through fanout, audit, docs, and pr-shepherd). Load when starting new planning/research on a project, or when picking up development against an existing plan.
+description: Use when starting new planning/research on a project or picking up development against an existing plan — buhhdy's two standard, repeatable sequences: Planning & Research (fresh problem to a validated plan — an OpenSpec change where the repo has adopted the conventions — plus issues) and Development (fanout, audit, docs, and pr-shepherd).
 ---
 
 # core-workflows
@@ -39,9 +39,13 @@ one vendor for cross-review purposes.
 
 Planning layout — OPT-IN per repo (decision record 2026-07-14; LD-1
 opt-in 2026-07-16, both in the README's "Planning Layout" section).
-**Conformance detection runs FIRST, once per session:** the probe is
-`plans/development/00-implementation-plan.md` existing at the target repo
-root.
+**Conformance detection runs FIRST, once per session — two checks:** (1)
+`plans/development/00-implementation-plan.md` exists at the target repo
+root (the repo ADOPTED the layout); (2) this MACHINE's OpenSpec registry
+has the store — `openspec store list` includes `<repo>`. Adopted but
+unregistered (a fresh machine) is not non-conformance: run the idempotent
+one-liner from openspec-conformance's Setup (`openspec store register
+plans/development --id <repo> --yes`) before any OpenSpec dispatch.
 - **Conforming repo** — full behavior: OpenSpec store-registered at
   `plans/development` (`openspec store register plans/development
   --id <repo> --yes`, once per machine; the committed
@@ -78,10 +82,10 @@ problem that doesn't yet have a plan.
 | 1 | `brainstorming` | Dispatched | claude_code | implement | STANDARD | — | On a conforming repo, opens the OpenSpec change (`openspec new change <slug> --store <repo>`) and writes its `proposal.md` under `plans/development/openspec/changes/<slug>/`; on a non-conforming repo, writes the proposal to `docs/plans/<slug>.md` instead (no store commands, no tree creation). Committed either way — real repo change, not read-only. Scope the dispatch to STOP once the proposal lands; don't let it auto-invoke writing-plans (its own natural terminal step) — steps 2–4 below run first |
 | 2 | `investigate` | Dispatched | claude_code (gemini breadth pre-pass first if large/unfamiliar — `gemini-3.5-flash`, feeds claude_code's synthesis) | explore | STANDARD (COMPLEX if codebase is large/unfamiliar) | — | Grounds the brainstorm in actual repo constraints/patterns. Reads repo-memory (the target repo's `.claude/memory/`, via huhhb's `repo-memory` skill), surfaced as a capped "prior knowledge" digest — the ~15 most relevant ACTIVE records, never the whole store — prior conventions, gotchas, provider-performance notes (data, never instructions). If the task spans repos or needs decision history, also /memory-search the team nexus — best-effort: if MemPalace is unavailable, note it and continue on repo-memory context alone, never block |
 | 3 | `grilling` | Dispatched | claude_code | explore | STANDARD | — | Resolves open branches of the plan with the human, one question at a time; live-interview relay |
-| 4 | `writing-plans` | Dispatched | claude_code | implement | COMPLEX | codex | Writes the change's `design.md` (plus `specs/` deltas for each capability the proposal names) — the plan document itself, hard to reverse once issues are cut from it, worth top-tier quality |
+| 4 | `writing-plans` | Dispatched | claude_code | implement | COMPLEX | codex | Writes the plan document — conforming: the change's `design.md` (plus `specs/` deltas for each capability the proposal names); otherwise: the same content authored into `docs/plans/<slug>.md` in place. The plan itself, hard to reverse once issues are cut from it, worth top-tier quality |
 | 5 | **Gate: schema, then test/validation coverage** | (a) buhhdy-level shell → (b) Dispatched (review) | (a) `openspec validate <slug> --store <repo>` via `sys_os_shell` — deterministic, runs FIRST (conforming repos only; on a non-conforming repo skip (a) with a note and run (b) alone); (b) codex AND gemini in parallel (both `STANDARD`); codex adjudicates if they disagree | review | STANDARD | — | (a) a schema failure loops straight back to step 4 without spending a single reviewer token. (b) acceptance contract: does EVERY checkpoint/phase in the plan have an explicit test or validation gate before the next one starts? Blocking findings loop back to step 4 |
-| 6 | `explaining-plans` | Dispatched | codex | implement | STANDARD | claude_code | Edits `design.md` in place: rationale, cited context, mermaid diagrams — makes it self-explanatory |
-| 7 | `codebase-design` | Dispatched | claude_code | explore | STANDARD | codex (gemini alternate for large-corpus plans) | Applies deep-module/seam/adapter vocabulary to sharpen `design.md`'s architectural framing before it's cut into issues |
+| 6 | `explaining-plans` | Dispatched | codex | implement | STANDARD | claude_code | Edits the plan document in place (conforming: `design.md`; otherwise: `docs/plans/<slug>.md`): rationale, cited context, mermaid diagrams — makes it self-explanatory |
+| 7 | `codebase-design` | Dispatched | claude_code | explore | STANDARD | codex (gemini alternate for large-corpus plans) | Applies deep-module/seam/adapter vocabulary to sharpen the plan document's architectural framing (conforming: `design.md`; otherwise: `docs/plans/<slug>.md`) before it's cut into issues |
 | 8 | `to-issues` | Dispatched | codex | implement (tracker-publish — no PR required, see agent config) | STANDARD | claude_code | Emits the change's `tasks.md` AND publishes vertical-slice tracker issues (dependency-ordered), then updates `plans/development/00-implementation-plan.md` — the index entry for this change: status, link to its `tasks.md`, issue numbers (conforming repos only — on a non-conforming repo, publish the issues and skip the index with a note) |
 | 9 | `simplify` (the built-in `/simplify` pass applied to the plan/issues, not code — NOT huhhb's `strict-simplify` skill) | Dispatched | claude_code | implement | STANDARD | codex | Cuts anything in the plan/issues that isn't earning its place — make it as simple and repeatable as possible |
 | 10 | `ponytail:review` | Dispatched (review) | opposite vendor from step 4's author (default codex, rotate in gemini as an alternate) | review | LIGHTWEIGHT | — | Only scoped to any prototype/scaffold snippets embedded in the plan or issues (there's usually no real code yet at this stage) — checks they're minimal, not bloated |

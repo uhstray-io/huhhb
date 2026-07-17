@@ -42,6 +42,13 @@ single source of truth.
 - Stack: <stack>
 - Source: <dirs>  ·  Tests: <dirs>  ·  Docs: `docs/`, `plans/`
 
+## Development lifecycle
+worktrees (recommended, toggleable — see huhhb's `using-git-worktrees`) →
+branches (`feat/ fix/ docs/ chore/ refactor/` for human-reviewed work;
+`<agent>/<task-id>` for orchestrator tasks — only `<agent>/*` is ever
+janitored) → one PR per deliverable (stacking sanctioned: base on the
+parent, declare it, parents merge first) → human-authorized merge.
+
 ## Review pipeline
 - Non-trivial change → branch → PR. CodeRabbit reviews are wired up.
 - Cross-review by a different-vendor agent before requesting human review.

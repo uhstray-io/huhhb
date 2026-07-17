@@ -192,7 +192,10 @@ plus an explicit merge instruction (Merge Authorization below).
 
 **LD-1 (2026-07-16): conformance is OPT-IN per repo — adopted via
 repo-kickstart on repos we choose, never an org mandate.** buhhdy detects
-adoption (probe: `plans/development/00-implementation-plan.md` exists)
+adoption (probe: `plans/development/00-implementation-plan.md` exists,
+plus the machine-local check — `openspec store list` includes the repo;
+adopted-but-unregistered means run the idempotent register, not
+non-conformance)
 and degrades gracefully on non-adopted repos: workflows still run,
 planning artifacts go to `docs/plans/<slug>.md`, OpenSpec/index/ADR steps
 skip with a note, and repo-kickstart is suggested once per session.

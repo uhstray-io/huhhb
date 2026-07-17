@@ -2,7 +2,7 @@
 
 Grilled and confirmed 2026-07-16. Goal: turn repo-memory's write lint
 from prose into a gate, and make capture survive sessions that never end
-cleanly — commit-time capture, PR-time consolidation, no nudges.
+cleanly — commit-time capture, PR-time consolidation — no reliance on session-end/Stop-hook nudges (the PR-time PostToolUse instruction is an explicit trigger, not a nudge).
 
 ## Why (decisions from the grill)
 
@@ -31,7 +31,9 @@ cleanly — commit-time capture, PR-time consolidation, no nudges.
 - Escape hatch: an explicit in-session human instruction ("override the
   memory lint") downgrades a block to a warn. Silent for `MEMORY.md` and
   human-curated memories (no `kind:`).
-- Implementation: `hooks/repo-memory-lint.ts` (Node stdlib, erasable TS),
+- Implementation: `scripts/repo-memory-lint.ts` (Node stdlib, erasable TS;
+  the git-hook variant runs it directly — `node <script> --staged` — and
+  exits 0 cleanly when node is unavailable),
   wired in `.claude-plugin/plugin.json`. Extension (same script, second
   entry point): a `.githooks/pre-commit` variant runs the identical
   mechanical checks over staged `.claude/memory/` files so non-Claude
@@ -41,7 +43,7 @@ cleanly — commit-time capture, PR-time consolidation, no nudges.
 - `.githooks/post-commit` (committed; repo-kickstart runs
   `git config core.hooksPath .githooks` at adoption; memory-onboarding
   project scope verifies the setting).
-- Appends 1–2 outcome-framed lines per commit to the branch's staging
+- Appends 1–2 commit-summary staging lines per commit to the branch's staging
   journal `.claude/memory/wip/<branch-slug>.md`: date · branch ·
   conventional-commit subject (already outcome language) · files-changed
   count. Purely mechanical — no model call, composed from git facts so it
@@ -75,7 +77,8 @@ cleanly — commit-time capture, PR-time consolidation, no nudges.
    three (contract stays in the skill; hooks enforce it).
 5. G0 lint + offline suite + a bench scenario asserting the lint gate's
    block/warn split; version bump per the new lifecycle rules (this is a
-   big feature → minor with patch carry-over).
+   big feature → minor increments and the patch value carries over
+   unchanged: 0.5.17 becomes 0.6.17).
 
 ## Out of scope
 

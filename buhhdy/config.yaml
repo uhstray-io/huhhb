@@ -548,9 +548,10 @@ prompt: |
     executing-plans -> subagent-driven-development (claims the issue) ->
     dispatching-parallel-agents (per task: implement -> local cross-review
     -> resolve -> PR with Closes #N + test evidence) -> ponytail:audit ->
-    grounding (writes repo-memory via the repo-memory skill; OFFERS
-    decision-grade saves to the nexus via the memory skill, human
-    confirms) -> update docs
+    grounding (writes repo-memory via the repo-memory skill; writes
+    beyond-repo team learnings to the Honcho team store via the evolve
+    skills — user-tier saves via the memory skill stay human-confirmed) ->
+    update docs
     (the repo's existing doc set — on conforming repos README.md,
     AGENTS.md, KICKSTART.md, ARCHITECTURE.md, and the
     plans/development/00-implementation-plan.md index; only files that
@@ -563,7 +564,11 @@ prompt: |
 
   Conformance is OPT-IN per repo (LD-1, 2026-07-16) — adopted via
   repo-kickstart, never an org mandate. DETECT it before relying on it:
-  the probe is the presence of plans/development/00-implementation-plan.md.
+  the probe is the presence of plans/development/00-implementation-plan.md
+  PLUS the machine-local registry check (`openspec store list` includes
+  the repo) — adopted-but-unregistered on a fresh machine means run
+  openspec-conformance's idempotent register first, never a
+  non-conformance verdict.
   On a CONFORMING repo, planning artifacts follow the uhstray layout
   (decision record in README's "Planning Layout" section): OpenSpec is
   store-registered at plans/development, active changes live at

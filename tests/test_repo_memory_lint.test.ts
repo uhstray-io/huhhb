@@ -3,7 +3,7 @@
 
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { classify, is_record, warn_reasons } from "../scripts/repo-memory-lint.ts";
+import { apply_edit, classify, is_gated_path, is_record, warn_reasons } from "../scripts/repo-memory-lint.ts";
 
 const RECORD = `---
 name: api-flakes
@@ -102,6 +102,25 @@ test("bypass attempt: bogus metadata values fail the whitelist", () => {
 
 test("identical rewrite of a record is allowed (no-op Write)", () => {
   assert.equal(classify(RECORD, RECORD, false).action, "allow");
+});
+
+test("is_gated_path gates direct children of .claude/memory/ only", () => {
+  assert.equal(is_gated_path(".claude/memory/api-flakes.md"), true);
+  assert.equal(is_gated_path("/repo/.claude/memory/x.md"), true);
+  assert.equal(is_gated_path(".claude/memory/MEMORY.md"), false);
+  assert.equal(is_gated_path(".claude/memory/wip/feat-x.md"), false);
+  assert.equal(is_gated_path("docs/notes.md"), false);
+});
+
+test("apply_edit substitutes literally — $-sequences in new_string are inert", () => {
+  // A `new_string` of "$&" must land as the literal bytes "$&", not expand
+  // back into the matched text (which would reconstruct existing === proposed
+  // and let a body edit sail through as allow).
+  assert.equal(apply_edit("abcMxyz", "M", "$&", false), "abc$&xyz");
+  assert.equal(apply_edit("abcMxyz", "M", "$&", true), "abc$&xyz");
+  const edited = apply_edit(RECORD, "3 of 4 incidents", "$&", false);
+  assert.notEqual(edited, RECORD);
+  assert.equal(classify(RECORD, edited, false).action, "block");
 });
 
 test("warn_reasons flags all three heuristics independently", () => {

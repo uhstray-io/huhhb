@@ -21,18 +21,28 @@ const METADATA_LINE = /^\s*(status|promote):.*$/;
 const IMPERATIVE = /(^|\n)\s*(?:[-*>]\s*)?(Always|Never|You must|Do not|Skip)\b/;
 const POLICY_REF = /(Merge Authorization|routing rule|routing polic|permission)/i;
 
-export function is_record(content: string): boolean {
-  const m = content.match(/^---\n([\s\S]*?)\n---/);
-  return !!m && /^\s*kind:\s*\S/m.test(m[1]);
+// The gate covers files directly under .claude/memory/ only — MEMORY.md is
+// the human-curated index and wip/ journals (like every subdirectory) sit
+// outside MEMORY_PATH's [^/]+ match by construction.
+export function is_gated_path(file: string): boolean {
+  return MEMORY_PATH.test(file) && !file.endsWith("MEMORY.md");
 }
 
-const STATUS_VALUE = /^\s*status:\s*(active|superseded-by:\d{4}-\d{2}-\d{2})\s*$/;
-const PROMOTE_VALUE = /^\s*promote:\s*(candidate|done:\d{4}-\d{2}-\d{2})\s*$/;
-
+// Sole frontmatter parser — is_record and warn_reasons derive from it so
+// "what counts as frontmatter/body" can never diverge between the gate and
+// the warn heuristics.
 function split_doc(content: string): { fm: string; body: string } {
   const m = content.match(/^(---\n[\s\S]*?\n---)([\s\S]*)$/);
   return m ? { fm: m[1], body: m[2] } : { fm: "", body: content };
 }
+
+export function is_record(content: string): boolean {
+  const { fm } = split_doc(content);
+  return !!fm && /^\s*kind:\s*\S/m.test(fm);
+}
+
+const STATUS_VALUE = /^\s*status:\s*(active|superseded-by:\d{4}-\d{2}-\d{2})\s*$/;
+const PROMOTE_VALUE = /^\s*promote:\s*(candidate|done:\d{4}-\d{2}-\d{2})\s*$/;
 
 // A change is a permitted metadata flip iff: the body is byte-identical,
 // the frontmatter differs only in status:/promote: lines, and every such
@@ -55,7 +65,7 @@ function is_permitted_metadata_flip(existing: string, proposed: string): boolean
 
 export function warn_reasons(content: string): string[] {
   const reasons: string[] = [];
-  const body = content.replace(/^---\n[\s\S]*?\n---/, "");
+  const { body } = split_doc(content);
   if (IMPERATIVE.test(body))
     reasons.push(
       "imperative language directed at an agent — records are observational (facts, dates, outcomes); quarantine or rephrase",
@@ -96,9 +106,15 @@ export function classify(
   return warns.length ? { action: "warn", reasons: warns } : { action: "allow", reasons: [] };
 }
 
-function apply_edit(existing: string, old_s: string, new_s: string, all: boolean): string {
+export function apply_edit(existing: string, old_s: string, new_s: string, all: boolean): string {
   if (!old_s) return existing;
-  return all ? existing.split(old_s).join(new_s) : existing.replace(old_s, new_s);
+  if (all) return existing.split(old_s).join(new_s);
+  // Literal substitution only: String.replace(string, string) interprets
+  // $-sequences ($&, $`, $', $$) in the replacement, but the real Edit tool
+  // substitutes literally — a $-bearing new_string would make the gate
+  // classify content that differs from what actually lands on disk.
+  const i = existing.indexOf(old_s);
+  return i === -1 ? existing : existing.slice(0, i) + new_s + existing.slice(i + old_s.length);
 }
 
 function consume_override(dir_hint: string): boolean {
@@ -126,7 +142,7 @@ function run_stdin_mode(): void {
   const input = payload.tool_input || {};
   const file: string = input.file_path || "";
   if (!["Write", "Edit"].includes(tool)) return;
-  if (!MEMORY_PATH.test(file) || file.endsWith("MEMORY.md") || /\/wip\//.test(file)) return;
+  if (!is_gated_path(file)) return;
 
   const existing = existsSync(file) ? readFileSync(file, "utf8") : "";
   const proposed =
@@ -167,7 +183,7 @@ function run_staged_mode(): void {
   try {
     files = execFileSync("git", ["diff", "--cached", "--name-only"], { encoding: "utf8" })
       .split("\n")
-      .filter((f) => MEMORY_PATH.test(f) && !f.endsWith("MEMORY.md") && !/\/wip\//.test(f));
+      .filter(is_gated_path);
   } catch {
     return; // not a git repo — nothing to do
   }

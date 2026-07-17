@@ -22,6 +22,9 @@ try {
 }
 if (!branch) process.exit(0);
 
+// Slug rule (branch / -> -) is duplicated cross-language in
+// .githooks/post-commit — change both together or this hook reconstructs
+// a journal path the capture hook never wrote.
 const journal = `.claude/memory/wip/${branch.replace(/\//g, "-")}.md`;
 if (!existsSync(journal)) process.exit(0);
 

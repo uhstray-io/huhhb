@@ -21,11 +21,11 @@ claude plugin install --scope user huhhb
 You are maintaining a **skills marketplace**. Your job is to author, improve,
 and validate skill definitions — not to build traditional software.
 
-## Language Policy — TypeScript/JavaScript only
+## Language & Runtime Conventions
 
-All first-party runtime code in this repo is **TypeScript**, executed
-directly with Node ≥ 22.18 (native type stripping — no build step, no
-transpiler, no bundler):
+The repo's first-party **infrastructure** (`scripts/`, `tests/`, `hooks/`, the
+evolve suite) is **TypeScript**, executed directly with Node ≥ 22.18 (native
+type stripping — no build step, no transpiler, no bundler):
 
 - Scripts: `node scripts/<name>.ts`, `node scripts/evolve/<name>.ts`
 - Tests: `node --test tests/test_evolve.test.ts`
@@ -35,13 +35,20 @@ transpiler, no bundler):
   `package.json` dependencies.
 - Erasable TypeScript syntax only (no `enum`, no `namespace`, no parameter
   properties) so files run unmodified under Node's type stripping.
-- **Do not add Python (or other-language) runtime code.** The memory MCP
-  server runs from its published PyPI package via `uvx` — that is an
-  external package configured in `.claude-plugin/plugin.json` +
-  `.claude-plugin/.mcp.json`, not repo code, and a hand-rolled
-  reimplementation must never come back.
-- Licensing boundary: our code is MIT and only *imports* externally
-  installed packages — nothing AGPL is ever vendored into the tree.
+
+TypeScript is the default for that infrastructure because it runs zero-setup
+under Node — but it is **not** a hard, repo-wide restriction. **Skills may ship
+payload scripts in whatever language best fits the job** (e.g. a Python
+converter run via `uv`, a shell helper) — the same way skills already bundle
+`.sh`, `.cjs`, and `.js` tools. Prefer a language the target environment
+already has, keep the skill self-contained, and document any runtime
+prerequisites in the skill's `SKILL.md`.
+
+Licensing boundary: our code is MIT and only *imports* externally installed
+packages — nothing AGPL is ever vendored into the tree. The memory MCP server
+runs from its published PyPI package via `uvx` (configured in
+`.claude-plugin/plugin.json` + `.claude-plugin/.mcp.json`), not vendored repo
+code.
 
 ## When Adding a Skill
 
@@ -161,7 +168,6 @@ After syncing, review the diff, bump versions, cut a release if changed.
 - Do not write multi-paragraph skill descriptions — one clear line only
 - Do not hardcode paths or usernames in skill scripts
 - Do not use a `triggers` frontmatter field
-- Do not add non-TypeScript runtime code (see Language Policy)
 - Do not push non-trivial changes directly to main
 - Do not add AI attribution to commits or PRs
 

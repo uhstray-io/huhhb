@@ -617,6 +617,14 @@
         "mermaid"
       ],
       "version": "0.1.0"
+    },
+    {
+      "name": "discovering-context",
+      "path": "skills/discovering-context/SKILL.md",
+      "description": "Use when a goal is big, vague, or dependency-heavy and you need to map every piece of context required before planning — builds a context dependency DAG (mermaid) by relentlessly interviewing with recommended answers, expanding each node until it saturates, then hands the map to writing-plans.",
+      "category": "dev",
+      "tags": ["dev", "planning", "context", "graph", "dag", "discovery"],
+      "version": "0.1.0"
     }
   ]
 }

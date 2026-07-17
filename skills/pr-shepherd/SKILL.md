@@ -11,8 +11,8 @@ is the canonical caller and the worked example throughout; "buhhdy-level"
 below means "the calling orchestrator itself", and every buhhdy artifact named here
 (`config.yaml` Merge Authorization / Cross-Review Rule, `core-workflows`)
 maps to the calling agent's equivalent policy. It begins
-exactly where that workflow ends — the implementer PRs and the docs PR are
-open — and finishes with each PR **merged under human authority**, its issues
+where that workflow ends — its PRs are open — and finishes with each PR
+**merged under human authority**, its issues
 closed, its change archived (on repos that adopted the plans/OpenSpec
 conventions — see the conditional in close-out step 2), its worktree
 removed, and stale branches janitored. buhhdy never merges on its own
@@ -182,12 +182,10 @@ force-deleted.
 Each pr-shepherd run does one janitor pass, confined to the ORCHESTRATOR'S
 OWN branch prefix via one validated `ORCHESTRATOR_PREFIX` variable
 (buhhdy's is `buhhdy`; never a bare `refs/heads/`). The guard is
-structural AND atomic: the ref pattern enumerates only that prefix, the
-default branch must resolve from `origin/HEAD` (else the pass deletes
-NOTHING — fail closed), and deletion is compare-and-delete against the
-inspected object id (`git update-ref -d`), so a branch that moved between
-inspection and deletion survives; success is logged only on actual
-deletion.
+structural AND atomic: only that prefix is enumerated; no resolvable
+`origin/HEAD` default → the pass deletes nothing (fail closed); deletion
+is compare-and-delete on the inspected object id, so a moved branch
+survives; success logs only on actual deletion.
 
 The runnable script lives in `references/janitor.md`.
 

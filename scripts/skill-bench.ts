@@ -40,6 +40,9 @@ const HISTORY = process.env.SKILL_BENCH_HISTORY
 const RATIO_TOKENS = 1.5;
 const RATIO_TIME = 2.0;
 const RATIO_TURNS = 1.5;
+// R3 champion/challenger: a revised skill must not regress its own last
+// passing version — pass rate must hold, tokens may drift this much
+const CHAMPION_RATIO_TOKENS = 1.1;
 // R4 evidence-cited verification: the judge must ground its score in a
 // concrete quote/artifact from the response — scores without evidence drift.
 const JUDGE_TEMPLATE =
@@ -215,6 +218,47 @@ export function promptHash(prompt: string): string {
   return createHash("sha256").update(prompt, "utf-8").digest("hex").slice(0, 12);
 }
 
+/* R3: the champion is the latest history row for this skill+scenario from a
+   DIFFERENT version that completed all its runs — the bar a challenger must
+   meet ("no victory, no replacement"). Same-version rows are re-runs, not
+   rivals; rows that never fully passed set no bar. */
+export function championRow(skill: string, scenarioId: string, version: string): Json | null {
+  if (!existsSync(HISTORY)) return null;
+  const lines = readFileSync(HISTORY, "utf-8").split("\n");
+  for (let i = lines.length - 1; i >= 0; i--) {
+    let row: Json;
+    try {
+      row = JSON.parse(lines[i]);
+    } catch {
+      continue;
+    }
+    if (row.skill === skill && row.scenario === scenarioId
+        && row.version && row.version !== version
+        && Number(row.runs) > 0 && Number(row.passes) === Number(row.runs)) {
+      return row;
+    }
+  }
+  return null;
+}
+
+/* Pure challenger-vs-champion verdict: hold the pass rate, keep tokens
+   within CHAMPION_RATIO_TOKENS of the champion's. */
+export function beatsChampion(
+  cand: { passes: number; runs: number; tokens: number },
+  champ: Json,
+): { ok: boolean; detail: string } {
+  const champRate = Number(champ.passes) / Number(champ.runs);
+  const candRate = cand.passes / cand.runs;
+  const rateOk = candRate >= champRate;
+  const champTokens = Number(champ.tokens) || 0;
+  const tokensOk = !champTokens || cand.tokens <= champTokens * CHAMPION_RATIO_TOKENS;
+  return {
+    ok: rateOk && tokensOk,
+    detail: `pass ${cand.passes}/${cand.runs} vs champion ${champ.passes}/${champ.runs} ` +
+      `(v${champ.version}); tokens ${cand.tokens} vs ${champTokens} (<= ${CHAMPION_RATIO_TOKENS}x)`,
+  };
+}
+
 /* Latest history row with baseline numbers for this exact prompt — the
    baseline is invariant to the skill version under test, so re-measuring it
    every bench burns real tokens for no new information. */
@@ -346,6 +390,16 @@ function benchSkill(spec: Spec, runs: number, dryRun: boolean,
       }
     }
 
+    // R3 champion/challenger: never replace a passing lineage with a worse one
+    const champ = championRow(spec.skill, sid, version);
+    if (champ) {
+      const cv = beatsChampion({ passes, runs, tokens }, champ);
+      gate(sid, "R3 vs champion", cv.ok, cv.detail);
+    } else {
+      console.log("  INFO INCUBATING — no passing champion history for this " +
+        "scenario yet; this lineage sets the bar rather than being gated by one");
+    }
+
     let judgeScore: number | null = null;
     if (scenario.judge && skilled.length) {
       const scores = skilled.map((r) => judge(scenario.judge!, r.result));
@@ -362,6 +416,7 @@ function benchSkill(spec: Spec, runs: number, dryRun: boolean,
         api_ms: api, turns,
         baseline_tokens: bt, baseline_ms: bd, baseline_turns: bn,
         baseline_passes: basePass, verdicts: scoped(sid),
+        champion_version: champ ? champ.version : null,
       });
     }
   }

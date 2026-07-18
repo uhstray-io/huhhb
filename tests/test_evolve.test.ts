@@ -1596,6 +1596,46 @@ describe("BenchTests", () => {
     assert.deepEqual(rows, []);
   });
 
+  test("test_champion_row_picks_latest_passing_other_version", () => {
+    // R3: same-version rows are re-runs, failing rows set no bar — the
+    // champion is the newest fully-passing row from a different version
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "bench-champ-"));
+    try {
+      const hist = path.join(tmp, "hist.jsonl");
+      const driver = path.join(tmp, "driver.mjs");
+      const rows = [
+        { skill: "s", scenario: "sc", version: "1.0", runs: 3, passes: 3, tokens: 1000 },
+        { skill: "s", scenario: "sc", version: "1.1", runs: 3, passes: 1, tokens: 500 },  // failed — no bar
+        { skill: "s", scenario: "sc", version: "2.0", runs: 3, passes: 3, tokens: 900 },  // current — re-run
+      ];
+      fs.writeFileSync(driver, [
+        `const m = await import(${JSON.stringify(
+          pathToFileURL(path.join(REPO, "scripts", "skill-bench.ts")).href)});`,
+        `const fs = await import("node:fs");`,
+        `fs.writeFileSync(process.env.SKILL_BENCH_HISTORY,`,
+        `  ${JSON.stringify(rows.map((r) => JSON.stringify(r)).join("\n") + "\n")});`,
+        `const champ = m.championRow("s", "sc", "2.0");`,
+        `const beat = m.beatsChampion({ passes: 3, runs: 3, tokens: 1050 }, champ);`,
+        `const regress = m.beatsChampion({ passes: 2, runs: 3, tokens: 800 }, champ);`,
+        `const blowout = m.beatsChampion({ passes: 3, runs: 3, tokens: 2000 }, champ);`,
+        `console.log(JSON.stringify({ champV: champ.version,`,
+        `  beat: beat.ok, regress: regress.ok, blowout: blowout.ok }));`,
+      ].join("\n"));
+      const r = spawnSync(process.execPath, [driver], {
+        encoding: "utf-8",
+        env: { ...process.env, SKILL_BENCH_HISTORY: hist },
+      });
+      assert.equal(r.status, 0, r.stderr);
+      const out = JSON.parse(r.stdout);
+      assert.equal(out.champV, "1.0", "failing 1.1 and same-version 2.0 must be skipped");
+      assert.ok(out.beat, "matching pass rate within token tolerance beats the champion");
+      assert.ok(!out.regress, "a regressed pass rate must never replace the champion");
+      assert.ok(!out.blowout, "a token blowout must never replace the champion");
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
   test("test_cached_baseline_requires_baseline_passes", () => {
     // rows predating the baseline_passes field can't prove the baseline
     // ever completed — cachedBaseline must re-measure, not trust them

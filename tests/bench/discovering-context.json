@@ -1,0 +1,28 @@
+{
+  "skill": "discovering-context",
+  "budget": {"max_tokens": 120000, "max_cost_usd": 2.0, "max_duration_ms": 420000},
+  "scenarios": [
+    {
+      "id": "collab-editing-context-map",
+      "prompt": "I want to add real-time collaborative editing to our existing web-based document editor. Before we plan the implementation, map out ALL of the context you'd need to gather to build a solid plan — every decision, dependency, and unknown — as a graph/DAG, and keep expanding it until it's complete. Since this is a non-interactive run, you can't ask me questions live: instead, for each open decision, mark it as a node that needs my input, name the question, and give your recommended answer. Produce the context map.",
+      "phrasing": true,
+      "assert": "grep -qiE 'graph TD|mermaid|-->' result.txt",
+      "judge": "A correct response builds a CONTEXT DEPENDENCY GRAPH, not a flat checklist. It must: (1) render nodes AND edges where an edge means 'B is context required to satisfy A', rooted at the goal — ideally as a mermaid `graph TD`; (2) recurse — take at least one node and expand it into child context nodes (e.g. auth -> session store -> current infra), showing it decided per-node whether MORE context was needed rather than stopping at one flat level; (3) classify nodes by status such as needs-input / needs-research / known/resolved, and for each open DECISION name the question and give a RECOMMENDED answer (since it can't interview live); (4) state a stop/completeness condition (saturation: rounds stop adding nodes, then user confirmation). Penalize: a plain bullet list with no edges/dependencies; stopping at a single level with no recursion; guessing decisions without flagging them as needs-input nodes; omitting recommended answers; jumping straight into writing the implementation plan instead of mapping context first; claiming the map is 'complete' with no stated criterion.",
+      "config": {"allowedTools": ["Write", "Read"]}
+    }
+  ],
+  "triggers": {
+    "positive": [
+      "map out all the context I need before we plan this",
+      "build a context graph of everything this depends on",
+      "what context do I need to gather before planning this",
+      "discover the dependencies first, then we'll plan"
+    ],
+    "negative": [
+      "write the implementation plan for this feature",
+      "review this pull request",
+      "save this decision to repo memory",
+      "brainstorm what features this product should have"
+    ]
+  }
+}

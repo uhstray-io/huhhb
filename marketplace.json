@@ -3,7 +3,7 @@
   "publisher": "uhstray-io",
   "displayName": "Uhstray Skills Hub",
   "description": "Uhstray.io's curated Claude Code skills marketplace \u2014 workflows and automation for engineering teams.",
-  "version": "0.6.17",
+  "version": "0.6.18",
   "homepage": "https://github.com/uhstray-io/huhhb",
   "license": "MIT",
   "skills": [
@@ -600,6 +600,30 @@
         "planning",
         "buhhdy"
       ],
+      "version": "0.1.0"
+    },
+    {
+      "name": "markdown-to-pdf",
+      "path": "skills/markdown-to-pdf/SKILL.md",
+      "description": "Use when converting a Markdown file into a beautiful, print-ready PDF — reports, docs, specs, or exports with a styled cover page, running headers/footers, page numbers, tables, syntax-highlighted code, and mermaid diagrams.",
+      "category": "dev",
+      "tags": [
+        "dev",
+        "pdf",
+        "markdown",
+        "docs",
+        "export",
+        "weasyprint",
+        "mermaid"
+      ],
+      "version": "0.1.0"
+    },
+    {
+      "name": "discovering-context",
+      "path": "skills/discovering-context/SKILL.md",
+      "description": "Use when a goal is big, vague, or dependency-heavy and you need to map every piece of context required before planning — builds a context dependency DAG (mermaid) by relentlessly interviewing with recommended answers, expanding each node until it saturates, then hands the map to writing-plans.",
+      "category": "dev",
+      "tags": ["dev", "planning", "context", "graph", "dag", "discovery"],
       "version": "0.1.0"
     }
   ]

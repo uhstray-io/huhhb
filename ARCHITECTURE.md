@@ -32,8 +32,10 @@ next session. evolve is **inert until Honcho is configured** (env-only creds).
 
 ## Key decisions
 
-- **TypeScript only, no build step** — Node ≥ 22.18 native type stripping;
-  stdlib only, zero runtime deps. No Python or other-language runtime code.
+- **TypeScript infra, no build step** — first-party infrastructure (scripts,
+  tests, hooks, evolve) is TypeScript on Node ≥ 22.18 native type stripping;
+  stdlib only, zero runtime deps. Skills may ship payload scripts in any
+  language that fits (e.g. Python via `uv`); see AGENTS.md.
 - **AGENTS.md is canonical**; `CLAUDE.md` mirrors it for Claude Code. Two files,
   one source of truth — they must stay consistent.
 - **MCP servers are external packages, never vendored** — the memory server runs

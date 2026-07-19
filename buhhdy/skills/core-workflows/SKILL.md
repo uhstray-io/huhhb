@@ -1,6 +1,6 @@
 ---
 name: core-workflows
-description: Use when starting new planning/research on a project or picking up development against an existing plan — buhhdy's two standard, repeatable sequences: Planning & Research (fresh problem to a validated plan — an OpenSpec change where the repo has adopted the conventions — plus issues) and Development (fanout, audit, docs, and pr-shepherd).
+description: "Use when starting new planning/research on a project or picking up development against an existing plan — buhhdy's two standard, repeatable sequences: Planning & Research (fresh problem to a validated plan — an OpenSpec change where the repo has adopted the conventions — plus issues) and Development (fanout, audit, docs, and pr-shepherd)."
 ---
 
 # core-workflows

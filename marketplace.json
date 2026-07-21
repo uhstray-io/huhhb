@@ -625,6 +625,14 @@
       "category": "dev",
       "tags": ["dev", "planning", "context", "graph", "dag", "discovery"],
       "version": "0.1.0"
+    },
+    {
+      "name": "product-inception",
+      "path": "skills/product-inception/SKILL.md",
+      "description": "Use when the user EXPLICITLY requests product inception — \"new product\", \"product inception\", \"new major initiative\", \"greenfield product planning\" — or explicitly asks for a BMAD-style phase (product brief, PRD, product architecture) for a major initiative. Never inferred from task size — for a feature, change, or bug (even \"use our full planning process\"), use core-workflows Workflow 1 instead.",
+      "category": "dev",
+      "tags": ["dev", "planning", "inception", "product", "brief", "prd", "architecture", "bmad"],
+      "version": "0.1.0"
     }
   ]
 }

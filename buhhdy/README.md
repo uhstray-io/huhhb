@@ -263,6 +263,23 @@ deterministic schema check before any judgment review spends tokens; on
 repos not yet adopted, the proposal and plan live in
 `docs/plans/<slug>.md` and the schema gate is skipped with a note.
 
+**LD-3 (2026-07-21): the BMAD-adapted inception layer is opt-in and
+terminates at the architecture document — OpenSpec is the sole change
+substrate; there is no story system.** Genuine product inception (explicitly
+requested, never inferred) runs Workflow 0 (huhhb's `product-inception`
+skill): three human-gated phases producing
+`plans/product/<initiative-slug>/{brief,prd,architecture}.md`, immediate
+promotion of architecture `## Decisions` to `plans/architecture/` ADRs
+(promote-adr.ts source-file mode — no index writes), and a terminal handoff
+of the PRD's epic queue to Workflow 1, one normal OpenSpec change per epic.
+**Rejected alternative: adopting BMAD-METHOD wholesale, including its
+epic/story/sprint layer** — that would create two competing sources of truth
+for decomposition (BMAD stories vs OpenSpec changes + tracker issues), add
+token/ceremony cost per initiative, and duplicate what `to-issues` and
+`pr-shepherd` already own. Nothing from BMAD is vendored; its phase structure
+and template content are adapted house-style with attribution in the skill's
+reference.md.
+
 ## Review Pipeline
 
 Three independent layers, in fixed order — each is a separate channel, and

@@ -77,6 +77,70 @@ test("no ## Decisions section promotes zero ADRs but still updates the index", (
   assert.match(idx, /\|\s*archived\s*\|/, "index row still flipped");
 });
 
+/* Source-file mode (inception promotion): promotes ## Decisions from an
+   arbitrary file (plans/product/<slug>/architecture.md), no index involved. */
+function scaffoldProduct(archBody: string, withIndex = false): string {
+  const root = mkdtempSync(join(tmpdir(), "opsx-"));
+  const productDir = join(root, "plans", "product", "acme-app");
+  mkdirSync(productDir, { recursive: true });
+  mkdirSync(join(root, "plans", "architecture"), { recursive: true });
+  writeFileSync(join(productDir, "architecture.md"), archBody);
+  if (withIndex) {
+    writeFileSync(join(root, "plans", "development", "00-implementation-plan.md"), "placeholder");
+    mkdirSync(join(root, "plans", "development"), { recursive: true });
+  }
+  return root;
+}
+
+const ARCH_WITH_DECISIONS = `## Design Paradigm
+
+Modular monolith.
+
+## Decisions
+
+- **AD-1: Postgres over SQLite.** Concurrency needs it.
+
+## Deferred
+
+- Sharding.
+`;
+
+test("source-file mode promotes one ADR from architecture.md and never touches the index", () => {
+  const root = scaffoldProduct(ARCH_WITH_DECISIONS);
+  mkdirSync(join(root, "plans", "development"), { recursive: true });
+  writeFileSync(join(root, "plans", "development", "00-implementation-plan.md"), "untouched-sentinel");
+  execFileSync("node", [SCRIPT, join(root, "plans"),
+    "--from", join(root, "plans", "product", "acme-app", "architecture.md"),
+    "--slug", "acme-app"], { encoding: "utf-8" });
+
+  assert.deepEqual(readdirSync(join(root, "plans", "architecture")), ["001-acme-app.md"], "exactly one ADR");
+  const adr = readFileSync(join(root, "plans", "architecture", "001-acme-app.md"), "utf-8");
+  assert.match(adr, /AD-1: Postgres over SQLite/, "carries the Decisions content");
+  assert.doesNotMatch(adr, /Deferred/, "does NOT copy the full architecture doc");
+  assert.match(adr, /architecture\.md\)/, "links back to the source file");
+  assert.equal(readFileSync(join(root, "plans", "development", "00-implementation-plan.md"), "utf-8"),
+    "untouched-sentinel", "index file is not modified in source-file mode");
+});
+
+test("source-file mode re-run is idempotent", () => {
+  const root = scaffoldProduct(ARCH_WITH_DECISIONS);
+  const run = () => execFileSync("node", [SCRIPT, join(root, "plans"),
+    "--from", join(root, "plans", "product", "acme-app", "architecture.md"),
+    "--slug", "acme-app"], { encoding: "utf-8" });
+  run();
+  run();
+  assert.deepEqual(readdirSync(join(root, "plans", "architecture")), ["001-acme-app.md"], "still exactly one ADR");
+});
+
+test("source-file mode with no ## Decisions promotes nothing and exits 0, even with no index file", () => {
+  const root = scaffoldProduct("## Design Paradigm\n\nNothing durable yet.\n");
+  const out = execFileSync("node", [SCRIPT, join(root, "plans"),
+    "--from", join(root, "plans", "product", "acme-app", "architecture.md"),
+    "--slug", "acme-app"], { encoding: "utf-8" }); // throws if exit != 0
+  assert.equal(readdirSync(join(root, "plans", "architecture")).length, 0, "no ADR");
+  assert.match(out, /no ## Decisions/, "reports why nothing promoted");
+});
+
 test("exact-slug match: an existing '001-add-widget.md' does not block promoting slug 'widget'", () => {
   // Regression for the suffix-match bug: endsWith('-widget.md') would treat the
   // unrelated add-widget ADR as widget's own → widget's ADR never written and

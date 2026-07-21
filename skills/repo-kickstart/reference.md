@@ -151,6 +151,18 @@ live here. (Current-state capability specs live in the store at
 `plans/development/openspec/specs/`, not here.)
 ```
 
+### plans/product/README.md
+```markdown
+# plans/product
+
+Product-inception artifacts, one directory per initiative:
+`<initiative-slug>/{brief.md,prd.md,architecture.md}` (huhhb's
+`product-inception` skill / buhhdy Workflow 0 — opt-in, rare). The PRD's
+Epic Queue feeds Workflow 1; architecture `## Decisions` promote to
+`plans/architecture/` on approval. Empty is normal — most repos never
+run inception.
+```
+
 ---
 
 ## 3. OpenSpec — store registration (mechanism owned by `openspec-conformance`)
@@ -328,6 +340,7 @@ unverified rows are failures.
 | CLAUDE.md pointer | file exists and references AGENTS.md |
 | KICKSTART / ARCHITECTURE | file exists |
 | plans tree | `plans/development/00-implementation-plan.md` + both READMEs exist |
+| plans/product | `plans/product/README.md` exists (content optional — inception is opt-in, never mandatory) |
 | OpenSpec | `plans/development/openspec/config.yaml` + `.openspec-store/store.yaml` (id `<repo>`) exist; `openspec store list` includes `<repo>` (else re-run `register` — it no-ops) |
 | .claude/memory/ | MEMORY.md exists; AGENTS.md carries the `## Repo Memory` block; a kickstart outcome record exists |
 | Honcho | evolve reports the workspace scoped (or env absent → skipped) |

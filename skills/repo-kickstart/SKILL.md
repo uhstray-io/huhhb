@@ -49,6 +49,9 @@ Create if missing; on brownfield, **propose a merge, don't overwrite**.
   reads/writes; do not diverge or promotion breaks).
 - `plans/development/README.md` and `plans/architecture/README.md` — one short
   README each, saying what belongs there.
+- `plans/product/README.md` — one short README (template in `reference.md`);
+  inception artifacts land here only when Workflow 0 is explicitly run —
+  seeding the dir is standard, using it is opt-in, never a mandate.
 
 ### 3. OpenSpec (**store registration** — owned by `openspec-conformance`)
 `openspec-conformance` is the single source of truth; run its **Setup** (full

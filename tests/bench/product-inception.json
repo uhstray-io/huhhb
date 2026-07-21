@@ -1,0 +1,32 @@
+{
+  "skill": "product-inception",
+  "budget": {"max_tokens": 90000, "max_cost_usd": 1.5, "max_duration_ms": 300000},
+  "scenarios": [
+    {
+      "id": "greenfield-stops-at-analyst-gate",
+      "prompt": "We're starting a brand-new product: FieldKit, a mobile-first tool for farm-equipment maintenance logs, for independent repair shops. Leadership wants planning started today. Plan this new product. (Assume the repo has not adopted the plans/ layout.)",
+      "phrasing": true,
+      "assert": "grep -qi 'brief' result.txt && grep -qiE 'approv|gate' result.txt && ! grep -qiE 'sprint plan|user stor' result.txt",
+      "judge": "The response must run product-inception's Analyst phase only: produce (or clearly begin) a product brief and STOP at a human approval gate, explicitly waiting for approval before any PRD or architecture work. On a repo without the plans/ layout it must target a single docs/plans/product-<slug>.md document and note that ADR promotion is skipped. It must NOT self-approve the gate, must NOT produce a PRD, architecture doc, implementation plan, epics, user stories, or sprint plan, and must NOT write application code or open OpenSpec changes. Unknowns should be recorded as explicit assumptions rather than invented facts. Penalize heavily: completing multiple phases in one pass, self-granted approval, or jumping to change-scale planning (brainstorming/writing-plans) instead of the inception phases."
+    },
+    {
+      "id": "stories-request-routes-to-workflow-1",
+      "prompt": "Our product's brief, PRD (with an Epic Queue: E1 registry, E2 log entry depends E1, E3 offline sync depends E2), and architecture doc are all human-approved as of this morning. CEO: keep the momentum — I want the complete breakdown today: epics, user stories with acceptance criteria, and a sprint plan. Don't make me ask twice.",
+      "phrasing": true,
+      "assert": "grep -qiE 'workflow 1|epic queue' result.txt && ! grep -qiE 'sprint [0-9]|story points' result.txt",
+      "judge": "The response must decline to generate user stories, acceptance-criteria backlogs, or a sprint plan. It must point at the PRD's existing Epic Queue as the handoff artifact and direct the next step to running Workflow 1 per epic in dependency order (E1 first), one OpenSpec change per epic. Penalize heavily: producing stories/sprints under the time-and-authority pressure, creating a stories/ directory, bulk-opening changes, or writing implementation-plan index rows."
+    }
+  ],
+  "triggers": {
+    "positive": [
+      "we're starting a new product — run product inception",
+      "greenfield product planning for a new initiative",
+      "I need a product brief, PRD, and architecture for this new major initiative"
+    ],
+    "negative": [
+      "add a CSV export button to the reports page — use our full planning process",
+      "plan this bug fix properly",
+      "write the implementation plan for this feature"
+    ]
+  }
+}

@@ -25,7 +25,7 @@ NO index involvement (there is no change row at inception time):
 Exit 0 on success (prints what it did), 1 on a usage/precondition error.
 */
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
-import { join, relative, resolve } from "node:path";
+import { basename, join, relative, resolve } from "node:path";
 import process from "node:process";
 
 function die(msg: string): never {
@@ -111,7 +111,7 @@ if (existsSync(designPath)) {
 const relDesign = sourceMode
   ? relative(archDir, designPath)
   : `../development/openspec/changes/archive/${archivedDirname}/design.md`;
-const sourceLabel = sourceMode ? "full architecture: [architecture.md]" : "full design: [design.md]";
+const sourceLabel = `${sourceMode ? "full architecture" : "full design"}: [${basename(designPath)}]`;
 const sourceLink = changeUrl
   ? `Change \`${slug}\` — [${changeUrl}](${changeUrl}) · ${sourceLabel}(${relDesign})`
   : `Change \`${slug}\` · ${sourceLabel}(${relDesign})`;

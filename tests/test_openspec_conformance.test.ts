@@ -79,16 +79,12 @@ test("no ## Decisions section promotes zero ADRs but still updates the index", (
 
 /* Source-file mode (inception promotion): promotes ## Decisions from an
    arbitrary file (plans/product/<slug>/architecture.md), no index involved. */
-function scaffoldProduct(archBody: string, withIndex = false): string {
+function scaffoldProduct(archBody: string): string {
   const root = mkdtempSync(join(tmpdir(), "opsx-"));
   const productDir = join(root, "plans", "product", "acme-app");
   mkdirSync(productDir, { recursive: true });
   mkdirSync(join(root, "plans", "architecture"), { recursive: true });
   writeFileSync(join(productDir, "architecture.md"), archBody);
-  if (withIndex) {
-    writeFileSync(join(root, "plans", "development", "00-implementation-plan.md"), "placeholder");
-    mkdirSync(join(root, "plans", "development"), { recursive: true });
-  }
   return root;
 }
 

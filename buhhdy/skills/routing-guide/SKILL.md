@@ -37,13 +37,13 @@ not quota-based, and is never demoted by that reordering.
 
 ## Inception vs Change Routing (added 2026-07-21)
 
-Product/initiative scale, EXPLICITLY requested ("new product", "product
-inception", "new major initiative", "greenfield product planning", or an
-explicit BMAD-style phase request) → core-workflows **Workflow 0**
-(`product-inception`). Everything else — features, changes, bugs, refactors
-— → **Workflow 1**. Tie-breaker: when in doubt, Workflow 1 — inception must
-be explicitly requested, never inferred from task size. Workflow 0
-terminates at the architecture doc (LD-3); its epic queue feeds Workflow 1.
+Product/initiative scale, EXPLICITLY requested → core-workflows
+**Workflow 0** (`product-inception`; trigger phrases per Workflow 0's
+intro — that section is canonical). Everything else — features, changes,
+bugs, refactors — → **Workflow 1**. Tie-breaker: when in doubt, Workflow 1
+— inception must be explicitly requested, never inferred from task size.
+Workflow 0 terminates at the architecture doc (LD-3); its epic queue feeds
+Workflow 1.
 
 ## Gemini Worker Naming (ACP migration, 2026-07-08)
 

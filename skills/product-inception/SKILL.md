@@ -46,7 +46,8 @@ Create a task per item; complete in order (single-phase entry: if the user
 explicitly asked for just one phase, run only that row plus steps 0 and 4+,
 same gates):
 
-0. **Conformance probe** — `plans/development/00-implementation-plan.md`
+0. **Conformance probe** (canonical test: openspec-conformance →
+   idempotency detection) — `plans/development/00-implementation-plan.md`
    exists AND `openspec store list` includes the repo → conforming.
    Artifacts go to `plans/product/<initiative-slug>/`; on a non-conforming
    repo, ALL phases write one document `docs/plans/product-<slug>.md`
@@ -63,10 +64,10 @@ same gates):
    bury decisions elsewhere — fix structure BEFORE presenting). GATE:
    present, get human approval.
 4. **Promote ADRs immediately** (conforming repos; skip-with-note
-   otherwise) — the moment architecture.md is approved:
-   `node <huhhb>/skills/openspec-conformance/promote-adr.ts plans --from
-   plans/product/<slug>/architecture.md --slug <slug>`
-   (see openspec-conformance → "Inception promotion").
+   otherwise) — the moment architecture.md is approved, run the
+   `promote-adr.ts --from` invocation exactly as documented in
+   openspec-conformance → "Inception promotion" (canonical — don't
+   re-derive the command).
 5. **Hand off and STOP** — emit the Epic Queue with "run Workflow 1 per
    epic" instructions. Each epic, when someone picks it up, enters
    Workflow 1 step 1 seeded with brief/PRD/architecture; its change's

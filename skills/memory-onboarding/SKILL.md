@@ -16,6 +16,16 @@ buhhdy-level non-code authoring.
 Run BOTH scopes by default. Record pass / warn / fail / n-a per item —
 no blank cells, ever.
 
+**Scope boundary vs `repo-kickstart`.** `repo-kickstart` no longer delegates its
+memory step here: it owns the two-store setup (codebase-memory graph + Hindsight
+bank) and Honcho directly, and it no longer seeds `.claude/memory/`. This skill
+still owns the `.claude/memory/` stratum's diagnostics — the store's data is kept,
+just **retired from routing**. So on a two-store repo, treat P1's auto-fix as
+opt-in rather than automatic: if `.claude/memory/` is absent **and** the repo has a
+Hindsight bank, report **n-a** — "retired from routing; `repo-kickstart` owns
+memory here" — instead of initializing a store nothing routes to. Initialize only
+when the human asks, or when the repo has no two-store setup at all.
+
 ## Machine scope (once per user machine)
 
 Resolve the huhhb checkout ONCE before M2–M4: `$HUHHB_HOME` → the

@@ -7,6 +7,66 @@ placeholder through.
 
 ---
 
+## 0. Derived names & prerequisite probes
+
+### The three names — different strings, from different inputs
+Two systems key off the repo **directory** name and one off the repo **path**.
+Deriving them once in preflight, then using them verbatim, avoids the most
+common failure in this setup: passing the wrong string to the wrong store.
+
+| Name | Derivation | Example |
+|------|------------|---------|
+| OpenSpec store id | repo **directory** name | `site-config` |
+| Hindsight `bank_id` | repo **directory** name — same string, unrelated system | `site-config` |
+| graph project | repo **path**, leading `/` dropped, `/` → `-` | `Users-you-Documents-GitHub-site-config` |
+
+```bash
+REPO_ROOT=$(git rev-parse --show-toplevel) || exit 1
+BANK_ID=$(basename "$REPO_ROOT")          # also the OpenSpec store id
+```
+
+### Probe every prerequisite — none of them is fatal
+Each missing prerequisite reports `skipped — <reason>` in the closing checklist
+**and** records the gap in `plans/development/00-implementation-plan.md`. A
+missing prerequisite is never a silent pass and never a hard failure of the whole
+run — the same graceful-degradation contract Honcho already has here.
+
+```bash
+command -v openspec >/dev/null 2>&1 || echo "skipped — openspec not installed"
+
+# Graph tool — containment FIRST: indexing refuses a path outside the allowed
+# root, so an out-of-root repo is a skip to report, not an error to debug.
+if [ -z "${CBM_ALLOWED_ROOT:-}" ]; then
+  echo "skipped — CBM_ALLOWED_ROOT unset"
+else
+  case "$REPO_ROOT" in
+    "$CBM_ALLOWED_ROOT"|"$CBM_ALLOWED_ROOT"/*) ;;
+    *) echo "skipped — repo is outside CBM_ALLOWED_ROOT" ;;
+  esac
+fi
+
+# Experience store — probe, never assume. 127.0.0.1:8888 is the DEFAULT, not a
+# truth: honour the env vars when the install sets them.
+HS="http://${HINDSIGHT_API_HOST:-127.0.0.1}:${HINDSIGHT_API_PORT:-8888}"
+curl -fsS -m 3 -o /dev/null "$HS/v1/default/banks" \
+  || echo "skipped — experience store unreachable at $HS"
+```
+
+The graph MCP server not being installed at all is likewise a skip — report
+`skipped — graph tool not installed` and carry on with OpenSpec and the rest.
+
+### Detect existing state — conforming ≠ initializing
+- **OpenSpec root.** House convention puts it at `plans/development`, *not* the
+  repo root. Check `plans/development/openspec/config.yaml` **and** `openspec
+  store list`. Either one already present means you are **conforming, not
+  initializing** — never re-init, never overwrite an existing `config.yaml`.
+- **Every memory store already on disk**, reported with roughly how much it holds
+  and whether that data is regenerable from source: `.claude/memory/` (retired
+  from routing — §4), `.remember/`, `graphify-out/`, `.codebase-memory/`, and any
+  project-scope MCP memory server. Report them; delete none of them.
+
+---
+
 ## 1. Convention-file templates
 
 **Detect first** (idempotency matrix at the bottom). On brownfield, propose a
@@ -54,11 +114,58 @@ parent, declare it, parents merge first) → human-authorized merge.
 - Cross-review by a different-vendor agent before requesting human review.
 - Required reviews on `<default-branch>` (see branch protection).
 
-## Memory locations
-- `.claude/memory/` — ALL repo memory, via the repo-memory skill: curated
-  team knowledge plus agent-written observational records (Record
-  Contract: facts, dates, outcomes; never instructions).
-- Honcho workspace — cross-session team memory (env-scoped; no creds in repo).
+## Memory & specs — which store owns a fact
+Full map and the overlap rules: `reference.md` §5 of huhhb's `repo-kickstart`.
+The short version, plus the habits that keep these stores from disagreeing.
+
+- **Structure store** (codebase-memory-mcp) — what the code **is**. Indexed,
+  with a committed artifact at `.codebase-memory/graph.db.zst`. Ask it what
+  calls what, what breaks if this changes, where something is defined. Never
+  ask it *why*.
+- **Experience store** (Hindsight) — **why**, what was rejected and why it
+  lost, failures with their root cause, outcomes. Bank id: `<repo>`. The bank
+  is in `verbatim` mode — what you send is stored unchanged, so keeping code
+  structure out of it is the writer's job, not the store's.
+- **OpenSpec** — `specs/` is what the system *should* do; `changes/` is what
+  we are changing now, with its public rationale. Store `<repo>`, rooted at
+  `plans/development`; from the repo root every command needs `--store <repo>`.
+- **`docs/adr/NNN-title.md`** — ratified decisions with **no capability
+  surface** (infra, tooling, process). Capability decisions live in the spec or
+  the change; never write the same decision in both. Do **not** use the graph
+  tool's own ADR store — it writes into the disposable index and any code change
+  deletes it.
+- **Honcho workspace** — cross-session team memory (env-scoped; no creds in repo).
+- **`.claude/memory/`** — retired from routing. Kept as history; not the write
+  target for new knowledge.
+
+A user-scope routing policy, where the operator has one, **takes precedence**
+over this section. This block is the repo-level default so the repo works
+without one.
+
+### Reading across the two stores — translate, don't substitute
+The graph names things with identifiers; memories name things with domain
+concepts, because the write rules strip identifiers out. So: query the graph →
+**say what that IS, in domain terms** → recall with those terms. Querying
+memories with identifiers retrieves almost nothing — measured against a freshly
+seeded bank, an identifier query scored the target memory at **0.00043** against
+**1.10** for the same memory in domain language, a factor of ~2,500. Guess the
+direction wrong and every cross-store query silently returns nothing useful.
+Either order is legal; concepts survive refactors that rename functions, which is
+what makes them the better join key.
+
+### On archive, retain the outcome
+`openspec archive <change>` records that a change completed. It does **not**
+record whether it *worked* — and that gap is this repo's highest-value memory.
+So when you archive, retain ONE memory into bank `<repo>`: the outcome labelled
+plainly **worked / dead end / corrected**, the root cause of anything that
+failed, and any constraint discovered along the way. One self-contained
+paragraph, in domain language.
+
+### Drift check — a deliberate practice, not an aside
+`openspec list --specs --store <repo>` is intent; the graph's architecture
+summary is reality. Compare them on purpose, periodically. Divergence is
+**information, not a conflict to reconcile** — it means the specs or the code
+moved and nobody wrote it down.
 
 ## Conventions
 - Conventional Commits; concise subjects. No AI attribution in commits/PRs.
@@ -193,6 +300,22 @@ openspec validate --all --store <repo> --no-interactive || true
 Then edit `plans/development/openspec/config.yaml` `context:` for the real
 `<stack>` and add the house `rules:` (block in `openspec-conformance/reference.md`).
 
+**Also put the memory routing in `context:` — this is the wiring, not a nicety.**
+That field is injected into the model's context whenever OpenSpec creates an
+artifact, which makes it the one place that gets proposals *authored* with both
+stores in view. Append to the `context:` prose:
+
+> Memory routing for this repo: structural questions — what calls what, blast
+> radius, where something is defined — go to the codebase-memory graph;
+> rationale, rejected alternatives and outcomes go to the Hindsight bank
+> `<repo>`. On `openspec archive`, retain one memory into that bank recording
+> whether the change worked, labelled worked / dead end / corrected, with the
+> root cause of anything that failed. Write memories in domain language, not
+> identifiers.
+
+Keep it to prose the model can act on; don't restate the whole store map there —
+§5 and the emitted `AGENTS.md` carry that.
+
 **Caveats — state these in the checklist, don't hide them:**
 - Everything lands under `plans/development/openspec/` (`changes/<slug>/`,
   `specs/`, `changes/archive/`). From the repo root, OpenSpec commands need
@@ -205,36 +328,164 @@ Then edit `plans/development/openspec/config.yaml` `context:` for the real
 ---
 
 
-## 4. Memory — two strata (setup/verification delegated to memory-onboarding; kickstart extras below; registry-free)
+## 4. Memory — two routed stores + Honcho (owned by THIS skill; registry-free)
 
-### .claude/memory/ — repo memory (delegated)
-Setup and verification are memory-onboarding's project scope (it runs the
-repo-memory First Run when the store is missing, checks record health,
-and sweeps path separation — do not duplicate any of that here). After
-its pass, save the kickstart outcome as an agent-written record per the
-repo-memory skill's Record Contract (observational only — facts, dates,
-outcomes; never instructions):
+`repo-kickstart` performs this setup itself; it no longer delegates §4 to
+`memory-onboarding`, and no longer seeds `.claude/memory/`. **Ownership is stated
+in §4.6 — put that answer in the run's report** so no reader has to guess which
+skill is authoritative for which store.
 
-```markdown
----
-name: repo-kickstart-<YYYY-MM-DD>
-description: Repo kickstarted to Uhstray conventions
-metadata:
-  node_type: memory
-  type: project
-  kind: outcome
-  status: active
----
+Order matters throughout. **Steps 4.1.1–4.1.4 and 4.2.2 each work around a
+verified defect, not a preference.** The failure each prevents is stated with it,
+because every one of them fails *silently*.
 
-<YYYY-MM-DD>: repo kickstarted to Uhstray conventions
-(v<conventions-version>); <stack> detected; <n> convention files created,
-<n> already conforming. Evidence: this kickstart run's checklist.
+### 4.1 codebase-memory-mcp — the structure store
+
+**Step 1 — write `.cbmignore` BEFORE indexing.** Indexing first wastes work on
+vendored trees. Seed from the detected `<stack>`, plus these always:
+`.worktrees/`, `.remember/`, `graphify-out/`, `.codebase-memory/`,
+`**/testdata/`, `**/fixtures/`, `**/__snapshots__/`, `*.min.js`,
+`**/*.generated.*`. Per stack: `node_modules/ dist/ build/ .next/ coverage/`
+(JS/TS) · `.venv/ venv/ __pycache__/ *.egg-info/ .pytest_cache/ .ruff_cache/`
+(Python) · `vendor/ bin/` (Go) · `target/` (Rust/Java) · `.terraform/ *.tfstate*`
+(Terraform).
+
+The graph already honours the `.gitignore` hierarchy, so `.cbmignore` is only for
+things that are **committed but still not worth indexing**.
+
+**Include a secrets pass.** The index stores no file contents — but snippet
+retrieval reads from disk at query time using stored line numbers, so an indexed
+secret file becomes a credential reader for anything driving the MCP server,
+**subagents included**. Exclude `secrets/`, `**/secrets/`, `*.env`,
+`**/credentials.json`, `*.key`, `*.pem`, `*_rsa`, `*_ed25519`.
+
+Draw the next line deliberately and **say in the report where you drew it**:
+credential *material* is excluded, but environment *data* — inventories, host and
+IP lists, topology — is often the most structurally valuable content a private
+repo has, and such a repo may commit it on purpose. Excluding that by reflex guts
+the graph; indexing a private key is a leak. They are not the same call.
+
+*Idempotency:* read the existing `.cbmignore` first and **append only missing
+lines**. Never rewrite it wholesale — the user's own entries, ordering and
+comments must survive.
+
+**Step 2 — index with the artifact.** `index_repository(repo_path=$REPO_ROOT,
+persistence=true)`. Report nodes and edges. Re-running is cheap: it imports the
+existing artifact, then indexes incrementally.
+
+**Step 3 — if any `.cbmignore` entry changed, force a clean rebuild.**
+`.cbmignore` gates what gets indexed *next*; **it does not retract what is
+already in the graph.** Verified: after adding `**/credentials.json`, the
+re-index reported the path as `excluded` while the file and its API-key node
+stayed queryable and the node count did not move. Newly-excluded content persists
+silently — worst exactly when the reason for excluding it was that it was
+sensitive. So:
+
+```bash
+# 1. delete_project(project="<graph project name from §0>")
+rm -f "$REPO_ROOT/.codebase-memory/graph.db.zst"   # keep .gitattributes — step 4
+# 2. index_repository(...) again
+# 3. query_graph("MATCH (f:File) RETURN f.file_path") — PROVE the paths are gone
 ```
-Record what THIS run actually learned (stack, created vs
-already-conforming, any gap recorded). **A re-run that changed
-nothing appends no line** — an unchanged run is a no-op here too.
 
-### Honcho — team memory (env-scoped)
+Step 3's proof is the point. A re-index that reports `excluded` is not evidence;
+the file list is.
+
+**Step 4 — `git check-attr merge` must print `merge: ours`.**
+
+```bash
+git check-attr merge -- .codebase-memory/graph.db.zst
+```
+
+The auto-generated line is `graph.db.zst merge=ours binary`, and **it does not
+work**: `binary` is a git macro expanding to `-diff -merge -text`, so trailing it
+unsets `merge=ours`. Repair by reversing the order:
+
+```bash
+printf '# Reordered so merge=ours survives the binary macro\ngraph.db.zst binary merge=ours\n' \
+  > "$REPO_ROOT/.codebase-memory/.gitattributes"
+git check-attr merge -- .codebase-memory/graph.db.zst   # must now print: merge: ours
+```
+
+Two verified facts about how the tool treats this file:
+- It writes it **only when it first creates `.codebase-memory/`** — and deleting
+  the file then re-indexing does **not** recreate it, leaving `merge:
+  unspecified`: quieter and worse than the broken version, because nothing hints
+  anything is missing.
+- It **never overwrites an existing** `.gitattributes`, so a hand-corrected file
+  survives every later index. The repair is one-time per repo.
+
+Never report this row ✅ on anything but the passing output. Then ensure
+`graph.db.zst`, `.gitattributes` and `artifact.json` are committed — teammates
+bootstrap from the artifact instead of paying a full re-index.
+
+### 4.2 Hindsight — the experience store
+
+Base URL from §0's probe (`$HS`) — never a hardcoded literal. One bank per repo,
+`bank_id` = the repo directory name.
+
+**Step 1 — create the bank.** `PUT $HS/v1/default/banks/$BANK_ID` — idempotent by
+API design: `PUT` on an existing bank updates rather than duplicating.
+
+**Step 2 — set `retain_extraction_mode: verbatim`, in its own call.** Required,
+not optional: the default `concise` mode **silently discards rejected
+alternatives and root causes** — verified by feeding it a decision plus its
+abandoned alternative and watching only the conclusion survive. That experiential
+content is the entire reason this store exists. Verbatim also costs less.
+
+Its price: verbatim filters *nothing*. **The never-retain rules bind the writer,
+not the store.**
+
+**The mode is write-only — do not try to read it back.** Verified: `get_bank`
+omits `retain_extraction_mode`, `GET /v1/default/banks/<id>` answers `Method Not
+Allowed`, and the `PATCH` response doesn't echo it either. So **re-apply the PATCH
+on every run** — it is idempotent and cheap — and never treat "the bank already
+exists" as evidence the mode is right.
+
+Verify verbatim **behaviourally** instead; it is the only real evidence available.
+Retain a paragraph containing a decision *and* its rejected alternative, recall
+it, and confirm the alternative came back. Under `concise` only the conclusion
+survives. The step-5 charter can double as this probe if you write it that way.
+(A per-call alternative exists — `sync_retain(strategy:"exact")` — but the bank
+setting is what makes every *other* writer's retains verbatim too.)
+
+**Step 3 — set `retain_mission`, in its own call**, forbidding code structure and
+credential values. Two verified facts about these fields:
+- `mission` and `reflect_mission` are the **same underlying field** — patching
+  `reflect_mission` overwrote `mission` (and `background`) with its value. Writing
+  one clobbers the other; never assume they are independent.
+- `retain_mission` is a **separate** field — patching it left `mission` untouched —
+  and, like the extraction mode, it is **write-only**. Re-apply, don't detect.
+
+Treat the guard as **advisory** regardless: on input that was *only* code
+structure, the local model ignored it and stored the whole call graph verbatim.
+
+**Step 4 — write with `sync_retain`, not `retain`.** Plain `retain` is
+asynchronous and returns `{"status":"accepted","operation_id":…}` — an acceptance
+receipt, not a confirmation; the write can fail afterwards with nothing to tell
+you, which would make every ✅ in this section unfounded. `sync_retain` blocks and
+returns `{"status":"completed","memory_ids":[…]}` and the memory is queryable
+immediately. (At HTTP level this is `async:false` on the memories endpoint.) If
+you do use async `retain`, you must verify afterwards — `get_operation` for the
+status, or the bank's fact count.
+
+**Step 5 — seed a project charter**, after recalling first to confirm none exists
+so a re-run does not duplicate it. Prose about **purpose, constraints and current
+state**. If you find yourself listing directories, modules or dependencies,
+**stop** — that is the graph's job, and retaining it here is the one failure mode
+that breaks this whole architecture. Ground it in the README, ADRs, recent commit
+subjects and the architecture summary. Write it in the language a colleague would
+use: memories are retrieved by domain concept, and that is what makes the
+cross-store join work.
+
+A retain costs a model call (~7–11 s), so get the charter right in one pass.
+
+**Step 6 — seed the kickstart outcome** as one `sync_retain` into the bank: what
+this run actually did (stack detected, created vs already-conforming, gaps
+recorded). **A re-run that changed nothing retains nothing** — an unchanged run
+is a no-op here too.
+
+### 4.3 Honcho — team memory (env-scoped)
 Scope the repo's workspace through the evolve-suite skills (`/evolve` / the
 evolve setup). Config comes from the environment only:
 `HONCHO_URL`, `HONCHO_API_KEY`, `HONCHO_WORKSPACE`. **Never write a URL, key,
@@ -242,9 +493,88 @@ or workspace into the repo.** If the env is not configured, report
 `Honcho — skipped (not configured)` and continue; evolve degrades gracefully
 by design.
 
+### 4.4 Capture hooks — still seeded, now feeding the bank
+Seed `.githooks/` (post-commit capture + pre-commit record lint, templates from
+huhhb) and run `git config core.hooksPath .githooks`.
+
+The two-store move changed the **terminal write**, not the capture:
+- **post-commit** appends 1–2 outcome-framed lines per commit to
+  `.claude/memory/wip/<branch-slug>.md`. Unchanged: zero-LLM, mechanical from git
+  facts.
+- That journal is a **staging buffer, not a store** — nothing routes to it, it
+  holds nothing durable, and it is deleted on consolidation. It is now the draft
+  material for the PR/archive retain, and consolidating a branch's journal into
+  one paragraph is most of the work of writing a good outcome memory.
+- **PR consolidation** now folds the journal into ONE `sync_retain` into the
+  repo's bank, then deletes the journal in the same commit.
+- **pre-commit record lint** stays. `.claude/memory/` is retired from routing but
+  its records are *kept*, and in-place edits to them still need blocking. The
+  lint ignores `wip/` by construction, so journals are unaffected.
+
+### 4.5 `.claude/memory/` — retired from routing, data kept
+**Never delete it.** This skill no longer seeds the store and no longer writes
+records into it. Existing records stay exactly where they are, as history.
+
+### 4.6 Who owns what now — state this in the report
+- **`repo-kickstart`** (this skill) owns the two routed stores and Honcho.
+- **`repo-memory`** and **`memory-onboarding`** are **not deprecated.** They still
+  own `.claude/memory/` — its format, its Record Contract, its diagnostics — and
+  remain correct on direct invocation. What changed is that the store they govern
+  is no longer where new knowledge is routed.
+- No store in this arrangement has two owners. If a reader has to guess which
+  skill is authoritative for one, that is a defect in the report.
+
 ---
 
-## 5. Review tooling
+## 5. The store map — which store owns a fact
+
+After a kickstart a repo has **six** candidate homes for a fact, plus a retired
+seventh still on disk. Getting this wrong is the whole risk of this setup: every
+failure in building it came from ambiguity about which store owned a fact, never
+from a broken command.
+
+| Store | Holds | Tense | Never holds |
+|-------|-------|-------|-------------|
+| **codebase-memory-mcp** graph | What the code **is** | Present, derived from source | Why anything was done |
+| **OpenSpec `specs/`** | What the system **should do** — ratified capability specs | Present, intended | What the code currently is; deliberation |
+| **OpenSpec `changes/`** | What we are **changing now**, with tasks and public rationale | In-flight | Whether it worked afterwards |
+| **`docs/adr/`** | Ratified decisions with **no capability surface** — infra, tooling, process | Permanent record | Deliberation; anything a spec already states |
+| **Hindsight** bank | **Why**, what was rejected and why it lost, failures with root cause, **outcomes** | Historical, experiential | Code structure; credential values |
+| **Honcho** workspace | Cross-session, cross-repo team context | Accruing | Repo-local structure; anything credential-shaped |
+| ~~`.claude/memory/`~~ | Retired from routing — kept as history | — | New knowledge (nothing routes here) |
+
+`.claude/memory/wip/<branch-slug>.md` is not in this table on purpose: it is a
+staging buffer, deleted on consolidation, never a store.
+
+### The four overlap rules
+
+- **Intent vs reality.** OpenSpec `specs/` is what the system *should* do; the
+  graph is what it *does*. Divergence is a **signal, not a conflict** — comparing
+  `openspec list --specs` against the graph's architecture summary is a drift
+  check worth running deliberately, not a contradiction to reconcile.
+- **Public rationale vs deliberation.** A change proposal carries the ratified,
+  public "why". Hindsight carries what did **not** make the proposal: what was
+  feared, what was tried first and abandoned, and why the rejected option lost.
+- **ADR only for what OpenSpec does not cover.** In an OpenSpec repo, capability
+  decisions live in the spec or the change. Reserve `docs/adr/NNN-title.md` for
+  decisions with no capability surface. **Never write the same decision in both.**
+  Create `docs/adr/` only when there is actually something to put in it — don't
+  scaffold an empty directory.
+- **Never use the graph tool's ADR store.** It writes into the disposable index,
+  the content never reaches the shareable artifact, and any change to the codebase
+  **hard-deletes it on the next index**. Verified: one added file moved node count
+  251 → 255 and the ADR row count went to 0, with no warning. A committed file
+  does the same job and survives.
+
+### Precedence
+Where a **user-scope routing policy** exists (the operator's own agent config), it
+**wins**. This section is the repo-level default, so the skill works on a machine
+that has no such policy — which is most machines. Point at a user policy from the
+emitted `AGENTS.md`; never restate one there, and never require one to exist.
+
+---
+
+## 6. Review tooling
 
 ### .coderabbit.yaml — author from schema (no repo config to copy)
 ```yaml
@@ -305,29 +635,42 @@ Required reviews on the default branch are a precondition for pr-shepherd.
 
 ---
 
-## 6. Verification checklist — the closing report
+## 7. Verification checklist — the closing report
 ```
 repo-kickstart — <owner>/<repo> (<greenfield|brownfield>, <stack>)
 
   item                         status
   ---------------------------  --------------------------------------
   README links doc set         ✅ present | ➕ created | ⚠ merge proposed
-  AGENTS.md (canonical)        ✅ | ➕
+  AGENTS.md (canonical)        ✅ | ➕   (memory + specs sections present)
   CLAUDE.md (pointer)          ✅ | ➕ | ⚠ full file kept
   KICKSTART.md                 ✅ | ➕
   ARCHITECTURE.md              ✅ | ➕
   plans/ tree + index          ✅ | ➕
-  OpenSpec init + registration ✅ | ➕  (validate: <pass | N pending>)
-  .claude/memory/ seeded       ✅ | ➕
+  OpenSpec init + registration ✅ | ➕  (validate: <pass | N pending>) | ⚠ skipped — <reason>
+  OpenSpec context: → routing  ✅ | ➕ | ⚠ skipped — no OpenSpec
+  .cbmignore + secrets pass    ✅ | ➕  (line drawn: <what was excluded vs kept>)
+  graph indexed + artifact     ✅ | ➕  (<nodes> nodes / <edges> edges) | ⚠ skipped — <reason>
+  graph.db.zst merge=ours      ✅ verified | ➕ repaired | ⚠ skipped — <reason>
+  Hindsight bank (verbatim)    ✅ | ➕  (bank <id>, verbatim re-applied) | ⚠ skipped — <reason>
+  charter in bank              ✅ present | ➕ retained | ⚠ skipped — <reason>
+  capture hooks → bank         ✅ | ➕  (core.hooksPath=.githooks)
   Honcho workspace scoped      ✅ | ⚠ skipped (not configured)
   .coderabbit.yaml             ✅ | ➕
   branch protection            ✅ present | ❌ absent — commands emitted + gap recorded | N/A no remote yet
 
-  second-run no-op: <yes | n/a first run>
+  store ownership stated:  <yes>          (§4.6 — which skill owns which store)
+  gaps recorded in index:  <list | none>
+  second-run no-op:        <yes | n/a first run>
 ```
 `❌ branch protection` with emitted commands (or `N/A` when the repo has no
-GitHub remote yet) is an **expected pass** for a fresh repo. Only fabricated or
-unverified rows are failures.
+GitHub remote yet) is an **expected pass** for a fresh repo. So is any
+`⚠ skipped — <reason>` row **whose gap was recorded** in
+`plans/development/00-implementation-plan.md`: a missing prerequisite is a status,
+not a failure. Only fabricated or unverified rows are failures — and these four
+rows may never be ✅ without their evidence in hand: the node/edge counts, the
+passing `check-attr` output, a verbatim round-trip that brought a rejected
+alternative back, and a domain-language recall that actually returned the charter.
 
 ---
 
@@ -342,7 +685,14 @@ unverified rows are failures.
 | plans tree | `plans/development/00-implementation-plan.md` + both READMEs exist |
 | plans/product | `plans/product/README.md` exists (content optional — inception is opt-in, never mandatory) |
 | OpenSpec | `plans/development/openspec/config.yaml` + `.openspec-store/store.yaml` (id `<repo>`) exist; `openspec store list` includes `<repo>` (else re-run `register` — it no-ops) |
-| .claude/memory/ | MEMORY.md exists; AGENTS.md carries the `## Repo Memory` block; a kickstart outcome record exists |
+| OpenSpec context | `config.yaml` `context:` already names the bank id and the graph/rationale split |
+| AGENTS.md memory block | AGENTS.md carries the `## Memory & specs` heading and it names this repo's bank id |
+| `.cbmignore` | file exists and already contains the always-list, the `<stack>` entries and the secrets entries — append-only, so a re-run adds no line |
+| graph index | `index_status` reports the project indexed; `.codebase-memory/graph.db.zst` exists and is committed |
+| graph merge attr | `git check-attr merge -- .codebase-memory/graph.db.zst` prints `merge: ours` |
+| Hindsight bank | bank `<repo>` exists. The mode is **not readable**, so re-apply the `verbatim` PATCH every run — idempotent, and it changes no content. "Bank exists" alone is never evidence the mode is right |
+| charter | a domain-language recall against the bank returns a charter-like memory |
+| capture hooks | `.githooks/` present and `git config core.hooksPath` = `.githooks` |
 | Honcho | evolve reports the workspace scoped (or env absent → skipped) |
 | .coderabbit.yaml | file exists |
 | branch protection | `gh api …/protection` returns 200 |
@@ -360,7 +710,17 @@ consecutive run must produce **no diff**.
 | "CLAUDE.md should hold the full instructions" | AGENTS.md is canonical; CLAUDE.md is a one-line pointer. Two sources drift. |
 | "Symlink openspec/specs + changes into plans/" | Obsolete — that was the rejected pre-1.6 hack. Use `openspec store register plans/development` (native). No symlinks. |
 | "openspec validate failed → the kickstart failed" | A fresh index isn't a conforming change yet. Report "pending"; don't fail the run. |
-| "I'll drop a memory log under plans/" | plans/ holds documents only — ALL repo memory goes to .claude/memory/ via the repo-memory skill; records are observational (facts/dates/outcomes), instructions go to AGENTS.md. |
+| "I'll drop a memory log under plans/" | plans/ holds DOCUMENTS only. Experience goes to the Hindsight bank, structure to the graph, instructions to AGENTS.md. No memory of any kind under plans/, ever. |
+| "`.claude/memory/` is retired, so I'll delete/migrate it" | Retired from **routing**. The data is kept, in place. Deleting someone's history is not a kickstart — §4.5. |
+| "The re-index reported the secret path as `excluded`, so it's out of the graph" | It isn't. `.cbmignore` never retracts indexed nodes. delete_project + remove the artifact + re-index, then prove it with the file list — §4.1 step 3. |
+| "`graph.db.zst merge=ours binary` is what the tool wrote, so it works" | It doesn't. `binary` is a macro that unsets `merge=ours`. Reverse the order and require `merge: ours` from check-attr — §4.1 step 4. |
+| "`retain` returned `accepted`, so the memory is saved" | `accepted` is a receipt, not a write. Use `sync_retain`, or verify with `get_operation` — §4.2 step 4. |
+| "The bank's `retain_mission` will keep code structure out" | Advisory only — verified being ignored on structure-only input. The writer is the filter, not the store. |
+| "The bank already exists, so that row is ✅" | Existing ≠ conforming, and the mode is write-only so you cannot check it. Re-apply the `verbatim` PATCH every run; a `concise` bank silently drops the content the store exists for. |
+| "Hindsight/the graph is unreachable, so the run failed" | Report `skipped — <reason>`, record the gap, and finish every other stratum. A missing prerequisite never fails the whole run. |
+| "I'll record this decision with the graph tool's ADR store" | Never — disposable index, hard-deleted on the next index, absent from the artifact. Committed file at `docs/adr/`. |
+| "This capability decision deserves an ADR *and* a spec" | Pick one. In an OpenSpec repo the spec or the change IS the record; ADRs are for decisions with no capability surface. |
+| "I'll put the memory block in CLAUDE.md" | AGENTS.md is canonical; CLAUDE.md stays a one-line pointer. Two sources drift. |
 | "I'll commit the Honcho key so it's reproducible" | Never. Creds are env-only; a committed key is a leak. |
 | "Branch protection is missing, I'll just enable it" | Don't configure silently — emit the commands for the human and record the gap. |
 | "Second run — I'll just recreate everything" | Re-run must be a no-op. Detect, report ✅, change nothing. |
@@ -372,3 +732,19 @@ consecutive run must produce **no diff**.
 - Enabling branch protection without the human.
 - A second run that produces a diff.
 - Inventing a value for Honcho (URL/key/workspace) when none is configured.
+- Reporting the graph, merge-attr, bank or charter rows ✅ without the evidence in
+  hand — node/edge counts, the passing `check-attr` output, a verbatim round-trip,
+  a recall that returned the charter.
+- Claiming the bank's extraction mode was "verified" or "read back". It is
+  write-only; that claim cannot be true.
+- Deleting, moving or migrating `.claude/memory/`. Retired ≠ removable.
+- Retaining code structure — paths, symbols, signatures, call graphs, dependency
+  lists — into the bank. This is the one failure mode that breaks the whole
+  architecture: it looks like useful context, goes stale on the next commit, and
+  then the two stores disagree with no signal saying which to trust.
+- Indexing without the secrets pass — or stripping a private repo's environment
+  *data* because it "looks sensitive", without saying so in the report.
+- Treating an async `retain` receipt as a verified write.
+- Hardcoding the experience store's host/port instead of probing §0's `$HS`.
+- Requiring a user-scope routing policy to exist. It's an optional layer that wins
+  where present; the repo-level default here must stand on its own.

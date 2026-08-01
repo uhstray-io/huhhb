@@ -35,8 +35,11 @@ console.log(
       additionalContext:
         `repo-memory PR consolidation: a staging journal exists at ${journal} for this branch. ` +
         `Per the repo-memory skill's Hooks section: read it, consolidate and /simplify its per-commit lines ` +
-        `into ONE PR outcome record (agent Record Contract, kind: outcome, evidence = the PR number + commit range) ` +
-        `saved via the repo-memory skill's save flow, then delete the journal in the same commit. Do this now.`,
+        `into ONE self-contained outcome paragraph, then sync_retain it into this repo's Hindsight bank ` +
+        `(bank_id = the repo directory name). The paragraph states the outcome labelled plainly ` +
+        `worked / dead end / corrected, the root cause of anything that failed, and any constraint discovered ` +
+        `along the way — in domain language, never identifiers or file paths. Use sync_retain, not retain: ` +
+        `an "accepted" receipt is not a verified write. Then delete the journal in the same commit. Do this now.`,
     },
   }),
 );

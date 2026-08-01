@@ -204,10 +204,17 @@ codebase-memory-mcp config list
    `bank_id` = repo directory name, verbatim. Use **separate banks**, not
    metadata filters: banks are storage-level isolation, metadata filtering is
    application-level and is not isolation at all.
-9. **Set the write guard, then find out whether it is enforcement.** Set
-   `retain_mission` to forbid code structure. Verify which mission-like fields
-   are independent — `mission` and `reflect_mission` are the **same underlying
-   field**, so writing one silently overwrites the other. Probe the guard
+9. **Set the write guard — and know that you cannot read it back.** Set
+   `retain_mission` to forbid code structure. **The bank config is write-only
+   [verified]:** there is no per-bank GET (`GET /v1/default/banks/<id>` returns
+   405), and the list endpoint returns `mission` but omits
+   `retain_extraction_mode` and `retain_mission` entirely. A bank existing is
+   therefore never evidence it is configured — and any instruction to "re-read
+   the setting afterwards" is unexecutable. **Re-apply both settings on every
+   run** (the PATCH is idempotent) and verify *behaviourally* per step 10.
+   `mission` and `reflect_mission` are the same underlying field, so writing
+   one overwrites the other; `mission` is readable in the list response, which
+   is the only part of this you can confirm by reading. Probe the guard
    adversarially: retain something that is *only* what it forbids.
 10. **Test extraction fidelity before trusting any bank.** Retain one item
     containing a decision **and** its rejected alternative **and** a root
@@ -247,6 +254,14 @@ scores in the policy. Reference build: **0.000015** vs **1.096** [measure] — a
 gap large enough that guessing the direction silently breaks every cross-store
 query. If your numbers come out the other way, follow your numbers.
 
+A second measurement on the same stack scored **0.259** vs **1.093** — same
+direction, but a 4× gap rather than a 70,000× one. The difference was the
+confound from §1.2: that identifier query happened to share vocabulary with the
+memory's text (it named an "extraction mode" and an "ignore rule", both of
+which the memory discusses in prose). **A clean measurement needs identifiers
+that appear nowhere in the memory text.** Take the direction as settled and
+your own magnitude as approximate unless you controlled for that overlap.
+
 ### Phase 4 — Per-repo bootstrap
 
 Install `memory-init-template.md` from this skill directory to
@@ -262,8 +277,9 @@ file is a credential reader for anything driving the MCP server; (3) force a
 clean rebuild if any ignore entry changed; (4) index with the persistent
 artifact and report node/edge counts; (5) verify the git merge attribute with
 `git check-attr` and repair it; (6) point ratified ADRs at committed files; (7)
-create the bank idempotently and set extraction mode and guard in **separate**
-calls, re-reading both; (8) seed a prose charter after checking none exists;
+**re-apply** extraction mode and guard on every run in **separate** calls,
+since neither can be read back; (8) seed a prose charter after checking none
+exists;
 (9) append a delimited project `CLAUDE.md` section; (10) report created vs.
 skipped.
 
@@ -323,7 +339,7 @@ reference tools that no longer exist.
 | `update` uses a weaker URL check than the reviewed script | The release-bundled installer copy ≠ the copy on main; loose `case` pattern `http://localhost*` prefix-matches `http://localhost.example.com` **[verified]** | Re-download from the reviewed source and compare hashes; never trust the on-disk copy |
 | Containment "confirmed" by an exit code | Exit 1 also means "not a git repo" **[verified]** | Control test: same path with the variable unset must succeed |
 | Containment applies in the terminal but not in the desktop app | Profile variables do not reach MCP servers launched by the app **[verified]** | Set `CBM_ALLOWED_ROOT` in `~/.claude/settings.json` `env` too |
-| Index reports a path `excluded` but its nodes are still queryable | `.cbmignore` gates the *next* index; it does not retract existing nodes **[verified]** | `delete_project`, remove the artifact, re-index, then query the excluded paths to prove absence |
+| A newly-ignored path's nodes are still queryable after a re-index | `.cbmignore` gates the *next* index; it does not retract existing nodes **[verified]**. The index response is not the signal you want: a **full rebuild** does list its excluded dirs, but the **incremental** path retracts nothing while reporting success, and node count drifts for unrelated reasons because the artifact directory indexes itself | `delete_project`, remove the artifact, re-index, then **enumerate the indexed file list** — that is the only thing that proves absence |
 | `git check-attr merge` prints `merge: unset` on a line that looks right | `graph.db.zst merge=ours binary` — `binary` is a macro expanding to `-diff -merge -text` and unsets the preceding `merge=ours` **[verified]** | Reverse the order: `graph.db.zst binary merge=ours` |
 | `.gitattributes` deleted, re-index does not recreate it | Written only when the tool first creates the directory **[verified]** | Restore by hand; the repair is one-time per repo |
 | ADR reads back fine, then vanishes | `manage_adr` writes into the disposable index; any code change hard-deletes it (251→255 nodes was enough; `SELECT COUNT(*)` → 0) and it never reaches the shareable artifact **[verified]** | Committed `docs/adr/NNN-title.md`. Do not use `manage_adr` |
@@ -333,7 +349,8 @@ reference tools that no longer exist.
 | Every write fails, every read looks healthy | Local server rejects `response_format: json_object` with 400 **[verified]** | `HINDSIGHT_API_LLM_STRICT_SCHEMA=true` |
 | Control plane reachable from the LAN | API and control plane default to `0.0.0.0`, control plane has no API key **[verified]** | `HINDSIGHT_API_HOST=127.0.0.1` + UI hostname flag; prove refusal from the LAN address |
 | Rejected alternatives silently missing from stored memories | Default `concise` extraction discards them — the one content type justifying this store over a vector DB. `verbatim` preserved `tried first and abandoned`, `dead end, corrected`; also cheaper, 1,371 vs 2,046 tokens **[verified]** | Set `verbatim`; the never-retain list now binds the writer |
-| Writing `mission` wipes `reflect_mission` | Same underlying field **[verified]** | Set `retain_mission` on its own call; re-read all three |
+| Writing `mission` wipes `reflect_mission` | Same underlying field **[verified]** | Set `retain_mission` on its own call |
+| Bank exists and looks configured, but the mode never took | Bank config is **write-only**: no per-bank GET (405), and the list response omits `retain_extraction_mode` and `retain_mission` **[verified]** | Re-apply both every run; confirm behaviourally with a round trip that shows a rejected alternative surviving — never by reading the field |
 | Guard configured but a call-graph dump was stored anyway | Guard is delivered correctly and disobeyed when obeying would mean returning nothing — a property of negative constraints under extraction, not a bug **[verified]** | Move enforcement into the caller's write routing; keep the field as a nudge and label it advisory |
 | Tag filter returns results for a tag that does not exist | `tags` are stored and listed but do not filter recall and do not affect scoring **[verified]** | Human-readable labels only; banks are the only isolation boundary |
 | Write "succeeded" but the memory is absent | MCP `retain` is async and returns `{"status":"accepted","operation_id":…}` with no flag to block **[verified]** | Use `sync_retain`; or `retain` for a batch you verify with `get_operation` |
@@ -346,14 +363,27 @@ reference tools that no longer exist.
 
 | Operation | Time | LLM calls | Tokens |
 | --------- | ---- | --------- | ------ |
-| `recall` | 0.3 s | **0** | **0** |
-| `retain` / `sync_retain` | ~7–11 s | 1 | ~1,400–2,000 |
-| `reflect` | ~12 s | **4** | ~8,300 |
+| `recall` | 0.35 s | **0** | **0** |
+| `sync_retain` | ~7 s | **2** — extraction + auto-consolidation | ~4,500 |
+| `reflect` | ~14 s | **3** | ~11,000–16,000 |
 | graph index and queries | sub-ms to seconds | 0 | 0 |
 
-Reading is free. **`reflect`, not `retain`, is the expensive branch** — anyone
-budgeting from "one model call per operation" is wrong by 4× on exactly the
-operation they reach for when they want judgement.
+Reading is free. **`reflect`, not `retain`, is the expensive branch.**
+
+These are re-measured numbers, and the re-measurement is itself the lesson: an
+earlier pass on the same machine recorded retain as **1** call at ~1,400–2,000
+tokens and reflect as **4** calls at ~8,300. Retain is two calls whenever
+auto-consolidation is enabled — every write triggers a consolidation pass
+behind it, so budgeting from "one call per retain" understates it by ~2×. Count
+the calls on **your** machine with **your** settings; the operation names
+predict neither the count nor the direction of the error.
+
+**`reflect` fails silently on a small `max_tokens` [verified].** At
+`max_tokens: 700` it returned `"No answer provided."` after spending all three
+model calls and 11,283 tokens — full price, no output, and `success` on every
+underlying call. The same query at the 4,096 default answered well. Do not
+lower `max_tokens` to economise on `reflect`: it saves nothing and the failure
+presents as an empty result rather than an error.
 
 ---
 

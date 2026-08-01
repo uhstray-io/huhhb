@@ -1,0 +1,53 @@
+# Paths committed or present in the tree that are not worth indexing into the
+# code graph. The .gitignore hierarchy is already honoured, so this file is
+# only for things git tracks (or leaves untracked in-tree) that still pollute
+# the graph.
+#
+# Changing anything here does NOT retract nodes already in the graph — the
+# incremental path keeps them. After editing, force a clean rebuild:
+#   delete_project(project="Users-stray-Documents-GitHub-huhhb")
+#   index_repository(repo_path=<repo root>, persistence=true)
+# then enumerate the indexed file list to prove the paths are gone.
+
+# Vendored agent-framework trees. .agent/ and .agents/ are byte-identical
+# duplicates of each other, so indexing both doubled every query result.
+.agent/
+.agents/
+.opencode/
+.codex/
+_bmad/
+.claude/skills/
+.teach/
+
+# Build, cache and environment
+.venv/
+node_modules/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Working state, not source
+.worktrees/
+.remember/
+.codebase-memory/
+
+# Generated and fixture content
+**/testdata/
+**/fixtures/
+**/__snapshots__/
+*.min.js
+*.min.css
+**/*.generated.*
+
+# Secrets and key material — never index. The graph stores no file contents,
+# but snippet retrieval reads from disk at query time using stored line
+# numbers, so an indexed secret file is a credential reader for anything
+# driving the MCP server. Environment *data* (inventory, host lists) is
+# deliberately NOT excluded — it is structurally valuable and is not a secret.
+*.env
+!*.env.example
+*credentials*.json
+*.pem
+*.p12
+id_rsa*

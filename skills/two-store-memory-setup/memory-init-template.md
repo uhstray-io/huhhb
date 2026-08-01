@@ -82,10 +82,13 @@ incrementally. Report `nodes` and `edges`.
 
 **If step 1 added or changed any entry, a plain re-index is not enough.**
 `.cbmignore` gates what is indexed *next*; it does not retract what is already
-in the graph. Verified: after adding a credentials path, the re-index reported
-it as excluded while the file and its API-key node were still queryable.
-Newly-excluded content persists silently — which matters most when the reason
-for excluding it was that it was sensitive.
+in the graph. Verified: after adding a credentials path, the file and its
+API-key node stayed queryable. The index response is not the signal you want:
+a full rebuild does list its excluded dirs, but the incremental path retracts
+nothing while reporting success, and node count drifts for unrelated reasons
+because the artifact directory indexes itself. Newly-excluded content persists
+silently, which matters most when the reason for excluding it was that it was
+sensitive.
 
 Force a clean rebuild whenever step 1 changed anything:
 
@@ -179,9 +182,18 @@ never-retain rules bind the writer, not the store.**
 
 Then set the write guard. `retain_mission` is a separate field and must be set
 on its own call — `mission` and `reflect_mission` are the **same underlying
-field**, so writing one overwrites the other. Set it, then re-read all three.
-Understand it is advisory: on input that was *only* code structure, the model
-ignored it and stored the whole call graph verbatim.
+field**, so writing one overwrites the other.
+
+**Neither the mode nor the guard can be read back**: there is no per-bank GET
+(it returns 405), and the bank list omits both fields. So a bank existing is
+never evidence it is configured. **Re-apply both settings on every run** — the
+PATCH is idempotent, which is what makes that safe — and confirm the mode
+*behaviourally* by retaining a decision plus its rejected alternative and
+checking the alternative survived. Do not write a step that claims to verify
+by reading these fields; it cannot be done.
+
+The guard is advisory regardless: on input that was *only* code structure, the
+model ignored it and stored the whole call graph verbatim.
 
 ```bash
 curl -s -X PATCH "$HINDSIGHT_URL/v1/default/banks/$BANK_ID" \

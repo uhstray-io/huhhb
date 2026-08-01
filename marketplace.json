@@ -3,7 +3,7 @@
   "publisher": "uhstray-io",
   "displayName": "Uhstray Skills Hub",
   "description": "Uhstray.io's curated Claude Code skills marketplace \u2014 workflows and automation for engineering teams.",
-  "version": "0.6.18",
+  "version": "0.6.19",
   "homepage": "https://github.com/uhstray-io/huhhb",
   "license": "MIT",
   "skills": [
@@ -477,6 +477,22 @@
       "version": "0.2.0"
     },
     {
+      "name": "two-store-memory-setup",
+      "path": "skills/two-store-memory-setup/SKILL.md",
+      "description": "Use when installing, repairing, or verifying the two-store agent-memory architecture on a machine \u2014 a code-graph store (codebase-memory-mcp) for present-tense structural truth plus an experience store (Hindsight) for decisions, rationale and outcomes. Gated phases with control-test verification at each gate; device scope, per-repo bootstrap is delegated to the memory-init command it writes.",
+      "category": "ops",
+      "tags": [
+        "ops",
+        "memory",
+        "setup",
+        "mcp",
+        "codebase-memory",
+        "hindsight",
+        "verification"
+      ],
+      "version": "0.1.0"
+    },
+    {
       "name": "pr-shepherd",
       "path": "skills/pr-shepherd/SKILL.md",
       "description": "Use when buhhdy's Development workflow has open PRs that need driving from creation to merge and cleaned-up afterward \u2014 the terminal step once PRs are open. Monitors CI and CodeRabbit/human review, routes findings back to the original implementer, gates the merge on a human approval (never merges autonomously), then runs post-merge close-out: closes issues, updates the plan, archives the change, removes the worktree, and janitors stale buhhdy/* branches.",
@@ -605,7 +621,7 @@
     {
       "name": "markdown-to-pdf",
       "path": "skills/markdown-to-pdf/SKILL.md",
-      "description": "Use when converting a Markdown file into a beautiful, print-ready PDF — reports, docs, specs, or exports with a styled cover page, running headers/footers, page numbers, tables, syntax-highlighted code, and mermaid diagrams.",
+      "description": "Use when converting a Markdown file into a beautiful, print-ready PDF \u2014 reports, docs, specs, or exports with a styled cover page, running headers/footers, page numbers, tables, syntax-highlighted code, and mermaid diagrams.",
       "category": "dev",
       "tags": [
         "dev",
@@ -621,9 +637,16 @@
     {
       "name": "discovering-context",
       "path": "skills/discovering-context/SKILL.md",
-      "description": "Use when a goal is big, vague, or dependency-heavy and you need to map every piece of context required before planning — builds a context dependency DAG (mermaid) by relentlessly interviewing with recommended answers, expanding each node until it saturates, then hands the map to writing-plans.",
+      "description": "Use when a goal is big, vague, or dependency-heavy and you need to map every piece of context required before planning \u2014 builds a context dependency DAG (mermaid) by relentlessly interviewing with recommended answers, expanding each node until it saturates, then hands the map to writing-plans.",
       "category": "dev",
-      "tags": ["dev", "planning", "context", "graph", "dag", "discovery"],
+      "tags": [
+        "dev",
+        "planning",
+        "context",
+        "graph",
+        "dag",
+        "discovery"
+      ],
       "version": "0.1.0"
     }
   ]

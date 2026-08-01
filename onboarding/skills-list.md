@@ -23,6 +23,7 @@ Powered by [MemPalace](https://github.com/mempalace/mempalace). Runs via the plu
 |-------|---------|-------------|
 | memory | `/memory` | Access, search, and manage the team memory nexus — store and recall project context via MCP |
 | memory-onboarding | `/memory-onboarding` | Use when checking or setting up the four-strata memory system on this machine and in the current project — "is my memory set up right", a fresh machine/repo, or a preflight memory-degradation report. Pass/warn/fail matrix + at most three next actions; diagnose-then-ask (only repo-memory first-run auto-applies); credentials never transit chat |
+| two-store-memory-setup | `/two-store-memory-setup` | Use when installing, repairing, or verifying the two-store agent-memory architecture on a machine — a code-graph store for structural truth plus an experience store for decisions and outcomes. Gated phases, control-test verification at every gate, a catalogue of verified defects indexed by symptom, and the per-repo `memory-init` command it writes |
 | memory-search | `/memory-search` | Semantic search across the memory nexus |
 | memory-mine | `/memory-mine` | Ingest a project directory or text into the nexus |
 | memory-status | `/memory-status` | Nexus stats — drawer count, wings, rooms |

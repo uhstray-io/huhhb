@@ -433,7 +433,77 @@ default. Retrieval quality is bounded by what was stored.
 
 ---
 
-## 5. Rationalization table
+## 5. Standing constraints
+
+These hold across every phase, not just the one they first bite in.
+
+**Docs currency before any install command.** Both projects ship fast. Fetch
+the current README or docs and confirm the command, flags and paths still match
+what this reference says. Where they differ, **follow the docs and report the
+delta** — this file is a record of one verified build, not a spec the upstream
+is obliged to honour.
+
+**Ask before anything destructive or irreversible.** Overwriting an existing
+`CLAUDE.md`, deleting an index or database, or modifying files outside the
+authorised paths. And if a tool does one of these *without* asking — stop and
+report it rather than continuing as though it were authorised. A tool taking an
+unrequested destructive action is a finding, not a step that went through.
+
+**Correct yourself in writing.** When something you asserted turns out wrong,
+fix it in the artifacts already written — the policy block, the rollback note,
+the report — not only in conversation. On the reference build this happened
+three times; expect at least twice. An uncorrected artifact is worse than no
+artifact, because it will be trusted later.
+
+**No credentials in any file you create.** If a key is needed, reference an
+environment variable and tell the human to set it themselves. A placeholder a
+local server ignores is not a credential, but say so explicitly when you use
+one.
+
+**No telemetry, analytics or usage reporting** in either system. Check for it
+during install rather than assuming the defaults are off.
+
+**Out of scope — do not do these.** Do not install a third memory or code-graph
+tool; two stores is the design. Do not install a second `PreToolUse` hook
+nudging toward a *different* graph — hooks stack rather than replace, so report
+any that already exist either way (one nudging toward *these* two stores is
+fine). Do not "fix" a tool by editing its installed source in site-packages —
+find the supported configuration path, or report that none exists.
+
+---
+
+## 6. After an upgrade — the four cheap probes
+
+Both projects rewrite agent configuration on update, and the routing policy
+lives in a Markdown file no installer knows about. Re-run Phase 5 after any
+upgrade to either tool, and re-check the loopback bindings at the same time — a
+default of `0.0.0.0` that an upgrade restores is a network-exposed memory store.
+
+Four minutes, and each probe maps to a defect that was invisible from status
+output:
+
+1. Does a retain preserve a rejected alternative? (extraction mode survived)
+2. Does a nonexistent-tag filter return zero? (filtering still does nothing)
+3. Does a durable record still have rows behind it after a code change?
+4. Are both servers' tools actually **invocable**, not merely connected?
+
+**Ongoing watch items.** For the structure store, run with diagnostics on for
+the first week and check whether RSS grows against query count — its docs
+devote a section to memory-trajectory capture for slow leaks. For the
+experience store, expect roughly 1 GB resident when using local embedding and
+reranker models, and establish why GPU acceleration is disabled by default on
+your platform before enabling it. Watch for a relevance floor appearing in a
+later release; until then recall on a large bank returns low-scoring noise and
+it is the caller's job to ignore it.
+
+**If cross-store answers start feeling thin, check the policy is loading before
+blaming the stores.** The symptom of the join lapsing is recalls that return
+nothing useful while every component reports healthy. Grepping out of habit is
+the tell.
+
+---
+
+## 7. Rationalization table
 
 | Excuse | Reality |
 | ------ | ------- |

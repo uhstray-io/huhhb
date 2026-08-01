@@ -31,8 +31,10 @@ touches the evolve/Honcho stratum, MemPalace, or `.claude/memory/`.
 
 ## Three rules that outrank convenience
 
-**1. A tool's self-report is not evidence.** For every claim, state what would
-prove it **false**, then run that. Prefer a control test — once with the
+**1. A tool's self-report is not evidence.** Both projects ship fast — before
+any install command, fetch the current docs and confirm the command, flags and
+paths still match; where they differ, follow the docs and report the delta.
+Then for every claim, state what would prove it **false** and run that. Prefer a control test — once with the
 setting, once without, show both — over reading a status line. Verified here:
 `✔ Connected` while no tool is callable; `excluded` while the nodes are still
 queryable; `--skip-config` accepted and ignored; `{"status":"accepted"}` for a
@@ -87,6 +89,12 @@ call-graph dump was stored verbatim despite it. **The writer is the filter.**
 - About to record a ratified ADR through `manage_adr` — the next code change
   hard-deletes it
 - About to report "working" for a claim you never constructed a test for
+- About to enable telemetry, or put a credential in a file you create
+- About to install a *third* store, or a `PreToolUse` hook nudging toward a
+  different graph — two stores is the design, and hooks stack
+- About to edit a tool's installed source instead of finding its config path
+- About to continue past a tool that did something destructive **without**
+  asking — stop and report it instead
 
-Rationalization table and the diagnostic counter-techniques are in
-[reference.md](reference.md). Read them before testing, not after.
+Standing constraints, rationalizations and the diagnostic counter-techniques
+are in [reference.md](reference.md) — read them before testing, not after.

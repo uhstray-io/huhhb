@@ -174,6 +174,7 @@ After syncing, review the diff, bump versions, cut a release if changed.
 ## Key Files
 
 - `skills/` — all skills, one flat subdirectory per skill (`skills/<skill-name>/SKILL.md`)
+- `.cbmignore` — paths kept out of the code graph (vendored agent trees, caches, key material); changing it needs a forced rebuild, not just a re-index
 - `onboarding/` — onboarding flow triggered on first install
 - `hooks/` — plugin lifecycle hook scripts (SessionStart, PreToolUse, Stop)
 - `marketplace.json` — skill manifest (name, path, description, category, tags, version per skill)
@@ -237,10 +238,38 @@ base.
 | Domain knowledge the user has that shouldn't be re-explained | `user` |
 | Personal notes about this repo (gitignore `user_*.md` if private) | `user` |
 
-These are **repo-scoped** records. Cross-project personal preferences belong in
-MemPalace (user stratum) and cross-session team learnings in Honcho (team
-stratum) — not here; see
-[`project-buhhdy-memory-model.md`](.claude/memory/project-buhhdy-memory-model.md).
+These are **repo-scoped** records, committed and shared with the team.
+Cross-project preferences and cross-session decisions belong to the
+device-level stores below, not here. The MemPalace and Honcho strata are
+**retired from routing** as of 2026-08-01 — still shipped, data intact,
+invoked only when asked for by name; see
+[`project-two-store-memory-supersedes-mempalace.md`](.claude/memory/project-two-store-memory-supersedes-mempalace.md).
+
+<!-- two-store-memory:start -->
+### Device-level memory stores
+
+Two stores that never hold the same fact. Structure is regenerated from source
+for free; experience is the only copy.
+
+- **Structure** → the code graph. This repo is indexed, and
+  [`.cbmignore`](.cbmignore) excludes the vendored agent-framework trees that
+  otherwise made up ~91% of the graph and duplicated every query result.
+  Editing `.cbmignore` requires a **forced rebuild** — ignore rules gate the
+  next index and never retract nodes already stored.
+- **Experience** → bank id `huhhb`. The bank runs in `verbatim` mode: what you
+  send is stored unchanged, so keeping code structure out of it is the
+  writer's job, not the store's. The extraction mode and write guard **cannot
+  be read back** — re-apply them rather than checking them.
+- Use the **blocking** write variant. An `accepted` response is a receipt, not
+  a confirmation.
+- Ratified ADRs are committed files under `docs/adr/`. Do **not** use
+  `manage_adr` — it writes into the disposable index and the next code change
+  hard-deletes it.
+- Read-routing rules live in the operator's global `CLAUDE.md` under
+  "TWO-STORE MEMORY ROUTING" and are deliberately not restated here.
+- Setup, repair, the verified defect catalogue and measured costs:
+  [`skills/two-store-memory-setup/reference.md`](skills/two-store-memory-setup/reference.md).
+<!-- two-store-memory:end -->
 
 ### What NOT to save
 

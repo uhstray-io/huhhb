@@ -55,6 +55,13 @@ curl -fsS -m 3 -o /dev/null "$HS/v1/default/banks" \
 The graph MCP server not being installed at all is likewise a skip — report
 `skipped — graph tool not installed` and carry on with OpenSpec and the rest.
 
+**Name the remedy, don't just shrug.** Installing and binding the two servers is
+**machine scope and not this skill's job** — it belongs to huhhb's
+`two-store-memory-setup`. So a missing server reports
+`skipped — <tool> not installed; run two-store-memory-setup (machine scope), then
+re-run` rather than a bare skip. This skill is repo scope: it assumes the machine
+is set up and never installs, binds or configures a server itself.
+
 ### Detect existing state — conforming ≠ initializing
 - **OpenSpec root.** House convention puts it at `plans/development`, *not* the
   repo root. Check `plans/development/openspec/config.yaml` **and** `openspec
@@ -359,6 +366,15 @@ secret file becomes a credential reader for anything driving the MCP server,
 **subagents included**. Exclude `secrets/`, `**/secrets/`, `*.env`,
 `**/credentials.json`, `*.key`, `*.pem`, `*_rsa`, `*_ed25519`.
 
+*Verified, not inferred:* editing a function on disk and calling
+`get_code_snippet` again **without re-indexing** returned the new text. Retrieval
+reads the live file. So excluding a secret from the index is what keeps it out of
+snippet range — nothing else does.
+
+Note `.codebase-memory/` indexes *itself* unless excluded (its `.gitattributes`
+and `artifact.json` showed up as File nodes), which is why it is on the
+always-list above.
+
 Draw the next line deliberately and **say in the report where you drew it**:
 credential *material* is excluded, but environment *data* — inventories, host and
 IP lists, topology — is often the most structurally valuable content a private
@@ -375,11 +391,17 @@ existing artifact, then indexes incrementally.
 
 **Step 3 — if any `.cbmignore` entry changed, force a clean rebuild.**
 `.cbmignore` gates what gets indexed *next*; **it does not retract what is
-already in the graph.** Verified: after adding `**/credentials.json`, the
-re-index reported the path as `excluded` while the file and its API-key node
-stayed queryable and the node count did not move. Newly-excluded content persists
-silently — worst exactly when the reason for excluding it was that it was
-sensitive. So:
+already in the graph.** Verified on 0.9.0: after adding `**/credentials.json`, a
+plain re-index left `config/credentials.json` in the file list and its
+`NVIDIA_API_KEY` node fully queryable — with **no signal of any kind**. Both
+things you would reach for as evidence are useless here:
+- the response's `excluded` field listed only `.git`, never the ignored path — so
+  it does not report the exclusion at all;
+- the node count *moved*, 23 → 36, for an unrelated reason (`.codebase-memory/`
+  getting indexed). Counts drift in both directions and prove nothing.
+
+Newly-excluded content therefore persists silently — worst exactly when the reason
+for excluding it was that it was sensitive. So:
 
 ```bash
 # 1. delete_project(project="<graph project name from §0>")
@@ -388,8 +410,12 @@ rm -f "$REPO_ROOT/.codebase-memory/graph.db.zst"   # keep .gitattributes — ste
 # 3. query_graph("MATCH (f:File) RETURN f.file_path") — PROVE the paths are gone
 ```
 
-Step 3's proof is the point. A re-index that reports `excluded` is not evidence;
-the file list is.
+Step 3's proof is the point: **neither `excluded` nor the node count is evidence —
+the file list is.** Verified remedy on the same repo: after `delete_project`,
+removing the artifact and re-indexing, `credentials.json` was gone from the file
+list and a search for `NVIDIA_API_KEY` returned zero results. (The glob does work:
+`**/credentials.json` matched a nested `config/credentials.json`. The ignore was
+honoured — just only for content indexed *after* it.)
 
 **Step 4 — `git check-attr merge` must print `merge: ours`.**
 
@@ -485,13 +511,33 @@ this run actually did (stack detected, created vs already-conforming, gaps
 recorded). **A re-run that changed nothing retains nothing** — an unchanged run
 is a no-op here too.
 
-### 4.3 Honcho — team memory (env-scoped)
-Scope the repo's workspace through the evolve-suite skills (`/evolve` / the
-evolve setup). Config comes from the environment only:
-`HONCHO_URL`, `HONCHO_API_KEY`, `HONCHO_WORKSPACE`. **Never write a URL, key,
-or workspace into the repo.** If the env is not configured, report
-`Honcho — skipped (not configured)` and continue; evolve degrades gracefully
-by design.
+### 4.3 Honcho — team memory (env-scoped; a server in one mode only)
+Scope the repo's workspace through the evolve-suite skills (`/evolve` / the evolve
+setup). **`repo-kickstart` never configures Honcho** — it reads the existing
+configuration and reports on it, so this step adds no server setup of its own.
+Config comes from the environment or evolve's own user-scope config file, never
+from the repo: `HONCHO_URL`, `HONCHO_API_KEY`, `HONCHO_WORKSPACE`. **Never write a
+URL, key, or workspace into the repo.**
+
+There are **three** states. Collapsing them into "configured / not configured" is
+the mistake to avoid, because one of them is configured *and* serverless:
+
+| State | Server | Report |
+|-------|--------|--------|
+| `honcho` mode | Yes — self-hosted `HONCHO_URL` or managed `HONCHO_API_KEY` | scope the workspace; name it |
+| `local` mode | **None** — blank endpoint selects it | `local mode (no server; nothing to scope)` — a *configured* state, not a missing one |
+| unconfigured | — | `skipped — not configured` |
+
+**`honcho` mode has a second prerequisite beyond credentials: the `@honcho-ai/sdk`
+package must be installed** — an optional runtime dependency, deliberately never
+vendored. A machine can hold a valid endpoint, key and workspace and still be
+unable to talk to the server. Probe for it, and report `skipped — endpoint
+configured, @honcho-ai/sdk not installed` with the one-line install hint rather
+than a bare ✅. Local mode also has **no deriver**, so recall-synthesis features
+are absent there by design; that is not a gap for this skill to fix.
+
+Whatever the state, this stratum **never fails the run**, and `repo-kickstart`
+never installs the SDK or runs an `init` — those are the human's, in a terminal.
 
 ### 4.4 Capture hooks — still seeded, now feeding the bank
 Seed `.githooks/` (post-commit capture + pre-commit record lint, templates from
@@ -516,7 +562,17 @@ The two-store move changed the **terminal write**, not the capture:
 records into it. Existing records stay exactly where they are, as history.
 
 ### 4.6 Who owns what now — state this in the report
-- **`repo-kickstart`** (this skill) owns the two routed stores and Honcho.
+- **`two-store-memory-setup`** owns **machine scope**: installing, binding and
+  configuring both servers plus the global routing policy. This skill *depends on*
+  that having been done and never does it — see §0's remedy line.
+- **`repo-kickstart`** (this skill) owns **repo scope**: the two routed stores in
+  *this* repo, Honcho, OpenSpec, and the wiring between them.
+- **`memory-init`** (a user-scope command that `two-store-memory-setup` installs)
+  performs the same per-repo bootstrap standalone. Both are idempotent and take
+  the same steps, so running both is redundant rather than harmful — but for a
+  repo being kickstarted, **`repo-kickstart` is the one to run**; `memory-init`
+  is for repos you are not kickstarting. Never treat them as two halves of one
+  job.
 - **`repo-memory`** and **`memory-onboarding`** are **not deprecated.** They still
   own `.claude/memory/` — its format, its Record Contract, its diagnostics — and
   remain correct on direct invocation. What changed is that the store they govern
@@ -564,7 +620,9 @@ staging buffer, deleted on consolidation, never a store.
   the content never reaches the shareable artifact, and any change to the codebase
   **hard-deletes it on the next index**. Verified: one added file moved node count
   251 → 255 and the ADR row count went to 0, with no warning. A committed file
-  does the same job and survives.
+  does the same job and survives. **Expect to be nudged toward the trap:** every
+  `index_repository` response carries an `adr_hint` recommending `manage_adr`
+  (observed on 0.9.0). It is the tool's suggestion, not a reason to use it.
 
 ### Precedence
 Where a **user-scope routing policy** exists (the operator's own agent config), it
@@ -655,7 +713,7 @@ repo-kickstart — <owner>/<repo> (<greenfield|brownfield>, <stack>)
   Hindsight bank (verbatim)    ✅ | ➕  (bank <id>, verbatim re-applied) | ⚠ skipped — <reason>
   charter in bank              ✅ present | ➕ retained | ⚠ skipped — <reason>
   capture hooks → bank         ✅ | ➕  (core.hooksPath=.githooks)
-  Honcho workspace scoped      ✅ | ⚠ skipped (not configured)
+  Honcho workspace scoped      ✅ <workspace> | ⚠ local mode (no server) | ⚠ skipped (unconfigured | sdk missing)
   .coderabbit.yaml             ✅ | ➕
   branch protection            ✅ present | ❌ absent — commands emitted + gap recorded | N/A no remote yet
 
@@ -693,7 +751,7 @@ alternative back, and a domain-language recall that actually returned the charte
 | Hindsight bank | bank `<repo>` exists. The mode is **not readable**, so re-apply the `verbatim` PATCH every run — idempotent, and it changes no content. "Bank exists" alone is never evidence the mode is right |
 | charter | a domain-language recall against the bank returns a charter-like memory |
 | capture hooks | `.githooks/` present and `git config core.hooksPath` = `.githooks` |
-| Honcho | evolve reports the workspace scoped (or env absent → skipped) |
+| Honcho | evolve reports the workspace scoped. `local` mode, unconfigured, and endpoint-without-SDK are **terminal states, not gaps to fix here** — report which one and move on |
 | .coderabbit.yaml | file exists |
 | branch protection | `gh api …/protection` returns 200 |
 
@@ -712,7 +770,9 @@ consecutive run must produce **no diff**.
 | "openspec validate failed → the kickstart failed" | A fresh index isn't a conforming change yet. Report "pending"; don't fail the run. |
 | "I'll drop a memory log under plans/" | plans/ holds DOCUMENTS only. Experience goes to the Hindsight bank, structure to the graph, instructions to AGENTS.md. No memory of any kind under plans/, ever. |
 | "`.claude/memory/` is retired, so I'll delete/migrate it" | Retired from **routing**. The data is kept, in place. Deleting someone's history is not a kickstart — §4.5. |
-| "The re-index reported the secret path as `excluded`, so it's out of the graph" | It isn't. `.cbmignore` never retracts indexed nodes. delete_project + remove the artifact + re-index, then prove it with the file list — §4.1 step 3. |
+| "The re-index says it's `excluded` / the node count didn't move, so the secret is out" | Neither is evidence — `excluded` never lists the ignored path and counts drift for unrelated reasons. `.cbmignore` never retracts indexed nodes: delete_project + remove the artifact + re-index, then prove it with the file list — §4.1 step 3. |
+| "Honcho has no URL set, so it's unconfigured" | A blank endpoint selects **local mode**, which is configured and needs no server. Report local mode — §4.3. |
+| "Endpoint and key are set, so Honcho is ✅" | `honcho` mode also needs `@honcho-ai/sdk` installed. Probe it; valid credentials with no SDK cannot reach the server. |
 | "`graph.db.zst merge=ours binary` is what the tool wrote, so it works" | It doesn't. `binary` is a macro that unsets `merge=ours`. Reverse the order and require `merge: ours` from check-attr — §4.1 step 4. |
 | "`retain` returned `accepted`, so the memory is saved" | `accepted` is a receipt, not a write. Use `sync_retain`, or verify with `get_operation` — §4.2 step 4. |
 | "The bank's `retain_mission` will keep code structure out" | Advisory only — verified being ignored on structure-only input. The writer is the filter, not the store. |

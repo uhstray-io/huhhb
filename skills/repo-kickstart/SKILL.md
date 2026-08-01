@@ -42,6 +42,8 @@ conforming" per item is the desired result on huhhb and on any re-run.
   store, Honcho. Each degrades to `skipped — <reason>` in the checklist **plus a
   recorded gap**; **none of them fails the run**, and none is a silent pass.
   Probe the experience store, never assume its endpoint (commands in §0).
+  Installing/binding a server is **machine scope** — not this skill's job. Name
+  the remedy (`two-store-memory-setup`) instead of shrugging.
 - **Detect existing state before deciding you're initializing.** An OpenSpec root
   (house convention: `plans/development`, *not* the repo root — also check
   `openspec store list`), an existing index or bank, and every memory store
@@ -112,10 +114,13 @@ to the graph, instructions to AGENTS.md.
   to detect them — then a project charter: prose about purpose, constraints and current
   state, **never an inventory** (inventories are the graph's job). Write with
   `sync_retain` — an async receipt is not a verified write.
-- **Honcho (team memory)** — scope the repo's workspace via the evolve-suite
-  skills. **Credentials come from the environment** (`HONCHO_URL` /
-  `HONCHO_API_KEY` / `HONCHO_WORKSPACE`) — **never write them into the repo.**
-  Honcho unconfigured? report "skipped — Honcho not configured", don't fail.
+- **Honcho (team memory)** — this skill **reads** the existing config and reports;
+  it never configures a server, installs anything, or runs an `init`.
+  **Credentials come from the environment** (`HONCHO_URL` / `HONCHO_API_KEY` /
+  `HONCHO_WORKSPACE`) — **never write them into the repo.** Three states, not two
+  (§4.3): `honcho` mode needs a reachable server **and** `@honcho-ai/sdk`
+  installed; `local` mode needs **no server** and is configured, not missing;
+  unconfigured reports `skipped`. None of the three fails the run.
 - **`.claude/memory/` — retired from routing, data kept.** Never delete, move or
   migrate it. This skill no longer seeds the store or writes records into it;
   `repo-memory` and `memory-onboarding` still own it and remain correct on direct

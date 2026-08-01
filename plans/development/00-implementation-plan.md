@@ -23,6 +23,11 @@ _Status: proposed · in-progress · in-review · archived._
 
 ## Open conformance gaps
 
-- **Branch protection on `main`** — not configured (GitHub returns 404). The
-  human must enable required PR reviews (precondition for pr-shepherd). Commands
-  in [KICKSTART.md](../../KICKSTART.md#branch-protection-one-time-admin).
+- **Required approvals on `main`** — the `protect-main` ruleset is active (PR
+  required, force-push and deletion blocked), but
+  `required_approving_review_count` is `0`, so a PR can be self-merged with no
+  approval — the pr-shepherd precondition is only half met. An admin must raise
+  it to `1`; command in
+  [KICKSTART.md](../../KICKSTART.md#branch-protection-one-time-admin).
+  (The classic `/branches/main/protection` API returns 404 here — that is
+  expected: this repo uses a ruleset, not classic protection.)

@@ -33,10 +33,13 @@ conforming" per item is the desired result on huhhb and on any re-run.
 - Detect the **stack** (`package.json` / `pyproject.toml` / `go.mod` /
   `Cargo.toml` / `pom.xml` / …). It feeds AGENTS/ARCHITECTURE context, the
   OpenSpec `config.yaml` context, `.cbmignore`, and CodeRabbit's language tools.
-- **Derive the three names** (table in `reference.md` §0). The OpenSpec store id
-  and the Hindsight bank id are both the repo *directory* name; the graph project
-  is the repo *path*. Different strings — mixing them up is the most common
-  failure here.
+- **Derive the three names** (table in `reference.md` §0): `STORE_ID` = the repo
+  *directory* name · `BANK_ID` = **directory name + a hash of canonical
+  identity** (a bare directory name silently merges two repos called `app` into
+  one bank) · the graph project = the tool's own lossy derivation from the repo
+  *path*. Three different strings — mixing them up is the most common failure
+  here, and the graph one needs an identity check **before you index**, not just
+  before you delete.
 - **Probe every prerequisite and record what's missing** — `openspec`, the graph
   tool (including repo-inside-`CBM_ALLOWED_ROOT` containment), the experience
   store, Honcho. Each degrades to `skipped — <reason>` in the checklist **plus a

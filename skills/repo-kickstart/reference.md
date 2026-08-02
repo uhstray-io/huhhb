@@ -36,13 +36,24 @@ Verified: `/tmp/app` and `/srv/app` both yield bank `app` under the old rule and
 `app-d75b6c3b` / `app-dae668e4` under this one. Keep `BANK_ID` raw in config and
 prose; **percent-encode it only when interpolating into a request URL.**
 
-**Guard the destructive steps — the graph name you cannot fix.** The graph project
-name is derived by the *tool*, not by this skill, and it is lossy: `/a-b/c` and
-`/a/b-c` both map to `a-b-c`. You cannot rename it, so verify identity instead.
-`list_projects` reports each project's `root_path` — **match it against
-`$REPO_ROOT` before `delete_project`**, or a clean rebuild can wipe a different
-repo's graph. Apply the same rule to the bank: if one already exists at this id,
-confirm it belongs to this repo before writing.
+**Guard the graph name you cannot fix — before *indexing*, not just before
+deleting.** The graph project name is derived by the *tool*, not by this skill,
+and it is lossy: `/a-b/c` and `/a/b-c` both map to `a-b-c`. You cannot rename it,
+so verify identity instead. `list_projects` reports each project's `root_path`:
+
+> **Compare `root_path` against `$REPO_ROOT` before `index_repository` *and*
+> before `delete_project`. If it differs, stop and report the collision — do not
+> index.**
+
+Indexing is the dangerous one precisely because it is the routine operation.
+Verified: two repos at `…/x-y/z` and `…/x/y-z` both derive `…-x-y-z`, and indexing
+the second **silently replaced the first** — the project's file list went from
+`src/alpha.py` to `src/beta.py`, `list_projects` began reporting the second repo's
+`root_path`, and the call still returned `status: indexed` with no warning.
+Nothing anywhere tells you the first repo's graph is gone.
+
+Apply the same rule to the bank: if one already exists at this id, confirm it
+belongs to this repo before writing.
 
 **Migration.** Repos bootstrapped before this rule have a bare-directory-name bank
 (and the global routing policy still documents that form). Do **not** silently
@@ -416,9 +427,12 @@ the graph; indexing a private key is a leak. They are not the same call.
 lines**. Never rewrite it wholesale — the user's own entries, ordering and
 comments must survive.
 
-**Step 2 — index with the artifact.** `index_repository(repo_path=$REPO_ROOT,
-persistence=true)`. Report nodes and edges. Re-running is cheap: it imports the
-existing artifact, then indexes incrementally.
+**Step 2 — index with the artifact.** **First run §0's identity check**: if
+`list_projects` already has this project name under a *different* `root_path`,
+stop and report the collision — indexing would silently overwrite that repo's
+graph. Otherwise `index_repository(repo_path=$REPO_ROOT, persistence=true)`.
+Report nodes and edges. Re-running is cheap: it imports the existing artifact,
+then indexes incrementally.
 
 **Step 3 — if any `.cbmignore` entry changed, force a clean rebuild.**
 `.cbmignore` gates what gets indexed *next*; **it does not retract what is
@@ -491,8 +505,21 @@ bootstrap from the artifact instead of paying a full re-index.
 Base URL from §0's probe (`$HS`) — never a hardcoded literal. One bank per repo,
 `bank_id` derived per §0 — never a bare directory name.
 
-**Step 1 — create the bank.** `PUT $HS/v1/default/banks/$BANK_ID` — idempotent by
-API design: `PUT` on an existing bank updates rather than duplicating.
+**Step 1 — create the bank.** Keep `BANK_ID` raw everywhere except the URL, and
+**percent-encode the path segment** — a directory name holding a space, `#`, `?`
+or `%` otherwise addresses the wrong bank or fails outright:
+
+```bash
+BANK_SEG=$(printf '%s' "$BANK_ID" | jq -sRr @uri)   # encode ONLY for the URL
+curl -fsS -X PUT "$HS/v1/default/banks/$BANK_SEG" \
+  -H 'Content-Type: application/json' -d '{"name":"<repo>","mission":"…"}'
+```
+
+Verified round-trip: raw `probe space-deadbeef` → segment
+`probe%20space-deadbeef` → stored and listed under the **raw** id, and `DELETE`
+with the encoded segment matches it. So use `$BANK_SEG` in every request path,
+and keep `$BANK_ID` raw in `AGENTS.md`, config and prose. `PUT` is idempotent by
+API design: on an existing bank it updates rather than duplicating.
 
 **Step 2 — set `retain_extraction_mode: verbatim`, in its own call.** Required,
 not optional: the default `concise` mode **silently discards rejected

@@ -58,6 +58,15 @@ unaided run named the constants, the line numbers and the exact values across 44
 while the same prompt under a tight ceiling compressed to `I edited skill-bench.ts` and
 lost every referent. Compression is what turns this skill into an edit log.
 
+**"Cut scope" means one behavior change per checkpoint.** State what now differs, why it
+matters in one clause, draw the delta, stop. Do **not** append the sections that feel
+owed — a root-cause retrospective, a why-this-was-worth-fixing paragraph, a list of
+neighbouring code you checked and left alone. Each is defensible alone; together they are
+how a 5-sentence ceiling becomes nine. Measured with §7 active: narration that named
+every identifier correctly and drew a correct diagram still ran ~9 sentences, because
+nothing said where to stop. If the change genuinely has several independent behavior
+changes, that is several checkpoints, not one long one.
+
 ## 5. The three checkpoints
 
 Narrate at exactly these moments, nothing in between:
@@ -149,3 +158,5 @@ applies. An active `training` session overrides all of it — yield entirely (§
 - "The user just saw the diff" — then they do not need narration either. Pick one.
 - "Naming it would break the sentence limit" — cut scope, not specifics (§4).
 - "Nothing structural changed, so no diagram" — §3 inverted that. Draw the delta.
+- "One more paragraph on why this mattered" — that is the ninth sentence. Stop at the
+  diagram (§4).

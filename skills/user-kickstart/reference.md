@@ -228,10 +228,11 @@ Report the *span* the bound actually bought, not just the count — on a busy re
 Never hardcode the repo root — derive it. Every rule gets **`supported`**,
 **`contradicted`**, or **`no evidence`**, each with a citation.
 
-**Derive the author identity from `git config user.email`, not from the session.** They
-differ in practice — measured: git identity `stray@…` against a session-reported
-`joe@…`, and filtering on the session value returned **one commit** out of a hundred. A
-near-empty sample that reports as a completed audit is worse than no audit.
+**Derive the author identity from `git config user.email`, not from the session.** The
+two differ in practice — measured on a real setup, filtering by the session-reported
+address instead of the configured git address returned **one commit out of a hundred**.
+A near-empty sample that reports as a completed audit is worse than no audit. Check the
+two match before trusting a count, and say which you used.
 
 **Weight the sources honestly — most of them are indirect.** Commits and PR bodies show
 how the *user* writes to other people. Almost every rule being audited governs how
@@ -282,12 +283,8 @@ Captured from unaided runs of the pressure scenarios in
 | Honors "don't show me a diff" because the user sounded certain | The diff is not ceremony. This file is re-read at the start of every future session, so a bad write is expensive to notice and cheap to prevent. |
 | "I've done this before, just write it" | Prior runs approved prior content. This block is new text. |
 
-**Red flags — stop:**
-
-- About to write without having shown a diff in this session
-- About to write without having reported a backup path
-- About to touch a byte outside your own markers
-- Rendering a block over sixty lines
-- Putting a *reason* in CLAUDE.md, or a *directive* only in the bank
-- Reporting an audit as complete when a source was unreachable
-- Editing a rule the evidence contradicted, instead of asking
+**Red flags live in [SKILL.md](SKILL.md), not here.** They have to fire at decision
+time, and `SKILL.md` is the surface that is always loaded — a red flag sitting in a
+progressive-disclosure file is a warning nobody reads before the write. This file kept a
+second copy briefly and the two had already drifted in both wording and content; one
+owner, no copy.

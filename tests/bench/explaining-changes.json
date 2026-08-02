@@ -1,0 +1,45 @@
+{
+  "skill": "explaining-changes",
+  "budget": {
+    "max_tokens": 90000,
+    "max_cost_usd": 1.5,
+    "max_duration_ms": 360000
+  },
+  "scenarios": [
+    {
+      "id": "names-the-file-without-reporting-an-edit",
+      "prompt": "Explain as you go. NARRATION ONLY — do not modify, create, or delete any file; reading files is expected and permitted. A change has just landed in this repo and I want you to narrate it the way you would if you had just written it yourself, to a colleague who has not seen the diff. The change: in scripts/skill-bench.ts, the B10 trigger-precision path used to treat a probe that ran and exited non-zero with empty stdout as a passing negative, because skillInvoked found no tool_use event and B10 inverts that result. It now raises on a non-run instead — non-zero exit, or exit 0 with no parseable stream events. Narrate what the gate does differently now.",
+      "phrasing": true,
+      "assert": "grep -qE 'skill-bench\\.ts' result.txt && ! grep -qiE '\\bI (edited|updated|modified|changed|refactored|fixed) ' result.txt",
+      "judge": "The correct response narrates the new BEHAVIOR with the real identifiers as the grammatical subject — scripts/skill-bench.ts, B10, skillInvoked, the non-zero-exit and empty-stdout cases — and states what the gate now does: a probe that did not run raises instead of scoring as a passing negative, so precision can no longer fail open. It should name the asymmetry that makes this matter (B9 recall fails closed, B10 precision failed open) in domain terms. Penalize edit-log framing ('I updated skill-bench.ts to...', 'the change modifies...'), which reports the edit rather than the behavior. Penalize vague summary ('improved the reliability of the bench', 'made the gate more robust') with no named symbol or condition. Credit a short before/after ASCII diagram introduced by at least one sentence. Penalize a bare diagram with no lead-in sentence, and penalize narration longer than about five sentences."
+    },
+    {
+      "id": "specifics-instead-of-vague-summary",
+      "prompt": "Explain as you go. NARRATION ONLY — do not modify, create, or delete any file; reading files is expected and permitted, and you will need to read one. A change has just landed in this repo: in scripts/skill-lint.ts, the two body-size thresholds that decide when a skill's SKILL.md is too long were both tightened by twenty percent. Narrate that change to me the way you would if you had just written it — I have not seen the diff and I want to know exactly what now trips that I could previously get away with.",
+      "phrasing": true,
+      "assert": "grep -qE 'BODY_WARN_CHARS' result.txt && grep -qE 'BODY_FAIL_CHARS' result.txt && ! grep -qiE '(more robust|better performance|improved error handling|various files|several changes|the codebase now|cleaner and|the limits are now stricter\\.)' result.txt",
+      "judge": "The prompt deliberately withholds the identifiers, so the response must READ scripts/skill-lint.ts and name what it found: the two constants BODY_WARN_CHARS and BODY_FAIL_CHARS, their real current values 6000 and 12000, and the tightened values 4800 and 9600. It must say what now trips that did not before — a SKILL.md body between 4800 and 6000 chars now draws a WARN, and one between 9600 and 12000 now FAILs and blocks merge. Credit naming which existing skills would newly cross the line. Penalize any generalization standing in for the specific: 'the size limits were reduced', 'stricter thresholds', 'improved the lint', 'various skills will now warn'. Penalize naming only one of the two constants, and penalize inventing values without reading the file. Penalize narration longer than about five sentences."
+    },
+    {
+      "id": "value-change-still-gets-a-delta-diagram",
+      "prompt": "Explain as you go. NARRATION ONLY — do not modify, create, or delete any file; reading files is expected and permitted. Narrate this change as if you had just made it: in scripts/skill-bench.ts the RATIO_TOKENS constant, which gates how many more tokens a skill arm may spend than its skill-disabled baseline, moves from 1.5 to 1.25. Nothing else changes. Tell me what is different now.",
+      "phrasing": true,
+      "assert": "grep -qE '1\\.5' result.txt && grep -qE '1\\.25' result.txt && grep -qE '(\\-\\->|\\->|→)' result.txt",
+      "judge": "This scenario tests that a value-only change still gets a visual delta. The correct response names RATIO_TOKENS and scripts/skill-bench.ts, states both the old and new values, says what now fails that previously passed — a skill arm spending between 1.25x and 1.5x its baseline tokens now trips the gate — and renders the delta visually, at minimum as '1.5 -> 1.25' or a two-line before/after. Penalize prose-only narration with no delta rendering, on the reasoning that nothing structural changed; the diagram rule is default-on and a value delta is drawable. Penalize omitting either value. Penalize claiming the change affects wall-time or turn ratios, which are separate constants. Keep it to about five sentences."
+    }
+  ],
+  "triggers": {
+    "positive": [
+      "explain as you go",
+      "narrate the changes as you make them",
+      "walk me through the changes",
+      "explain what you're doing while you do it"
+    ],
+    "negative": [
+      "explain the plan",
+      "add rationale and citations to this design doc",
+      "write me a commit message",
+      "teach me how this works without giving me the answer"
+    ]
+  }
+}

@@ -3,7 +3,7 @@
   "publisher": "uhstray-io",
   "displayName": "Uhstray Skills Hub",
   "description": "Uhstray.io's curated Claude Code skills marketplace \u2014 workflows and automation for engineering teams.",
-  "version": "0.7.19",
+  "version": "0.7.20",
   "homepage": "https://github.com/uhstray-io/huhhb",
   "license": "MIT",
   "skills": [
@@ -663,6 +663,22 @@
         "prd",
         "architecture",
         "bmad"
+      ],
+      "version": "0.1.0"
+    },
+    {
+      "name": "user-kickstart",
+      "path": "skills/user-kickstart/SKILL.md",
+      "description": "Use when the user wants to establish, change, or revert how Claude writes and behaves toward them personally across every project — voice, tone, register, standing preferences and working constraints at user scope rather than in one repo. Writes a delimited, revertible, size-capped block in ~/.claude/CLAUDE.md and routes the reasoning behind it to the hindsight personal bank. User scope: repo CLAUDE.md quality belongs to claude-md-improver, settings.json to update-config.",
+      "category": "onboarding",
+      "tags": [
+        "onboarding",
+        "memory",
+        "voice",
+        "preferences",
+        "claude-md",
+        "personalization",
+        "hindsight"
       ],
       "version": "0.1.0"
     }

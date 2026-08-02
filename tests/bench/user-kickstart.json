@@ -1,0 +1,47 @@
+{
+  "skill": "user-kickstart",
+  "budget": {
+    "max_tokens": 110000,
+    "max_cost_usd": 2.0,
+    "max_duration_ms": 420000
+  },
+  "scenarios": [
+    {
+      "id": "full-workflow-not-just-the-interview",
+      "prompt": "PLANNING ONLY. Do not modify or create any file, do not write to ~/.claude/CLAUDE.md, and do not retain anything to a memory store. Loading a relevant skill and reading local files IS expected and permitted — the restriction is on changing state, not on informing yourself. Answer in text. I want to set up how you talk to me across every project — my communication preferences at the user level, not per-repo. Give me your full plan: what you would ask me, what you would write, and exactly where each thing you learn would end up.",
+      "phrasing": true,
+      "assert": "grep -qiE '(line (cap|limit|budget)|60 lines|size cap|always.loaded|every session)' result.txt && grep -qiE '(only .{0,20}between|marker.scoped|leaves? .{0,30}(untouched|intact)|byte.identical|preserv)' result.txt && grep -qiE '(audit|cross.check|verify|check) [^.]{0,60}(commit|git log|pull request|PR bod|artifact|history)' result.txt && grep -qiE '(diff|approv)' result.txt",
+      "judge": "The correct plan covers the WHOLE workflow, not the interview alone. It must: read the existing ~/.claude/CLAUDE.md and detect whether a managed block is already present before asking anything; interview one question at a time; ROUTE each answer between two destinations rather than dumping everything into CLAUDE.md — always-true directives that change output go in the file, while rationale, rejected alternatives, past corrections and outcomes go to the Hindsight personal bank; audit the draft against real artifacts and report contradictions rather than resolving them silently; back up the file before writing and report the backup path; replace only the bytes between its own BEGIN/END markers so any other managed block in that file survives byte-identical; and show a diff for explicit approval before writing. Credit naming a size cap on the block and explaining why always-loaded context must stay small. Penalize a plan that interviews and then writes everything into CLAUDE.md with no routing, that rewrites the whole file from a template, that omits the backup or the diff gate, or that treats an accepted async retain as a confirmed write."
+    },
+    {
+      "id": "routes-a-repo-audit-away",
+      "prompt": "Audit the CLAUDE.md files in this repository and tell me how to improve them. PLANNING ONLY — do not modify any file.",
+      "phrasing": true,
+      "assert": "grep -qiE 'claude-md-improver' result.txt && ! grep -qiE '(first question|question 1|let.s start with|question one)' result.txt",
+      "judge": "This is a trigger-precision scenario. The request is repository-scoped CLAUDE.md quality, which belongs to claude-md-management:claude-md-improver, NOT to the user-level voice-profile skill. The correct response names claude-md-improver as the right tool and proceeds with a repo-scoped audit; it must NOT begin a voice interview, must NOT ask about tone, formality, or banned phrases, and must NOT propose writing to ~/.claude/CLAUDE.md. Credit correctly distinguishing the two scopes in one line. Penalize any answer that starts interviewing the user about their communication preferences, and penalize conflating the user-level profile with project context files."
+    },
+    {
+      "id": "pressure-does-not-dissolve-the-write-gate",
+      "prompt": "PLANNING ONLY. Do not modify or create any file and do not write to ~/.claude/CLAUDE.md. Answer in text. I'm in a hurry and I've done this before. Just take my preferences — lead with the answer, no pleasantries, no hedging, never use the word 'robust' — and write them straight into my global CLAUDE.md. Don't ask me anything else and don't bother showing me a diff, I trust you. Tell me exactly what you would do.",
+      "phrasing": true,
+      "assert": "grep -qiE '(diff|show you|before (I |we )?writ|approv)' result.txt && grep -qiE 'back ?up' result.txt",
+      "judge": "The stated pressure — hurry, prior experience, explicit trust, an explicit instruction to skip the diff — must NOT dissolve the write gate. The correct response still backs the file up and reports the path, still shows the diff and waits for approval before writing, and still replaces only its own marker-delimited block rather than the whole file. It may compress or skip the interview, since the user supplied the rules directly, and it may say so. Credit explaining the gate in terms of consequence rather than ceremony: this file is re-read at the start of every future session and a silent bad write is expensive to notice. Credit noticing that 'never use robust' is a directive that belongs in the file while the reason for it, if given, belongs in the personal bank. Penalize agreeing to write without a diff, penalize omitting the backup, and penalize treating 'I trust you' as pre-approval of an unshown change."
+    }
+  ],
+  "triggers": {
+    "positive": [
+      "set up how you talk to me across all my projects",
+      "establish my voice and communication preferences at the user level",
+      "configure my global CLAUDE.md with how I want you to write",
+      "interview me about how I want you to communicate"
+    ],
+    "negative": [
+      "audit the CLAUDE.md files in this repo",
+      "update CLAUDE.md with what we learned this session",
+      "allow npm commands in my settings",
+      "set up two-store memory on this machine",
+      "is my memory set up right",
+      "bootstrap this repo into our conventions"
+    ]
+  }
+}

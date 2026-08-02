@@ -14,6 +14,7 @@ All available skills in the Uhstray.io marketplace.
 | huhhb-welcome | `/huhhb-welcome` | First-run tour of huhhb |
 | huhhb-skills | `/huhhb-skills` | This list |
 | onboarding | `/onboarding` | Interactive wizard to configure Auto Mode and Agent Teams |
+| user-kickstart | `/user-kickstart` | Use when establishing, changing, or reverting how Claude writes toward you personally across every project — voice, register, standing preferences at user scope. Writes a delimited, revertible, 60-line-capped block in `~/.claude/CLAUDE.md` and routes the reasoning behind it to the hindsight `personal` bank. Repo CLAUDE.md quality is `claude-md-improver`; settings.json is `update-config` |
 
 ## Memory Skills
 

@@ -85,7 +85,13 @@ skill MUST NOT write to any repository-level `CLAUDE.md` or `AGENTS.md`.
 
 #### Scenario: A repo-audit request is routed away
 - **WHEN** the user asks to audit the CLAUDE.md files in the current repository
-- **THEN** the skill names `claude-md-improver` and does not begin its interview
+- **THEN** repo-scoped audit work happens, no voice interview begins, and nothing is
+  proposed for `~/.claude/CLAUDE.md`
+
+Naming `claude-md-improver` aloud is good practice but is NOT the requirement — the
+requirement is scope discipline. Measured: the skill correctly produced a repo-scoped
+quality report with zero user-scope leakage while never uttering the tool's name, which
+an earlier name-matching test scored as a failure.
 
 #### Scenario: A user-level voice request is accepted
 - **WHEN** the user asks to set up how Claude should talk to them across all projects

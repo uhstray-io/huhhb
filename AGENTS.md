@@ -275,10 +275,44 @@ for free; experience is the only copy.
   versioned with the code it governs.
 - Do **not** use `manage_adr` — it writes into the disposable index and the
   next code change hard-deletes it.
-- Read-routing rules live in the operator's global `CLAUDE.md` under
-  "TWO-STORE MEMORY ROUTING" and are deliberately not restated here.
+- **Specs** → OpenSpec store `huhhb`, rooted at `plans/development` (not the
+  repo root), so every command run from the repo root needs `--store huhhb`.
+  `openspec/specs/` is what the system *should* do; `openspec/changes/` is what
+  we are changing now, carrying the **public, ratified** "why". What did not
+  make the proposal — what was feared, tried first, abandoned, and why the
+  rejected option lost — goes to the bank instead.
+- Where the operator has a global routing policy (`CLAUDE.md`, "TWO-STORE
+  MEMORY ROUTING"), it **wins**. This section is the repo-level default so the
+  repo works on a machine that has none — which is most machines installing
+  this marketplace.
 - Setup, repair, the verified defect catalogue and measured costs:
   [`skills/two-store-memory-setup/reference.md`](skills/two-store-memory-setup/reference.md).
+
+#### Reading across the stores — translate, don't substitute
+
+The graph names things with identifiers; memories name things with domain
+concepts, because the write rules strip identifiers out. So: query the graph →
+**say what that IS, in domain terms** → recall with those terms. Querying the
+bank with identifiers retrieves almost nothing — measured here, an identifier
+query scored the target memory at **0.00043** against **1.10** for the same
+memory in domain language. Either order is legal; concepts survive the
+refactors that rename functions, which is what makes them the better join key.
+
+#### On archive, retain the outcome
+
+`openspec archive <change> --store huhhb` records that a change completed. It
+does **not** record whether it *worked* — and that gap is this repo's
+highest-value memory. So when you archive, retain ONE memory into bank
+`huhhb-da43e85b`: the outcome labelled plainly **worked / dead end /
+corrected**, the root cause of anything that failed, and any constraint
+discovered along the way. One self-contained paragraph, in domain language.
+
+#### Drift check — a deliberate practice, not an aside
+
+`openspec list --specs --store huhhb` is intent; the graph's architecture
+summary is reality. Compare them on purpose, periodically. Divergence is
+**information, not a conflict to reconcile** — it means the specs or the code
+moved and nobody wrote it down.
 <!-- two-store-memory:end -->
 
 ### What NOT to save

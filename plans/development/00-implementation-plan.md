@@ -17,7 +17,7 @@ cell (the change slug) and edits the Status and Links cells in place.
 
 | Change | Title | Status | Owner | Links |
 |--------|-------|--------|-------|-------|
-| _(none yet)_ | | | | |
+| product-inception-layer | BMAD-adapted product-inception layer (Workflow 0) | proposed | joe | [tasks.md](openspec/changes/product-inception-layer/tasks.md) |
 
 _Status: proposed · in-progress · in-review · archived._
 

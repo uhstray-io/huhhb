@@ -3,7 +3,7 @@
   "publisher": "uhstray-io",
   "displayName": "Uhstray Skills Hub",
   "description": "Uhstray.io's curated Claude Code skills marketplace \u2014 workflows and automation for engineering teams.",
-  "version": "0.6.19",
+  "version": "0.7.19",
   "homepage": "https://github.com/uhstray-io/huhhb",
   "license": "MIT",
   "skills": [
@@ -479,7 +479,7 @@
     {
       "name": "two-store-memory-setup",
       "path": "skills/two-store-memory-setup/SKILL.md",
-      "description": "Use when installing, repairing, or verifying the two-store agent-memory architecture on a machine \u2014 a code-graph store (codebase-memory-mcp) for present-tense structural truth plus an experience store (Hindsight) for decisions, rationale and outcomes. Gated phases with control-test verification at each gate; device scope, per-repo bootstrap is delegated to the memory-init command it writes.",
+      "description": "Use when installing, repairing, or verifying the two-store agent-memory architecture on a machine \u2014 a code-graph store (codebase-memory-mcp) for present-tense structural truth plus an experience store (Hindsight) for decisions, rationale and outcomes. Machine scope: install, bind, configure, routing policy; per-repo bootstrap belongs to repo-kickstart. Gated phases with control-test verification at each gate.",
       "category": "ops",
       "tags": [
         "ops",
@@ -601,7 +601,7 @@
         "memory",
         "openspec"
       ],
-      "version": "0.2.0"
+      "version": "0.3.0"
     },
     {
       "name": "openspec-conformance",
@@ -616,7 +616,7 @@
         "planning",
         "buhhdy"
       ],
-      "version": "0.1.0"
+      "version": "0.2.0"
     },
     {
       "name": "markdown-to-pdf",
@@ -646,6 +646,23 @@
         "graph",
         "dag",
         "discovery"
+      ],
+      "version": "0.1.0"
+    },
+    {
+      "name": "product-inception",
+      "path": "skills/product-inception/SKILL.md",
+      "description": "Use when the user EXPLICITLY requests product inception \u2014 \"new product\", \"product inception\", \"new major initiative\", \"greenfield product planning\" \u2014 or explicitly asks for a BMAD-style phase (product brief, PRD, product architecture) for a major initiative. Never inferred from task size \u2014 for a feature, change, or bug (even \"use our full planning process\"), use core-workflows Workflow 1 instead.",
+      "category": "dev",
+      "tags": [
+        "dev",
+        "planning",
+        "inception",
+        "product",
+        "brief",
+        "prd",
+        "architecture",
+        "bmad"
       ],
       "version": "0.1.0"
     }

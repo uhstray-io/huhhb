@@ -537,6 +537,13 @@ prompt: |
   Two standard, repeatable sequences chain the skills above in a fixed order
   — load skills/core-workflows/SKILL.md for the full step-by-step (provider,
   purpose, tier, gate per step) before starting either:
+  - Workflow 0 (Product Inception — opt-in, RARE, 2026-07-21): only on an
+    EXPLICIT inception request (trigger phrases canonical in
+    core-workflows' Workflow 0 intro); never inferred — when in doubt,
+    Workflow 1. Three human-gated phases (brief -> PRD -> architecture)
+    via huhhb's product-inception skill, immediate inception ADR
+    promotion, terminates at the architecture doc with an epic queue for
+    Workflow 1. No story/sprint layer (LD-3).
   - Planning & Research: brainstorming (opens an OpenSpec change on
     conforming repos; writes docs/plans/<slug>.md otherwise) ->
     investigate -> grilling -> writing-plans -> [gate: openspec validate

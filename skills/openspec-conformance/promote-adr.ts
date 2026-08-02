@@ -15,10 +15,17 @@ one) but still updates the index row. Node stdlib only; no deps.
 
     node promote-adr.ts <plans-dir> <archived-dirname> [--change-url <url>]
 
+Source-file mode (inception promotion — openspec-conformance "Inception
+promotion"): promote the ## Decisions section of an arbitrary file (e.g.
+plans/product/<slug>/architecture.md), same extraction/numbering/idempotency,
+NO index involvement (there is no change row at inception time):
+
+    node promote-adr.ts <plans-dir> --from <file> --slug <slug> [--change-url <url>]
+
 Exit 0 on success (prints what it did), 1 on a usage/precondition error.
 */
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { basename, join, relative, resolve } from "node:path";
 import process from "node:process";
 
 function die(msg: string): never {
@@ -55,23 +62,40 @@ function nextAdrNumber(archDir: string): string {
 }
 
 const args = process.argv.slice(2);
-const flagIdx = args.indexOf("--change-url");
-const changeUrl = flagIdx !== -1 ? args[flagIdx + 1] : "";
-const positional = flagIdx === -1
-  ? args
-  : args.filter((_, i) => i !== flagIdx && i !== flagIdx + 1);
+const VALUE_FLAGS = ["--change-url", "--from", "--slug"];
+const flags: Record<string, string> = {};
+const positional: string[] = [];
+for (let i = 0; i < args.length; i++) {
+  if (VALUE_FLAGS.includes(args[i])) { flags[args[i]] = args[i + 1] ?? ""; i++; }
+  else positional.push(args[i]);
+}
+const changeUrl = flags["--change-url"] ?? "";
+const fromPath = flags["--from"] ?? "";
+const sourceMode = fromPath !== "";
 const [plansDir, archivedDirname] = positional;
-if (!plansDir || !archivedDirname) die("usage: promote-adr.ts <plans-dir> <archived-dirname> [--change-url <url>]");
-if (/(^|[/\\])\.\.([/\\]|$)/.test(archivedDirname)) die(`invalid archived dirname (path traversal): ${archivedDirname}`);
+const USAGE = "usage: promote-adr.ts <plans-dir> <archived-dirname> [--change-url <url>]\n" +
+  "       promote-adr.ts <plans-dir> --from <file> --slug <slug> [--change-url <url>]";
+if (!plansDir || (!sourceMode && !archivedDirname)) die(USAGE);
+if (sourceMode && !flags["--slug"]) die("--from requires --slug");
+if (!sourceMode && /(^|[/\\])\.\.([/\\]|$)/.test(archivedDirname)) die(`invalid archived dirname (path traversal): ${archivedDirname}`);
 
-const archivedChangeDir = join(plansDir, "development", "openspec", "changes", "archive", archivedDirname);
-const designPath = join(archivedChangeDir, "design.md");
 const archDir = join(plansDir, "architecture");
 const indexPath = join(plansDir, "development", "00-implementation-plan.md");
-if (!existsSync(archivedChangeDir)) die(`archived change not found: ${archivedChangeDir}`);
 
-// slug = archive dirname minus the leading YYYY-MM-DD- date openspec adds
-const slug = archivedDirname.replace(/^\d{4}-\d{2}-\d{2}-/, "");
+let slug: string;
+let designPath: string;
+if (sourceMode) {
+  slug = flags["--slug"];
+  if (!/^[a-z0-9][a-z0-9-]*$/i.test(slug)) die(`invalid slug (kebab-case only): ${slug}`);
+  designPath = resolve(fromPath);
+  if (!existsSync(designPath)) die(`source file not found: ${designPath}`);
+} else {
+  const archivedChangeDir = join(plansDir, "development", "openspec", "changes", "archive", archivedDirname);
+  if (!existsSync(archivedChangeDir)) die(`archived change not found: ${archivedChangeDir}`);
+  // slug = archive dirname minus the leading YYYY-MM-DD- date openspec adds
+  slug = archivedDirname.replace(/^\d{4}-\d{2}-\d{2}-/, "");
+  designPath = join(archivedChangeDir, "design.md");
+}
 
 // 1. extract ONLY the Decisions section (+ short Context / Consequences pointers)
 let decisions = "";
@@ -84,10 +108,13 @@ if (existsSync(designPath)) {
   consequences = section(design, "Risks / Trade-offs");
 }
 
-const relDesign = `../development/openspec/changes/archive/${archivedDirname}/design.md`;
+const relDesign = sourceMode
+  ? relative(archDir, designPath)
+  : `../development/openspec/changes/archive/${archivedDirname}/design.md`;
+const sourceLabel = `${sourceMode ? "full architecture" : "full design"}: [${basename(designPath)}]`;
 const sourceLink = changeUrl
-  ? `Change \`${slug}\` — [${changeUrl}](${changeUrl}) · full design: [design.md](${relDesign})`
-  : `Change \`${slug}\` · full design: [design.md](${relDesign})`;
+  ? `Change \`${slug}\` — [${changeUrl}](${changeUrl}) · ${sourceLabel}(${relDesign})`
+  : `Change \`${slug}\` · ${sourceLabel}(${relDesign})`;
 
 // Idempotent: if this slug already has an ADR, a re-run promotes nothing new.
 const escapedSlug = slug.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -102,7 +129,7 @@ if (meaningful(decisions) && !existingAdrFile) {
   const adrPath = join(archDir, `${num}-${slug}.md`);
   const adr = `# ${num}. ${slug}
 
-_Status: accepted — promoted on archive._
+_Status: accepted — ${sourceMode ? "promoted on architecture approval (inception)" : "promoted on archive"}._
 
 ## Context
 
@@ -114,7 +141,7 @@ ${decisions}
 
 ## Consequences
 
-${meaningful(consequences) ? consequences : "See the source change's Risks / Trade-offs."}
+${meaningful(consequences) ? consequences : "See the source document below."}
 
 ## Source
 
@@ -134,7 +161,7 @@ const adrLink = adrBase
   : "";
 let rowUpdated = false;
 let rowFound = false;
-if (existsSync(indexPath)) {
+if (!sourceMode && existsSync(indexPath)) {
   const lines = readFileSync(indexPath, "utf-8").split("\n");
   for (let i = 0; i < lines.length; i++) {
     const cells = lines[i].split("|").map((c) => c.trim());
@@ -164,6 +191,12 @@ const rowMsg = rowUpdated
     ? "already archived — no change"
     : "NOT found";
 console.log(`promote-adr: ${adrMsg}`);
+if (sourceMode) {
+  // Inception promotion: no change row exists yet, the index is not this
+  // mode's concern — report and exit clean.
+  console.log(`promote-adr: source-file mode — index untouched`);
+  process.exit(0);
+}
 console.log(`promote-adr: index row for '${slug}' ${rowMsg}`);
 if (!rowFound) {
   // A missing row means archive would complete without the status flip —

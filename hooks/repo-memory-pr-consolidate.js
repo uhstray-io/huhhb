@@ -33,10 +33,16 @@ console.log(
     hookSpecificOutput: {
       hookEventName: "PostToolUse",
       additionalContext:
-        `repo-memory PR consolidation: a staging journal exists at ${journal} for this branch. ` +
-        `Per the repo-memory skill's Hooks section: read it, consolidate and /simplify its per-commit lines ` +
-        `into ONE PR outcome record (agent Record Contract, kind: outcome, evidence = the PR number + commit range) ` +
-        `saved via the repo-memory skill's save flow, then delete the journal in the same commit. Do this now.`,
+        `repo-memory PR consolidation: a staging journal exists at ${journal} for branch ${branch}. ` +
+        `Per the repo-memory skill's "Retention state machine": FIRST recall this repo's Hindsight bank ` +
+        `(bank_id per repo-kickstart reference section 0 — NOT a bare directory name) for an existing ` +
+        `outcome naming branch ${branch}. If one exists, stop: it is already retained, do not write a second. ` +
+        `Otherwise read the journal, consolidate and /simplify its per-commit lines into ONE self-contained ` +
+        `paragraph naming branch ${branch} and the PR number, stating the outcome labelled plainly ` +
+        `worked / dead end / corrected, the root cause of anything that failed, and any constraint discovered ` +
+        `— in domain language, never identifiers or file paths. Store it with sync_retain, not retain. ` +
+        `Delete the journal ONLY after sync_retain returns status completed; if it fails or the bank is ` +
+        `unreachable, KEEP the journal and report that, so the post-merge close-out can retry. Do this now.`,
     },
   }),
 );

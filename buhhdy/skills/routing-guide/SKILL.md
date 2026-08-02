@@ -35,6 +35,16 @@ Tree for the full mechanics, including how a reported subscription tier can
 reorder this per session. Rule 6's gemini primary is capability/cost-based,
 not quota-based, and is never demoted by that reordering.
 
+## Inception vs Change Routing (added 2026-07-21)
+
+Product/initiative scale, EXPLICITLY requested → core-workflows
+**Workflow 0** (`product-inception`; trigger phrases per Workflow 0's
+intro — that section is canonical). Everything else — features, changes,
+bugs, refactors — → **Workflow 1**. Tie-breaker: when in doubt, Workflow 1
+— inception must be explicitly requested, never inferred from task size.
+Workflow 0 terminates at the architecture doc (LD-3); its epic queue feeds
+Workflow 1.
+
 ## Gemini Worker Naming (ACP migration, 2026-07-08)
 
 buhhdy runs on stock upstream omnigent, which drives Gemini through its
@@ -130,6 +140,7 @@ auth = user's OpenRouter credentials, verified via live boot + dispatch).
 |-----------------------------|--------------|--------------|-----------|
 | writing-skills              | claude_code  | codex        | Prose depth |
 | writing-plans               | claude_code  | codex        | Long-horizon planning |
+| product-inception           | claude_code  | codex        | Planning-judgment prose (Workflow 0 only — explicit request, COMPLEX per phase, human gate per phase) |
 | brainstorming               | claude_code  | codex        | Exploratory depth |
 | executing-plans             | claude_code  | codex        | Agentic execution |
 | grounding                   | buhhdy-level | —            | buhhdy runs its own checkpoint on itself — not dispatched |

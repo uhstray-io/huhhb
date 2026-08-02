@@ -166,8 +166,22 @@ NOT present a partial sample as complete coverage.
 - **THEN** the rule is reported `contradicted` with the citing commits
 
 #### Scenario: An unreachable source is reported, not hidden
-- **WHEN** the `gh` CLI is unavailable and PR bodies cannot be read
-- **THEN** the audit reports that the PR source was skipped and why
+- **WHEN** the real `gh` binary is present but genuinely unauthenticated, so PR bodies
+  cannot be read
+- **THEN** the audit reports the PR source as unreachable, names authentication as the
+  reason, and does not present the remaining sources as complete coverage
+
+The unavailability MUST be genuine. A stubbed or shimmed binary does not test this:
+measured 2026-08-02, a fake `gh` placed earlier on `PATH` was detected, traced back to
+the real binary, and correctly routed around — the skill was right, and the test proved
+nothing. Induce the real failure instead (an empty `GH_CONFIG_DIR` with no
+`GH_TOKEN`/`GITHUB_TOKEN`), so there is no working binary to fall back to.
+
+#### Scenario: A broken tool is distinguished from a missing source
+- **WHEN** a source's tool fails because the tool itself is misconfigured rather than
+  because the source does not exist
+- **THEN** the audit says which of the two occurred instead of recording the source
+  unreachable
 
 #### Scenario: A new preference is not penalized
 - **WHEN** a stated preference has no supporting or contradicting artifact

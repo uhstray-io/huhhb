@@ -118,9 +118,13 @@
 - [ ] 6.2 Cap proof: force a 70-line resolved rule set on the scratch copy, confirm the
       write is blocked and a prune is requested — proves "An oversized block blocks the
       write"
-- [ ] 6.3 Audit-honesty proof: run the audit with `gh` unavailable, confirm the skipped
-      PR source is reported rather than hidden — proves "An unreachable source is
-      reported, not hidden"
+- [ ] 6.3 Audit-honesty proof: run the audit against a **genuinely** unauthenticated
+      real `gh` — `env -u GH_TOKEN -u GITHUB_TOKEN GH_CONFIG_DIR=<empty dir>` — and
+      confirm the PR source is reported unreachable with authentication named as the
+      reason, and that the remaining sources are not presented as complete coverage.
+      Proves "An unreachable source is reported, not hidden".
+      **Do not shim `gh`.** A fake binary earlier on `PATH` was detected, traced to the
+      real one, and routed around; the skill was correct and the test measured nothing.
 - [ ] 6.4 Run `openspec validate voice-anatomy-layer --store huhhb`
 - [ ] 6.5 Run `evolve-map`; confirm `user-kickstart` registers with no unflagged overlap
       against `claude-md-improver`, `memory-onboarding`, `onboarding`, or

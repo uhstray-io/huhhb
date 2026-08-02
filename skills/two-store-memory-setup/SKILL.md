@@ -13,10 +13,14 @@ ADRs under `docs/adr/` remain the durable repository record of *ratified*
 decisions; the store holds the deliberation behind them. The two stores never
 hold the same fact.
 
-**Scope:** this skill owns the machine — install, bind, configure, routing
-policy. A single repo's ignore file, index, bank and charter belong to the
-`memory-init` command Phase 4 writes; general memory health is
-`memory-onboarding`. Honcho is out of scope.
+**Scope:** this skill owns **machine scope** — install, bind, configure, routing
+policy. **Repo scope belongs to `repo-kickstart`**, which performs the per-repo
+two-store init itself; for a repo being kickstarted, that is the one to run.
+The `memory-init` command Phase 4 writes does the same per-repo steps standalone,
+for repos you are *not* kickstarting — the two are redundant, not two halves of
+one job. General memory health is `memory-onboarding`. Honcho is out of scope.
+No store here has two owners; if a reader has to guess which skill is
+authoritative for one, that is a defect.
 
 ## Three rules that outrank convenience
 

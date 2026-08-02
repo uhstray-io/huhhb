@@ -17,15 +17,25 @@ edge counts, bank id, and what was skipped because it already existed.
 
 ## 0. Establish names
 
+**The bank id carries a hash — a bare directory name collides silently.** `PUT`
+on an existing bank *updates* it, so two unrelated repos both called `app` would
+quietly share one bank and interleave their memories. The suffix comes from
+canonical identity, preferring the `origin` remote so every clone of one repo
+resolves to the same bank while two same-named repos never do. This derivation
+is owned by `repo-kickstart` §0 — keep the two byte-identical:
+
 ```bash
-REPO_ROOT=$(git rev-parse --show-toplevel)   # abort if this fails: not a git repo
-BANK_ID=$(basename "$REPO_ROOT")             # bank id = repo directory name, verbatim
-BACKUP_DIR="$HOME/.cache/memory-init/backups/$BANK_ID"   # snapshots for every config write
+REPO_ROOT=$(git rev-parse --show-toplevel) || exit 1   # not a git repo → stop
+canon=$(git remote get-url origin 2>/dev/null \
+  | sed -E 's#^git@([^:]+):#\1/#; s#^[a-z]+://##; s#^[^@/]+@##; s#\.git$##' | tr 'A-Z' 'a-z')
+[ -n "$canon" ] || canon=$(cd "$REPO_ROOT" && pwd -P)  # no remote → canonical path
+BANK_ID="$(basename "$REPO_ROOT")-$(printf '%s' "$canon" | shasum -a 256 | cut -c1-8)"
+BACKUP_DIR="$HOME/.cache/memory-init/backups/$BANK_ID"  # snapshots for every config write
 mkdir -p "$BACKUP_DIR"
 ```
 
-`BANK_ID` is a basename, so sibling checkouts with the same directory name map
-to the same bank — step 4 checks ownership before writing to one that exists.
+Keep `BANK_ID` raw in config and prose; **percent-encode it only when
+interpolating into a request URL.**
 
 The code-graph store derives its own project name from the full path (leading
 `/` dropped, `/` → `-`). That is separate and is not the bank id.
@@ -157,6 +167,11 @@ cp "$REPO_ROOT/.codebase-memory/graph.db.zst" "$BACKUP_DIR/" 2>/dev/null || true
 Resolve the project id rather than hardcoding it, and **require exactly one
 match** — abort on zero (nothing to rebuild) and on more than one (ambiguous).
 Taking the first result can delete a stale or unrelated project.
+
+Do this identity check **before indexing too, not only before deleting.** The
+graph project name is derived by the tool and is lossy — `/a-b/c` and `/a/b-c`
+both map to `a-b-c` — and you cannot rename it, so verify `root_path` matches
+this repo before you write into that project as well.
 
 ```text
 list_projects()   → keep entries whose root_path == the canonical $REPO_C

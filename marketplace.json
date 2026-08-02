@@ -591,7 +591,7 @@
     {
       "name": "repo-kickstart",
       "path": "skills/repo-kickstart/SKILL.md",
-      "description": "Bootstrap any repo \u2014 greenfield or brownfield \u2014 into Uhstray's standard development conventions: the README/AGENTS/KICKSTART/ARCHITECTURE doc set, the plans/ tree, OpenSpec store registration, memory setup (.claude/memory/ via repo-memory + optional Honcho), a CodeRabbit config, and a branch-protection check. Idempotent, registry-free, and non-destructive.",
+      "description": "Bootstrap any repo \u2014 greenfield or brownfield \u2014 into Uhstray's standard development conventions: the README/AGENTS/KICKSTART/ARCHITECTURE doc set, the plans/ tree, OpenSpec store registration, the two-store memory init for this repo (.cbmignore + index + bank + charter) plus a Honcho probe, a CodeRabbit config, and a branch-protection check. Owns repo scope; machine-scope install is two-store-memory-setup. Idempotent, registry-free, and non-destructive.",
       "category": "dev",
       "tags": [
         "dev",
@@ -601,7 +601,7 @@
         "memory",
         "openspec"
       ],
-      "version": "0.3.0"
+      "version": "0.3.1"
     },
     {
       "name": "openspec-conformance",

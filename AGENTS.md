@@ -256,7 +256,9 @@ for free; experience is the only copy.
   otherwise made up ~91% of the graph and duplicated every query result.
   Editing `.cbmignore` requires a **forced rebuild** — ignore rules gate the
   next index and never retract nodes already stored.
-- **Experience** → bank id `huhhb`. The bank runs in `verbatim` mode: what you
+- **Experience** → bank id `huhhb-da43e85b` (`<dir>-<hash of canonical
+  identity>`; a bare directory name would collide with any other repo called
+  `huhhb`). The bank runs in `verbatim` mode: what you
   send is stored unchanged, so keeping code structure out of it is the
   writer's job, not the store's. The extraction mode and write guard **cannot
   be read back** — re-apply them rather than checking them.

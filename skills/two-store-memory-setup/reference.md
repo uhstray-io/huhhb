@@ -211,7 +211,10 @@ codebase-memory-mcp config list
 
    Create `personal` for cross-project preferences. Do **not**
    pre-create a bank per repo — let Phase 4 create each on demand. Convention:
-   `bank_id` = repo directory name, verbatim. Use **separate banks**, not
+   `bank_id` = `<dir>-<8 hex of sha256(canonical identity)>`, preferring the
+   `origin` remote over the path — a bare directory name silently merges two
+   repos called `app` into one bank. The derivation is owned by
+   `repo-kickstart` §0; keep them byte-identical. Use **separate banks**, not
    metadata filters: banks are storage-level isolation, metadata filtering is
    application-level and is not isolation at all.
 9. **Set the write guard — and know that you cannot read it back.** Set
@@ -416,7 +419,8 @@ Two stores. They never hold the same fact.
   Never authoritative
   on what the code currently looks like.
 
-Name derivation between them: bank id = basename(repo_root); the graph's
+Name derivation between them: bank id = `<dir>-<8 hex sha256 of canonical
+identity>` (see repo-kickstart §0 — never a bare directory name); the graph's
 project name = the repo path with the leading `/` dropped and `/` → `-`.
 
 ## Read routing — decide before the first tool call

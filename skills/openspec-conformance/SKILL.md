@@ -93,6 +93,25 @@ It extracts **only** the archived `design.md` `## Decisions` section into one
 full design doc. A change with no `## Decisions` promotes no ADR but still updates
 the index. Offline check: `node --test tests/test_openspec_conformance.test.ts`.
 
+## Inception promotion (on architecture approval — what product-inception runs)
+
+Same mechanism, different source and timing: the moment a human approves an
+initiative's `plans/product/<slug>/architecture.md` (huhhb's
+`product-inception` skill / buhhdy Workflow 0), promote its decisions
+IMMEDIATELY — inception decisions are repo-level context Workflow 1's
+`investigate` step must find before any epic is picked up:
+
+```bash
+node "${CLAUDE_PLUGIN_ROOT}/skills/openspec-conformance/promote-adr.ts" \
+  <path-to-plans> --from <path-to-plans>/product/<slug>/architecture.md --slug <slug>
+```
+
+The `## Decisions`-section-only rule applies unchanged (the architecture doc
+keeps its `AD-N` blocks under a literal `## Decisions` heading; nothing else
+promotes). Same numbering sequence, same per-slug idempotency. The index is
+NOT touched — no change row exists at inception time, so the four-writer
+enumeration above is unchanged by this mode.
+
 ## Full detail
 
 `reference.md` — the `config.yaml` house-rules block, the `/opsx:*` per-tool

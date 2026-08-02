@@ -1,6 +1,6 @@
 ---
 name: core-workflows
-description: Use when starting new planning/research on a project or picking up development against an existing plan — buhhdy's two standard, repeatable sequences: Planning & Research (fresh problem to a validated plan — an OpenSpec change where the repo has adopted the conventions — plus issues) and Development (fanout, audit, docs, and pr-shepherd).
+description: "Use when starting new planning/research on a project or picking up development against an existing plan — buhhdy's two standard, repeatable sequences: Planning & Research (fresh problem to a validated plan — an OpenSpec change where the repo has adopted the conventions — plus issues) and Development (fanout, audit, docs, and pr-shepherd)."
 ---
 
 # core-workflows
@@ -71,6 +71,41 @@ tracker issues directly from its task breakdown (no `tasks.md`) — every
 Workflow 1 step stays executable, only the artifact shape changes.
 `docs/superpowers/specs/` is RETIRED as a write target — everywhere,
 regardless of conformance.
+
+## Workflow 0 — Product Inception (opt-in, rare)
+
+Trigger: GENUINE product inception only — "new product", "product
+inception", "new major initiative", "greenfield product planning", or an
+explicit user request for a BMAD-style phase (e.g. an architecture doc for
+a major initiative). Workflow 0 is EXCEPTIONAL: it must be explicitly
+requested, never inferred from task size, and Workflow 1 remains the
+default entry point for everything else — when in doubt, Workflow 1. It
+wraps huhhb's `product-inception` skill (load it for phase detail,
+templates, and degradation) and terminates at the architecture document:
+the story/sprint layer is out of scope by decision LD-3 (README) —
+decomposition and execution belong to Workflows 1 and 2.
+
+Each phase artifact is cross-reviewed by the opposite vendor BEFORE its
+human gate (the PRD and architecture doc are exactly the hard-to-reverse
+artifacts the Cross-Review Rule exists for), and NO phase starts until the
+previous phase's artifact is human-approved. Phases are live-interview
+steps (same relay mechanism as `brainstorming`/`grilling`). Manual path:
+the Analyst/PM phases may run on a flat-rate chat subscription with
+artifacts pasted back into the repo — the same per-phase human gates
+apply; dispatch stays canonical.
+
+| # | Step | Kind | Primary | Purpose | Tier | Reviewer | Gate / output |
+|---|------|------|---------|---------|------|----------|----------------|
+| 1 | `product-inception` — Analyst phase | Dispatched (live-interview) | claude_code | implement | COMPLEX | codex | Writes `plans/product/<initiative-slug>/brief.md` (non-conforming repo: starts the single `docs/plans/product-<slug>.md` doc instead). HUMAN GATE: brief approved before step 2 |
+| 2 | `product-inception` — PM phase | Dispatched (live-interview) | claude_code | implement | COMPLEX | codex | Writes `prd.md` — essential spine (Vision, Users/UJ-N, Glossary, FR-N capabilities, Non-Goals, MVP Scope, SM-N metrics, Open Questions) plus the **Epic Queue** (value-grouped, dependency-ordered, FR-coverage map). HUMAN GATE: PRD approved before step 3 |
+| 3 | `product-inception` — Architect phase | Dispatched (live-interview) | claude_code | implement | COMPLEX | codex | Writes `architecture.md` with its `AD-N` blocks under a literal `## Decisions` heading (the promotion contract — never buried elsewhere) |
+| 4 | `explaining-plans` | Dispatched | codex | implement | STANDARD | claude_code | Enriches `architecture.md` in place (rationale, cited context, mermaid). HUMAN GATE: architecture approved |
+| 5 | Inception ADR promotion | **buhhdy-level** shell (`sys_os_shell`) | `promote-adr.ts --from` per openspec-conformance "Inception promotion" (canonical invocation) | — | — | — | IMMEDIATELY on architecture approval, before handoff (conforming repos only — skip-with-note elsewhere) |
+| 6 | Epic-queue handoff | **buhhdy-level** | buhhdy | — | — | — | TERMINAL. Hands the human (or the next buhhdy run) the PRD's epic queue with "run Workflow 1 per epic" instructions — each epic, when picked up, enters Workflow 1 step 1 seeded with brief/PRD/architecture, and its change's `proposal.md` links back to its PRD epic |
+
+End state: three human-approved artifacts under `plans/product/<slug>/`
+(or the one degradation doc), inception ADR(s) promoted, and an epic queue
+waiting for Workflow 1 — no code, no changes opened, no issues cut.
 
 ## Workflow 1 — Planning & Research
 

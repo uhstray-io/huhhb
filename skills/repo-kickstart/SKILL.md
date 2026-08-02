@@ -1,15 +1,20 @@
 ---
 name: repo-kickstart
-description: Use when bootstrapping a repository — greenfield or brownfield — into Uhstray's standard development conventions and memory setup. Idempotent and non-destructive: safe to re-run, never overwrites existing docs. Triggers on "repo kickstart", "bootstrap this repo", "set up our conventions", "conform this repo", "initialize plans/openspec/memory".
+description: Use when bootstrapping a repository — greenfield or brownfield — into Uhstray's standard development conventions, OpenSpec, and the two-store memory setup. Idempotent and non-destructive: safe to re-run, never overwrites existing docs. Triggers on "repo kickstart", "bootstrap this repo", "set up our conventions", "conform this repo", "initialize plans/openspec/memory", "initialize this repo for openspec and memory", "set up two-store memory here", "index this repo and create its memory bank".
 ---
 
 # repo-kickstart
 
-Bootstraps **any** repo into Uhstray's standard development conventions,
-including memory. Works whether buhhdy authors the files directly or dispatches
-this to a sub-agent — everything needed beyond this file (all templates, the
-OpenSpec/CodeRabbit/branch-protection detail, the report format) lives in
-**`reference.md`**.
+Bootstraps **any** repo into Uhstray's standard development conventions:
+convention files, the planning tree, OpenSpec, the two-store memory
+architecture, and **the wiring between OpenSpec and the stores** — no companion
+document and no second skill. Works whether buhhdy authors the files directly or
+dispatches this to a sub-agent; everything beyond this file (all templates, the
+OpenSpec/memory/CodeRabbit/branch-protection mechanism, the store map, the report
+format) lives in **`reference.md`**.
+
+The artifacts it emits teach the repo how to use both systems, so the setup
+outlives the session that ran it.
 
 **Golden rule: detect before you write. Read any existing file fully before
 touching it. Never destroy content — integrate. Confirm-first on every
@@ -27,7 +32,31 @@ conforming" per item is the desired result on huhhb and on any re-run.
   `docs/` already exist with real content?
 - Detect the **stack** (`package.json` / `pyproject.toml` / `go.mod` /
   `Cargo.toml` / `pom.xml` / …). It feeds AGENTS/ARCHITECTURE context, the
-  OpenSpec `config.yaml` context, and CodeRabbit's language tools.
+  OpenSpec `config.yaml` context, `.cbmignore`, and CodeRabbit's language tools.
+- **Derive the three names** (table in `reference.md` §0): `STORE_ID` = the repo
+  *directory* name · `BANK_ID` = **directory name + a hash of canonical
+  identity** (a bare directory name silently merges two repos called `app` into
+  one bank) · the graph project = the tool's own lossy derivation from the repo
+  *path*. Three different strings — mixing them up is the most common failure
+  here, and the graph one needs an identity check **before you index**, not just
+  before you delete.
+- **Probe every prerequisite and record what's missing** — `openspec`, the graph
+  tool (including repo-inside-`CBM_ALLOWED_ROOT` containment), the experience
+  store, Honcho. Each degrades to `skipped — <reason>` in the checklist **plus a
+  recorded gap**; **none of them fails the run**, and none is a silent pass.
+  Probe the experience store, never assume its endpoint (commands in §0).
+  Installing/binding a server is **machine scope** — not this skill's job. Name
+  the remedy (`two-store-memory-setup`) instead of shrugging.
+- **Detect existing state before deciding you're initializing.** An OpenSpec root
+  (house convention: `plans/development`, *not* the repo root — also check
+  `openspec store list`), an existing index or bank, and every memory store
+  already on disk.
+- **Conformance is per artifact, never per repo.** "This repo already has an
+  OpenSpec root" does **not** mean the run is done — an adopted repo can be
+  missing `plans/product/README.md` or the AGENTS.md memory block forever if you
+  short-circuit on the first thing you find. Check each artifact in §1–§5
+  independently: present → ✅ and leave it **exactly** as it is; **missing →
+  create it**. Never re-init, never overwrite, never delete.
 
 ### 1. Convention files (templates in `reference.md`)
 Create if missing; on brownfield, **propose a merge, don't overwrite**.
@@ -35,7 +64,10 @@ Create if missing; on brownfield, **propose a merge, don't overwrite**.
   `ARCHITECTURE.md`, and `plans/`. Brownfield: add a "Project conventions"
   links section, keep their prose.
 - **AGENTS.md** — the **canonical** agent operating instructions (conventions,
-  layout, review pipeline, memory locations).
+  layout, review pipeline). Its memory section is where the wiring **persists**:
+  the store map in brief, the archive→retain convention, the drift check, and the
+  identifier→domain translate step. Template in `reference.md` §1; it belongs
+  here, **not** in CLAUDE.md.
 - **CLAUDE.md** — a **one-line pointer** to AGENTS.md. If a full CLAUDE.md
   already exists, leave it and offer to slim it — never clobber.
 - **KICKSTART.md** — human + agent onboarding: setup, how to run, how to
@@ -49,6 +81,9 @@ Create if missing; on brownfield, **propose a merge, don't overwrite**.
   reads/writes; do not diverge or promotion breaks).
 - `plans/development/README.md` and `plans/architecture/README.md` — one short
   README each, saying what belongs there.
+- `plans/product/README.md` — one short README (template in `reference.md`);
+  inception artifacts land here only when Workflow 0 is explicitly run —
+  seeding the dir is standard, using it is opt-in, never a mandate.
 
 ### 3. OpenSpec (**store registration** — owned by `openspec-conformance`)
 `openspec-conformance` is the single source of truth; run its **Setup** (full
@@ -61,27 +96,52 @@ root (no symlinks). Commit the resulting `.openspec-store/store.yaml`, set
 <repo>` — **report the result** (a fresh store is a status, not a failure).
 From the repo root, OpenSpec commands need `--store <repo>`.
 
-### 4. Memory kickstart — DELEGATED to memory-onboarding (project scope)
-Two strata (detail + headers in `reference.md`); registry-free — this skill
-does **not** track or register conformance anywhere. Run huhhb's
-`memory-onboarding` skill, PROJECT scope, and append its matrix to this
-run's verification checklist — it owns repo-memory First Run setup, record
-health, and the path-separation sweep (**hard rule: repo memory lives in
-`.claude/memory/` ONLY; `plans/` holds planning/architecture/development/
-specification documents — no memory of any kind is ever written under
-`plans/`**); do not reimplement them here. The kickstart-specific extras
-below remain this skill's own:
-- **Seed the kickstart outcome record** into `.claude/memory/` per the
-  `repo-memory` skill's Record Contract (observational-only: facts,
-  dates, outcomes — never instructions) with what this run learned.
-- **Activate the repo's git hooks**: seed `.githooks/` (post-commit
-  capture + pre-commit memory lint, templates from huhhb) and run
-  `git config core.hooksPath .githooks` — per the repo-memory skill's
-  Hooks section.
-- **Honcho (team memory)** — scope the repo's workspace via the evolve-suite
-  skills. **Credentials come from the environment** (`HONCHO_URL` /
-  `HONCHO_API_KEY` / `HONCHO_WORKSPACE`) — **never write them into the repo.**
-  Honcho unconfigured? report "skipped — Honcho not configured", don't fail.
+`context:` also carries the **memory routing** (block in `reference.md` §3) — the
+bank id, and that structure goes to the graph while rationale goes to the bank.
+That field reaches the model whenever OpenSpec authors an artifact, so it is what
+makes proposals get written with both stores in view. This is the wiring; without
+it the repo has two systems rather than one workflow.
+
+### 4. Memory kickstart — two-store, owned by THIS skill
+Two routed stores plus Honcho (mechanism and every worked-around defect in
+`reference.md` §4); registry-free — this skill does **not** track or register
+conformance anywhere. `repo-kickstart` performs this itself and **no longer
+delegates to `memory-onboarding`**. **Hard rule, unchanged in force: `plans/`
+holds planning/architecture/development/specification DOCUMENTS — no memory of
+any kind is ever written under `plans/`.** Experience goes to the bank, structure
+to the graph, instructions to AGENTS.md.
+- **codebase-memory-mcp — the structure store.** `.cbmignore` written *before*
+  indexing (secrets pass included) → index with `persistence=true` → prove
+  `git check-attr merge -- .codebase-memory/graph.db.zst` prints `merge: ours` →
+  commit the artifact. **Each of those steps works around a defect that fails
+  silently**; §4.1 states what breaks if you skip it. This is a new capability —
+  nothing in this skill did it before.
+- **Hindsight — the experience store.** One bank per repo, `bank_id` derived per
+  §0 — **directory name plus a hash of canonical identity, never the bare
+  directory name**, which silently merges two repos called `app` into one bank.
+  `verbatim` extraction in its own call, `retain_mission` in
+  another — both are **write-only, so re-apply them every run** rather than trying
+  to detect them — then a project charter: prose about purpose, constraints and current
+  state, **never an inventory** (inventories are the graph's job). Write with
+  `sync_retain` — an async receipt is not a verified write.
+- **Honcho (team memory)** — this skill **reads** the existing config and reports;
+  it never configures a server, installs anything, or runs an `init`.
+  **Credentials come from the environment** (`HONCHO_URL` / `HONCHO_API_KEY` /
+  `HONCHO_WORKSPACE`) — **never write them into the repo.** Three states, not two
+  (§4.3): `honcho` mode needs a reachable server **and** `@honcho-ai/sdk`
+  installed; `local` mode needs **no server** and is configured, not missing;
+  unconfigured reports `skipped`. None of the three fails the run.
+- **`.claude/memory/` — retired from routing, data kept.** Never delete, move or
+  migrate it. This skill no longer seeds the store or writes records into it;
+  `repo-memory` and `memory-onboarding` still own it and remain correct on direct
+  invocation (§4.6 — **state that ownership split in the report**).
+- **Activate the repo's git hooks** (still seeded): `.githooks/` post-commit
+  capture + pre-commit record lint, then `git config core.hooksPath .githooks`.
+  The per-commit journal under `.claude/memory/wip/` is a **staging buffer, not a
+  store** — now the draft material for the PR/archive retain, deleted on
+  consolidation.
+- **Seed the kickstart outcome** as one `sync_retain` into the bank — what this
+  run actually did. A re-run that changed nothing retains nothing.
 
 ### 5. Review tooling
 - **`.coderabbit.yaml`** — generate from the template in `reference.md`, adapted
@@ -94,10 +154,18 @@ below remain this skill's own:
   branch are a precondition for pr-shepherd.
 
 ### 6. Verification checklist
-End by printing the pass/fail table (format in `reference.md`): convention
-files present, plans tree, OpenSpec validates, memory verified (memory-onboarding project-scope matrix appended + kickstart outcome record + Honcho scoping),
-CodeRabbit config, branch-protection status. Branch protection is expected
-**red with instructions** on a fresh repo — that is a pass for the run.
+End by printing the pass/fail table (format in `reference.md` §7): convention
+files present, plans tree, OpenSpec validates + its `context:` wiring, both memory
+stores verified **by evidence** (node/edge counts · `check-attr` printing
+`merge: ours` · a verbatim round-trip that brings a rejected alternative back —
+the mode itself is write-only · a domain-language recall that actually returns the
+charter), capture hooks active, Honcho scoping,
+CodeRabbit config, branch-protection status. Also state **which skill owns which
+store** and list every recorded gap.
+
+Branch protection is expected **red with instructions** on a fresh repo — that is
+a pass for the run, as is any `⚠ skipped — <reason>` row whose gap was recorded.
+A row you could not verify is reported honestly, never optimistically.
 
 ## Idempotency & non-destruction (never skip)
 Detect existing state first: present + conforming → ✅ "already conforming",

@@ -34,8 +34,13 @@ BACKUP_DIR="$HOME/.cache/memory-init/backups/$BANK_ID"  # snapshots for every co
 mkdir -p "$BACKUP_DIR"
 ```
 
-Keep `BANK_ID` raw in config and prose; **percent-encode it only when
-interpolating into a request URL.**
+Keep `BANK_ID` raw in config, in `AGENTS.md` and in prose; **percent-encode it
+only when interpolating into a request URL** — derive the encoded form once and
+use it in every request path:
+
+```bash
+BANK_SEG=$(printf '%s' "$BANK_ID" | jq -sRr @uri)   # encode ONLY for the URL
+```
 
 The code-graph store derives its own project name from the full path (leading
 `/` dropped, `/` → `-`). That is separate and is not the bank id.
@@ -275,7 +280,7 @@ overwrite. If it holds facts and does describe this repo, you are repairing,
 not creating: keep the existing name and mission unless asked otherwise.
 
 ```bash
-$CURL -X PUT "$HINDSIGHT_URL/v1/default/banks/$BANK_ID" \
+$CURL -X PUT "$HINDSIGHT_URL/v1/default/banks/$BANK_SEG" \
   -H 'Content-Type: application/json' \
   -d '{"name":"<Repo Name>","mission":"<one sentence: what this repo is for, and that this bank holds only decisions, rationale and outcomes for it>"}'
 ```
@@ -287,7 +292,7 @@ only the conclusion survive. That experiential content is the whole reason this
 store exists.
 
 ```bash
-$CURL -X PATCH "$HINDSIGHT_URL/v1/default/banks/$BANK_ID" \
+$CURL -X PATCH "$HINDSIGHT_URL/v1/default/banks/$BANK_SEG" \
   -H 'Content-Type: application/json' -d '{"retain_extraction_mode":"verbatim"}'
 ```
 
@@ -311,7 +316,7 @@ The guard is advisory regardless: on input that was *only* code structure, the
 model ignored it and stored the whole call graph verbatim.
 
 ```bash
-$CURL -X PATCH "$HINDSIGHT_URL/v1/default/banks/$BANK_ID" \
+$CURL -X PATCH "$HINDSIGHT_URL/v1/default/banks/$BANK_SEG" \
   -H 'Content-Type: application/json' \
   -d '{"retain_mission":"Retain decisions, rationale, rejected alternatives, failures with their root cause, outcomes labelled worked/dead-end/corrected, constraints discovered the hard way, and stated preferences. Never extract or retain code structure: file paths, function or class names, signatures, call relationships, import graphs, dependency lists, whole file contents, or long diffs. Those are regenerable from source and go stale on the next commit."}'
 ```
@@ -324,7 +329,7 @@ report — do not skip the bank silently.
 Check first, so a re-run does not retain a duplicate:
 
 ```bash
-$CURL -X POST "$HINDSIGHT_URL/v1/default/banks/$BANK_ID/memories/recall" \
+$CURL -X POST "$HINDSIGHT_URL/v1/default/banks/$BANK_SEG/memories/recall" \
   -H 'Content-Type: application/json' -d '{"query":"project charter purpose constraints current state"}'
 ```
 

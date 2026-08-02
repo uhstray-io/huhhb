@@ -8,8 +8,16 @@ Onboarding for humans and agents working on **huhhb**.
   stripping. No build step, no transpiler, zero npm runtime dependencies.
 - **`gh`** — GitHub CLI, for PRs and branch protection.
 - **`openspec` ≥ 1.6.0** — the plans store CLI (`plans/development` is store `huhhb`).
-- **`mempalace`** (optional) — only needed to exercise the `memory` skill's MCP
-  server: `uv tool install mempalace`.
+- **Memory stores** (optional) — needed only to exercise the memory skills. Run
+  `/two-store-memory-setup` rather than installing by hand; it reviews the installer,
+  snapshots config before writing, and control-tests containment at each gate.
+  - [codebase-memory-mcp](https://github.com/DeusData/codebase-memory-mcp) — the code
+    graph. Structural truth, regenerated from source, zero write cost.
+  - [Hindsight](https://github.com/vectorize-io/hindsight) — the experience store.
+    Decisions, rationale and outcomes; the only copy of them.
+- **`mempalace`** (legacy, optional) — **retired from routing 2026-08-01.** Only needed
+  to read existing MemPalace data through the `memory` skill:
+  `uv tool install mempalace`. Not required for new work.
 
 There is nothing to `npm install` for the runtime — Node stdlib only.
 

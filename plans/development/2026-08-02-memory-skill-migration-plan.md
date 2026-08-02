@@ -126,22 +126,47 @@ Removing four `memory-*` skills frees trigger surface. Confirm the survivors cla
       and recall both 1.0, measured, with the pre-existing `.claude/skills/` BMAD
       contamination noted in the result
 
-### 4. Documentation reconciliation
+### 4. Fix the surviving diagnostic skill
 
-- [ ] 4.1 README — delete the "Legacy memory skills" subsection and the pointer to this
+`memory-onboarding` is the "is my memory set up right?" entry point and it currently
+diagnoses the **wrong system**. Its matrix is M1 MemPalace / M2 evolve+Honcho / M3
+capture hooks / M4 buhhdy config floor — there is **no row for either of the two stores**,
+so the skill can report a clean bill of health on a machine where the current memory
+architecture is absent or broken. This is a functional gap, not a stale label, which is
+why it is here rather than in the documentation sweep.
+
+- [ ] 4.1 Capture a RED baseline first — run the skill on a machine with the two stores
+      deliberately broken and confirm it reports healthy. That failure is the test
+- [ ] 4.2 Replace M1 (MemPalace) with two rows: the code graph (indexed, containment root
+      set, `auto_index` on) and the experience store (reachable, bank exists, `sync_retain`
+      round-trips). Reuse `two-store-memory-setup`'s own checks — orchestrate, never
+      reimplement, which is this skill's stated contract
+- [ ] 4.3 Drop "four-strata" from the description and body; the count changes and a
+      hardcoded number goes stale on the next stratum change
+- [ ] 4.4 M4 (buhhdy config floor) depends on the buhhdy removal — coordinate, do not
+      guess. If buhhdy is gone, the row goes with it
+- [ ] 4.5 Update `tests/bench/memory-onboarding.json`, which still asserts MemPalace
+      behaviour
+- [ ] 4.6 **Gate:** re-run 4.1's broken-machine scenario and confirm it now reports the
+      failure; `node scripts/skill-bench.ts memory-onboarding` beats its skill-disabled
+      baseline
+
+### 5. Documentation reconciliation
+
+- [ ] 5.1 README — delete the "Legacy memory skills" subsection and the pointer to this
       plan
-- [ ] 4.2 `KICKSTART.md` — drop the legacy `mempalace` prerequisite bullet
-- [ ] 4.3 `AGENTS.md`:243 — the "retired from routing" note becomes "removed in
+- [ ] 5.2 `KICKSTART.md` — drop the legacy `mempalace` prerequisite bullet
+- [ ] 5.3 `AGENTS.md`:243 — the "retired from routing" note becomes "removed in
       `<version>`"; keep the link to the supersedes memory as history
-- [ ] 4.4 `.claude/memory/` — supersede rather than delete
+- [ ] 5.4 `.claude/memory/` — supersede rather than delete
       `project-mempalace-architecture.md`, per the repo-memory Record Contract
       (supersede-never-edit)
-- [ ] 4.5 **Gate:** `git grep -i mempalace` returns only historical plans under
+- [ ] 5.5 **Gate:** `git grep -i mempalace` returns only historical plans under
       `plans/development/` and superseded memory records — no live docs, no code
 
-### 5. Out of scope for this plan
+### 6. Out of scope for this plan
 
-- [ ] 5.1 **buhhdy** — `config.yaml`, `README.md` and `core-workflows/SKILL.md` still
+- [ ] 6.1 **buhhdy** — `config.yaml`, `README.md` and `core-workflows/SKILL.md` still
       name MemPalace as the user-memory system of record and probe for it in the roster
       preflight. **Deliberately untouched:** buhhdy is being removed from this repo, with
       its practices carried to another project. Any memory-reference fix there belongs to

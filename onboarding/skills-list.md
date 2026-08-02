@@ -29,18 +29,18 @@ routing path.
 |-------|---------|-------------|
 | two-store-memory-setup | `/two-store-memory-setup` | Use when installing, repairing, or verifying the two-store agent-memory architecture on a machine — a code-graph store for structural truth plus an experience store for decisions and outcomes. Gated phases, control-test verification at every gate, a catalogue of verified defects indexed by symptom, and the per-repo `memory-init` command it writes |
 | repo-memory | `/repo-memory` | Repo-local memory in `.claude/memory/` — committed to git, no external service |
+| memory-onboarding | `/memory-onboarding` | Use when checking or setting up the memory system on this machine and in the current project — "is my memory set up right", a fresh machine/repo, or a reported memory degradation. Pass/warn/fail matrix + at most three next actions; diagnose-then-ask; credentials never transit chat |
 
 ### MemPalace (retired from routing)
 
-Powered by [MemPalace](https://github.com/mempalace/mempalace). Runs via the plugin's configured MCP (uvx) server, or install the CLI with `uv tool install mempalace` — either setup is valid; a configured MCP server without the CLI is not a missing install. **Retired from routing on 2026-08-01** — still shipped and installed with data intact, invoked only when asked for by name. Their descriptions still match a generic "remember this", so pick deliberately.
+Powered by [MemPalace](https://github.com/mempalace/mempalace). Runs via the plugin's configured MCP (uvx) server, or install the CLI with `uv tool install mempalace` — either setup is valid; a configured MCP server without the CLI is not a missing install. **Retired from routing on 2026-08-01** — still shipped and installed with data intact, invoked only when asked for by name. Their manifest descriptions are now prefixed LEGACY so a generic "remember this" no longer matches them. Removal is planned in [2026-08-02-memory-skill-migration-plan.md](../plans/development/2026-08-02-memory-skill-migration-plan.md).
 
 | Skill | Command | Description |
 |-------|---------|-------------|
-| memory | `/memory` | Access, search, and manage the team memory nexus — store and recall project context via MCP |
-| memory-onboarding | `/memory-onboarding` | Use when checking or setting up the four-strata memory system on this machine and in the current project — "is my memory set up right", a fresh machine/repo, or a preflight memory-degradation report. Pass/warn/fail matrix + at most three next actions; diagnose-then-ask (only repo-memory first-run auto-applies); credentials never transit chat |
-| memory-search | `/memory-search` | Semantic search across the memory nexus |
-| memory-mine | `/memory-mine` | Ingest a project directory or text into the nexus |
-| memory-status | `/memory-status` | Nexus stats — drawer count, wings, rooms |
+| memory | `/memory` | **Legacy** — read existing nexus data |
+| memory-search | `/memory-search` | **Legacy** — nexus search; now Hindsight `recall` or `repo-memory` |
+| memory-mine | `/memory-mine` | **Legacy** — nexus ingest; now codebase-memory-mcp indexing |
+| memory-status | `/memory-status` | **Legacy** — nexus stats; now `memory-onboarding` |
 
 ## Self-Learning (evolve)
 

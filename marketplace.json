@@ -36,7 +36,7 @@
     {
       "name": "memory",
       "path": "skills/memory/SKILL.md",
-      "description": "Access, search, and manage the team memory nexus \u2014 powered by MemPalace. Store and recall project context via MCP.",
+      "description": "LEGACY, retired from routing 2026-08-01 \u2014 MemPalace nexus, kept only to read existing MemPalace data; still installed with data intact. NOT the current memory system: structural truth is codebase-memory-mcp and experience is Hindsight, set up via two-store-memory-setup. Do not use for new work.",
       "category": "memory",
       "tags": [
         "memory",
@@ -50,7 +50,7 @@
     {
       "name": "memory-search",
       "path": "skills/memory-search/SKILL.md",
-      "description": "Semantic search across the team memory nexus.",
+      "description": "LEGACY, retired from routing 2026-08-01 \u2014 semantic search over an existing MemPalace nexus only. For current memory use hindsight recall; for repo knowledge use repo-memory.",
       "category": "memory",
       "tags": [
         "memory",
@@ -62,7 +62,7 @@
     {
       "name": "memory-mine",
       "path": "skills/memory-mine/SKILL.md",
-      "description": "Mine a project directory or text into the memory nexus.",
+      "description": "LEGACY, retired from routing 2026-08-01 \u2014 ingest a directory into an existing MemPalace nexus. For current code structure use codebase-memory-mcp indexing instead.",
       "category": "memory",
       "tags": [
         "memory",
@@ -74,7 +74,7 @@
     {
       "name": "memory-status",
       "path": "skills/memory-status/SKILL.md",
-      "description": "Show memory nexus statistics \u2014 drawer count, wings, rooms.",
+      "description": "LEGACY, retired from routing 2026-08-01 \u2014 MemPalace nexus stats. For current memory health use memory-onboarding.",
       "category": "memory",
       "tags": [
         "memory",

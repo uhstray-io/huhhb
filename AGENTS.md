@@ -174,6 +174,7 @@ After syncing, review the diff, bump versions, cut a release if changed.
 ## Key Files
 
 - `skills/` — all skills, one flat subdirectory per skill (`skills/<skill-name>/SKILL.md`)
+- `.cbmignore` — paths kept out of the code graph (vendored agent trees, caches, key material); changing it needs a forced rebuild, not just a re-index
 - `onboarding/` — onboarding flow triggered on first install
 - `hooks/` — plugin lifecycle hook scripts (SessionStart, PreToolUse, Stop)
 - `marketplace.json` — skill manifest (name, path, description, category, tags, version per skill)
@@ -237,10 +238,82 @@ base.
 | Domain knowledge the user has that shouldn't be re-explained | `user` |
 | Personal notes about this repo (gitignore `user_*.md` if private) | `user` |
 
-These are **repo-scoped** records. Cross-project personal preferences belong in
-MemPalace (user stratum) and cross-session team learnings in Honcho (team
-stratum) — not here; see
-[`project-buhhdy-memory-model.md`](.claude/memory/project-buhhdy-memory-model.md).
+These are **repo-scoped** records, committed and shared with the team.
+Cross-project preferences and cross-session decisions belong to the
+device-level stores below, not here. The MemPalace and Honcho strata are
+**retired from routing** as of 2026-08-01 — still shipped, data intact,
+invoked only when asked for by name; see
+[`project-two-store-memory-supersedes-mempalace.md`](.claude/memory/project-two-store-memory-supersedes-mempalace.md).
+
+<!-- two-store-memory:start -->
+### Device-level memory stores
+
+Two stores that never hold the same fact. Structure is regenerated from source
+for free; experience is the only copy.
+
+- **Structure** → the code graph. This repo is indexed, and
+  [`.cbmignore`](.cbmignore) excludes the vendored agent-framework trees that
+  otherwise made up ~91% of the graph and duplicated every query result.
+  Editing `.cbmignore` requires a **forced rebuild** — ignore rules gate the
+  next index and never retract nodes already stored.
+- **Experience** → bank id `huhhb-da43e85b` (`<dir>-<hash of canonical
+  identity>`; a bare directory name would collide with any other repo called
+  `huhhb`). The bank runs in `verbatim` mode: what you
+  send is stored unchanged, so keeping code structure out of it is the
+  writer's job, not the store's. The extraction mode and write guard **cannot
+  be read back** — re-apply them rather than checking them.
+- Use the **blocking** write variant. An `accepted` response is a receipt, not
+  a confirmation.
+- **Ratified decisions belong to `docs/adr/NNN-title.md`, not to the bank.**
+  The split is by kind, not by copy: the committed ADR is the public record of
+  *what was decided*; the bank holds the deliberation behind it — alternatives
+  considered, why the rejected ones lost, what was feared, what was tried
+  first, and how it turned out. Do not retain the ADR's ratified text into the
+  bank; reference the decision in domain terms and record the reasoning. This
+  is the one place the "experience store is the only copy" rule is narrowed:
+  it is the only copy of the *reasoning*, while the decision itself is
+  versioned with the code it governs.
+- Do **not** use `manage_adr` — it writes into the disposable index and the
+  next code change hard-deletes it.
+- **Specs** → OpenSpec store `huhhb`, rooted at `plans/development` (not the
+  repo root), so every command run from the repo root needs `--store huhhb`.
+  `openspec/specs/` is what the system *should* do; `openspec/changes/` is what
+  we are changing now, carrying the **public, ratified** "why". What did not
+  make the proposal — what was feared, tried first, abandoned, and why the
+  rejected option lost — goes to the bank instead.
+- Where the operator has a global routing policy (`CLAUDE.md`, "TWO-STORE
+  MEMORY ROUTING"), it **wins**. This section is the repo-level default so the
+  repo works on a machine that has none — which is most machines installing
+  this marketplace.
+- Setup, repair, the verified defect catalogue and measured costs:
+  [`skills/two-store-memory-setup/reference.md`](skills/two-store-memory-setup/reference.md).
+
+#### Reading across the stores — translate, don't substitute
+
+The graph names things with identifiers; memories name things with domain
+concepts, because the write rules strip identifiers out. So: query the graph →
+**say what that IS, in domain terms** → recall with those terms. Querying the
+bank with identifiers retrieves almost nothing — measured here, an identifier
+query scored the target memory at **0.00043** against **1.10** for the same
+memory in domain language. Either order is legal; concepts survive the
+refactors that rename functions, which is what makes them the better join key.
+
+#### On archive, retain the outcome
+
+`openspec archive <change> --store huhhb` records that a change completed. It
+does **not** record whether it *worked* — and that gap is this repo's
+highest-value memory. So when you archive, retain ONE memory into bank
+`huhhb-da43e85b`: the outcome labelled plainly **worked / dead end /
+corrected**, the root cause of anything that failed, and any constraint
+discovered along the way. One self-contained paragraph, in domain language.
+
+#### Drift check — a deliberate practice, not an aside
+
+`openspec list --specs --store huhhb` is intent; the graph's architecture
+summary is reality. Compare them on purpose, periodically. Divergence is
+**information, not a conflict to reconcile** — it means the specs or the code
+moved and nobody wrote it down.
+<!-- two-store-memory:end -->
 
 ### What NOT to save
 

@@ -29,12 +29,42 @@ before any tag existed — so tags/releases are for version history and changelo
 
 ## Forcing a plugin update locally
 
-`claude plugin install --scope user huhhb` silently skips if already installed. To pick up a new version:
+`claude plugin install --scope user huhhb` silently skips if already installed — still true,
+and it is the trap: it reports success, builds the new version's cache directory, and leaves
+`installed_plugins.json` pointing at the old one. A cache directory existing is not the same
+as it being installed.
+
+**`claude plugin update` is the command that actually flips it** (verified 2026-08-02,
+`0.7.18 → 0.7.20`):
 
 ```bash
-claude plugin marketplace update
-claude plugin uninstall huhhb
-claude plugin install --scope user huhhb
+claude plugin marketplace update      # refresh the marketplace clone from its source
+claude plugin update huhhb@huhhb      # flips installed_plugins.json to the new version
 ```
 
-There is no in-place upgrade command — uninstall/reinstall is required.
+Restart to apply — already-running sessions keep the version they loaded at start.
+
+Confirm it took by reading `installed_plugins.json`, not by trusting the success line:
+
+```bash
+node -e 'const j=require(process.env.HOME+"/.claude/plugins/installed_plugins.json");
+for(const [k,v] of Object.entries(j.plugins)) if(/huhhb/.test(k)) console.log(JSON.stringify(v))'
+```
+
+**Testing an unpushed branch:** `marketplace update` pulls from GitHub and will never see a
+local-only commit. Fetch into the marketplace clone from the working repo instead, then
+update:
+
+```bash
+cd ~/.claude/plugins/marketplaces/huhhb
+git fetch /path/to/your/repo <branch>:<temp-branch> && git checkout <temp-branch>
+claude plugin update huhhb@huhhb
+```
+
+That clone has `autoUpdate: true`, so it can pull `main` back over the temp branch on its own
+schedule — if a bench run suddenly reports a skill missing, check the clone's branch first.
+Snapshot `installed_plugins.json` and the clone's HEAD before starting, and check out `main`
+again afterwards.
+
+**Superseded:** an earlier version of this note said there was no in-place upgrade command and
+that uninstall/reinstall was required. `claude plugin update` exists and works.

@@ -14,10 +14,25 @@ All available skills in the Uhstray.io marketplace.
 | huhhb-welcome | `/huhhb-welcome` | First-run tour of huhhb |
 | huhhb-skills | `/huhhb-skills` | This list |
 | onboarding | `/onboarding` | Interactive wizard to configure Auto Mode and Agent Teams |
+| user-kickstart | `/user-kickstart` | Use when establishing, changing, or reverting how Claude writes toward you personally across every project — voice, register, standing preferences at user scope. Writes a delimited, revertible, 60-line-capped block in `~/.claude/CLAUDE.md` and routes the reasoning behind it to the hindsight `personal` bank. Repo CLAUDE.md quality is `claude-md-improver`; settings.json is `update-config` |
 
 ## Memory Skills
 
-Powered by [MemPalace](https://github.com/mempalace/mempalace). Runs via the plugin's configured MCP (uvx) server, or install the CLI with `uv tool install mempalace` — either setup is valid; a configured MCP server without the CLI is not a missing install.
+### Two-store memory (current routing)
+
+The two stores are **codebase-memory-mcp** (code graph — structural truth,
+regenerated from source) and **Hindsight** (experience store — decisions,
+rationale and outcomes, the only copy). This is the architecture on the
+routing path.
+
+| Skill | Command | Description |
+|-------|---------|-------------|
+| two-store-memory-setup | `/two-store-memory-setup` | Use when installing, repairing, or verifying the two-store agent-memory architecture on a machine — a code-graph store for structural truth plus an experience store for decisions and outcomes. Gated phases, control-test verification at every gate, a catalogue of verified defects indexed by symptom, and the per-repo `memory-init` command it writes |
+| repo-memory | `/repo-memory` | Repo-local memory in `.claude/memory/` — committed to git, no external service |
+
+### MemPalace (retired from routing)
+
+Powered by [MemPalace](https://github.com/mempalace/mempalace). Runs via the plugin's configured MCP (uvx) server, or install the CLI with `uv tool install mempalace` — either setup is valid; a configured MCP server without the CLI is not a missing install. **Retired from routing on 2026-08-01** — still shipped and installed with data intact, invoked only when asked for by name. Their descriptions still match a generic "remember this", so pick deliberately.
 
 | Skill | Command | Description |
 |-------|---------|-------------|
@@ -26,7 +41,6 @@ Powered by [MemPalace](https://github.com/mempalace/mempalace). Runs via the plu
 | memory-search | `/memory-search` | Semantic search across the memory nexus |
 | memory-mine | `/memory-mine` | Ingest a project directory or text into the nexus |
 | memory-status | `/memory-status` | Nexus stats — drawer count, wings, rooms |
-| repo-memory | `/repo-memory` | Repo-local memory in `.claude/memory/` — committed to git, no external service |
 
 ## Self-Learning (evolve)
 
@@ -58,7 +72,7 @@ managed setup; unconfigured machines behave as if it were not installed.
 | markdown-to-pdf | `/markdown-to-pdf` | Use when converting a Markdown file into a beautiful, print-ready PDF — styled cover page, running headers/footers, page numbers, GFM tables, syntax-highlighted code, and rendered mermaid diagrams (WeasyPrint + mermaid-cli, run via `uv`) |
 | openspec-conformance | `/openspec-conformance` | Use when making OpenSpec conform to Uhstray's plans/development + plans/architecture layout — the once-per-repo store-registration setup, the house config rules, and the archive-time ADR promotion; the source of truth that repo-kickstart and pr-shepherd both call |
 | pr-shepherd | `/pr-shepherd` | Use when buhhdy's Development workflow has open PRs to drive to merge — monitors CI + CodeRabbit + human review, routes findings back to the original implementer (2-attempts-then-human), gates the merge on a human approval (never merges autonomously), then runs post-merge close-out and a buhhdy/*-only branch janitor |
-| repo-kickstart | `/repo-kickstart` | Use when bootstrapping any repo — greenfield or brownfield — into Uhstray's standard conventions: the README/AGENTS/KICKSTART/ARCHITECTURE doc set, the plans/ tree, OpenSpec, memory setup (.claude/memory/ via repo-memory + optional Honcho), CodeRabbit, and a branch-protection check. Idempotent, registry-free, and non-destructive |
+| repo-kickstart | `/repo-kickstart` | Use when bootstrapping any repo — greenfield or brownfield — into Uhstray's standard conventions: the README/AGENTS/KICKSTART/ARCHITECTURE doc set, the plans/ tree, OpenSpec, the two-store memory init for this repo (.cbmignore + index + bank + charter) plus a Honcho probe, CodeRabbit, and a branch-protection check. Owns repo scope; machine-scope install is `two-store-memory-setup`. Idempotent, registry-free, and non-destructive |
 | session-resume | `/session-resume` | Use when picking up prior work in a fresh session — verifies the continuation file against the repo, re-hydrates context, briefs, then acts |
 | session-save | `/session-save` | Use when ending or pausing a session and you want to resume cleanly later — writes a gitignored continuation file with the exact next action and chat-only context |
 | subagent-driven-development | `/subagent-driven-development` | Use when executing implementation plans with independent tasks in the current session |

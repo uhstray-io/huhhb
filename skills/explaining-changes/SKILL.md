@@ -22,8 +22,11 @@ task, and summarize before commits. Say 'stop explaining' to turn it off."
 ## Default depth: `brief` / `standard`
 
 This runs many times per session, so keep it tight — it must not fight the repo's
-token-economy ethos. Default to `brief`/`standard`: at most ~4 sentences and at most one
+token-economy ethos. Default to `brief`/`standard`: at most ~5 sentences and at most one
 small ASCII diagram per increment. Go `deep` only when the user asks.
+
+**When brevity and specificity collide, cut scope — never specifics.** One thing named
+precisely beats three things summarized vaguely.
 
 ## The three checkpoints
 
@@ -39,11 +42,14 @@ Self-invoke this narration at exactly these moments:
 ## Output rules
 
 - **Chat/CLI only.** Never persist narration to a file.
-- **ASCII diagrams only** (boxes + arrows, single level, no nesting), and **only when
-  structure or flow actually changed** — not for every edit. Prose-introduce it (one
-  sentence first; never a bare diagram).
-- **Brevity ceiling** at default depth: ≤~4 sentences + ≤1 small diagram per increment.
+- **ASCII diagrams by default** (boxes + arrows, single level, no nesting) at every
+  checkpoint where something moved — structure, flow, data shape, or file relationships.
+  Show **before → after** with the changed node marked. Omit only when there is nothing
+  to draw, and say so. Prose-introduce it (one sentence first; never a bare diagram).
+- **Brevity ceiling** at default depth: ≤~5 sentences + ≤1 small diagram per increment.
 - **Educate, don't report:** say what the system now does, not "I edited file X."
+- **Name specifics:** the path, the symbol, the value, the pattern — never "the system",
+  "various files", or "more robust". Credentials are named by variable, never by value.
 
 ## Interplay with other skills
 
@@ -92,3 +98,7 @@ Full rules in the co-located [`principles.md`](./principles.md). The essentials:
 - **Medium:** this skill narrates in *chat*, so use **simple ASCII** (never mermaid here).
 - **Depth:** `brief`/`standard` by default; honor user overrides.
 - **Educate, don't report:** frame the new behavior, not the edit list.
+- **Voice (§7):** identity, voice defaults, patterns, anti-patterns, context shifts, and
+  the red flags that precede a vague narration. Precedence — a `VOICE & WORKING PROFILE`
+  block in `~/.claude/CLAUDE.md` outranks §7; `caveman` outranks its defaults; `training`
+  overrides everything and you yield.

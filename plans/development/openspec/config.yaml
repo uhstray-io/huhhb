@@ -7,6 +7,15 @@ context: |
   in marketplace.json, quality gates in scripts/).
   Conventions: Conventional Commits, no AI attribution. Cross-review by a
   different-vendor agent before human review. Plans live under plans/.
+  Memory routing: structural questions — what calls what, blast radius, where
+  something is defined — go to the codebase-memory graph; rationale, rejected
+  alternatives and outcomes go to the Hindsight bank huhhb-da43e85b. The change
+  proposal carries the public, ratified "why"; what did not make it goes to the
+  bank. On `openspec archive`, retain one memory into that bank recording
+  whether the change worked, labelled worked / dead end / corrected, with the
+  root cause of anything that failed. Write memories in domain language, never
+  in identifiers — the bank is queried by concept, and code structure retained
+  there goes stale on the next commit.
 
 rules:
   proposal:

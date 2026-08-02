@@ -36,16 +36,39 @@ node --test tests/test_openspec_conformance.test.ts   # offline openspec-conform
 
 ## Branch protection (one-time, admin)
 
-`main` is not yet protected. Required PR reviews on `main` are a precondition
-for the pr-shepherd lifecycle. An admin runs once:
+`main` is covered by the **`protect-main` ruleset** (active since 2026-07-18):
+a PR is required, force-pushes and deletion are blocked. Do **not** add classic
+branch protection on top — two overlapping mechanisms is how the
+worktree/GUI-push hazard got missed the first time.
+
+One gap remains: `required_approving_review_count` is `0`, so a PR can be
+self-merged with no approval. Required reviews are a precondition for the
+pr-shepherd lifecycle. An admin raises it once — via
+[repo rules](https://github.com/uhstray-io/huhhb/rules/19158566), or:
 
 ```bash
-gh api -X PUT "repos/uhstray-io/huhhb/branches/main/protection" --input - <<'JSON'
+gh api -X PUT repos/uhstray-io/huhhb/rulesets/19158566 --input - <<'JSON'
 {
-  "required_pull_request_reviews": { "required_approving_review_count": 1 },
-  "required_status_checks": null,
-  "enforce_admins": true,
-  "restrictions": null
+  "name": "protect-main",
+  "target": "branch",
+  "enforcement": "active",
+  "conditions": { "ref_name": { "include": ["~DEFAULT_BRANCH"], "exclude": [] } },
+  "rules": [
+    { "type": "pull_request",
+      "parameters": {
+        "required_approving_review_count": 1,
+        "dismiss_stale_reviews_on_push": false,
+        "require_code_owner_review": false,
+        "require_last_push_approval": false,
+        "required_review_thread_resolution": false,
+        "allowed_merge_methods": ["merge", "squash", "rebase"]
+      } },
+    { "type": "non_fast_forward" },
+    { "type": "deletion" }
+  ]
 }
 JSON
 ```
+
+The `rules` array is replaced wholesale on `PUT` — send all three rules, not
+just the changed one.

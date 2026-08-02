@@ -98,6 +98,17 @@ function runClaude(prompt: string, extra: string[] = [], timeout = 600,
    installed catalog, which machine state doesn't influence. */
 function skillInvoked(prompt: string, skill: string, timeout = 600): boolean {
   const proc = claudeProc(prompt, "stream-json", ["--verbose"], timeout);
+  /* A probe that did not actually run must never read as "the skill correctly
+     declined". B10 inverts this result (neg = !skillInvoked), so a silent
+     non-run scores as a precision PASS — a broken CLI would report perfect
+     precision. claudeProc only throws on proc.error, which covers spawn
+     failure and timeout but NOT a process that ran and exited non-zero with
+     empty stdout. Fail loudly here instead; B9 already fails closed. */
+  if (proc.status !== 0) {
+    throw new Error(`trigger probe exited ${proc.status} (not a verdict): ` +
+      `${String(proc.stderr ?? "").slice(0, 200)}`);
+  }
+  let sawEvent = false;
   for (const line of (proc.stdout ?? "").split("\n")) {
     let event: Json;
     try {
@@ -105,6 +116,7 @@ function skillInvoked(prompt: string, skill: string, timeout = 600): boolean {
     } catch {
       continue;
     }
+    sawEvent = true;
     const content = ((event.message ?? {}) as Json).content;
     for (const block of Array.isArray(content) ? content : []) {
       if (block && typeof block === "object" && block.type === "tool_use"
@@ -113,6 +125,10 @@ function skillInvoked(prompt: string, skill: string, timeout = 600): boolean {
         return true;
       }
     }
+  }
+  /* Exit 0 with no parseable stream events is also a non-run, not a decline. */
+  if (!sawEvent) {
+    throw new Error("trigger probe produced no parseable events (not a verdict)");
   }
   return false;
 }
@@ -132,6 +148,11 @@ export function runScenario(scenario: Scenario, runs: number, baseline: boolean)
       const envOverrides = envEntries.length ? Object.fromEntries(envEntries) : null;
       const data = runClaude(scenario.prompt, extra, 600, envOverrides);
       writeFileSync(join(workdir, "result.txt"), String(data.result ?? ""));
+      // turns.txt lets an assert distinguish "actually used tools" from
+      // "wrote a fluent description of using them" — result.txt is the final
+      // text only, so prose alone can satisfy a content grep. A pure
+      // text answer is 1 turn; each tool round-trip adds one.
+      writeFileSync(join(workdir, "turns.txt"), String(Number(data.num_turns) || 0));
       const check = spawnSync("sh", ["-c", scenario.assert], {
         cwd: workdir, timeout: 60_000, maxBuffer: MAX_BUFFER,
       });

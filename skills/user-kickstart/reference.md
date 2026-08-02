@@ -214,16 +214,44 @@ answers are sitting in the file.
 After the draft, before the write. Check each drafted rule against what the user
 actually does, and report the gap. Bounded, and the bounds are printed:
 
-| Source | Limit | Reaches |
-| ------ | ----- | ------- |
-| `git log` across the user's repo root | last 100 commits | subject and body style, hedging, vagueness |
-| `gh pr list --author @me` bodies | last 20 | longer-form register, structure |
-| `.claude/memory/feedback-*.md` | all readable | corrections already recorded |
-| cached evolve conclusions | current file | stated preferences and corrections |
-| hindsight `personal` recall | one call, free | prior preferences and their reasons |
+| Source | Limit | Reaches | Strength |
+| ------ | ----- | ------- | -------- |
+| `.claude/memory/feedback-*.md` | all readable | corrections the user gave *to Claude* | **direct** |
+| hindsight `personal` recall | one call, free | prior preferences and their reasons | **direct** |
+| cached evolve conclusions | current file; report its age | stated preferences and corrections | **direct** |
+| `git log`, author from `git config user.email` | last 100 commits; report the date span | subject and body style, hedging, vagueness | indirect |
+| `gh pr list --author @me` bodies | last 20 | longer-form register, structure | indirect |
+
+Report the *span* the bound actually bought, not just the count — on a busy repo "last
+100 commits" was ten days, which is a narrower window than it sounds.
 
 Never hardcode the repo root — derive it. Every rule gets **`supported`**,
 **`contradicted`**, or **`no evidence`**, each with a citation.
+
+**Derive the author identity from `git config user.email`, not from the session.** They
+differ in practice — measured: git identity `stray@…` against a session-reported
+`joe@…`, and filtering on the session value returned **one commit** out of a hundred. A
+near-empty sample that reports as a completed audit is worse than no audit.
+
+**Weight the sources honestly — most of them are indirect.** Commits and PR bodies show
+how the *user* writes to other people. Almost every rule being audited governs how
+*Claude* writes to the user. Those are different registers, so a contradiction found in
+commit prose is **weak** evidence against a rule about Claude's output, and must be
+reported as weak rather than as a flat `contradicted`. Two consequences:
+
+- **Prose the user co-drafted with Claude is circular.** Commit messages and PR bodies in
+  an actively agent-assisted repo already reflect Claude's register, so they cannot
+  independently confirm a rule about Claude's register. Say so when citing them.
+- **Direct evidence outranks indirect.** `feedback-*.md` corrections, `personal`-bank
+  memories, and anything where the user told Claude how to write are the strongest
+  sources, because they are about this relationship rather than about the user's writing
+  in general. Weigh them first, and say when they returned nothing — measured, all five
+  sources can be reachable and still yield `no evidence` on every drafted rule.
+
+**A tool that fails is not the same as a source that is missing.** If a source errors,
+check whether the tool itself is broken before recording the source unreachable — a
+shimmed or misconfigured binary on `PATH` will report an authentic-looking failure. Say
+which of the two happened.
 
 **Report what you actually sampled, including what you could not reach.** `gh` missing,
 a repo unreadable, the bank empty — say so. A partial sample presented as complete

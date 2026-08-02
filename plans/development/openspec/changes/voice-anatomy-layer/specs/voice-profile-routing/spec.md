@@ -26,6 +26,29 @@ that repository's own bank and MUST NOT be written to `personal`.
 - **WHEN** a stated preference applies only to one repository
 - **THEN** it routes to that repository's bank and not to `personal`
 
+### Requirement: Routing accuracy is measured, not assumed
+
+Routing is the load-bearing rule of this skill, so it SHALL carry its own G1 bench
+scenario scoring classification against a labelled ground truth covering all three
+destinations. The set SHALL include at least one rationale whose corresponding directive
+would belong in the file, at least one identity statement, and at least one
+repository-scoped preference. The scenario SHALL require an exact-match output format so
+scoring is mechanical rather than judge-dependent, and SHALL pass only at 100 percent.
+
+Proving the *effect* of a profile on downstream output is explicitly out of scope here
+and is recorded as a deferred follow-up in `plans/development/00-implementation-plan.md`;
+it needs a two-stage harness that `scripts/skill-bench.ts` does not provide.
+
+#### Scenario: A rationale is not routed to always-loaded context
+- **WHEN** the labelled set includes "I stopped asking for summaries because I never
+  read them"
+- **THEN** it routes to the `personal` bank and not to `~/.claude/CLAUDE.md`
+
+#### Scenario: A repo-scoped preference does not reach the personal bank
+- **WHEN** the labelled set includes a preference qualified to one repository
+- **THEN** it routes to that repository's bank, and the scenario fails if it routes to
+  `personal` even when every other item is correct
+
 ### Requirement: Bank writes use sync_retain and are approved as a batch
 
 Writes to the hindsight `personal` bank SHALL use `sync_retain`, not `retain`, so the

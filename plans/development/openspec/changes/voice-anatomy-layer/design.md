@@ -316,8 +316,22 @@ list, so it never has to be bought with description text — see Decision 11).
 
 - **More diagrams and more specifics cost tokens on a skill that fires many times per
   session.** Mitigated by the ≤6-node cap, the single-sentence skip note, and the
-  ceiling moving by exactly one sentence. If the bench shows the cost is not paid back
-  in comprehension, §3 and the ceiling are the two knobs, and they move together.
+  ceiling moving by exactly one sentence. **Measured 2026-08-02, and the risk resolved
+  in two different directions.** Where the identifiers were already in context,
+  specificity was *cheaper* than vagueness — 3326 tokens against a 5977 baseline —
+  because a precise short answer beats a padded hand-wave. Where the scenario withheld
+  them, the skill arm had to read a 228-line file and came in at 8732 against 5588
+  (1.56x), failing the global 1.5x gate with identical turn counts. That failure is
+  documented in the fixture and accepted: the gate is not relaxed and the scenario is
+  not weakened, because a scenario that hands over the identifiers stops testing
+  whether the skill goes and finds them. Real narration runs in the first regime — the
+  agent has just edited the file it is describing.
+- **The ceiling did not hold on its own.** With §7 active, narration named every
+  identifier and drew a correct diagram, then ran ~9 sentences against a ceiling of 5,
+  by appending a root-cause retrospective, a why-this-mattered paragraph, and a list of
+  neighbouring paths checked. §4 now bounds a checkpoint to one behavior change and
+  names those three appendages; §7 carries the matching red flag. Closed after GREEN,
+  not yet re-benched.
 - **Specificity can leak secrets.** Naming real paths and values is the point, but a
   private-config repo makes that a disclosure surface. §7 carries one carve-out:
   credential values, tokens, and real addresses are named by *variable*, never by value.

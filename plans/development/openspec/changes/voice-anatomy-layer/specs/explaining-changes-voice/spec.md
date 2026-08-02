@@ -94,6 +94,31 @@ cheaper than the prose it displaces. Both files SHALL carry the same number.
 - **WHEN** `SKILL.md` and `principles.md` are read together
 - **THEN** both state five sentences and neither retains the prior four
 
+### Requirement: The retrieval cost of specificity is accepted, not tuned away
+
+Naming a referent the model does not already hold requires retrieving it, and retrieval
+costs input tokens that a vague summary does not. Where a bench scenario withholds the
+identifiers deliberately, the resulting `B4 vs baseline` overrun SHALL be documented in
+the scenario and accepted. The global `RATIO_TOKENS` gate in `scripts/skill-bench.ts`
+MUST NOT be relaxed to accommodate it, and the scenario MUST NOT be weakened to pass —
+a scenario that supplies the identifiers no longer tests whether the skill goes and
+finds them.
+
+Measured 2026-08-02: 8732 tokens against a 5588 baseline (1.56x, over 1.5x) with
+identical turn counts, while the judge rose from 2/5 to 5/5. The control is the sibling
+scenario that supplies its identifiers in the prompt and demands the same specificity —
+its skill arm cost 3326 against a 5977 baseline, cheaper than vagueness. Specificity is
+not expensive; retrieval is.
+
+#### Scenario: The overrun is recorded rather than silently carried
+- **WHEN** a scenario's specificity requirement forces a file read the baseline avoids
+- **THEN** the fixture carries a note stating the measured ratio, the cause, and the
+  instruction not to relax the gate or weaken the scenario
+
+#### Scenario: The gate is not edited to suit this change
+- **WHEN** `B4 vs baseline` fails on such a scenario
+- **THEN** `RATIO_TOKENS` is unchanged and the failure stands as documented
+
 ### Requirement: The specificity mandate is loophole-closed with red flags
 
 Because the specificity mandate is a discipline rule under a brevity ceiling, §7 SHALL

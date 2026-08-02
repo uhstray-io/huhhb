@@ -5,96 +5,107 @@ description: Use when installing, repairing, or verifying the two-store agent-me
 
 # two-store-memory-setup
 
-Installs and verifies the **device-level** two-store memory architecture:
-`codebase-memory-mcp` holds present-tense structural truth about code and is
-regenerated from source for free; `Hindsight` holds decisions, rationale,
-failures and outcomes and is the **only copy** of that data. They never hold
-the same fact.
+Install, repair and verify the **device-level** two-store memory architecture.
+The code-graph store holds structural truth and is regenerated from source for
+free; the experience store holds decisions, rationale and outcomes and is the
+**only copy**. They never hold the same fact.
 
-Exact commands, the catalogue of verified defects with their symptoms, the
-routing-policy text, the per-repo command template and the rollback note all
-live in **[reference.md](reference.md)**. Read its defect catalogue *before*
-you verify anything — the hard part here is not installing two servers, it is
-telling a working component from a convincingly broken one.
-
-## Scope — what this skill owns
-
-| Concern | Owner |
-| ------- | ----- |
-| Machine: install, bind, configure, global routing policy | **this skill** |
-| One repo: ignore file, index, bank, charter | `memory-init` (Phase 4 writes it) |
-| "Is my four-strata memory healthy?" | `memory-onboarding` |
-| Repo conventions bootstrap | `repo-kickstart` |
-
-Honcho is **out of scope**. This skill configures two stores and never
-touches the evolve/Honcho stratum, MemPalace, or `.claude/memory/`.
+**Scope:** this skill owns the machine — install, bind, configure, routing
+policy. A single repo's ignore file, index, bank and charter belong to the
+`memory-init` command Phase 4 writes; general memory health is
+`memory-onboarding`. Honcho is out of scope.
 
 ## Three rules that outrank convenience
 
-**1. A tool's self-report is not evidence.** Both projects ship fast — before
-any install command, fetch the current docs and confirm the command, flags and
-paths still match; where they differ, follow the docs and report the delta.
-Then for every claim, state what would prove it **false** and run that. Prefer a control test — once with the
-setting, once without, show both — over reading a status line. Verified here:
-`✔ Connected` while no tool is callable; `excluded` while the nodes are still
-queryable; `--skip-config` accepted and ignored; `{"status":"accepted"}` for a
-write that never landed; a record that reads back with zero rows behind it.
-Cannot construct a falsifiable test? Say the claim is **unverified**.
+**1. A tool's self-report is not evidence.** Fetch current upstream docs before
+any install command; where they differ from this skill, follow the docs and
+report the delta. Then for every claim, state what would prove it **false** and
+run that — prefer a control (once with the setting, once without) over a status
+line. No falsifiable test available? Say **unverified**.
 
-**2. Snapshot before, diff after — every step that writes config**, not just
-installers, and even when a flag promises nothing will be written. `cp` the
-file, run the step, show a real diff. The installer writes to *every* coding
-agent it detects, not only Claude Code.
+**2. Snapshot before, diff after** — every config write, even when a flag
+promises none. The installer writes to *every* agent it detects, not just
+Claude Code; `--skip-config` has been accepted and ignored while ten files
+changed. Re-verify the installer hash against the reviewed source: the
+release-bundled copy differs from the one on main and is what `update` runs.
 
-**3. Stop at the gates and wait for a human answer.** The gates are marked in
-the phase table. "I don't want to be asked a bunch of questions", "just get it
-working", or a stated deadline **do not dissolve a gate** — they are the
-conditions under which skipping one does the most damage. Batching a gate into
-an end-of-run report is skipping it: the decision was needed *before* the work,
-and reporting afterwards presents a fait accompli as a question.
+**3. Stop at the gates and wait for a human answer.** "Don't ask me a bunch of
+questions", "just get it working", or a stated deadline **do not dissolve a
+gate** — they are the conditions under which skipping one does the most damage.
+Batching a gate into an end-of-run report is skipping it.
 
-## Phase order
-
-Run in order. Never start a phase whose gate has not cleared.
+## Phases and gates
 
 | # | Phase | Gate |
 | - | ----- | ---- |
-| 0 | Survey: machine, ports, agent configs, **existing memory systems**, LLM provider + structured-output probe | **STOP** — every extra store is a competing source of truth. Present the collisions; the human chooses retire / migrate / run alongside / abandon |
-| 1 | `codebase-memory-mcp`: review installer, snapshot, install, set `auto_index`, set `CBM_ALLOWED_ROOT` in **two** places | **STOP** — containment proven by control test, not asserted: out-of-root refused, same path with the variable unset must **succeed**, plus symlink and `../`. Then delete the index the control created |
-| 2 | `Hindsight`: deployment shape, pin the DB port, **bind loopback**, one sourceable env file, extraction mode, bank layout | **STOP** — round trip (`sync_retain` → `recall` → `reflect`) with timings and token counts, and which operations hit the LLM |
-| 3 | Write the global routing policy as a delimited, removable block | Ask before extending it to other agents — rules naming tools an agent cannot reach are dead text |
-| 4 | Write the per-repo `memory-init` command from `memory-init-template.md` | Detect first: an existing command is verified and kept, never clobbered |
-| 5 | Prove it works — including **restart the agent, then invoke a read tool from each store** | **STOP** — until a tool is actually called, the policy is inert |
-| 6 | Write the rollback note: files touched, backups, uninstall, "non-obvious things that will bite you" | — |
+| 0 | Survey machine, ports (8888/9999/5432 **and the port you plan to pin**), every agent config, **existing memory systems**, LLM provider | **STOP** — each extra store is a competing source of truth. Present collisions; human picks retire / migrate / alongside / abandon |
+| 1 | Code-graph store: review installer, snapshot, install, set the config below | **STOP** — containment by control test |
+| 2 | Experience store: deployment shape, pin port, bind loopback, one sourceable env file, banks | **STOP** — round trip with timings and token counts |
+| 3 | Global routing policy as a delimited, removable block | Ask before extending to other agents — rules naming unreachable tools are dead text |
+| 4 | Per-repo `memory-init` from `memory-init-template.md` | Detect first; an existing command is verified and kept, never clobbered |
+| 5 | Prove it works | **STOP** — restart the agent, then **invoke** a read tool from each store |
+| 6 | Rollback note: files touched, backups, uninstall, what will bite you | — |
 
-## The one failure mode that destroys this architecture
+## Settings that decide whether this works at all
 
-Retaining code structure into the experience store because it looks like
-useful context. File paths, symbol names, signatures, call relationships,
-import graphs, dependency lists — all of it goes stale on the next commit, and
-then the two stores disagree with no signal saying which to trust. The graph
-regenerates it all for free. **Let it.**
+| Set this | Ships as | Cost of skipping |
+| -------- | -------- | ---------------- |
+| `auto_index true` | **`false`** | nothing ever self-indexes; the store stays permanently empty |
+| `CBM_ALLOWED_ROOT` in the shell profile **and** `settings.json` `env` | unset | containment silently absent in the desktop app and IDE extensions — where subagents run |
+| `HINDSIGHT_API_HOST=127.0.0.1` + the UI host flag | **`0.0.0.0`** | memory store on the LAN; the control plane has no API key |
+| DB port pinned, e.g. `pg0://hindsight:55432` | 5432 | connects to your *other* Postgres: `role "hindsight" does not exist` |
+| extraction mode `verbatim` | `concise` | rejected alternatives silently dropped — the content that justifies this store existing |
+| strict-schema flag, if the `json_object` probe returns 400 | soft path | **every write fails while every read looks healthy** |
 
-The bank's guard field is advisory, not enforcement — verified: a pure
-call-graph dump was stored verbatim despite it. **The writer is the filter.**
+The pg0 **instance name is the data directory** — changing it silently starts
+an empty database. Only the port is safe to vary.
+
+**Phase 1 gate, in full:** out-of-root path refused; **the same path with
+`CBM_ALLOWED_ROOT` unset must succeed**; symlink inside the root pointing out;
+`../` traversal; prefix sibling (`…GitHubOutside`). Read the refusal reason
+from the worker log — exit 1 also means "not a git repo". Then delete the index
+the control test created.
+
+## Verified defects — symptom first
+
+| Symptom | What is actually happening |
+| ------- | -------------------------- |
+| Both servers `✔ Connected`, no tool callable | Tools enumerate at session start. Restart, then invoke one read tool per store |
+| Write returned `{"status":"accepted"}`, memory absent | Async `retain` returns a receipt, not a confirmation. Use the blocking `sync_retain` |
+| Bank exists and looks configured, but the mode never took | Bank config is **write-only** — no per-bank GET (405), and the list omits those fields. Re-apply every run; confirm behaviourally |
+| Newly-ignored path still queryable after re-index | Ignore rules gate the *next* index and never retract nodes. Delete the project, rebuild, then **enumerate the indexed file list** |
+| ADR reads back fine, then vanishes | `manage_adr` writes to the disposable index; any code change hard-deletes it. Use committed `docs/adr/NNN-title.md` |
+| Filtering by a nonexistent tag returns rows | `tags` do not filter recall and do not affect scoring. Banks are the only isolation boundary |
+| `git check-attr merge` says `unset` on a correct-looking line | `binary` is a macro expanding to `-diff -merge -text` and cancels a preceding `merge=ours`. Write `graph.db.zst binary merge=ours` |
+| Daemon came up on default models | Shell-profile env never reaches a backgrounded daemon. One sourceable env file, sourced by the launcher |
+| Cross-store recall returns nothing while all is healthy | You queried with identifiers; the write rules keep identifiers out of memory text. Translate to domain terms first |
+| Near-empty bank returns everything at ~0.0001 | No relevance floor exists. The caller ignores low scores |
+| `reflect` returns "No answer provided." | Low `max_tokens` fails *after* paying for every call. Do not lower it to economise |
+
+**Costs, measured:** recall **0** model calls · `sync_retain` **2** (extraction
+plus auto-consolidation) · `reflect` **3** at ~11–16k tokens. Reading is free;
+`reflect` is the expensive branch. Re-measure on the target machine — an
+earlier pass on the same box recorded 1 and 4.
+
+## The failure mode that destroys this architecture
+
+Retaining code structure into the experience store because it looks like useful
+context. Paths, symbol names, signatures, call relationships and dependency
+lists all go stale on the next commit, and then the two stores disagree with
+nothing saying which to trust. The graph regenerates them free. **Let it.** The
+bank's guard is advisory — a pure call-graph dump was stored verbatim despite
+it. **The writer is the filter.**
 
 ## Red flags — STOP
 
-- About to `curl | bash` without downloading, reading and showing the script
-- About to accept an exit code, a status line, or `✔ Connected` as proof
-- About to proceed past a gate because the human said not to ask questions
-- About to write a measured number into the policy that you did not measure
-- About to `.cbmignore` a secret and re-index — that does **not** retract
-  existing nodes; the phase-4 rebuild is mandatory
-- About to record a ratified ADR through `manage_adr` — the next code change
-  hard-deletes it
-- About to report "working" for a claim you never constructed a test for
-- About to enable telemetry, or put a credential in a file you create
-- About to install a *third* store, or a `PreToolUse` hook nudging toward a
-  different graph — two stores is the design, and hooks stack
-- About to edit a tool's installed source instead of finding its config path
-- About to continue past a tool that did something destructive **without**
-  asking — stop and report it instead
+- `curl | bash` without downloading, reading and showing the script first
+- Accepting an exit code, a status line, or `✔ Connected` as proof
+- Proceeding past a gate because the human said not to ask questions
+- Writing a number into the policy that you did not measure
+- Telemetry, or a credential in a file you create
+- A *third* store, or a `PreToolUse` hook nudging a different graph
+- Editing a tool's installed source instead of finding its config path
+- Continuing past a tool that destroyed something **without** asking
 
-Standing constraints, rationalizations and the diagnostic counter-techniques
-are in [reference.md](reference.md) — read them before testing, not after.
+Per-phase detail, the seven diagnostic counter-techniques, the full defect
+catalogue and the routing-policy block are in [reference.md](reference.md).

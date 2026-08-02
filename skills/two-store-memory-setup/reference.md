@@ -45,8 +45,10 @@ caller. First prove the instruction was delivered, then vary the input to find
 where compliance breaks.
 
 **6. Count operations, not operation names.** `recall` makes **zero** model
-calls; `reflect` makes **four**. Measured by diffing a request-log total, not
-by reading docs. That inverts the intuition most cost policies are built on.
+calls; `reflect` makes **three** (an earlier pass on the same machine measured
+four — see §3). Measured by diffing a request-log total, not by reading docs.
+That inverts the intuition most cost policies are built on, and the fact that
+the number itself moved between passes is the point: count, do not inherit.
 
 **7. An acceptance is not a confirmation.** The same logical write was exposed
 twice with different semantics: a REST endpoint that blocks, and an MCP tool of
@@ -61,7 +63,9 @@ the write landed. Find the blocking variant and name it in the policy.
 ### Phase 0 — Survey (report before changing anything)
 
 **0a. Machine.** OS, arch, shell; Docker/Podman/Colima present and running.
-Every port the setup wants — **8888, 9999, 5432** — with the process holding
+Every port the setup wants — **8888, 9999, 5432, and whatever port you intend
+to pin the embedded Postgres to** (Phase 2 suggests 55432; survey it here or
+choose the pinned port only after an availability check) — with the process holding
 it: `lsof -nP -iTCP:<port> -sTCP:LISTEN`. A container mapping 5432 collides
 with the embedded Postgres, and the symptom is Hindsight connecting to *your
 other database* and reporting `role "hindsight" does not exist`. Disk: budget
@@ -121,16 +125,19 @@ looks healthy** — the store is silently write-dead. Fix is a Phase 2 flag.
 5. Set config explicitly and confirm — `auto_index` ships **`false`**, so
    without this nothing self-indexes and the store stays empty:
 
+   **Count first, then set the limit.** Sizing before measuring is how a repo
+   ends up silently half-indexed while the instructions imply the ceiling was
+   chosen deliberately. Count files *excluding* vendored and build trees — a
+   260k-file repo may hold 12k real ones — and prefer excluding the noise over
+   raising the ceiling.
+
 ```bash
-codebase-memory-mcp config set auto_index true         # default false — MUST set
-codebase-memory-mcp config set auto_index_limit 50000  # size vs. largest real repo
-codebase-memory-mcp config set auto_watch true         # already default; be explicit
+# 1. measure the largest real repo first; 50000 below is an example, not a default to accept
+codebase-memory-mcp config set auto_index true          # ships false — MUST set
+codebase-memory-mcp config set auto_index_limit <derived> # from the count above
+codebase-memory-mcp config set auto_watch true          # already default; be explicit
 codebase-memory-mcp config list
 ```
-
-   Count files *excluding* vendored and build trees before sizing the limit — a
-   260k-file repo may hold 12k real ones. Prefer excluding noise over raising
-   the ceiling.
 
 6. **Decide the UI at install time.** The graph UI is a separate release asset,
    not a flag; a standard binary refuses `--ui`. Reinstalling later re-runs the

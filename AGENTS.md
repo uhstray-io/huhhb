@@ -262,9 +262,17 @@ for free; experience is the only copy.
   be read back** — re-apply them rather than checking them.
 - Use the **blocking** write variant. An `accepted` response is a receipt, not
   a confirmation.
-- Ratified ADRs are committed files under `docs/adr/`. Do **not** use
-  `manage_adr` — it writes into the disposable index and the next code change
-  hard-deletes it.
+- **Ratified decisions belong to `docs/adr/NNN-title.md`, not to the bank.**
+  The split is by kind, not by copy: the committed ADR is the public record of
+  *what was decided*; the bank holds the deliberation behind it — alternatives
+  considered, why the rejected ones lost, what was feared, what was tried
+  first, and how it turned out. Do not retain the ADR's ratified text into the
+  bank; reference the decision in domain terms and record the reasoning. This
+  is the one place the "experience store is the only copy" rule is narrowed:
+  it is the only copy of the *reasoning*, while the decision itself is
+  versioned with the code it governs.
+- Do **not** use `manage_adr` — it writes into the disposable index and the
+  next code change hard-deletes it.
 - Read-routing rules live in the operator's global `CLAUDE.md` under
   "TWO-STORE MEMORY ROUTING" and are deliberately not restated here.
 - Setup, repair, the verified defect catalogue and measured costs:

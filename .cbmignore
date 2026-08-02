@@ -5,8 +5,11 @@
 #
 # Changing anything here does NOT retract nodes already in the graph — the
 # incremental path keeps them. After editing, force a clean rebuild:
-#   delete_project(project="Users-stray-Documents-GitHub-huhhb")
-#   index_repository(repo_path=<repo root>, persistence=true)
+#   1. resolve this checkout's project id — list_projects and match on
+#      root_path; it is derived from the absolute path, so it differs per
+#      checkout and must never be hardcoded
+#   2. delete_project(project=<resolved id>)
+#   3. index_repository(repo_path=<repo root>, persistence=true)
 # then enumerate the indexed file list to prove the paths are gone.
 
 # Vendored agent-framework trees. .agent/ and .agents/ are byte-identical
@@ -46,8 +49,18 @@ __pycache__/
 # driving the MCP server. Environment *data* (inventory, host lists) is
 # deliberately NOT excluded — it is structurally valuable and is not a secret.
 *.env
-!*.env.example
+*.env.*
 *credentials*.json
+*secret*.json
 *.pem
 *.p12
+*.pfx
+*.key
 id_rsa*
+id_ed25519*
+id_ecdsa*
+# re-include documented examples last — a negation only works after the
+# pattern that excluded it
+!*.env.example
+!*.env.sample
+!*.env.template

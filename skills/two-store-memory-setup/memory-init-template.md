@@ -20,13 +20,30 @@ edge counts, bank id, and what was skipped because it already existed.
 ```bash
 REPO_ROOT=$(git rev-parse --show-toplevel)   # abort if this fails: not a git repo
 BANK_ID=$(basename "$REPO_ROOT")             # bank id = repo directory name, verbatim
+BACKUP_DIR="$HOME/.cache/memory-init/backups/$BANK_ID"   # snapshots for every config write
+mkdir -p "$BACKUP_DIR"
 ```
+
+`BANK_ID` is a basename, so sibling checkouts with the same directory name map
+to the same bank — step 4 checks ownership before writing to one that exists.
 
 The code-graph store derives its own project name from the full path (leading
 `/` dropped, `/` → `-`). That is separate and is not the bank id.
 
-Confirm `$REPO_ROOT` is inside `$CBM_ALLOWED_ROOT`. If it is not, stop and say
-so — `index_repository` will refuse the path anyway.
+Confirm `$REPO_ROOT` is inside `$CBM_ALLOWED_ROOT` — **fail closed**, and
+compare canonical paths. Do not rely on the indexer refusing later: an unset
+variable means containment is not configured at all, and a naive string prefix
+lets a sibling like `…/GitHubOutside` through.
+
+```bash
+: "${CBM_ALLOWED_ROOT:?unset — containment is not configured; stop here}"
+ROOT_C=$(cd "$CBM_ALLOWED_ROOT" 2>/dev/null && pwd -P) || { echo "allowed root does not exist"; exit 1; }
+REPO_C=$(cd "$REPO_ROOT" && pwd -P)          # pwd -P resolves symlinks and ../
+case "$REPO_C/" in
+  "$ROOT_C"/*) ;;                             # trailing slash defeats prefix siblings
+  *) echo "REFUSE: $REPO_C is outside $ROOT_C"; exit 1 ;;
+esac
+```
 
 ## 1. Write `.cbmignore` before indexing
 
@@ -51,8 +68,27 @@ only for things that are committed but still not worth indexing.
 reads from disk at query time using stored line numbers — so an indexed secret
 file becomes a convenient credential reader for anything driving the MCP
 server, including subagents. Exclude credential files, key material and env
-files (`*.env`, `!*.env.example`, `*credentials*.json`, `*.pem`, `*.p12`,
-`id_rsa*`). **Draw the line explicitly and say where you drew it:**
+files — and cover the variants, since `*.env` alone misses `.env.local` and
+`id_rsa*` alone misses newer key types:
+
+```gitignore
+*.env
+*.env.*
+*credentials*.json
+*secret*.json
+*.pem
+*.p12
+*.pfx
+*.key
+id_rsa*
+id_ed25519*
+id_ecdsa*
+!*.env.example      # negations must come AFTER the pattern that excluded them
+!*.env.sample
+!*.env.template
+```
+
+**Draw the line explicitly and say where you drew it:**
 environment *data* — inventory, host lists, IP ranges — is often the most
 structurally valuable content in a private repo and is not a secret. Exclude
 key material, not documentation of the environment.
@@ -67,13 +103,30 @@ Accept when the output contains the intended exclusions and **nothing from
 first-party source**. A too-broad pattern silently eating real code is the
 other way this goes wrong.
 
+**Prove the check fires before believing a clean result.** `git check-ignore`
+does *not* accept `--exclude-from`; passing it matches nothing and reports
+every path as included, which reads exactly like "no problems found". Run one
+path you *know* must be excluded and one you know must not; if the known-bad
+path comes back clean, your detector is broken, not your patterns.
+
 **Idempotency:** read the existing `.cbmignore` first and append only lines not
 already present. Never rewrite it wholesale — the user may have added entries.
 Preserve their ordering and comments.
 
+**Snapshot before, diff after** — this is a config write like any other, and
+the skill's rule 2 applies to it. Same for the `CLAUDE.md` block in step 6.
+
+```bash
+cp .cbmignore "$BACKUP_DIR/cbmignore.$(git rev-parse --short HEAD)" 2>/dev/null || true
+# ... append the missing lines ...
+git diff --no-index -- "$BACKUP_DIR/cbmignore.…" .cbmignore || true
+```
+
+Show the diff. If anything changed outside the lines you meant to add, stop.
+
 ## 2. Index, with the persistent artifact
 
-```
+```text
 index_repository(repo_path="$REPO_ROOT", persistence=true)
 ```
 
@@ -90,10 +143,19 @@ because the artifact directory indexes itself. Newly-excluded content persists
 silently, which matters most when the reason for excluding it was that it was
 sensitive.
 
-Force a clean rebuild whenever step 1 changed anything:
+Force a clean rebuild whenever step 1 changed anything.
 
+> **STOP — deleting an index is a destructive action.** Say what will be
+> destroyed (project name, current node/edge count, whether an artifact is
+> committed) and get an explicit go-ahead. Back the artifact up first; the
+> graph is regenerable, but only if the rebuild actually succeeds.
+
+```bash
+mkdir -p "$BACKUP_DIR"
+cp "$REPO_ROOT/.codebase-memory/graph.db.zst" "$BACKUP_DIR/" 2>/dev/null || true
 ```
-delete_project(project="<derived-project-name>")
+```text
+delete_project(project="<resolve from list_projects by root_path — never hardcode>")
 ```
 ```bash
 rm -f "$REPO_ROOT/.codebase-memory/graph.db.zst"   # keep .gitattributes; see step 3
@@ -101,7 +163,7 @@ rm -f "$REPO_ROOT/.codebase-memory/graph.db.zst"   # keep .gitattributes; see st
 
 then index again, and **prove absence** rather than assuming it:
 
-```
+```text
 query_graph(query="MATCH (f:File) RETURN f.file_path")
 ```
 
@@ -124,9 +186,17 @@ git check-attr merge -- .codebase-memory/graph.db.zst    # broken state: "merge:
 If it reports anything other than `merge: ours`, rewrite with the order
 reversed so `merge=ours` survives:
 
+Replace **only** the `graph.db.zst` rule. The file may carry other attributes
+or comments, and `>` would silently destroy them:
+
 ```bash
-printf '# Reordered so merge=ours survives the binary macro\ngraph.db.zst binary merge=ours\n' \
-  > .codebase-memory/.gitattributes
+F=.codebase-memory/.gitattributes
+cp "$F" "$F.bak"
+# rewrite just the graph.db.zst line; leave every other line untouched
+awk '/^graph\.db\.zst[[:space:]]/ { print "graph.db.zst binary merge=ours"; next } { print }' \
+  "$F.bak" > "$F"
+grep -q '^graph\.db\.zst ' "$F" || printf 'graph.db.zst binary merge=ours\n' >> "$F"
+diff "$F.bak" "$F" || true                               # show exactly what changed
 git check-attr merge -- .codebase-memory/graph.db.zst    # must now print "merge: ours"
 ```
 
@@ -156,11 +226,34 @@ file does the same job and survives.
 
 ## 4. Create the bank
 
-Idempotent by API design — `PUT` on an existing bank updates rather than
-duplicating. Substitute the API base for this machine.
+**Every Hindsight call below uses `--fail-with-body --show-error`, not bare
+`-s`.** Plain `curl -s` exits 0 on an HTTP 500, so a failed write reads as
+success and the step continues on a bank that was never configured.
 
 ```bash
-curl -s -X PUT "$HINDSIGHT_URL/v1/default/banks/$BANK_ID" \
+CURL="curl -sS --fail-with-body"
+```
+
+**Look before you PUT.** `bank_id` is the repo directory name, so two
+checkouts named alike — `site-config` in two orgs, a fork beside its upstream —
+resolve to the *same* bank and silently interleave their decisions. Nothing
+rebuilds this store, so confirm ownership before writing:
+
+```bash
+$CURL "$HINDSIGHT_URL/v1/default/banks" | python3 -c "
+import json,sys,os
+b={x['bank_id']:x for x in json.load(sys.stdin)['banks']}.get(os.environ['BANK_ID'])
+print('NEW BANK' if not b else f\"EXISTS: {b['fact_count']} facts — mission: {b['mission'][:120]}\")"
+```
+
+If it exists, read the mission and recall the charter. Does it describe *this*
+repo? If it describes a different one, **stop** — you have a name collision,
+and the fix (a disambiguated bank id) is the human's call, not a silent
+overwrite. If it holds facts and does describe this repo, you are repairing,
+not creating: keep the existing name and mission unless asked otherwise.
+
+```bash
+$CURL -X PUT "$HINDSIGHT_URL/v1/default/banks/$BANK_ID" \
   -H 'Content-Type: application/json' \
   -d '{"name":"<Repo Name>","mission":"<one sentence: what this repo is for, and that this bank holds only decisions, rationale and outcomes for it>"}'
 ```
@@ -172,7 +265,7 @@ only the conclusion survive. That experiential content is the whole reason this
 store exists.
 
 ```bash
-curl -s -X PATCH "$HINDSIGHT_URL/v1/default/banks/$BANK_ID" \
+$CURL -X PATCH "$HINDSIGHT_URL/v1/default/banks/$BANK_ID" \
   -H 'Content-Type: application/json' -d '{"retain_extraction_mode":"verbatim"}'
 ```
 
@@ -196,7 +289,7 @@ The guard is advisory regardless: on input that was *only* code structure, the
 model ignored it and stored the whole call graph verbatim.
 
 ```bash
-curl -s -X PATCH "$HINDSIGHT_URL/v1/default/banks/$BANK_ID" \
+$CURL -X PATCH "$HINDSIGHT_URL/v1/default/banks/$BANK_ID" \
   -H 'Content-Type: application/json' \
   -d '{"retain_mission":"Retain decisions, rationale, rejected alternatives, failures with their root cause, outcomes labelled worked/dead-end/corrected, constraints discovered the hard way, and stated preferences. Never extract or retain code structure: file paths, function or class names, signatures, call relationships, import graphs, dependency lists, whole file contents, or long diffs. Those are regenerable from source and go stale on the next commit."}'
 ```
@@ -209,14 +302,30 @@ report — do not skip the bank silently.
 Check first, so a re-run does not retain a duplicate:
 
 ```bash
-curl -s -X POST "$HINDSIGHT_URL/v1/default/banks/$BANK_ID/memories/recall" \
+$CURL -X POST "$HINDSIGHT_URL/v1/default/banks/$BANK_ID/memories/recall" \
   -H 'Content-Type: application/json' -d '{"query":"project charter purpose constraints current state"}'
 ```
 
 If nothing charter-like comes back, write one. Ground it in what you can
 observe — README, ADRs, recent commit messages, open issues, the graph's
 architecture view — and keep it to a short paragraph covering **what this repo
-is for, its constraints, and its current state**. Use the blocking write path.
+is for, its constraints, and its current state**.
+
+**Use the blocking write, and check what came back.** The async `retain`
+returns `{"status":"accepted","operation_id":…}` — a receipt, not a
+confirmation; a failure after that point is silent and the charter is simply
+gone. Call the MCP tool `sync_retain` with `bank_id` set to `$BANK_ID`, and
+continue only when the response carries persisted ids:
+
+```text
+sync_retain(bank_id="<BANK_ID>",
+            context="Project charter — purpose, constraints and current state.",
+            content="<the charter paragraph>")
+→ {"status":"completed","memory_ids":["…"]}     # anything else: stop and report
+```
+
+Then recall it once and confirm it comes back — a completed write plus a
+successful recall is the round trip; either alone is not.
 
 **The charter is prose about purpose, constraints and state — not an inventory
 of the codebase.** If you find yourself listing directories, modules, function

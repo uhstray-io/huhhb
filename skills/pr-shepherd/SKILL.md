@@ -160,12 +160,12 @@ merge; report which one is missing and wait.
    `00-implementation-plan.md` row to `archived` + ADR link. No
    `## Decisions` → no ADR (expected). Don't hand-edit the row — the
    promoter owns it.
-3. **Write the outcome** as ONE `sync_retain` into the repo's Hindsight bank
-   (`bank_id` = repo dir name): what merged, findings-per-channel counts
-   (CI / CodeRabbit / human), escalations, outcome labelled **worked / dead
-   end / corrected**. A leftover `.claude/memory/wip/<branch-slug>.md`
-   journal folds in and is deleted — same store as the hook it backs up.
-   No bank → `repo-memory` record instead.
+3. **Write the outcome** per repo-memory's *Retention state machine* — recall
+   the bank FIRST; if this branch's outcome is there, the PR hook wrote it, so
+   stop. Else ONE `sync_retain` (`bank_id` per repo-kickstart §0): what merged,
+   finding counts, escalations, outcome labelled **worked / dead end /
+   corrected**. Journal folds in; delete only after `completed`. No bank →
+   `repo-memory` record.
 4. **Remove the worktree** for the merged task:
    ```bash
    git worktree remove .worktrees/<task_id>

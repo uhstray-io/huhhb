@@ -47,8 +47,13 @@ conforming" per item is the desired result on huhhb and on any re-run.
 - **Detect existing state before deciding you're initializing.** An OpenSpec root
   (house convention: `plans/development`, *not* the repo root — also check
   `openspec store list`), an existing index or bank, and every memory store
-  already on disk. Anything present → **you are conforming, not initializing**:
-  report ✅, change nothing, delete nothing.
+  already on disk.
+- **Conformance is per artifact, never per repo.** "This repo already has an
+  OpenSpec root" does **not** mean the run is done — an adopted repo can be
+  missing `plans/product/README.md` or the AGENTS.md memory block forever if you
+  short-circuit on the first thing you find. Check each artifact in §1–§5
+  independently: present → ✅ and leave it **exactly** as it is; **missing →
+  create it**. Never re-init, never overwrite, never delete.
 
 ### 1. Convention files (templates in `reference.md`)
 Create if missing; on brownfield, **propose a merge, don't overwrite**.
@@ -108,8 +113,10 @@ to the graph, instructions to AGENTS.md.
   commit the artifact. **Each of those steps works around a defect that fails
   silently**; §4.1 states what breaks if you skip it. This is a new capability —
   nothing in this skill did it before.
-- **Hindsight — the experience store.** One bank per repo, `bank_id` = the repo
-  directory name. `verbatim` extraction in its own call, `retain_mission` in
+- **Hindsight — the experience store.** One bank per repo, `bank_id` derived per
+  §0 — **directory name plus a hash of canonical identity, never the bare
+  directory name**, which silently merges two repos called `app` into one bank.
+  `verbatim` extraction in its own call, `retain_mission` in
   another — both are **write-only, so re-apply them every run** rather than trying
   to detect them — then a project charter: prose about purpose, constraints and current
   state, **never an inventory** (inventories are the graph's job). Write with

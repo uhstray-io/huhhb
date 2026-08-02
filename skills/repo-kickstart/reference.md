@@ -10,20 +10,47 @@ placeholder through.
 ## 0. Derived names & prerequisite probes
 
 ### The three names — different strings, from different inputs
-Two systems key off the repo **directory** name and one off the repo **path**.
-Deriving them once in preflight, then using them verbatim, avoids the most
-common failure in this setup: passing the wrong string to the wrong store.
 
 | Name | Derivation | Example |
 |------|------------|---------|
-| OpenSpec store id | repo **directory** name | `site-config` |
-| Hindsight `bank_id` | repo **directory** name — same string, unrelated system | `site-config` |
-| graph project | repo **path**, leading `/` dropped, `/` → `-` | `Users-you-Documents-GitHub-site-config` |
+| Hindsight `bank_id` | `<dir>-<8 hex of sha256(canonical identity)>` | `huhhb-da43e85b` |
+| OpenSpec store id | repo **directory** name | `huhhb` |
+| graph project | the tool's own: repo **path**, leading `/` dropped, `/` → `-` | `Users-you-Documents-GitHub-huhhb` |
+
+**Why the bank id carries a hash — a bare directory name collides, silently.**
+`PUT` on an existing bank *updates* it, so two unrelated repos both called `app`
+would quietly share one bank and interleave their memories. The suffix is derived
+from **canonical identity**, preferring the `origin` remote over the path so every
+clone of one repo resolves to the same bank while two same-named repos never do:
 
 ```bash
 REPO_ROOT=$(git rev-parse --show-toplevel) || exit 1
-BANK_ID=$(basename "$REPO_ROOT")          # also the OpenSpec store id
+canon=$(git remote get-url origin 2>/dev/null \
+  | sed -E 's#^git@([^:]+):#\1/#; s#^[a-z]+://##; s#^[^@/]+@##; s#\.git$##' | tr 'A-Z' 'a-z')
+[ -n "$canon" ] || canon=$(cd "$REPO_ROOT" && pwd -P)   # no remote → canonical path
+BANK_ID="$(basename "$REPO_ROOT")-$(printf '%s' "$canon" | shasum -a 256 | cut -c1-8)"
+STORE_ID=$(basename "$REPO_ROOT")                        # OpenSpec, machine-local
 ```
+
+Verified: `/tmp/app` and `/srv/app` both yield bank `app` under the old rule and
+`app-d75b6c3b` / `app-dae668e4` under this one. Keep `BANK_ID` raw in config and
+prose; **percent-encode it only when interpolating into a request URL.**
+
+**Guard the destructive steps — the graph name you cannot fix.** The graph project
+name is derived by the *tool*, not by this skill, and it is lossy: `/a-b/c` and
+`/a/b-c` both map to `a-b-c`. You cannot rename it, so verify identity instead.
+`list_projects` reports each project's `root_path` — **match it against
+`$REPO_ROOT` before `delete_project`**, or a clean rebuild can wipe a different
+repo's graph. Apply the same rule to the bank: if one already exists at this id,
+confirm it belongs to this repo before writing.
+
+**Migration.** Repos bootstrapped before this rule have a bare-directory-name bank
+(and the global routing policy still documents that form). Do **not** silently
+create a second bank alongside it. Detect the bare-name bank, report both ids, and
+ask: migrate (create the new id, re-retain, delete the old) or keep the old id
+recorded in `AGENTS.md` as an explicit exception. `OpenSpec store id` stays the
+directory name — it is machine-local and human-typed; if `openspec store register`
+reports that id taken by a different path, disambiguate then and record it.
 
 ### Probe every prerequisite — none of them is fatal
 Each missing prerequisite reports `skipped — <reason>` in the closing checklist
@@ -122,20 +149,24 @@ parent, declare it, parents merge first) → human-authorized merge.
 - Required reviews on `<default-branch>` (see branch protection).
 
 ## Memory & specs — which store owns a fact
-Full map and the overlap rules: `reference.md` §5 of huhhb's `repo-kickstart`.
-The short version, plus the habits that keep these stores from disagreeing.
+This block is self-contained on purpose: it has to work in this repo without
+reaching for a file that lives in some other repo.
 
 - **Structure store** (codebase-memory-mcp) — what the code **is**. Indexed,
   with a committed artifact at `.codebase-memory/graph.db.zst`. Ask it what
   calls what, what breaks if this changes, where something is defined. Never
   ask it *why*.
 - **Experience store** (Hindsight) — **why**, what was rejected and why it
-  lost, failures with their root cause, outcomes. Bank id: `<repo>`. The bank
+  lost, failures with their root cause, outcomes. Bank id: `<bank-id>`. The bank
   is in `verbatim` mode — what you send is stored unchanged, so keeping code
   structure out of it is the writer's job, not the store's.
 - **OpenSpec** — `specs/` is what the system *should* do; `changes/` is what
-  we are changing now, with its public rationale. Store `<repo>`, rooted at
-  `plans/development`; from the repo root every command needs `--store <repo>`.
+  we are changing now, with its public rationale. Store `<store-id>`, rooted at
+  `plans/development`; from the repo root every command needs
+  `--store <store-id>`.
+  **Public rationale vs deliberation:** the change proposal carries the ratified
+  "why"; what did *not* make it — what was feared, tried first, abandoned, and
+  why the rejected option lost — belongs in the bank.
 - **`docs/adr/NNN-title.md`** — ratified decisions with **no capability
   surface** (infra, tooling, process). Capability decisions live in the spec or
   the change; never write the same decision in both. Do **not** use the graph
@@ -163,13 +194,13 @@ what makes them the better join key.
 ### On archive, retain the outcome
 `openspec archive <change>` records that a change completed. It does **not**
 record whether it *worked* — and that gap is this repo's highest-value memory.
-So when you archive, retain ONE memory into bank `<repo>`: the outcome labelled
+So when you archive, retain ONE memory into bank `<bank-id>`: the outcome labelled
 plainly **worked / dead end / corrected**, the root cause of anything that
 failed, and any constraint discovered along the way. One self-contained
 paragraph, in domain language.
 
 ### Drift check — a deliberate practice, not an aside
-`openspec list --specs --store <repo>` is intent; the graph's architecture
+`openspec list --specs --store <store-id>` is intent; the graph's architecture
 summary is reality. Compare them on purpose, periodically. Divergence is
 **information, not a conflict to reconcile** — it means the specs or the code
 moved and nobody wrote it down.
@@ -252,7 +283,7 @@ _Status: proposed · in-progress · in-review · archived._
 
 Implementation plans and the living index (`00-implementation-plan.md`).
 This dir is the **OpenSpec store root** — `openspec/` lives here (registered as
-store `<repo>`), so active changes are `openspec/changes/<slug>/`.
+store `<store-id>`), so active changes are `openspec/changes/<slug>/`.
 ```
 
 ### plans/architecture/README.md
@@ -315,7 +346,7 @@ stores in view. Append to the `context:` prose:
 > Memory routing for this repo: structural questions — what calls what, blast
 > radius, where something is defined — go to the codebase-memory graph;
 > rationale, rejected alternatives and outcomes go to the Hindsight bank
-> `<repo>`. On `openspec archive`, retain one memory into that bank recording
+> `<bank-id>`. On `openspec archive`, retain one memory into that bank recording
 > whether the change worked, labelled worked / dead end / corrected, with the
 > root cause of anything that failed. Write memories in domain language, not
 > identifiers.
@@ -427,9 +458,19 @@ The auto-generated line is `graph.db.zst merge=ours binary`, and **it does not
 work**: `binary` is a git macro expanding to `-diff -merge -text`, so trailing it
 unsets `merge=ours`. Repair by reversing the order:
 
+**Rewrite only the `graph.db.zst` rule — never truncate the file.** The tool
+writes it, but a human may have added rules beside it, and `>` would delete them.
+That would also break this skill's own Golden Rule.
+
 ```bash
-printf '# Reordered so merge=ours survives the binary macro\ngraph.db.zst binary merge=ours\n' \
-  > "$REPO_ROOT/.codebase-memory/.gitattributes"
+GA="$REPO_ROOT/.codebase-memory/.gitattributes"
+touch "$GA"
+if grep -q '^graph\.db\.zst[[:space:]]' "$GA"; then          # replace in place
+  tmp=$(mktemp)
+  sed 's#^graph\.db\.zst[[:space:]].*#graph.db.zst binary merge=ours#' "$GA" > "$tmp" && mv "$tmp" "$GA"
+else                                                          # or append one line
+  printf '# Reordered so merge=ours survives the binary macro\ngraph.db.zst binary merge=ours\n' >> "$GA"
+fi
 git check-attr merge -- .codebase-memory/graph.db.zst   # must now print: merge: ours
 ```
 
@@ -448,7 +489,7 @@ bootstrap from the artifact instead of paying a full re-index.
 ### 4.2 Hindsight — the experience store
 
 Base URL from §0's probe (`$HS`) — never a hardcoded literal. One bank per repo,
-`bank_id` = the repo directory name.
+`bank_id` derived per §0 — never a bare directory name.
 
 **Step 1 — create the bank.** `PUT $HS/v1/default/banks/$BANK_ID` — idempotent by
 API design: `PUT` on an existing bank updates rather than duplicating.
@@ -694,7 +735,7 @@ Required reviews on the default branch are a precondition for pr-shepherd.
 ---
 
 ## 7. Verification checklist — the closing report
-```
+```text
 repo-kickstart — <owner>/<repo> (<greenfield|brownfield>, <stack>)
 
   item                         status
@@ -742,13 +783,13 @@ alternative back, and a domain-language recall that actually returned the charte
 | KICKSTART / ARCHITECTURE | file exists |
 | plans tree | `plans/development/00-implementation-plan.md` + both READMEs exist |
 | plans/product | `plans/product/README.md` exists (content optional — inception is opt-in, never mandatory) |
-| OpenSpec | `plans/development/openspec/config.yaml` + `.openspec-store/store.yaml` (id `<repo>`) exist; `openspec store list` includes `<repo>` (else re-run `register` — it no-ops) |
+| OpenSpec | `plans/development/openspec/config.yaml` + `.openspec-store/store.yaml` (id `<store-id>`) exist; `openspec store list` includes `<store-id>` (else re-run `register` — it no-ops) |
 | OpenSpec context | `config.yaml` `context:` already names the bank id and the graph/rationale split |
 | AGENTS.md memory block | AGENTS.md carries the `## Memory & specs` heading and it names this repo's bank id |
 | `.cbmignore` | file exists and already contains the always-list, the `<stack>` entries and the secrets entries — append-only, so a re-run adds no line |
 | graph index | `index_status` reports the project indexed; `.codebase-memory/graph.db.zst` exists and is committed |
 | graph merge attr | `git check-attr merge -- .codebase-memory/graph.db.zst` prints `merge: ours` |
-| Hindsight bank | bank `<repo>` exists. The mode is **not readable**, so re-apply the `verbatim` PATCH every run — idempotent, and it changes no content. "Bank exists" alone is never evidence the mode is right |
+| Hindsight bank | bank `<bank-id>` exists (derived per §0, **not** a bare directory name). The mode is **not readable**, so re-apply the `verbatim` PATCH every run — idempotent, and it changes no content. "Bank exists" alone is never evidence the mode is right |
 | charter | a domain-language recall against the bank returns a charter-like memory |
 | capture hooks | `.githooks/` present and `git config core.hooksPath` = `.githooks` |
 | Honcho | evolve reports the workspace scoped. `local` mode, unconfigured, and endpoint-without-SDK are **terminal states, not gaps to fix here** — report which one and move on |

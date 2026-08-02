@@ -127,8 +127,12 @@ records below have stricter update rules — supersede, never edit or delete.
 ## Record Contract (agent-written records — buhhdy)
 
 When an agent writes memory autonomously — buhhdy's Workflow 2 `grounding`
-step, pr-shepherd's post-merge close-out — the memory is a **record**: same
-one-file-per-fact format as above, plus these fields and constraints.
+step, or pr-shepherd's post-merge close-out **on a repo with no Hindsight bank**
+— the memory is a **record**: same one-file-per-fact format as above, plus these
+fields and constraints. In a bootstrapped repo pr-shepherd retains its outcome
+into the bank instead and writes no record here, so treat this contract as the
+no-bank fallback path rather than an unconditional one; expecting a record from
+every merge is how you end up with the outcome stored twice.
 
 Extra frontmatter on a record:
 
@@ -216,7 +220,8 @@ The contract above is enforced and fed by three hooks (plan:
 - **PR consolidation** — a PostToolUse hook on `gh pr create` instructs
   the session to consolidate + `/simplify` the journal into ONE outcome
   paragraph and **`sync_retain` it into the repo's Hindsight bank**
-  (`bank_id` = the repo directory name), deleting the journal in the same
+  (`bank_id` derived per repo-kickstart §0 — **not** a bare directory name,
+  which collides across same-named repos), deleting the journal in the same
   commit; pr-shepherd's close-out is the fallback for PRs created outside
   Claude Code. `wip/` journals are staging — exempt from the Record
   Contract, and the lint skips them by construction.
@@ -225,8 +230,29 @@ The contract above is enforced and fed by three hooks (plan:
   is unchanged, the terminal write moved.** The journal is now draft
   material for a bank retain rather than for a `.claude/memory/` record —
   consolidating a branch's per-commit lines into one paragraph is most of
-  the work of writing a good outcome memory either way. Use `sync_retain`,
-  not `retain`: an `accepted` receipt is not a verified write.
+  the work of writing a good outcome memory either way.
+
+### Retention state machine — two paths, one outcome
+
+The hook fires at PR creation and pr-shepherd fires after merge. Both would
+otherwise retain the same branch's outcome, and neither can see what the other
+did. Three rules make them one idempotent operation:
+
+1. **Recall before retaining.** Query the bank for an outcome memory naming this
+   branch or PR. Found → **skip the retain** and report "already retained"; the
+   second path is a *retry*, never a second write. Put the branch name and PR
+   number in the memory's text and `context` so this lookup can actually find it —
+   an outcome nothing can search for is an outcome that gets written twice.
+2. **Use `sync_retain`, never `retain`.** An `accepted` receipt is not a verified
+   write, so it cannot gate anything.
+3. **Delete the journal only after `status: completed`.** If the retain fails or
+   the bank is unreachable, **keep the journal and say so** — it is the retry
+   buffer, and deleting it on a failed write destroys the only copy of the
+   branch's capture. A journal that outlives its PR is a visible, recoverable
+   problem; a deleted one is silent data loss.
+
+With no bank at all, both paths fall back to a `.claude/memory/` record under the
+Record Contract, and the same recall-first rule applies as a file-existence check.
 
 ## Searching Memory
 

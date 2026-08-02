@@ -33,13 +33,17 @@
       "set up two-store memory on this machine",
       "install codebase-memory-mcp and hindsight",
       "configure memory on my device",
-      "verify my two-store memory setup"
+      "verify my two-store memory setup",
+      "both memory servers show connected but none of their tools are callable",
+      "my recall returns nothing useful even though everything reports healthy"
     ],
     "negative": [
       "is my memory set up right",
       "save this to repo memory",
       "bootstrap this repo into our conventions",
-      "review the skill library"
+      "review the skill library",
+      "set up two-store memory here",
+      "index this repo and create its memory bank"
     ]
   }
 }

@@ -1,6 +1,6 @@
 ---
 name: two-store-memory-setup
-description: Use when installing, repairing, or verifying the two-store agent-memory architecture on a machine — a code-graph store (codebase-memory-mcp) for structural truth plus an experience store (Hindsight) for decisions and outcomes. Triggers on "set up two-store memory", "install codebase-memory-mcp", "install hindsight", "configure the memory stores on this machine", "my memory routing policy isn't working", "verify my two-store setup". Not for general memory health checks — see memory-onboarding.
+description: Use when installing, repairing, or verifying the two-store agent-memory architecture on a machine — a code-graph store (codebase-memory-mcp) for structural truth plus an experience store (Hindsight) for decisions and outcomes. Triggers on "set up two-store memory", "install codebase-memory-mcp", "install hindsight", "configure the memory stores on this machine", "verify my two-store setup", and on symptoms: both MCP servers show connected but none of their tools are callable, recall returns nothing useful while everything reports healthy, the code graph never self-indexes or stays empty, retains report accepted but never land, the routing policy is not loading. Machine scope — per-repo bootstrap is repo-kickstart; general memory health is memory-onboarding.
 ---
 
 # two-store-memory-setup

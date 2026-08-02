@@ -114,9 +114,12 @@ looks healthy** — the store is silently write-dead. Fix is a Phase 2 flag.
 
 ### Phase 1 — codebase-memory-mcp (structure store)
 
-1. Fetch the installer, show it, wait for approval. Report what it downloads,
-   whether checksum verification is mandatory or bypassable, what it writes,
-   and which step is opaque to you.
+1. **Save the installer to a file — never pipe it into a shell.** Download the
+   exact bytes, verify the checksum or signature against the published value,
+   show the file, wait for approval, then execute *that saved file*. Piping
+   re-downloads at run time, so what executes is not what was reviewed. Report
+   what it downloads, whether checksum verification is mandatory or bypassable,
+   what it writes, and which step is opaque to you.
 2. **Snapshot every file it could touch**, including other agents' configs from
    0b. Record hashes.
 3. Check `--help` for `--dry-run` even if the README does not mention one. Use
@@ -132,7 +135,7 @@ looks healthy** — the store is silently write-dead. Fix is a Phase 2 flag.
    raising the ceiling.
 
 ```bash
-# 1. measure the largest real repo first; 50000 below is an example, not a default to accept
+# 1. measure the largest real repo first; the limit below must come from that count
 codebase-memory-mcp config set auto_index true          # ships false — MUST set
 codebase-memory-mcp config set auto_index_limit <derived> # from the count above
 codebase-memory-mcp config set auto_watch true          # already default; be explicit
@@ -344,7 +347,7 @@ reference tools that no longer exist.
 | Log says `ui.serving` but nothing listens | Server run with `</dev/null` reads EOF and exits **[verified]** | Hold stdin open |
 | Installer printed "Skipping agent configuration" but ten files changed | `--skip-config` accepted and ignored (0.9.0) **[verified]** | Treat any promise not to write as unverified until the diff proves it |
 | `update` uses a weaker URL check than the reviewed script | The release-bundled installer copy ≠ the copy on main; loose `case` pattern `http://localhost*` prefix-matches `http://localhost.example.com` **[verified]** | Re-download from the reviewed source and compare hashes; never trust the on-disk copy |
-| Containment "confirmed" by an exit code | Exit 1 also means "not a git repo" **[verified]** | Control test: same path with the variable unset must succeed |
+| Containment "confirmed" by an exit code | Exit 1 also means "not a git repo" **[verified]** | Control test: same path with the variable unset must succeed — run **once**, against a disposable fixture holding nothing sensitive, then delete the index it created. Normal operation fails closed |
 | Containment applies in the terminal but not in the desktop app | Profile variables do not reach MCP servers launched by the app **[verified]** | Set `CBM_ALLOWED_ROOT` in `~/.claude/settings.json` `env` too |
 | A newly-ignored path's nodes are still queryable after a re-index | `.cbmignore` gates the *next* index; it does not retract existing nodes **[verified]**. The index response is not the signal you want: a **full rebuild** does list its excluded dirs, but the **incremental** path retracts nothing while reporting success, and node count drifts for unrelated reasons because the artifact directory indexes itself | `delete_project`, remove the artifact, re-index, then **enumerate the indexed file list** — that is the only thing that proves absence |
 | `git check-attr merge` prints `merge: unset` on a line that looks right | `graph.db.zst merge=ours binary` — `binary` is a macro expanding to `-diff -merge -text` and unsets the preceding `merge=ours` **[verified]** | Reverse the order: `graph.db.zst binary merge=ours` |
@@ -408,7 +411,9 @@ Two stores. They never hold the same fact.
   source for free, authoritative on call graphs, blast radius, dead code,
   routes, architecture. Never authoritative on why.
 - Experience store: what HAPPENED and WHY — decisions, attempts, outcomes,
-  preferences. Nothing rebuilds it; it is the only copy. Never authoritative
+  preferences. Nothing rebuilds it; it is the only copy of those among the two
+  stores — committed ADRs remain the durable record of ratified decisions.
+  Never authoritative
   on what the code currently looks like.
 
 Name derivation between them: bank id = basename(repo_root); the graph's

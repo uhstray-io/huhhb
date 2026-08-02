@@ -5,10 +5,14 @@
 #
 # Changing anything here does NOT retract nodes already in the graph — the
 # incremental path keeps them. After editing, force a clean rebuild:
-#   1. resolve this checkout's project id — list_projects and match on
-#      root_path; it is derived from the absolute path, so it differs per
-#      checkout and must never be hardcoded
-#   2. delete_project(project=<resolved id>)
+#   1. resolve this checkout's project id — list_projects, and keep only the
+#      entries whose root_path equals the canonical repo root (resolve
+#      symlinks first). The id derives from the absolute path, so it differs
+#      per checkout and must never be hardcoded.
+#      Require EXACTLY ONE match. Abort on zero (nothing to rebuild) and abort
+#      on more than one (ambiguous) — never take the first result, or you will
+#      delete a stale or unrelated project.
+#   2. delete_project(project=<the single resolved id>)
 #   3. index_repository(repo_path=<repo root>, persistence=true)
 # then enumerate the indexed file list to prove the paths are gone.
 

@@ -19,8 +19,10 @@ All available skills in the Uhstray.io marketplace.
 
 ### Two-store memory (current routing)
 
-Stores are a code graph for structural truth and an experience store for
-decisions and outcomes. This is the architecture on the routing path.
+The two stores are **codebase-memory-mcp** (code graph — structural truth,
+regenerated from source) and **Hindsight** (experience store — decisions,
+rationale and outcomes, the only copy). This is the architecture on the
+routing path.
 
 | Skill | Command | Description |
 |-------|---------|-------------|

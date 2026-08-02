@@ -154,8 +154,15 @@ Force a clean rebuild whenever step 1 changed anything.
 mkdir -p "$BACKUP_DIR"
 cp "$REPO_ROOT/.codebase-memory/graph.db.zst" "$BACKUP_DIR/" 2>/dev/null || true
 ```
+Resolve the project id rather than hardcoding it, and **require exactly one
+match** — abort on zero (nothing to rebuild) and on more than one (ambiguous).
+Taking the first result can delete a stale or unrelated project.
+
 ```text
-delete_project(project="<resolve from list_projects by root_path — never hardcode>")
+list_projects()   → keep entries whose root_path == the canonical $REPO_C
+                    exactly one  → proceed
+                    zero or many → STOP and report
+delete_project(project="<the single resolved id>")
 ```
 ```bash
 rm -f "$REPO_ROOT/.codebase-memory/graph.db.zst"   # keep .gitattributes; see step 3

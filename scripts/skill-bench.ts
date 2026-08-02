@@ -132,6 +132,11 @@ export function runScenario(scenario: Scenario, runs: number, baseline: boolean)
       const envOverrides = envEntries.length ? Object.fromEntries(envEntries) : null;
       const data = runClaude(scenario.prompt, extra, 600, envOverrides);
       writeFileSync(join(workdir, "result.txt"), String(data.result ?? ""));
+      // turns.txt lets an assert distinguish "actually used tools" from
+      // "wrote a fluent description of using them" — result.txt is the final
+      // text only, so prose alone can satisfy a content grep. A pure
+      // text answer is 1 turn; each tool round-trip adds one.
+      writeFileSync(join(workdir, "turns.txt"), String(Number(data.num_turns) || 0));
       const check = spawnSync("sh", ["-c", scenario.assert], {
         cwd: workdir, timeout: 60_000, maxBuffer: MAX_BUFFER,
       });

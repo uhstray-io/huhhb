@@ -8,7 +8,10 @@ description: Use when installing, repairing, or verifying the two-store agent-me
 Install, repair and verify the **device-level** two-store memory architecture.
 The code-graph store holds structural truth and is regenerated from source for
 free; the experience store holds decisions, rationale and outcomes and is the
-**only copy**. They never hold the same fact.
+**only copy of them among the two stores** — nothing regenerates it. Committed
+ADRs under `docs/adr/` remain the durable repository record of *ratified*
+decisions; the store holds the deliberation behind them. The two stores never
+hold the same fact.
 
 **Scope:** this skill owns the machine — install, bind, configure, routing
 policy. A single repo's ignore file, index, bank and charter belong to the
@@ -18,8 +21,10 @@ policy. A single repo's ignore file, index, bank and charter belong to the
 ## Three rules that outrank convenience
 
 **1. A tool's self-report is not evidence.** Fetch current upstream docs before
-any install command; where they differ from this skill, follow the docs and
-report the delta. Then for every claim, state what would prove it **false** and
+any install command and use them for **tool-specific syntax** — commands, flag
+names, paths — reporting the delta where they differ. Upstream docs never
+override a gate or a safety step in this skill: if they conflict, stop and get
+human approval. Then for every claim, state what would prove it **false** and
 run that — prefer a control (once with the setting, once without) over a status
 line. No falsifiable test available? Say **unverified**.
 
@@ -51,7 +56,7 @@ Batching a gate into an end-of-run report is skipping it.
 | Set this | Ships as | Cost of skipping |
 | -------- | -------- | ---------------- |
 | `auto_index true` | **`false`** | nothing ever self-indexes; the store stays permanently empty |
-| `CBM_ALLOWED_ROOT` in the shell profile **and** `settings.json` `env` | unset | containment silently absent in the desktop app and IDE extensions — where subagents run |
+| `CBM_ALLOWED_ROOT` in the shell profile **and** `settings.json` `env` | unset — and unset means **no containment at all** | containment silently absent in the desktop app and IDE extensions, which is where subagents run. Missing or mismatched in any runtime: **stop setup**, do not proceed unprotected |
 | `HINDSIGHT_API_HOST=127.0.0.1` + the UI host flag | **`0.0.0.0`** | memory store on the LAN; the control plane has no API key |
 | DB port pinned, e.g. `pg0://hindsight:55432` | 5432 | connects to your *other* Postgres: `role "hindsight" does not exist` |
 | extraction mode `verbatim` | `concise` | rejected alternatives silently dropped — the content that justifies this store existing |
@@ -60,11 +65,17 @@ Batching a gate into an end-of-run report is skipping it.
 The pg0 **instance name is the data directory** — changing it silently starts
 an empty database. Only the port is safe to vary.
 
-**Phase 1 gate, in full:** out-of-root path refused; **the same path with
-`CBM_ALLOWED_ROOT` unset must succeed**; symlink inside the root pointing out;
-`../` traversal; prefix sibling (`…GitHubOutside`). Read the refusal reason
-from the worker log — exit 1 also means "not a git repo". Then delete the index
-the control test created.
+**Phase 1 gate, in full:** an out-of-root path refused; a symlink inside the
+root pointing out; a `../` traversal; a prefix sibling (`…GitHubOutside`). Read
+the refusal reason from the worker log — exit 1 also means "not a git repo".
+
+One of these runs is a **deliberate negative control**: the same path with
+`CBM_ALLOWED_ROOT` unset **must succeed**, or the refusals above prove nothing
+— they could equally be the tool failing for an unrelated reason. Run it once,
+against a **disposable fixture directory holding nothing sensitive**, then
+delete the index it created and confirm the store is clean. That single run is
+the only place unset is acceptable. **Normal operation fails closed:** if any
+runtime lacks the configured root, stop rather than index unprotected.
 
 ## Verified defects — symptom first
 
@@ -98,7 +109,9 @@ it. **The writer is the filter.**
 
 ## Red flags — STOP
 
-- `curl | bash` without downloading, reading and showing the script first
+- Piping remote content into a shell — **ever**. Save the exact bytes, verify
+  the checksum or signature, read the file, get approval, then execute *that
+  saved file*. A reviewed pipeline is still an unreviewed download at run time
 - Accepting an exit code, a status line, or `✔ Connected` as proof
 - Proceeding past a gate because the human said not to ask questions
 - Writing a number into the policy that you did not measure

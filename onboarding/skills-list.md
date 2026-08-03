@@ -28,7 +28,7 @@ routing path.
 | Skill | Command | Description |
 |-------|---------|-------------|
 | memory-setup | `/memory-setup` | Use when installing, repairing, or verifying the two-store agent-memory architecture on a machine — a code-graph store for structural truth plus an experience store for decisions and outcomes. Gated phases, control-test verification at every gate, a catalogue of verified defects indexed by symptom, and the per-repo `memory-init` command it writes |
-| repo-memory | `/repo-memory` | Repo-local memory in `.claude/memory/` — committed to git, no external service |
+| repo-memory | `/repo-memory` | Architecture decision records in `plans/architecture/` — master index by domain, a per-year decision log, monthly detail files. Append-only, supersede-never-edit. Committed to git and reviewable in the PR that changes them |
 
 ### MemPalace (retired from routing)
 

@@ -25,7 +25,12 @@ it live here. Current-state capability specs live in the store at
 
 ## Promotion from an OpenSpec change
 
-`promote-adr.ts` extracts a change's `design.md` `## Decisions` section into the decision
-log on archive. The mechanism is `openspec-conformance`'s; the **records are
-`repo-memory`'s**, and they land in the monthly file with rows added to both indexes. Do
-not hand-number ADRs when promoting.
+`promote-adr.ts` extracts a change's `design.md` `## Decisions` section into a numbered
+ADR on archive. The mechanism is `openspec-conformance`'s; the **records are
+`repo-memory`'s**. Do not hand-number ADRs when promoting.
+
+> **Pending migration.** `promote-adr.ts` still writes the old flat
+> `plans/architecture/NNN-<slug>.md` shape and does not update `DECISIONS.md` or the year
+> `INDEX.md`. Until it is retargeted, a promoted ADR must be folded into the monthly file
+> and both indexes by hand, or it will not appear in either index. Tracked as the
+> remaining task in this migration; ADR-0003 records the decision it has to implement.

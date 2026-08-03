@@ -666,6 +666,21 @@
         "hindsight"
       ],
       "version": "0.1.0"
+    },
+    {
+      "name": "fix-memory",
+      "path": "skills/fix-memory/SKILL.md",
+      "description": "Use when a memory artifact is in the wrong place and needs moving to the store that owns it — a record flagged by a conformance check, a legacy .claude/memory/ file, a decision buried in a commit body, or notes under plans/. Routes each fact to exactly one home: regenerable structure is deleted (the code graph rebuilds it), ratified decisions become ADRs, deliberation goes to the repo bank, cross-project preferences to personal. One artifact at a time, ask-first, never bulk.",
+      "category": "memory",
+      "tags": [
+        "memory",
+        "migration",
+        "conformance",
+        "adr",
+        "hindsight",
+        "triage"
+      ],
+      "version": "0.1.0"
     }
   ]
 }

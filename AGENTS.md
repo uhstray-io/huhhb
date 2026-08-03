@@ -95,6 +95,16 @@ Three measured gates — full criteria, thresholds, and the improvement loop in
   the real config dir). And `--runs 1` reuses a cached baseline from
   `tests/bench/history.jsonl`; use `--runs 3 --rebaseline` when the verdict
   has to mean something.
+
+  **Reading `history.jsonl` as a trend.** Every row carries the repo `commit`, so
+  `git archive <sha>` reconstructs exactly the code a measurement was taken against —
+  that file, not the plugin cache, is the durable record. Two discontinuities to respect
+  when comparing across time: `prompt_hash` covered only the prompt before `347a5cb` and
+  covers prompt + assert after it, so rows either side of that commit never match even
+  for an unchanged scenario, and an earlier same-hash pair may have had different
+  asserts. And rows with `tokens: 0, cost: 0, turns: 1` are empty runs — a rate limit
+  returning nothing, not a failure; seven such rows were purged in `9616fb1f`, and any
+  that reappear should be purged rather than read as a regression.
 - **G2 field promotion** (`node scripts/evolve/g2.ts report`) — evolve-loop
   telemetry (earned confidence, correction pressure) gates featured/pinned
   status.

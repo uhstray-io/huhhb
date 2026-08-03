@@ -17,7 +17,7 @@ bank. It writes nowhere else. Hand off rather than absorbing:
 | Repo or project CLAUDE.md quality, coverage, audit | `claude-md-management:claude-md-improver` |
 | Fold this session's learnings into a repo file | `/revise-claude-md` |
 | settings.json, hooks, permissions, env vars | `update-config` |
-| Installing or repairing the memory stores | `two-store-memory-setup` |
+| Installing or repairing the memory stores | `memory-setup` |
 
 If the request is about a *repository's* instructions, say so and route. Do not start
 an interview.

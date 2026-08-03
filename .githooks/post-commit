@@ -34,4 +34,10 @@ mkdir -p .claude/memory/wip
   printf -- '- %s · %s · %s (%s files)\n' "$(date +%F)" "$branch" "$subject" "$count"
   [ -n "$body_first" ] && printf -- '  %s\n' "$body_first"
 } >> ".claude/memory/wip/${slug}.md"
+
+# ADR nudge — print-only, never blocks. See skills/repo-memory/SKILL.md.
+if [ -x hooks/repo-memory-adr-check.sh ]; then
+  sh hooks/repo-memory-adr-check.sh || true
+fi
+
 exit 0

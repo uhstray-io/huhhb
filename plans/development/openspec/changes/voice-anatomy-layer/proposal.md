@@ -82,7 +82,7 @@ None — the store has no archived baseline specs; all three are new.
   points at `user-kickstart/reference.md` for the shared banned-phrase list. Valid —
   the plugin ships as one unit — but it is a new pattern in this tree.
 - No change to `claude-md-improver`, `/revise-claude-md`, `update-config`,
-  `memory-onboarding`, or `two-store-memory-setup`; `user-kickstart` routes to each of
+  `memory-onboarding`, or `memory-setup`; `user-kickstart` routes to each of
   them by name rather than absorbing their scope.
 
 ## Rollback Plan

@@ -1,16 +1,26 @@
 /* Offline check for the ADR promotion helper (skills/openspec-conformance).
    Run: node --test tests/test_openspec_conformance.test.ts
-   Guards the criterion-3 contract: one ADR + one index row, no dup, and the
-   no-Decisions path promotes zero ADRs. Node stdlib only. */
+
+   Promotion targets the repo-memory ADR store (ADR-0003): records append into
+   plans/architecture/YYYY/YYYY-MM.md, with a row in that year's INDEX.md and a
+   line in DECISIONS.md. Numbering is ADR-NNNN, globally sequential across every
+   month and never reused. Guards: one record + one index row, no duplicate on
+   re-run, and the no-Decisions path promotes nothing. Node stdlib only. */
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, readdirSync, existsSync } from "node:fs";
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, existsSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const SCRIPT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "skills", "openspec-conformance", "promote-adr.ts");
+const DATE = "2026-08-15"; // pinned so the target month file is deterministic
+const MONTH = join("2026", "2026-08.md");
+const YEAR_INDEX = join("2026", "INDEX.md");
+
+const read = (root: string, ...p: string[]) => readFileSync(join(root, "plans", "architecture", ...p), "utf-8");
+const monthOf = (root: string) => read(root, MONTH);
 
 function scaffold(designBody: string): string {
   const root = mkdtempSync(join(tmpdir(), "opsx-"));
@@ -23,6 +33,9 @@ function scaffold(designBody: string): string {
     "| add-widget | W | in-review | @j | [tasks](t) |\n");
   return root;
 }
+
+const run = (root: string, ...extra: string[]) =>
+  execFileSync("node", [SCRIPT, join(root, "plans"), ...extra, "--date", DATE], { encoding: "utf-8" });
 
 const WITH_DECISIONS = `## Context
 
@@ -41,44 +54,87 @@ Panels duplicate refresh logic.
 Flag off to roll back.
 `;
 
-test("promotes exactly one ADR and updates exactly one index row", () => {
+test("promotes one record into the month file and wires both indexes", () => {
   const root = scaffold(WITH_DECISIONS);
-  execFileSync("node", [SCRIPT, join(root, "plans"), "2026-07-15-add-widget"], { encoding: "utf-8" });
+  run(root, "2026-07-15-add-widget");
 
-  const adrs = readdirSync(join(root, "plans", "architecture"));
-  assert.deepEqual(adrs, ["001-add-widget.md"], "exactly one ADR");
+  const month = monthOf(root);
+  assert.match(month, /^## ADR-0001 — add-widget$/m, "record headed ADR-NNNN — slug");
+  assert.match(month, /Declarative config/, "carries the Decisions content");
+  assert.doesNotMatch(month, /Migration Plan/, "does NOT copy the full design doc");
+  assert.match(month, /design\.md\)/, "links back to the source design");
+  assert.match(month, /\*\*Status:\*\*/, "uses the template's field block");
 
-  const adr = readFileSync(join(root, "plans", "architecture", "001-add-widget.md"), "utf-8");
-  assert.match(adr, /Declarative config/, "carries the Decisions content");
-  assert.doesNotMatch(adr, /Migration Plan/, "does NOT copy the full design doc");
-  assert.match(adr, /design\.md\)/, "links back to the source design");
+  assert.match(read(root, YEAR_INDEX), /\|\s*ADR-0001\s*\|/, "year index has a row");
+  assert.match(read(root, "DECISIONS.md"), /ADR-0001/, "master index references it");
 
   const idx = readFileSync(join(root, "plans", "development", "00-implementation-plan.md"), "utf-8");
-  const archivedRows = idx.split("\n").filter((l) => /\|\s*archived\s*\|/.test(l));
-  assert.equal(archivedRows.length, 1, "exactly one row flipped to archived");
-  assert.match(idx, /ADR 001/, "index links the ADR");
+  assert.equal(idx.split("\n").filter((l) => /\|\s*archived\s*\|/.test(l)).length, 1, "exactly one row flipped");
+  assert.match(idx, /ADR-0001/, "implementation-plan row links the ADR");
 });
 
-test("re-running is idempotent — no duplicate ADR, no double-appended link", () => {
+test("re-running is idempotent — no duplicate record, no double-appended rows", () => {
   const root = scaffold(WITH_DECISIONS);
-  const run = () => execFileSync("node", [SCRIPT, join(root, "plans"), "2026-07-15-add-widget"], { encoding: "utf-8" });
-  run();
-  run(); // second run must be a no-op
-  assert.deepEqual(readdirSync(join(root, "plans", "architecture")), ["001-add-widget.md"], "still exactly one ADR");
+  run(root, "2026-07-15-add-widget");
+  run(root, "2026-07-15-add-widget");
+
+  assert.equal(monthOf(root).match(/^## ADR-/gm)?.length, 1, "still exactly one record");
+  assert.equal(read(root, YEAR_INDEX).match(/\|\s*ADR-0001\s*\|/g)?.length, 1, "year index row written once");
+  assert.equal(read(root, "DECISIONS.md").match(/ADR-0001/g)?.length, 1, "master index line written once");
   const idx = readFileSync(join(root, "plans", "development", "00-implementation-plan.md"), "utf-8");
-  assert.equal(idx.match(/ADR 001/g)?.length, 1, "ADR link appended exactly once");
+  assert.equal(idx.match(/ADR-0001/g)?.length, 1, "ADR link appended exactly once");
 });
 
-test("no ## Decisions section promotes zero ADRs but still updates the index", () => {
+test("numbering is global across months, not per-file", () => {
+  const root = scaffold(WITH_DECISIONS);
+  // a record already exists in an EARLIER month — the next number must be 0008
+  mkdirSync(join(root, "plans", "architecture", "2026"), { recursive: true });
+  writeFileSync(join(root, "plans", "architecture", "2026", "2026-05.md"),
+    "# 2026-05\n\n## ADR-0007 — something-else\n\n- **Status:** Accepted\n");
+  run(root, "2026-07-15-add-widget");
+
+  assert.match(monthOf(root), /^## ADR-0008 — add-widget$/m, "continues from the highest number anywhere");
+  assert.doesNotMatch(monthOf(root), /ADR-0007/, "does not reuse or move the earlier record");
+});
+
+test("no ## Decisions section promotes nothing but still flips the index row", () => {
   const root = scaffold("## Context\n\nTrivial doc-only change.\n");
-  execFileSync("node", [SCRIPT, join(root, "plans"), "2026-07-15-add-widget"], { encoding: "utf-8" });
-  assert.equal(readdirSync(join(root, "plans", "architecture")).length, 0, "no ADR");
+  run(root, "2026-07-15-add-widget");
+  assert.equal(existsSync(join(root, "plans", "architecture", MONTH)), false, "no month file created");
   const idx = readFileSync(join(root, "plans", "development", "00-implementation-plan.md"), "utf-8");
   assert.match(idx, /\|\s*archived\s*\|/, "index row still flipped");
 });
 
+test("exact-slug match: an existing add-widget record does not block promoting 'widget'", () => {
+  const root = mkdtempSync(join(tmpdir(), "opsx-"));
+  mkdirSync(join(root, "plans", "architecture", "2026"), { recursive: true });
+  writeFileSync(join(root, "plans", "architecture", "2026", "2026-08.md"),
+    "# 2026-08\n\n## ADR-0001 — add-widget\n\n- **Status:** Accepted\n");
+  const changeDir = join(root, "plans", "development", "openspec", "changes", "archive", "2026-07-16-widget");
+  mkdirSync(changeDir, { recursive: true });
+  writeFileSync(join(changeDir, "design.md"), WITH_DECISIONS);
+  writeFileSync(join(root, "plans", "development", "00-implementation-plan.md"),
+    "# idx\n\n| Change | Title | Status | Owner | Links |\n|--|--|--|--|--|\n" +
+    "| add-widget | W | archived | @j | [ADR-0001](../architecture/2026/2026-08.md) |\n" +
+    "| widget | Wid | in-review | @j | [tasks](t) |\n");
+
+  run(root, "2026-07-16-widget");
+
+  const month = monthOf(root);
+  assert.match(month, /^## ADR-0001 — add-widget$/m, "the unrelated record survives");
+  assert.match(month, /^## ADR-0002 — widget$/m, "widget gets its own new record");
+  const idx = readFileSync(join(root, "plans", "development", "00-implementation-plan.md"), "utf-8");
+  const widgetRow = idx.split("\n").find((l) => /^\|\s*widget\s*\|/.test(l)) ?? "";
+  assert.match(widgetRow, /archived/, "the widget row flipped");
+  assert.match(widgetRow, /ADR-0002/, "widget row links its own record");
+  assert.equal(idx.split("\n").find((l) => /^\|\s*add-widget\s*\|/.test(l)),
+    "| add-widget | W | archived | @j | [ADR-0001](../architecture/2026/2026-08.md) |",
+    "the unrelated add-widget row is untouched");
+});
+
 /* Source-file mode (inception promotion): promotes ## Decisions from an
-   arbitrary file (plans/product/<slug>/architecture.md), no index involved. */
+   arbitrary file (plans/product/<slug>/architecture.md), no implementation
+   plan involved. */
 function scaffoldProduct(archBody: string): string {
   const root = mkdtempSync(join(tmpdir(), "opsx-"));
   const productDir = join(root, "plans", "product", "acme-app");
@@ -101,68 +157,85 @@ Modular monolith.
 - Sharding.
 `;
 
-test("source-file mode promotes one ADR from architecture.md and never touches the index", () => {
+test("source-file mode promotes one record and never touches the implementation plan", () => {
   const root = scaffoldProduct(ARCH_WITH_DECISIONS);
   mkdirSync(join(root, "plans", "development"), { recursive: true });
   writeFileSync(join(root, "plans", "development", "00-implementation-plan.md"), "untouched-sentinel");
-  execFileSync("node", [SCRIPT, join(root, "plans"),
-    "--from", join(root, "plans", "product", "acme-app", "architecture.md"),
-    "--slug", "acme-app"], { encoding: "utf-8" });
+  run(root, "--from", join(root, "plans", "product", "acme-app", "architecture.md"), "--slug", "acme-app");
 
-  assert.deepEqual(readdirSync(join(root, "plans", "architecture")), ["001-acme-app.md"], "exactly one ADR");
-  const adr = readFileSync(join(root, "plans", "architecture", "001-acme-app.md"), "utf-8");
-  assert.match(adr, /AD-1: Postgres over SQLite/, "carries the Decisions content");
-  assert.doesNotMatch(adr, /Deferred/, "does NOT copy the full architecture doc");
-  assert.match(adr, /architecture\.md\)/, "links back to the source file");
+  const month = monthOf(root);
+  assert.match(month, /^## ADR-0001 — acme-app$/m, "exactly one record");
+  assert.match(month, /AD-1: Postgres over SQLite/, "carries the Decisions content");
+  assert.doesNotMatch(month, /Deferred/, "does NOT copy the full architecture doc");
+  assert.match(month, /architecture\.md\)/, "links back to the source file");
   assert.equal(readFileSync(join(root, "plans", "development", "00-implementation-plan.md"), "utf-8"),
-    "untouched-sentinel", "index file is not modified in source-file mode");
+    "untouched-sentinel", "implementation plan is not modified in source-file mode");
 });
 
 test("source-file mode re-run is idempotent", () => {
   const root = scaffoldProduct(ARCH_WITH_DECISIONS);
-  const run = () => execFileSync("node", [SCRIPT, join(root, "plans"),
-    "--from", join(root, "plans", "product", "acme-app", "architecture.md"),
-    "--slug", "acme-app"], { encoding: "utf-8" });
-  run();
-  run();
-  assert.deepEqual(readdirSync(join(root, "plans", "architecture")), ["001-acme-app.md"], "still exactly one ADR");
+  const go = () => run(root, "--from", join(root, "plans", "product", "acme-app", "architecture.md"), "--slug", "acme-app");
+  go();
+  go();
+  assert.equal(monthOf(root).match(/^## ADR-/gm)?.length, 1, "still exactly one record");
 });
 
-test("source-file mode with no ## Decisions promotes nothing and exits 0, even with no index file", () => {
+test("source-file mode with no ## Decisions promotes nothing and exits 0", () => {
   const root = scaffoldProduct("## Design Paradigm\n\nNothing durable yet.\n");
-  const out = execFileSync("node", [SCRIPT, join(root, "plans"),
-    "--from", join(root, "plans", "product", "acme-app", "architecture.md"),
-    "--slug", "acme-app"], { encoding: "utf-8" }); // throws if exit != 0
-  assert.equal(readdirSync(join(root, "plans", "architecture")).length, 0, "no ADR");
+  const out = run(root, "--from", join(root, "plans", "product", "acme-app", "architecture.md"), "--slug", "acme-app");
+  assert.equal(existsSync(join(root, "plans", "architecture", MONTH)), false, "no month file");
   assert.match(out, /no ## Decisions/, "reports why nothing promoted");
 });
 
-test("exact-slug match: an existing '001-add-widget.md' does not block promoting slug 'widget'", () => {
-  // Regression for the suffix-match bug: endsWith('-widget.md') would treat the
-  // unrelated add-widget ADR as widget's own → widget's ADR never written and
-  // its index row mislinked. Exact slug match must distinguish the two.
-  const root = mkdtempSync(join(tmpdir(), "opsx-"));
-  const arch = join(root, "plans", "architecture");
-  mkdirSync(arch, { recursive: true });
-  writeFileSync(join(arch, "001-add-widget.md"), "# 1. add-widget\n"); // a DIFFERENT change's ADR
-  const changeDir = join(root, "plans", "development", "openspec", "changes", "archive", "2026-07-16-widget");
-  mkdirSync(changeDir, { recursive: true });
-  writeFileSync(join(changeDir, "design.md"), WITH_DECISIONS);
-  writeFileSync(join(root, "plans", "development", "00-implementation-plan.md"),
-    "# idx\n\n| Change | Title | Status | Owner | Links |\n|--|--|--|--|--|\n" +
-    "| add-widget | W | archived | @j | [ADR 001](../architecture/001-add-widget.md) |\n" +
-    "| widget | Wid | in-review | @j | [tasks](t) |\n");
+test("year-index row lands INSIDE the table, not after trailing prose", () => {
+  /* Regression: the real INDEX.md has prose AFTER its table ("## Months",
+     "## Adding a row"). Appending at EOF put the row below that prose, outside
+     the table, where nothing renders it as a row. A fresh-dir test cannot catch
+     this because there the table IS last. */
+  const root = scaffold(WITH_DECISIONS);
+  const yDir = join(root, "plans", "architecture", "2026");
+  mkdirSync(yDir, { recursive: true });
+  // the record is the source of truth for numbering, so seed it too
+  writeFileSync(join(yDir, "2026-01.md"), "# 2026-01\n\n## ADR-0003 — earlier\n\n- **Status:** Accepted\n");
+  writeFileSync(join(yDir, "INDEX.md"),
+    "# Architecture decisions — 2026\n\n" +
+    "| ADR | Date | Decision | Domain | Status | Confidence | Record |\n" +
+    "|-----|------|----------|--------|--------|------------|--------|\n" +
+    "| ADR-0003 | 2026-01-02 | earlier | D | Accepted | High | [2026-01.md](2026-01.md) |\n\n" +
+    "## Adding a row\n\nSome trailing prose that must stay last.\n");
+  run(root, "2026-07-15-add-widget");
 
-  execFileSync("node", [SCRIPT, join(root, "plans"), "2026-07-16-widget"], { encoding: "utf-8" });
+  const lines = read(root, YEAR_INDEX).split("\n");
+  const newRow = lines.findIndex((l) => /^\|\s*ADR-0004\s*\|/.test(l));
+  const prose = lines.findIndex((l) => /^## Adding a row/.test(l));
+  assert.notEqual(newRow, -1, "the new row exists");
+  assert.ok(newRow < prose, `row must precede the trailing prose (row ${newRow}, prose ${prose})`);
+  assert.match(lines[newRow - 1] ?? "", /^\|/, "row sits directly after another table row");
+});
 
-  assert.deepEqual(readdirSync(arch).sort(), ["001-add-widget.md", "002-widget.md"],
-    "widget gets its own new ADR (002), not mislinked to the add-widget ADR");
-  const idx = readFileSync(join(root, "plans", "development", "00-implementation-plan.md"), "utf-8");
-  const widgetRow = idx.split("\n").find((l) => /^\|\s*widget\s*\|/.test(l)) ?? "";
-  assert.match(widgetRow, /archived/, "the widget row (not add-widget) flipped to archived");
-  assert.match(widgetRow, /ADR 002/, "widget row links its own ADR 002");
-  const addWidgetRow = idx.split("\n").find((l) => /^\|\s*add-widget\s*\|/.test(l)) ?? "";
-  assert.equal(addWidgetRow,
-    "| add-widget | W | archived | @j | [ADR 001](../architecture/001-add-widget.md) |",
-    "the unrelated add-widget row is left untouched");
+test("a NEW domain lands inside Decisions-by-domain, not under ## Years", () => {
+  /* Regression: appending a new `###` domain at EOF put it below the master
+     index's trailing "## Years" section, so markdown read the domain as a child
+     of Years instead of part of the domain list. */
+  const root = scaffold(WITH_DECISIONS);
+  writeFileSync(join(root, "plans", "architecture", "DECISIONS.md"),
+    "# Architecture Decisions — master index\n\n## Decisions by domain\n\n" +
+    "### Memory architecture\n\n| ADR | Decision | Status | Record |\n|--|--|--|--|\n" +
+    "| [ADR-0001](2026/2026-01.md) | x | Accepted | 2026-01 |\n\n" +
+    "## Years\n\n| Year | Decisions |\n|--|--|\n| 2026 | 1 |\n");
+  run(root, "2026-07-15-add-widget", "--domain", "Tooling and CI");
+
+  const lines = read(root, "DECISIONS.md").split("\n");
+  const newDomain = lines.findIndex((l) => l.trim() === "### Tooling and CI");
+  const years = lines.findIndex((l) => l.trim() === "## Years");
+  assert.notEqual(newDomain, -1, "the new domain heading exists");
+  assert.ok(newDomain < years, `new domain must precede ## Years (domain ${newDomain}, years ${years})`);
+});
+
+test("--domain files the record under the named domain in DECISIONS.md", () => {
+  const root = scaffold(WITH_DECISIONS);
+  run(root, "2026-07-15-add-widget", "--domain", "Tooling and CI");
+  const master = read(root, "DECISIONS.md");
+  const section = master.split(/^### /m).find((s) => s.startsWith("Tooling and CI")) ?? "";
+  assert.match(section, /ADR-0001/, "record filed under the requested domain");
 });

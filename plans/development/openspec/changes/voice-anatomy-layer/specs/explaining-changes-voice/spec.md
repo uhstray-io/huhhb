@@ -104,11 +104,16 @@ MUST NOT be relaxed to accommodate it, and the scenario MUST NOT be weakened to 
 a scenario that supplies the identifiers no longer tests whether the skill goes and
 finds them.
 
-Measured 2026-08-02: 8732 tokens against a 5588 baseline (1.56x, over 1.5x) with
-identical turn counts, while the judge rose from 2/5 to 5/5. The control is the sibling
-scenario that supplies its identifiers in the prompt and demands the same specificity —
-its skill arm cost 3326 against a 5977 baseline, cheaper than vagueness. Specificity is
-not expensive; retrieval is.
+**Re-measured, and the original figure did not hold.** 2026-08-02 with a cached
+baseline: 8732 vs 5588 = 1.56x, over the gate. 2026-08-03 with `--rebaseline`: 6480 vs
+9246 = **0.70x, cheaper than baseline**, judge 5/5. The first ratio compared against a
+baseline recorded under a different prompt and assert, so it was never like-for-like.
+
+The requirement stands but its evidence is now the method, not the number: a token ratio
+measured against a cached baseline is not evidence, and a documented "expected failure"
+must be re-measured with a fresh baseline before it is trusted. A B4 overrun currently
+appears on the sibling `value-change` scenario (1.55x) and is **not** yet explained —
+it is an open question, not an accepted cost.
 
 #### Scenario: The overrun is recorded rather than silently carried
 - **WHEN** a scenario's specificity requirement forces a file read the baseline avoids

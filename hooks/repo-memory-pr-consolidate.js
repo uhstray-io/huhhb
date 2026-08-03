@@ -34,7 +34,7 @@ console.log(
       hookEventName: "PostToolUse",
       additionalContext:
         `repo-memory PR consolidation: a staging journal exists at ${journal} for branch ${branch}. ` +
-        `Per the repo-memory skill's "Retention state machine": FIRST recall this repo's Hindsight bank ` +
+        `Per the repo-memory skill's Hooks section (PR consolidation): FIRST recall this repo's Hindsight bank ` +
         `(bank_id per repo-kickstart reference section 0 — NOT a bare directory name) for an existing ` +
         `outcome naming branch ${branch}. If one exists, stop: it is already retained, do not write a second. ` +
         `Otherwise read the journal, consolidate and /simplify its per-commit lines into ONE self-contained ` +

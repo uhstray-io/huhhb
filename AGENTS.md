@@ -86,7 +86,15 @@ Three measured gates — full criteria, thresholds, and the improvement loop in
 - **G1 merge bench** (`node scripts/skill-bench.ts <skill>`) — real
   `claude -p` runs against `tests/bench/<skill>.json` scenarios, with an A/B
   baseline (skill disabled) the skill must beat. Costs tokens; run when a
-  skill changes.
+  skill changes. Two measured traps: the baseline is the same prompt with
+  `--disallowedTools Skill`, which removes the tool but still loads the
+  operator's global `CLAUDE.md` — a scenario probing content that lives there
+  passes without the skill. Read the global file first, probe only surfaces it
+  does not cover, and mark overlapping scenarios VOID. Sandboxing `HOME` or
+  `CLAUDE_CONFIG_DIR` does not fix it (`Not logged in` — credentials bind to
+  the real config dir). And `--runs 1` reuses a cached baseline from
+  `tests/bench/history.jsonl`; use `--runs 3 --rebaseline` when the verdict
+  has to mean something.
 - **G2 field promotion** (`node scripts/evolve/g2.ts report`) — evolve-loop
   telemetry (earned confidence, correction pressure) gates featured/pinned
   status.
@@ -168,6 +176,11 @@ After syncing, review the diff, bump versions, cut a release if changed.
 - Do not write multi-paragraph skill descriptions — one clear line only
 - Do not hardcode paths or usernames in skill scripts
 - Do not use a `triggers` frontmatter field
+- Do not let a code example contradict the rule stated just above it — derive a
+  transformed value (URL-encoded, escaped, quoted) once into a named variable
+  and reuse it, rather than repeating the transform at each call site
+- Do not test for binary content with `grep -q $'\x00'` — the shell drops the
+  NUL, grep gets an empty pattern, and every file matches
 - Do not push non-trivial changes directly to main
 - Do not add AI attribution to commits or PRs
 
@@ -176,7 +189,7 @@ After syncing, review the diff, bump versions, cut a release if changed.
 - `skills/` — all skills, one flat subdirectory per skill (`skills/<skill-name>/SKILL.md`)
 - `.cbmignore` — paths kept out of the code graph (vendored agent trees, caches, key material); changing it needs a forced rebuild, not just a re-index
 - `onboarding/` — onboarding flow triggered on first install
-- `hooks/` — plugin lifecycle hook scripts (SessionStart, PreToolUse, Stop)
+- `hooks/` — plugin lifecycle hook scripts (SessionStart, PreToolUse, Stop). They run from `${CLAUDE_PLUGIN_ROOT}` = `~/.claude/plugins/cache/huhhb/huhhb/<version>/`, never the working tree — a hook edit has no effect on the running session until reinstall (Release Checklist 4)
 - `marketplace.json` — skill manifest (name, path, description, category, tags, version per skill)
 - `.claude-plugin/plugin.json` — plugin version read by Claude Code for update detection (keep in sync with `marketplace.json`)
 - `.claude-plugin/.mcp.json` — MCP server config (must match `plugin.json` mcpServers)
@@ -216,33 +229,48 @@ First install runs `onboarding/welcome.md` — a short guided tour: what's insta
 
 ## Repo Memory
 
-Project knowledge lives in `.claude/memory/` (committed to git) — huhhb's
-per-project **repo-memory** stratum, saved/retrieved via the `/repo-memory`
-skill. At session start, read `.claude/memory/MEMORY.md` for the index;
-**before answering questions about project decisions, conventions, or
-context, check `.claude/memory/` first** — it's the team's shared knowledge
-base.
+Ratified decisions live in `plans/architecture/` (committed to git),
+saved/retrieved via the `/repo-memory`
+skill: a master `DECISIONS.md`
+indexed by domain, a per-year `INDEX.md` decision log, and one detail file
+per month. **Before answering a question about why this repo is built the way
+it is, check `DECISIONS.md` first.** Records are append-only — never edit an
+accepted one; supersede it and link the two (ADR-0003, ADR-0004).
+
+Everything else routes away: code structure to the code graph, which
+regenerates it for free, and deliberation, outcomes and preferences to this
+repo's Hindsight bank, which is the only copy of them.
+
+`.claude/memory/` holds pre-2026-08 records and is **retired for new writes**.
+It is not deleted and not bulk-migrated; records are triaged individually by
+`fix-memory`.
 
 ### When to save
 
-| What | Type |
-| ---- | ---- |
-| Architectural decisions and their rationale | `project` |
-| Chosen libraries/frameworks and why alternatives were rejected | `project` |
-| Team conventions; what to repeat or avoid | `feedback` |
-| Anti-patterns tried here that didn't work | `feedback` |
-| Preferred naming, code-style, and formatting rules | `feedback` |
-| Things Claude got wrong repeatedly and had to be corrected on | `feedback` |
-| Links to external systems, dashboards, docs, wikis | `reference` |
-| Environment setup notes (non-obvious deps, quirks, build steps) | `reference` |
-| Domain knowledge the user has that shouldn't be re-explained | `user` |
-| Personal notes about this repo (gitignore `user_*.md` if private) | `user` |
+Record an architecture decision when it is **architecturally significant** — it changes
+the system's structure, trades a key quality attribute, or is difficult to reverse.
 
-These are **repo-scoped** records, committed and shared with the team.
-Cross-project preferences and cross-session decisions belong to the
-device-level stores below, not here. The MemPalace and Honcho strata are
-**retired from routing** as of 2026-08-01 — still shipped, data intact,
-invoked only when asked for by name; see
+| What | Where |
+| ---- | ----- |
+| A decision, what it cost, what was rejected | ADR in `plans/architecture/` |
+| Why we tried something first, what we feared, how it turned out | this repo's Hindsight bank |
+| What calls what, blast radius, dead code, routes | the code graph — never written by hand |
+| Cross-project preferences and working style | the `personal` bank |
+
+A reversible implementation choice is not an ADR. Neither is a convention or a bug fix.
+
+### What NOT to save
+
+- Anything already in AGENTS.md, README.md, or a spec — link it, do not copy it.
+- Anything the code graph regenerates. It is free there and stale here.
+- Deliberation. The record states what was decided and what it cost; the reasoning
+  behind it belongs in the bank.
+- Credential values, tokens, or real addresses — name the variable, never the value.
+
+Legacy `.claude/memory/` records are **repo-scoped** and retired for new writes.
+Cross-project preferences and cross-session decisions belong to the device-level stores
+below. The MemPalace and Honcho strata are **retired from routing** as of 2026-08-01 —
+still shipped, data intact, invoked only when asked for by name; see
 [`project-two-store-memory-supersedes-mempalace.md`](.claude/memory/project-two-store-memory-supersedes-mempalace.md).
 
 <!-- two-store-memory:start -->
@@ -264,7 +292,9 @@ for free; experience is the only copy.
   be read back** — re-apply them rather than checking them.
 - Use the **blocking** write variant. An `accepted` response is a receipt, not
   a confirmation.
-- **Ratified decisions belong to `docs/adr/NNN-title.md`, not to the bank.**
+- **Ratified decisions belong to `plans/architecture/`, not to the bank.**
+  One record per decision, appended to that month's file, indexed by year and by
+  domain — see `skills/repo-memory/` and `plans/architecture/TEMPLATE.md`.
   The split is by kind, not by copy: the committed ADR is the public record of
   *what was decided*; the bank holds the deliberation behind it — alternatives
   considered, why the rejected ones lost, what was feared, what was tried
@@ -286,7 +316,7 @@ for free; experience is the only copy.
   repo works on a machine that has none — which is most machines installing
   this marketplace.
 - Setup, repair, the verified defect catalogue and measured costs:
-  [`skills/two-store-memory-setup/reference.md`](skills/two-store-memory-setup/reference.md).
+  [`skills/memory-setup/reference.md`](skills/memory-setup/reference.md).
 
 #### Reading across the stores — translate, don't substitute
 

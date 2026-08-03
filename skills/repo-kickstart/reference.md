@@ -95,8 +95,8 @@ The graph MCP server not being installed at all is likewise a skip — report
 
 **Name the remedy, don't just shrug.** Installing and binding the two servers is
 **machine scope and not this skill's job** — it belongs to huhhb's
-`two-store-memory-setup`. So a missing server reports
-`skipped — <tool> not installed; run two-store-memory-setup (machine scope), then
+`memory-setup`. So a missing server reports
+`skipped — <tool> not installed; run memory-setup (machine scope), then
 re-run` rather than a bare skip. This skill is repo scope: it assumes the machine
 is set up and never installs, binds or configures a server itself.
 
@@ -301,10 +301,19 @@ store `<store-id>`), so active changes are `openspec/changes/<slug>/`.
 ```markdown
 # plans/architecture
 
-Durable, numbered ADRs (`NNN-<slug>.md`), promoted from a change's design on
-archive. `ARCHITECTURE.md` at the repo root summarizes; the decision records
-live here. (Current-state capability specs live in the store at
-`plans/development/openspec/specs/`, not here.)
+Architecture decision records, owned by the `repo-memory` skill:
+
+- `DECISIONS.md` — master index, decisions grouped by domain
+- `TEMPLATE.md` — the record template, confidence levels, superseding rules
+- `YYYY/INDEX.md` — that year's decision log, one row per ADR
+- `YYYY/YYYY-MM.md` — the records in full, one file per month
+
+**The rules live in `DECISIONS.md` — that file is canonical.** This README does not
+restate them; a second copy is a second thing to keep in sync. `ARCHITECTURE.md` at
+the repo root summarizes current state; the decisions that produced it live
+here. Current-state capability specs live in the store at
+`plans/development/openspec/specs/` — OpenSpec writes specifications, not
+decisions.
 ```
 
 ### plans/product/README.md
@@ -314,8 +323,8 @@ live here. (Current-state capability specs live in the store at
 Product-inception artifacts, one directory per initiative:
 `<initiative-slug>/{brief.md,prd.md,architecture.md}` (huhhb's
 `product-inception` skill / buhhdy Workflow 0 — opt-in, rare). The PRD's
-Epic Queue feeds Workflow 1; architecture `## Decisions` promote to
-`plans/architecture/` on approval. Empty is normal — most repos never
+Epic Queue feeds Workflow 1; architecture `## Decisions` promote into
+`plans/architecture/`'s monthly file on approval. Empty is normal — most repos never
 run inception.
 ```
 
@@ -379,8 +388,8 @@ Keep it to prose the model can act on; don't restate the whole store map there �
 
 ## 4. Memory — two routed stores + Honcho (owned by THIS skill; registry-free)
 
-`repo-kickstart` performs this setup itself; it no longer delegates §4 to
-`memory-onboarding`, and no longer seeds `.claude/memory/`. **Ownership is stated
+`repo-kickstart` performs this setup itself and no longer seeds
+`.claude/memory/`. **Ownership is stated
 in §4.6 — put that answer in the run's report** so no reader has to guess which
 skill is authoritative for which store.
 
@@ -630,21 +639,22 @@ The two-store move changed the **terminal write**, not the capture:
 records into it. Existing records stay exactly where they are, as history.
 
 ### 4.6 Who owns what now — state this in the report
-- **`two-store-memory-setup`** owns **machine scope**: installing, binding and
+- **`memory-setup`** owns **machine scope**: installing, binding and
   configuring both servers plus the global routing policy. This skill *depends on*
   that having been done and never does it — see §0's remedy line.
 - **`repo-kickstart`** (this skill) owns **repo scope**: the two routed stores in
   *this* repo, Honcho, OpenSpec, and the wiring between them.
-- **`memory-init`** (a user-scope command that `two-store-memory-setup` installs)
+- **`memory-init`** (a user-scope command that `memory-setup` installs)
   performs the same per-repo bootstrap standalone. Both are idempotent and take
   the same steps, so running both is redundant rather than harmful — but for a
   repo being kickstarted, **`repo-kickstart` is the one to run**; `memory-init`
   is for repos you are not kickstarting. Never treat them as two halves of one
   job.
-- **`repo-memory`** and **`memory-onboarding`** are **not deprecated.** They still
-  own `.claude/memory/` — its format, its Record Contract, its diagnostics — and
-  remain correct on direct invocation. What changed is that the store they govern
-  is no longer where new knowledge is routed.
+- **`repo-memory`** is **not deprecated** — it owns architecture decision records
+  at `plans/architecture/`, their format and their lifecycle. Machine-scope memory
+  health is `memory-setup` Phase 5. What changed is that `.claude/memory/` is no
+  longer where new knowledge is routed: structure goes to the graph, experience to
+  the bank, ratified decisions to `plans/architecture/`.
 - No store in this arrangement has two owners. If a reader has to guess which
   skill is authoritative for one, that is a defect in the report.
 
@@ -810,6 +820,7 @@ alternative back, and a domain-language recall that actually returned the charte
 | KICKSTART / ARCHITECTURE | file exists |
 | plans tree | `plans/development/00-implementation-plan.md` + both READMEs exist |
 | plans/product | `plans/product/README.md` exists (content optional — inception is opt-in, never mandatory) |
+| ADR structure | `plans/architecture/DECISIONS.md` and `TEMPLATE.md` exist; the record set and the index sets match **both ways** — every ADR in a `YYYY/YYYY-MM.md` has a row in that year's `INDEX.md` AND a line in `DECISIONS.md`, **and** every index row and master line resolves to an existing record. An index that omits a record is a **fail**; so is an index row pointing at a record that does not exist, because an orphaned row reads as a decision that was never made |
 | OpenSpec | `plans/development/openspec/config.yaml` + `.openspec-store/store.yaml` (id `<store-id>`) exist; `openspec store list` includes `<store-id>` (else re-run `register` — it no-ops) |
 | OpenSpec context | `config.yaml` `context:` already names the bank id and the graph/rationale split |
 | AGENTS.md memory block | AGENTS.md carries the `## Memory & specs` heading and it names this repo's bank id |

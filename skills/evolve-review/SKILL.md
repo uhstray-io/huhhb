@@ -94,7 +94,7 @@ skills mined from one-off requests are sprawl that dilutes recall forever).
 | who the user is / how the agent should behave | Honcho conclusion | `observe --type preference --target user` |
 | how to do a task class for this user (incl. hub-skill pitfalls) | overlay `~/.claude/skills/<hub>-local/` | `overlay.ts` |
 | project decision / team convention | `.claude/memory/` | `/repo-memory` flow |
-| structured collected knowledge | MemPalace | `/memory` flow |
+| structured collected knowledge | code graph (structure) · Hindsight bank (deliberation) · ADR in `plans/architecture/` (ratified decision) | the owning store's own flow — `repo-memory` for an ADR. `memory-setup` INSTALLS stores, it is not a destination; MemPalace `/memory` is retired, legacy reads only |
 | hub skill defect affecting everyone | Honcho `skill__<name>` observation | `observe --target skill__<name>` |
 
 **Shape overrides capture type.** The capture pipeline types by phrasing, so

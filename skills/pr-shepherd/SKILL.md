@@ -154,13 +154,13 @@ merge; report which one is missing and wait.
    adopted" and continue (same warn-and-continue as `.coderabbit.yaml`);
    never fail or force-create.
    When conforming: run `openspec archive <slug> --store <repo> --yes`,
-   then that skill's `promote-adr.ts`: it writes exactly one
-   `plans/architecture/NNN-<slug>.md` ADR from the design's
-   `## Decisions` (never the full doc) and flips that change's
+   then that skill's `promote-adr.ts`: it appends one ADR to
+   `plans/architecture/YYYY/YYYY-MM.md` from the design's `## Decisions`
+   (not the full doc), rows both indexes, and flips the change's
    `00-implementation-plan.md` row to `archived` + ADR link. No
-   `## Decisions` → no ADR (expected). Don't hand-edit the row — the
-   promoter owns it.
-3. **Write the outcome** per repo-memory's *Retention state machine* — recall
+   `## Decisions` → no ADR (expected). Don't hand-edit the row or fold
+   it in — the promoter owns both.
+3. **Write the outcome** per repo-memory § Hooks — recall
    the bank FIRST; if this branch's outcome is there, the PR hook wrote it, so
    stop. Else ONE `sync_retain` (`bank_id` per repo-kickstart §0): what merged,
    finding counts, escalations, outcome labelled **worked / dead end /

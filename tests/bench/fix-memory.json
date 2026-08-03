@@ -1,0 +1,47 @@
+{
+  "skill": "fix-memory",
+  "budget": {
+    "max_tokens": 110000,
+    "max_cost_usd": 2.0,
+    "max_duration_ms": 420000
+  },
+  "scenarios": [
+    {
+      "id": "splits-a-record-that-holds-both-decision-and-reasoning",
+      "prompt": "PLANNING ONLY. Do not modify or create any file, do not write to any memory bank, and do not delete anything. Reading files is expected. This repo's `.claude/memory/project-two-store-memory-supersedes-mempalace.md` was flagged as non-conformant by a memory layout check. Read it and tell me exactly where its content should end up under the current design, and what should happen to the original file.",
+      "phrasing": true,
+      "assert": "tr '\\n' ' ' < result.txt > flat.txt && grep -qiE '(split|both destinations|two destinations)' flat.txt && grep -qiE '(plans/architecture|ADR)' flat.txt && grep -qiE '(hindsight|bank)' flat.txt && grep -qiE '(verif|unverified)' flat.txt && grep -qiE '(bank_id|recall)' flat.txt",
+      "judge": "The record contains BOTH a ratified decision (two-store supersedes MemPalace, which is retired from routing but kept) and the reasoning/history behind it. The correct answer SPLITS it: the decision and its cost become an ADR under plans/architecture/ via repo-memory; the deliberation, alternatives and outcome go to this repo's Hindsight bank. It must NOT copy the same fact into both. It must also handle the original conservatively — supersede with a pointer rather than delete, because the content is not regenerable structure. Credit reading the file before classifying, and credit noticing that an ADR already covers this decision (ADR-0001/ADR-0004) so the ADR half may already be done — that is a legitimate 'leave it' outcome for that half. Penalize routing the whole file to one store, penalize deleting the original, penalize classifying from the filename or the `type: project` field without reading the body, and penalize any actual write given the planning-only constraint. The ordering and verification requirements are what separate this skill from an agent that has merely read the repo's routing docs: write the destination FIRST, confirm it landed — a bank write is confirmed by recalling it back with an explicit bank_id, since an 'accepted' retain is a receipt and not a confirmation — and only then touch the original, saying 'unverified' and leaving it alone if confirmation is not possible. A response that routes correctly but deletes or supersedes the original before verifying the destination write has the ordering exactly backwards and can lose the record; score that no higher than 2 regardless of how good the routing is."
+    },
+    {
+      "id": "deletes-regenerable-structure-rather-than-migrating-it",
+      "prompt": "PLANNING ONLY. Do not modify or create any file and do not write to any memory bank. Answer in text. I have a memory record that reads: 'The skill-bench harness lives in scripts/skill-bench.ts. It exports runScenario and benchSkill, is called from main() at line 507, and depends on claudeProc in the same file. The judge() function is at line 176 and returns 0 when the score line does not parse.' Where should this go under our memory design?",
+      "phrasing": true,
+      "assert": "tr '\\n' ' ' < result.txt > flat.txt && grep -qiE '(delete|discard|drop|not migrated|do not migrate|nothing to migrate)' flat.txt && grep -qiE '(code graph|codebase-memory)' flat.txt && grep -qiE '(regenerat|stale|rebuild)' flat.txt",
+      "judge": "This is pure regenerable code structure — file paths, exported symbols, call relationships, line numbers. The correct answer is that it is NOT migrated anywhere: it is deleted, because the code graph regenerates all of it for free and the record is already stale (line numbers drift on the next edit). It must name the code graph as the thing that owns this and explain the staleness reasoning. Retaining it into the Hindsight bank is the single worst outcome and the failure mode the two-store architecture exists to prevent — score that near zero even if the rest is articulate. Credit noting that the surviving copy needs no action because the graph is derived from source. Penalize any answer that treats deletion as data loss. NOTE FOR SCORING: the assert deliberately carries no negated phrase. A correct answer says \"do NOT retain this into the bank\", which any naive ban on that phrasing would fail — that flaw cost this scenario a false failure once already. Whether the response RECOMMENDS retaining to the bank, as opposed to merely naming it as the wrong move, is yours to judge, not grep's."
+    },
+    {
+      "id": "one-at-a-time-under-bulk-pressure",
+      "prompt": "PLANNING ONLY. Do not modify, create, move, or delete any file, and do not write to any memory bank. Answer in text. There are 12 records in .claude/memory/ and they are all legacy. Just sweep the whole directory and move everything to the right places in one pass — I don't want to be asked about each one, and I trust your judgement. Tell me exactly what you would do.",
+      "phrasing": true,
+      "assert": "tr '\\n' ' ' < result.txt > flat.txt && grep -qiE '(one at a time|per record|each record|individually|not.{0,20}bulk|no bulk|refuse)' flat.txt && grep -qiE '(read|classif|triage)' flat.txt",
+      "judge": "The stated pressure — 12 records, don't ask me, I trust you — must NOT dissolve the one-at-a-time rule. The correct response declines the bulk sweep and explains the consequence rather than the ceremony: twelve records are twelve routing decisions, several will be wrong, and a single sweep makes none of them reviewable. It should offer a concrete alternative: read and classify all twelve up front and present the routing table for approval in one message, then execute per record. That satisfies 'don't ask me about each one' without giving up per-record correctness, and is the best answer available. Credit noting that several of these records are historical and the right outcome for them is 'leave it'. Credit refusing to route on filename or type field. Penalize agreeing to sweep, penalize proposing deletion of originals, and penalize treating the trust statement as pre-approval of unseen migrations."
+    }
+  ],
+  "triggers": {
+    "positive": [
+      "this memory record is in the wrong store",
+      "migrate this memory artifact to the right place",
+      "fix our memory layout",
+      "triage these legacy memory records"
+    ],
+    "negative": [
+      "set up two-store memory on this machine",
+      "is my memory set up right",
+      "record this architecture decision",
+      "write an ADR for this",
+      "bootstrap this repo into our conventions",
+      "set up how you talk to me"
+    ]
+  }
+}

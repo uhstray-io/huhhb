@@ -96,7 +96,7 @@
 - [ ] 5.3 Author `tests/bench/user-kickstart.json` from the 1.2 scenarios, including an
       explicit `budget` block and a `triggers` object whose `negative` array carries
       phrasings belonging to `claude-md-improver`, `/revise-claude-md`, `update-config`,
-      and `two-store-memory-setup`
+      and `memory-setup`
 - [ ] 5.4 Author `tests/bench/explaining-changes.json` from the 1.1 scenarios with its
       own `budget` block (new file; none exists today)
 - [ ] 5.5 Run `node scripts/skill-lint.ts`; fix any new failure, add nothing to
@@ -127,7 +127,6 @@
       real one, and routed around; the skill was correct and the test measured nothing.
 - [ ] 6.4 Run `openspec validate voice-anatomy-layer --store huhhb`
 - [ ] 6.5 Run `evolve-map`; confirm `user-kickstart` registers with no unflagged overlap
-      against `claude-md-improver`, `memory-onboarding`, `onboarding`, or
-      `two-store-memory-setup`
+      against `claude-md-improver`, `onboarding`, or `memory-setup`
 - [ ] 6.6 Open the PR with pressure-test and idempotency evidence; after human merge,
       archive this change (`openspec archive voice-anatomy-layer --store huhhb`)

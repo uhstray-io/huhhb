@@ -27,20 +27,20 @@ routing path.
 
 | Skill | Command | Description |
 |-------|---------|-------------|
-| two-store-memory-setup | `/two-store-memory-setup` | Use when installing, repairing, or verifying the two-store agent-memory architecture on a machine — a code-graph store for structural truth plus an experience store for decisions and outcomes. Gated phases, control-test verification at every gate, a catalogue of verified defects indexed by symptom, and the per-repo `memory-init` command it writes |
-| repo-memory | `/repo-memory` | Repo-local memory in `.claude/memory/` — committed to git, no external service |
+| memory-setup | `/memory-setup` | Use when installing, repairing, or verifying the two-store agent-memory architecture on a machine — a code-graph store for structural truth plus an experience store for decisions and outcomes. Gated phases, control-test verification at every gate, a catalogue of verified defects indexed by symptom, and the per-repo `memory-init` command it writes |
+| repo-memory | `/repo-memory` | Architecture decision records in `plans/architecture/` — master index by domain, a per-year decision log, monthly detail files. Append-only, supersede-never-edit. Committed to git and reviewable in the PR that changes them |
+| fix-memory | `/fix-memory` | Use when a memory artifact is in the wrong store — migrates one at a time, ask-first, never bulk. Regenerable structure is deleted (the graph rebuilds it), ratified architectural decisions become ADRs, deliberation goes to the repo bank, cross-project preferences to `personal` |
 
 ### MemPalace (retired from routing)
 
-Powered by [MemPalace](https://github.com/mempalace/mempalace). Runs via the plugin's configured MCP (uvx) server, or install the CLI with `uv tool install mempalace` — either setup is valid; a configured MCP server without the CLI is not a missing install. **Retired from routing on 2026-08-01** — still shipped and installed with data intact, invoked only when asked for by name. Their descriptions still match a generic "remember this", so pick deliberately.
+Powered by [MemPalace](https://github.com/mempalace/mempalace). Runs via the plugin's configured MCP (uvx) server, or install the CLI with `uv tool install mempalace` — either setup is valid; a configured MCP server without the CLI is not a missing install. **Retired from routing on 2026-08-01** — still shipped and installed with data intact, invoked only when asked for by name. Their manifest descriptions are now prefixed LEGACY so a generic "remember this" no longer matches them. Removal is planned in [2026-08-02-memory-skill-migration-plan.md](../plans/development/2026-08-02-memory-skill-migration-plan.md).
 
 | Skill | Command | Description |
 |-------|---------|-------------|
-| memory | `/memory` | Access, search, and manage the team memory nexus — store and recall project context via MCP |
-| memory-onboarding | `/memory-onboarding` | Use when checking or setting up the four-strata memory system on this machine and in the current project — "is my memory set up right", a fresh machine/repo, or a preflight memory-degradation report. Pass/warn/fail matrix + at most three next actions; diagnose-then-ask (only repo-memory first-run auto-applies); credentials never transit chat |
-| memory-search | `/memory-search` | Semantic search across the memory nexus |
-| memory-mine | `/memory-mine` | Ingest a project directory or text into the nexus |
-| memory-status | `/memory-status` | Nexus stats — drawer count, wings, rooms |
+| memory | `/memory` | **Legacy** — read existing nexus data |
+| memory-search | `/memory-search` | **Legacy** — nexus search; now Hindsight `recall` or `repo-memory` |
+| memory-mine | `/memory-mine` | **Legacy** — nexus ingest; now codebase-memory-mcp indexing |
+| memory-status | `/memory-status` | **Legacy** — nexus stats; now `memory-setup` |
 
 ## Self-Learning (evolve)
 
@@ -72,7 +72,7 @@ managed setup; unconfigured machines behave as if it were not installed.
 | markdown-to-pdf | `/markdown-to-pdf` | Use when converting a Markdown file into a beautiful, print-ready PDF — styled cover page, running headers/footers, page numbers, GFM tables, syntax-highlighted code, and rendered mermaid diagrams (WeasyPrint + mermaid-cli, run via `uv`) |
 | openspec-conformance | `/openspec-conformance` | Use when making OpenSpec conform to Uhstray's plans/development + plans/architecture layout — the once-per-repo store-registration setup, the house config rules, and the archive-time ADR promotion; the source of truth that repo-kickstart and pr-shepherd both call |
 | pr-shepherd | `/pr-shepherd` | Use when buhhdy's Development workflow has open PRs to drive to merge — monitors CI + CodeRabbit + human review, routes findings back to the original implementer (2-attempts-then-human), gates the merge on a human approval (never merges autonomously), then runs post-merge close-out and a buhhdy/*-only branch janitor |
-| repo-kickstart | `/repo-kickstart` | Use when bootstrapping any repo — greenfield or brownfield — into Uhstray's standard conventions: the README/AGENTS/KICKSTART/ARCHITECTURE doc set, the plans/ tree, OpenSpec, the two-store memory init for this repo (.cbmignore + index + bank + charter) plus a Honcho probe, CodeRabbit, and a branch-protection check. Owns repo scope; machine-scope install is `two-store-memory-setup`. Idempotent, registry-free, and non-destructive |
+| repo-kickstart | `/repo-kickstart` | Use when bootstrapping any repo — greenfield or brownfield — into Uhstray's standard conventions: the README/AGENTS/KICKSTART/ARCHITECTURE doc set, the plans/ tree, OpenSpec, the two-store memory init for this repo (.cbmignore + index + bank + charter) plus a Honcho probe, CodeRabbit, and a branch-protection check. Owns repo scope; machine-scope install is `memory-setup`. Idempotent, registry-free, and non-destructive |
 | session-resume | `/session-resume` | Use when picking up prior work in a fresh session — verifies the continuation file against the repo, re-hydrates context, briefs, then acts |
 | session-save | `/session-save` | Use when ending or pausing a session and you want to resume cleanly later — writes a gitignored continuation file with the exact next action and chat-only context |
 | subagent-driven-development | `/subagent-driven-development` | Use when executing implementation plans with independent tasks in the current session |

@@ -1,6 +1,6 @@
 ---
 name: evolve
-description: Use when working with evolve's Honcho-backed cross-session memory — recalling what is known about the user or a skill ("what do you know about me", "check evolve memory", "what has evolve learned"), persisting a durable user fact across projects ("remember this everywhere", "remember this about me"), or deciding which memory stratum (Honcho, repo-memory, MemPalace, overlay skill) a piece of knowledge belongs in.
+description: Use when working with evolve's Honcho-backed cross-session memory — recalling what is known about the user or a skill ("what do you know about me", "check evolve memory", "what has evolve learned"), persisting a durable user fact across projects ("remember this everywhere", "remember this about me"), or deciding which memory stratum (Honcho, repo-memory, the two device-level stores, overlay skill) a piece of knowledge belongs in.
 ---
 
 # evolve — cross-session memory protocol
@@ -32,7 +32,7 @@ never by convenience:
 |---|---|---|---|
 | **Honcho** (this skill) | *Inferred* — conclusions derived from observed behavior; self-healing, may be wrong | self-hosted or managed Honcho workspace | automatic digests + `observe` below |
 | **repo-memory** | *Decided* — team decisions and conventions, git-audited | `.claude/memory/` | `/repo-memory` |
-| **MemPalace** | *Collected* — structured knowledge deliberately filed | nexus via MCP | `/memory` |
+| **MemPalace** *(retired 2026-08-01)* | *Collected* — structured knowledge deliberately filed | nexus via MCP | `/memory` — legacy reads only; not a routing target |
 | **Overlay skills** | *Learned procedure* — how to do a task class for this user | `~/.claude/skills/<hub>-local/` | `/evolve-review` |
 
 Why the split matters: a decided fact ("this repo uses uv, never pip")
@@ -103,7 +103,8 @@ When **not** to write:
   is a refusal the agent cites for months. If something failed and was fixed,
   the *fix* is the observation; if it failed and wasn't fixed, write nothing.
 - **Don't write project decisions here** — that's repo-memory (git). Don't
-  file reference material here — that's MemPalace. Wrong stratum, wrong
+  file reference material here — that's the code graph (codebase-memory-mcp)
+  for structure, or the repo's Hindsight bank for rationale. Wrong stratum, wrong
   failure mode.
 
 ## Trust calibration

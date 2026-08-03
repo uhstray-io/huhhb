@@ -214,14 +214,22 @@ Every skill needs an entry; bump its `version` and `.claude-plugin/plugin.json` 
 
 First install runs `onboarding/welcome.md` — a short guided tour: what's installed, how to invoke (`/skill-name`), and where the full list lives (`onboarding/skills-list.md`). Keep it brief.
 
-## Repo Memory
+## Repo Memory — architecture decision records
 
-Project knowledge lives in `.claude/memory/` (committed to git) — huhhb's
-per-project **repo-memory** stratum, saved/retrieved via the `/repo-memory`
-skill. At session start, read `.claude/memory/MEMORY.md` for the index;
-**before answering questions about project decisions, conventions, or
-context, check `.claude/memory/` first** — it's the team's shared knowledge
-base.
+Ratified decisions live in `plans/architecture/` (committed to git),
+authored and looked up via the `/repo-memory` skill: a master `DECISIONS.md`
+indexed by domain, a per-year `INDEX.md` decision log, and one detail file
+per month. **Before answering a question about why this repo is built the way
+it is, check `DECISIONS.md` first.** Records are append-only — never edit an
+accepted one; supersede it and link the two (ADR-0003, ADR-0004).
+
+Everything else routes away: code structure to the code graph, which
+regenerates it for free, and deliberation, outcomes and preferences to this
+repo's Hindsight bank, which is the only copy of them.
+
+`.claude/memory/` holds pre-2026-08 records and is **retired for new writes**.
+It is not deleted and not bulk-migrated; records are triaged individually by
+`fix-memory`.
 
 ### When to save
 
@@ -264,7 +272,9 @@ for free; experience is the only copy.
   be read back** — re-apply them rather than checking them.
 - Use the **blocking** write variant. An `accepted` response is a receipt, not
   a confirmation.
-- **Ratified decisions belong to `docs/adr/NNN-title.md`, not to the bank.**
+- **Ratified decisions belong to `plans/architecture/`, not to the bank.**
+  One record per decision, appended to that month's file, indexed by year and by
+  domain — see `skills/repo-memory/` and `plans/architecture/TEMPLATE.md`.
   The split is by kind, not by copy: the committed ADR is the public record of
   *what was decided*; the bank holds the deliberation behind it — alternatives
   considered, why the rejected ones lost, what was feared, what was tried

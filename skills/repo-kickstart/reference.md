@@ -301,10 +301,19 @@ store `<store-id>`), so active changes are `openspec/changes/<slug>/`.
 ```markdown
 # plans/architecture
 
-Durable, numbered ADRs (`NNN-<slug>.md`), promoted from a change's design on
-archive. `ARCHITECTURE.md` at the repo root summarizes; the decision records
-live here. (Current-state capability specs live in the store at
-`plans/development/openspec/specs/`, not here.)
+Architecture decision records, owned by the `repo-memory` skill:
+
+- `DECISIONS.md` — master index, decisions grouped by domain
+- `TEMPLATE.md` — the record template, confidence levels, superseding rules
+- `YYYY/INDEX.md` — that year's decision log, one row per ADR
+- `YYYY/YYYY-MM.md` — the records in full, one file per month
+
+`ADR-NNNN` is globally sequential and never reused. Records are append-only:
+never edit an accepted one — supersede it and link both. `ARCHITECTURE.md` at
+the repo root summarizes current state; the decisions that produced it live
+here. Current-state capability specs live in the store at
+`plans/development/openspec/specs/` — OpenSpec writes specifications, not
+decisions.
 ```
 
 ### plans/product/README.md
@@ -314,8 +323,8 @@ live here. (Current-state capability specs live in the store at
 Product-inception artifacts, one directory per initiative:
 `<initiative-slug>/{brief.md,prd.md,architecture.md}` (huhhb's
 `product-inception` skill / buhhdy Workflow 0 — opt-in, rare). The PRD's
-Epic Queue feeds Workflow 1; architecture `## Decisions` promote to
-`plans/architecture/` on approval. Empty is normal — most repos never
+Epic Queue feeds Workflow 1; architecture `## Decisions` promote into
+`plans/architecture/`'s monthly file on approval. Empty is normal — most repos never
 run inception.
 ```
 
@@ -811,6 +820,7 @@ alternative back, and a domain-language recall that actually returned the charte
 | KICKSTART / ARCHITECTURE | file exists |
 | plans tree | `plans/development/00-implementation-plan.md` + both READMEs exist |
 | plans/product | `plans/product/README.md` exists (content optional — inception is opt-in, never mandatory) |
+| ADR structure | `plans/architecture/DECISIONS.md` and `TEMPLATE.md` exist; every ADR in a `YYYY/YYYY-MM.md` has a row in that year's `INDEX.md` AND a line in `DECISIONS.md` — an index that omits a record is a **fail**, not a warning |
 | OpenSpec | `plans/development/openspec/config.yaml` + `.openspec-store/store.yaml` (id `<store-id>`) exist; `openspec store list` includes `<store-id>` (else re-run `register` — it no-ops) |
 | OpenSpec context | `config.yaml` `context:` already names the bank id and the graph/rationale split |
 | AGENTS.md memory block | AGENTS.md carries the `## Memory & specs` heading and it names this repo's bank id |

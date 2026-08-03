@@ -320,11 +320,12 @@ list, so it never has to be bought with description text — see Decision 11).
   in two different directions.** Where the identifiers were already in context,
   specificity was *cheaper* than vagueness — 3326 tokens against a 5977 baseline —
   because a precise short answer beats a padded hand-wave. Where the scenario withheld
-  them, the skill arm had to read a 228-line file and came in at 8732 against 5588
-  (1.56x), failing the global 1.5x gate with identical turn counts. That failure is
-  documented in the fixture and accepted: the gate is not relaxed and the scenario is
-  not weakened, because a scenario that hands over the identifiers stops testing
-  whether the skill goes and finds them. Real narration runs in the first regime — the
+  them, an early measurement showed 8732 against 5588 (1.56x) and was documented as an
+  accepted failure. **Re-measured 2026-08-03 with a fresh baseline it inverted to 6480
+  against 9246 — 0.70x, cheaper than baseline.** The first figure was compared against a
+  cached baseline from a different prompt and assert. The accepted-failure framing is
+  withdrawn; what survives is the method rule: never trust a ratio measured against a
+  cached baseline. Real narration runs in the first regime — the
   agent has just edited the file it is describing.
 - **The ceiling did not hold on its own.** With §7 active, narration named every
   identifier and drew a correct diagram, then ran ~9 sentences against a ceiling of 5,

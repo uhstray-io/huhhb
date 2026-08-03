@@ -89,6 +89,8 @@ skill exists to prevent.
 
 ## Three rules that outrank convenience
 
+Operative summary, kept here because an agent must not have to open another file mid-write. **[`plans/architecture/DECISIONS.md`](../../plans/architecture/DECISIONS.md) is canonical** — if these ever disagree, that file wins and this one is the bug.
+
 **1. Append-only — never edit an accepted record.** If the decision changed, write a new
 record that supersedes it. Editing erases *when and why* the direction shifted, which is
 the only thing a decision log is for. The single permitted edit to an accepted record is

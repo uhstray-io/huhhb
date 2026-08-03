@@ -9,14 +9,9 @@ Architecture decision records, owned by the [`repo-memory`](../../skills/repo-me
 | `YYYY/INDEX.md` | That year's decision log — one row per ADR |
 | `YYYY/YYYY-MM.md` | The records in full, one file per month |
 
-`ADR-NNNN` is globally sequential across all years and never reused. Take the next
-number from `DECISIONS.md`, not from the current month's file — a decision may have
-landed in a different month.
-
-**Records are append-only.** Never edit an accepted record; write a new one that
-supersedes it and link the two. The only permitted edit to an accepted record is setting
-its superseded pointer. Never delete a record, including a rejected one — a visible
-rejected option is what stops the team re-litigating it next year.
+**The rules live in [DECISIONS.md](DECISIONS.md) — that file is canonical.** Append-only
+records, global sequential numbering, one decision per record, never delete. This README
+does not restate them; a second copy is a second thing to keep in sync.
 
 `ARCHITECTURE.md` at the repo root summarizes current state; the decisions that produced
 it live here. Current-state capability specs live in the store at

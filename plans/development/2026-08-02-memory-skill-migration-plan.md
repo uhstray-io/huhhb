@@ -1,8 +1,23 @@
 # Memory skill migration — MemPalace → two-store
 
-**Status:** proposed · **Date:** 2026-08-02 · **Execute on:** a new branch, not this one
+**Status:** partly executed · **Date:** 2026-08-02 · **Last updated:** 2026-08-02
 
-Plan only. Nothing here is implemented yet.
+**What has since landed, and what has not:**
+
+| Phase | State |
+|---|---|
+| 1. Stop shipping the MemPalace MCP server | **not done** — `.claude-plugin/.mcp.json` still registers `memory` → `uvx mempalace-mcp` |
+| 2. Remove the four MemPalace skills | **not done** — descriptions marked LEGACY (`a7d2a4a`) but the skills ship |
+| 3. Close the trigger gap | **partly** — `memory-onboarding` removed, so its share of the surface is freed; unmeasured |
+| 4. Fix the surviving diagnostic skill | **obsolete** — `memory-onboarding` was deleted outright (ADR-0002) rather than repaired. Its checks moved to `memory-setup` Phase 5, `evolve-status`, and `repo-kickstart` |
+| 5. Documentation reconciliation | **done** — `f2b739e`, `a7d2a4a`, `31e9f09`, `3a9eb2b` |
+| 6. buhhdy | **still out of scope** — being removed from this repo entirely |
+
+Also landed outside this plan: `two-store-memory-setup` renamed to `memory-setup`;
+`repo-memory` repurposed as the ADR skill; `plans/architecture/` established as the ADR
+store; `fix-memory` authored. See `plans/architecture/2026/2026-08.md` ADR-0001..0004.
+
+Phases 1 and 2 below remain the live work.
 
 ---
 

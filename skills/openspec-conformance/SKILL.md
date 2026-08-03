@@ -24,12 +24,17 @@ list; don't restate subsets.
 **Layout (what adopted repos use):**
 - `plans/development/openspec/changes/<slug>/` — active changes (proposal, specs, design, tasks)
 - `plans/development/00-implementation-plan.md` — living index over active changes
-- `plans/architecture/NNN-<slug>.md` — durable ADRs (promoted on archive)
+- `plans/architecture/` — the ADR store, **owned by `repo-memory`** (ADR-0003).
+  OpenSpec writes specifications; this skill only carries the promotion mechanism
 
 **Mechanism:** OpenSpec's native **store registration** relocates the root to
 `plans/development` (verified live, openspec 1.6.0). A forked schema was
 **rejected** — it can rename/re-template artifacts but cannot move the root. What
 OpenSpec doesn't model — the index and ADRs — is carried as a promotion pattern.
+
+**Ownership:** the ADR *records* belong to `repo-memory` — their shape, numbering
+and lifecycle. This skill owns only the promotion mechanism that files one. OpenSpec
+writes specifications, not decisions (ADR-0003).
 
 ## Setup (once per repo — what repo-kickstart runs)
 
@@ -87,7 +92,9 @@ node "${CLAUDE_PLUGIN_ROOT}/skills/openspec-conformance/promote-adr.ts" \
 ```
 
 It extracts **only** the archived `design.md` `## Decisions` section into one
-`plans/architecture/NNN-<slug>.md` ADR (next number; Context/Decision/Consequences
+`## ADR-NNNN — <slug>` record appended to `plans/architecture/YYYY/YYYY-MM.md`,
+plus a row in that year's `INDEX.md` and a line in `DECISIONS.md` (globally
+sequential numbering; the template's field block
 + a link back to the archived design), and flips exactly that change's row in
 `00-implementation-plan.md` to `archived` with the ADR link. It never copies the
 full design doc. A change with no `## Decisions` promotes no ADR but still updates

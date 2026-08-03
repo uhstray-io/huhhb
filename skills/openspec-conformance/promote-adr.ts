@@ -124,7 +124,17 @@ const domain = flags["--domain"] || "Uncategorised";
 /* --date exists so the target month file is deterministic under test; without
    it the record lands in the month the promotion actually runs in. */
 const date = flags["--date"] || new Date().toISOString().slice(0, 10);
+/* Shape alone accepts impossible dates (2026-02-30, 2026-99-99) and would then
+   derive a year/month directory from them. Round-trip through UTC: a real date
+   normalises back to itself, an invalid one does not. */
 if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) die(`invalid --date (want YYYY-MM-DD): ${date}`);
+{
+  // Invalid Date makes toISOString() THROW, so check the timestamp before formatting.
+  const t = new Date(`${date}T00:00:00Z`);
+  if (Number.isNaN(t.getTime()) || t.toISOString().slice(0, 10) !== date) {
+    die(`invalid --date (not a real calendar date): ${date}`);
+  }
+}
 const year = date.slice(0, 4);
 const month = date.slice(0, 7);
 
@@ -245,7 +255,21 @@ ${sourceLink}
     if (insertTableRow(mLines, at, mRow)) master = mLines.join("\n");
     else master = `${master.replace(/\s*$/, "")}\n${mRow}\n`;
   } else {
-    master = `${master.replace(/\s*$/, "")}\n\n${domainHeading}\n\n| ADR | Decision | Status | Record |\n|-----|----------|--------|--------|\n${mRow}\n`;
+    /* A new domain must land INSIDE "Decisions by domain", not at EOF. The
+       master index ends with a "## Years" section, so appending puts the new
+       `###` heading underneath it and markdown reads the domain as a child of
+       Years. Insert before the first top-level `## ` that follows the domain
+       sections; fall back to EOF only when there is none. */
+    const block = `${domainHeading}\n\n| ADR | Decision | Status | Record |\n|-----|----------|--------|--------|\n${mRow}\n`;
+    const mLines = master.split("\n");
+    const lastDomain = mLines.reduce((acc, l, i) => (/^### /.test(l) ? i : acc), -1);
+    const nextTop = mLines.findIndex((l, i) => i > lastDomain && /^## /.test(l));
+    if (lastDomain !== -1 && nextTop !== -1) {
+      mLines.splice(nextTop, 0, ...block.split("\n"));
+      master = mLines.join("\n");
+    } else {
+      master = `${master.replace(/\s*$/, "")}\n\n${block}`;
+    }
   }
   writeFileSync(masterPath, master);
 }

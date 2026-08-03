@@ -232,8 +232,17 @@ function recordHistory(row: Json): void {
   appendFileSync(HISTORY, pyJson(full) + "\n");
 }
 
-export function promptHash(prompt: string): string {
-  return createHash("sha256").update(prompt, "utf-8").digest("hex").slice(0, 12);
+/* Identity of a baseline measurement. The ASSERT is part of it, not just the
+   prompt: baseline_passes is the assert's verdict against the baseline response,
+   so an assert-only edit invalidates the cached pass/fail while leaving the
+   prompt identical. Hashing the prompt alone let a changed assert reuse stale
+   completion evidence, which silently enables or skips the B4/B6/B8 ratio gates.
+   Second arg optional so existing callers keep working; rows written before this
+   change carry a prompt-only hash and simply miss, which is the safe direction. */
+export function promptHash(prompt: string, assertion = ""): string {
+  return createHash("sha256")
+    .update(assertion ? `${prompt}\u0000${assertion}` : prompt, "utf-8")
+    .digest("hex").slice(0, 12);
 }
 
 /* Latest history row with baseline numbers for this exact prompt — the
@@ -241,7 +250,7 @@ export function promptHash(prompt: string): string {
    every bench burns real tokens for no new information. */
 export function cachedBaseline(skill: string, scenario: Scenario): Json | null {
   if (!existsSync(HISTORY)) return null;
-  const want = promptHash(scenario.prompt);
+  const want = promptHash(scenario.prompt, scenario.assert);
   const lines = readFileSync(HISTORY, "utf-8").split("\n");
   for (let i = lines.length - 1; i >= 0; i--) {
     let row: Json;
@@ -377,7 +386,7 @@ function benchSkill(spec: Spec, runs: number, dryRun: boolean,
     if (record) {
       recordHistory({
         skill: spec.skill, version, scenario: sid,
-        prompt_hash: promptHash(scenario.prompt),
+        prompt_hash: promptHash(scenario.prompt, scenario.assert),
         runs, passes, judge: judgeScore,
         tokens, cost, duration_ms: dur,
         api_ms: api, turns,

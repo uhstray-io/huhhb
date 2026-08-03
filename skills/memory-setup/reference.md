@@ -461,7 +461,7 @@ contents or long diffs; credential values, keys, tokens, real addresses;
 anything already recorded in a committed ADR.
 
 ## The ADR overlap rule
-A ratified decision belongs to the repo → committed `docs/adr/NNN-title.md`.
+A ratified decision belongs to the repo → a committed record under `plans/architecture/` (see `repo-memory`); in a repo that has not adopted that layout, discover the existing convention rather than assuming `docs/adr/NNN-title.md`.
 The deliberation — what else was considered, what we feared, what we tried
 first → experience store. Do NOT use the graph tool's ADR store: it writes
 into the disposable index and any code change hard-deletes it.

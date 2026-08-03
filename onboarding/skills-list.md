@@ -29,7 +29,7 @@ routing path.
 |-------|---------|-------------|
 | memory-setup | `/memory-setup` | Use when installing, repairing, or verifying the two-store agent-memory architecture on a machine — a code-graph store for structural truth plus an experience store for decisions and outcomes. Gated phases, control-test verification at every gate, a catalogue of verified defects indexed by symptom, and the per-repo `memory-init` command it writes |
 | repo-memory | `/repo-memory` | Architecture decision records in `plans/architecture/` — master index by domain, a per-year decision log, monthly detail files. Append-only, supersede-never-edit. Committed to git and reviewable in the PR that changes them |
-| fix-memory | `/fix-memory` | Use when a memory artifact is in the wrong store — migrates one at a time, ask-first, never bulk. Regenerable structure is deleted (the graph rebuilds it), decisions become ADRs, deliberation goes to the repo bank, cross-project preferences to `personal` |
+| fix-memory | `/fix-memory` | Use when a memory artifact is in the wrong store — migrates one at a time, ask-first, never bulk. Regenerable structure is deleted (the graph rebuilds it), ratified architectural decisions become ADRs, deliberation goes to the repo bank, cross-project preferences to `personal` |
 
 ### MemPalace (retired from routing)
 

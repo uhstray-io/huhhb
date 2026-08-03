@@ -9,7 +9,7 @@ Install, repair and verify the **device-level** two-store memory architecture.
 The code-graph store holds structural truth and is regenerated from source for
 free; the experience store holds decisions, rationale and outcomes and is the
 **only copy of them among the two stores** — nothing regenerates it. Committed
-ADRs under `docs/adr/` remain the durable repository record of *ratified*
+ADRs under `plans/architecture/` remain the durable repository record of *ratified*
 decisions; the store holds the deliberation behind them. The two stores never
 hold the same fact.
 

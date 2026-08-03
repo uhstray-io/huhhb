@@ -86,7 +86,15 @@ Three measured gates — full criteria, thresholds, and the improvement loop in
 - **G1 merge bench** (`node scripts/skill-bench.ts <skill>`) — real
   `claude -p` runs against `tests/bench/<skill>.json` scenarios, with an A/B
   baseline (skill disabled) the skill must beat. Costs tokens; run when a
-  skill changes.
+  skill changes. Two measured traps: the baseline is the same prompt with
+  `--disallowedTools Skill`, which removes the tool but still loads the
+  operator's global `CLAUDE.md` — a scenario probing content that lives there
+  passes without the skill. Read the global file first, probe only surfaces it
+  does not cover, and mark overlapping scenarios VOID. Sandboxing `HOME` or
+  `CLAUDE_CONFIG_DIR` does not fix it (`Not logged in` — credentials bind to
+  the real config dir). And `--runs 1` reuses a cached baseline from
+  `tests/bench/history.jsonl`; use `--runs 3 --rebaseline` when the verdict
+  has to mean something.
 - **G2 field promotion** (`node scripts/evolve/g2.ts report`) — evolve-loop
   telemetry (earned confidence, correction pressure) gates featured/pinned
   status.
@@ -168,6 +176,11 @@ After syncing, review the diff, bump versions, cut a release if changed.
 - Do not write multi-paragraph skill descriptions — one clear line only
 - Do not hardcode paths or usernames in skill scripts
 - Do not use a `triggers` frontmatter field
+- Do not let a code example contradict the rule stated just above it — derive a
+  transformed value (URL-encoded, escaped, quoted) once into a named variable
+  and reuse it, rather than repeating the transform at each call site
+- Do not test for binary content with `grep -q $'\x00'` — the shell drops the
+  NUL, grep gets an empty pattern, and every file matches
 - Do not push non-trivial changes directly to main
 - Do not add AI attribution to commits or PRs
 
@@ -176,7 +189,7 @@ After syncing, review the diff, bump versions, cut a release if changed.
 - `skills/` — all skills, one flat subdirectory per skill (`skills/<skill-name>/SKILL.md`)
 - `.cbmignore` — paths kept out of the code graph (vendored agent trees, caches, key material); changing it needs a forced rebuild, not just a re-index
 - `onboarding/` — onboarding flow triggered on first install
-- `hooks/` — plugin lifecycle hook scripts (SessionStart, PreToolUse, Stop)
+- `hooks/` — plugin lifecycle hook scripts (SessionStart, PreToolUse, Stop). They run from `${CLAUDE_PLUGIN_ROOT}` = `~/.claude/plugins/cache/huhhb/huhhb/<version>/`, never the working tree — a hook edit has no effect on the running session until reinstall (Release Checklist 4)
 - `marketplace.json` — skill manifest (name, path, description, category, tags, version per skill)
 - `.claude-plugin/plugin.json` — plugin version read by Claude Code for update detection (keep in sync with `marketplace.json`)
 - `.claude-plugin/.mcp.json` — MCP server config (must match `plugin.json` mcpServers)

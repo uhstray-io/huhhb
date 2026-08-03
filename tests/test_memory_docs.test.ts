@@ -1,10 +1,14 @@
-/* Offline checks for the memory-model docs added/changed in this PR:
-   .claude/memory/MEMORY.md, .claude/memory/project-buhhdy-memory-model.md,
-   AGENTS.md, CLAUDE.md.
+/* Offline checks for the repo-memory store and the agent-instruction docs:
+   .claude/memory/ (index + record schema), AGENTS.md, CLAUDE.md.
 
    Mirrors the frontmatter-parsing approach in scripts/skill-lint.ts (S1-S8)
    but applied to repo-memory files and the two top-level agent-instruction
    docs, per the schema documented in skills/repo-memory/SKILL.md.
+
+   Checks the store's *schema*, never a record's prose. Records are
+   append-only and superseded in place (ADR-0004), so any assertion pinned to
+   one record's wording fails the moment that record is superseded — which is
+   exactly what happened to the buhhdy-memory-model assertions this replaced.
 
    Run: node --test tests/test_memory_docs.test.ts
    Node stdlib only, no network. */
@@ -17,7 +21,6 @@ import { fileURLToPath } from "node:url";
 const REPO = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const MEMORY_DIR = join(REPO, ".claude", "memory");
 const MEMORY_INDEX = join(MEMORY_DIR, "MEMORY.md");
-const BUHHDY_MODEL_FILE = join(MEMORY_DIR, "project-buhhdy-memory-model.md");
 const AGENTS_FILE = join(REPO, "AGENTS.md");
 const CLAUDE_FILE = join(REPO, "CLAUDE.md");
 
@@ -91,91 +94,65 @@ describe(".claude/memory/MEMORY.md (index)", () => {
     }
   });
 
-  test("includes exactly one entry for the new buhhdy memory model file", () => {
-    const matches = lines.filter((l) => l.includes("project-buhhdy-memory-model.md"));
-    assert.equal(matches.length, 1, "expected exactly one MEMORY.md line for the new file");
-  });
-
-  test("the buhhdy memory model entry summarizes the tier hierarchy and path-separation rule", () => {
-    const entry = lines.find((l) => l.includes("project-buhhdy-memory-model.md")) ?? "";
-    assert.match(entry, /\[buhhdy memory model\]\(project-buhhdy-memory-model\.md\)/);
-    assert.match(entry, /user \(MemPalace\)/);
-    assert.match(entry, /team \(Honcho\)/);
-    assert.match(entry, /repo-memory in \.claude\/memory\/ only/);
-    assert.match(entry, /buhhdy\/memory retired/);
-  });
-});
-
-describe(".claude/memory/project-buhhdy-memory-model.md (new memory file)", () => {
-  const text = readFileSync(BUHHDY_MODEL_FILE, "utf-8");
-  const { keys, fm, body } = parseFrontmatter(text);
-
-  test("has parseable frontmatter", () => {
-    assert.notEqual(keys, null, "no parseable frontmatter block");
-  });
-
-  test("frontmatter has exactly [name, description, metadata] at top level", () => {
-    assert.deepEqual(keys, ["name", "description", "metadata"]);
-  });
-
-  test("frontmatter name matches the file's slug", () => {
-    const nameMatch = fm.match(/^name:\s*(\S+)/m);
-    assert.ok(nameMatch, "no name: field");
-    assert.equal(nameMatch![1], "project-buhhdy-memory-model");
-  });
-
-  test("metadata.node_type is 'memory'", () => {
-    assert.equal(nestedValue(fm, "metadata", "node_type"), "memory");
-  });
-
-  test("metadata.type is one of the four repo-memory types", () => {
-    const type = nestedValue(fm, "metadata", "type");
-    assert.ok(type, "no metadata.type field");
-    assert.ok(["project", "feedback", "reference", "user"].includes(type!),
-      `unexpected metadata.type: ${type}`);
-    assert.equal(type, "project");
-  });
-
-  test("frontmatter has no unsupported 'triggers' field", () => {
-    assert.ok(!(keys ?? []).includes("triggers"));
-  });
-
-  test("description length is within the repo-wide 30-500 char lint window", () => {
-    const descMatch = fm.match(/^description:\s*(.+(?:\n[ \t]+.+)*)/m);
-    assert.ok(descMatch, "no description: field");
-    const len = charLen(descMatch![1]);
-    assert.ok(len >= 30 && len <= 500, `description length ${len} out of [30, 500]`);
-  });
-
-  test("documents all three memory tiers in precedence order", () => {
-    const userIdx = body.indexOf("**user memory**");
-    const teamIdx = body.indexOf("**team memory**");
-    const configIdx = body.indexOf("**buhhdy config defaults");
-    assert.ok(userIdx !== -1 && teamIdx !== -1 && configIdx !== -1, "missing a tier heading");
-    assert.ok(userIdx < teamIdx && teamIdx < configIdx, "tiers are not in precedence order");
-  });
-
-  test("states the hard path-separation rule for .claude/memory/ vs plans/", () => {
-    assert.match(body, /\*\*Path separation \(hard rule\):\*\*/);
-    assert.match(body, /repo memory lives in `\.claude\/memory\/` ONLY/);
-    assert.match(body, /no memory of any kind is ever written under `plans\/`/);
-  });
-
-  test("records retirement of the bespoke buhhdy/memory store", () => {
-    assert.match(body, /bespoke `buhhdy\/memory\/` store was retired/);
-    assert.match(body, /`repo-kickstart` is idempotent and registry-free/);
-  });
-
-  test("has no dangling relative markdown links", () => {
-    const prose = body.replace(/```[\s\S]*?```/g, "");
-    for (const m of prose.matchAll(/\]\((?!http|#|mailto)([^)\s]+)\)/g)) {
-      const link = m[1];
-      const target = resolve(dirname(BUHHDY_MODEL_FILE), link.split(":")[0]);
-      const alt = resolve(REPO, link.split(":")[0]);
-      assert.ok(existsSync(target) || existsSync(alt), `broken relative link: ${link}`);
+  test("indexes each record exactly once", () => {
+    for (const file of memoryFiles) {
+      const matches = lines.filter((l) => l.includes(`(${file})`));
+      assert.equal(matches.length, 1, `expected exactly one MEMORY.md line for ${file}`);
     }
   });
 });
+
+/* Record schema, applied to every record in the store rather than one
+   hand-picked file — a new record is covered the moment it lands. */
+for (const file of memoryFiles) {
+  describe(`.claude/memory/${file}`, () => {
+    const path = join(MEMORY_DIR, file);
+    const text = readFileSync(path, "utf-8");
+    const { keys, fm, body } = parseFrontmatter(text);
+
+    test("has parseable frontmatter", () => {
+      assert.notEqual(keys, null, "no parseable frontmatter block");
+    });
+
+    test("frontmatter has exactly [name, description, metadata] at top level", () => {
+      assert.deepEqual(keys, ["name", "description", "metadata"]);
+    });
+
+    test("frontmatter name matches the file's slug", () => {
+      const nameMatch = fm.match(/^name:\s*(\S+)/m);
+      assert.ok(nameMatch, "no name: field");
+      assert.equal(nameMatch![1], file.replace(/\.md$/, ""));
+    });
+
+    test("metadata.type is one of the four repo-memory types", () => {
+      const type = nestedValue(fm, "metadata", "type");
+      assert.ok(type, "no metadata.type field");
+      assert.ok(["project", "feedback", "reference", "user"].includes(type!),
+        `unexpected metadata.type: ${type}`);
+    });
+
+    test("frontmatter has no unsupported 'triggers' field", () => {
+      assert.ok(!(keys ?? []).includes("triggers"));
+    });
+
+    test("description length is within the repo-wide 30-500 char lint window", () => {
+      const descMatch = fm.match(/^description:\s*(.+(?:\n[ \t]+.+)*)/m);
+      assert.ok(descMatch, "no description: field");
+      const len = charLen(descMatch![1]);
+      assert.ok(len >= 30 && len <= 500, `description length ${len} out of [30, 500]`);
+    });
+
+    test("has no dangling relative markdown links", () => {
+      const prose = body.replace(/```[\s\S]*?```/g, "");
+      for (const m of prose.matchAll(/\]\((?!http|#|mailto)([^)\s]+)\)/g)) {
+        const link = m[1];
+        const target = resolve(dirname(path), link.split(":")[0]);
+        const alt = resolve(REPO, link.split(":")[0]);
+        assert.ok(existsSync(target) || existsSync(alt), `broken relative link: ${link}`);
+      }
+    });
+  });
+}
 
 describe("AGENTS.md", () => {
   const text = readFileSync(AGENTS_FILE, "utf-8");

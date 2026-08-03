@@ -213,6 +213,25 @@ test("year-index row lands INSIDE the table, not after trailing prose", () => {
   assert.match(lines[newRow - 1] ?? "", /^\|/, "row sits directly after another table row");
 });
 
+test("a NEW domain lands inside Decisions-by-domain, not under ## Years", () => {
+  /* Regression: appending a new `###` domain at EOF put it below the master
+     index's trailing "## Years" section, so markdown read the domain as a child
+     of Years instead of part of the domain list. */
+  const root = scaffold(WITH_DECISIONS);
+  writeFileSync(join(root, "plans", "architecture", "DECISIONS.md"),
+    "# Architecture Decisions — master index\n\n## Decisions by domain\n\n" +
+    "### Memory architecture\n\n| ADR | Decision | Status | Record |\n|--|--|--|--|\n" +
+    "| [ADR-0001](2026/2026-01.md) | x | Accepted | 2026-01 |\n\n" +
+    "## Years\n\n| Year | Decisions |\n|--|--|\n| 2026 | 1 |\n");
+  run(root, "2026-07-15-add-widget", "--domain", "Tooling and CI");
+
+  const lines = read(root, "DECISIONS.md").split("\n");
+  const newDomain = lines.findIndex((l) => l.trim() === "### Tooling and CI");
+  const years = lines.findIndex((l) => l.trim() === "## Years");
+  assert.notEqual(newDomain, -1, "the new domain heading exists");
+  assert.ok(newDomain < years, `new domain must precede ## Years (domain ${newDomain}, years ${years})`);
+});
+
 test("--domain files the record under the named domain in DECISIONS.md", () => {
   const root = scaffold(WITH_DECISIONS);
   run(root, "2026-07-15-add-widget", "--domain", "Tooling and CI");

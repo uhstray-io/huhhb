@@ -10,7 +10,7 @@
 | 2. Remove the four MemPalace skills | **not done** — descriptions marked LEGACY (`a7d2a4a`) but the skills ship |
 | 3. Close the trigger gap | **partly** — `memory-onboarding` removed, so its share of the surface is freed; unmeasured |
 | 4. Fix the surviving diagnostic skill | **obsolete** — `memory-onboarding` was deleted outright (ADR-0002) rather than repaired. Its checks moved to `memory-setup` Phase 5, `evolve-status`, and `repo-kickstart` |
-| 5. Documentation reconciliation | **done** — `f2b739e`, `a7d2a4a`, `31e9f09`, `3a9eb2b` |
+| 5. Documentation reconciliation | **done** — `f2b739e`, `a7d2a4a`, `31e9f09`, `3a9eb2b`. Its checklist below is left unticked deliberately: those boxes describe the removal-time doc pass (phases 1–2), which has not run |
 | 6. buhhdy | **still out of scope** — being removed from this repo entirely |
 
 Also landed outside this plan: `two-store-memory-setup` renamed to `memory-setup`;
@@ -137,11 +137,17 @@ Removing four `memory-*` skills frees trigger surface. Confirm the survivors cla
 - [ ] 3.1 Add "remember this", "what do we know about", "search my memory",
       "memory status" to the negative-trigger lists of whichever survivor should NOT
       match, and the positive list of whichever should
-- [ ] 3.2 **Gate:** `node scripts/skill-bench.ts memory-onboarding` — trigger precision
+- [ ] 3.2 **Gate:** `node scripts/skill-bench.ts memory-setup` — trigger precision
       and recall both 1.0, measured, with the pre-existing `.claude/skills/` BMAD
       contamination noted in the result
 
-### 4. Fix the surviving diagnostic skill
+### 4. Fix the surviving diagnostic skill — OBSOLETE, DO NOT EXECUTE
+
+> **This entire phase is obsolete.** `memory-onboarding` was deleted outright (ADR-0002)
+> rather than repaired; its checks moved to `memory-setup` Phase 5, `evolve-status`, and
+> `repo-kickstart`'s verification checklist. The tasks below are kept as the record of what
+> was planned and why it was dropped. Every one of them references a skill that no longer
+> exists — none can be run.
 
 `memory-onboarding` is the "is my memory set up right?" entry point and it currently
 diagnoses the **wrong system**. Its matrix is M1 MemPalace / M2 evolve+Honcho / M3
@@ -160,10 +166,10 @@ why it is here rather than in the documentation sweep.
       hardcoded number goes stale on the next stratum change
 - [ ] 4.4 M4 (buhhdy config floor) depends on the buhhdy removal — coordinate, do not
       guess. If buhhdy is gone, the row goes with it
-- [ ] 4.5 Update `tests/bench/memory-onboarding.json`, which still asserts MemPalace
+- [~] 4.5 **OBSOLETE** (skill deleted; fixture removed with it) — was: update `tests/bench/memory-onboarding.json`, which still asserted MemPalace
       behaviour
 - [ ] 4.6 **Gate:** re-run 4.1's broken-machine scenario and confirm it now reports the
-      failure; `node scripts/skill-bench.ts memory-onboarding` beats its skill-disabled
+      failure; `node scripts/skill-bench.ts memory-setup` beats its skill-disabled
       baseline
 
 ### 5. Documentation reconciliation
@@ -205,4 +211,4 @@ why it is here rather than in the documentation sweep.
 
 Done when: `git grep -i mempalace` is limited to historical plans and superseded memory
 records; `skill-lint` is 0 FAIL at 49 skills; a scratch-profile install registers no
-`memory` MCP server; and `memory-onboarding` measures 1.0 trigger precision and recall.
+`memory` MCP server; and `memory-setup` measures 1.0 trigger precision and recall.

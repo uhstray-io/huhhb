@@ -9,7 +9,7 @@ not this file.
   and tracker issues are cut — status `proposed`/`in-progress`, with links to the
   change's `tasks.md` and its issue number(s).
 - **pr-shepherd post-merge close-out** flips the row to `archived` and appends
-  the promoted `plans/architecture/NNN-<slug>.md` ADR link (via
+  the promoted `[ADR-NNNN](../architecture/YYYY/YYYY-MM.md)` link (via
   `promote-adr.ts` — do not hand-edit the status/ADR link).
 
 Keep the columns exactly as below — `promote-adr.ts` matches a row by its first

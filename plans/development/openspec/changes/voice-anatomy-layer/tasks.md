@@ -127,7 +127,6 @@
       real one, and routed around; the skill was correct and the test measured nothing.
 - [ ] 6.4 Run `openspec validate voice-anatomy-layer --store huhhb`
 - [ ] 6.5 Run `evolve-map`; confirm `user-kickstart` registers with no unflagged overlap
-      against `claude-md-improver`, `memory-onboarding`, `onboarding`, or
-      `memory-setup`
+      against `claude-md-improver`, `onboarding`, or `memory-setup`
 - [ ] 6.6 Open the PR with pressure-test and idempotency evidence; after human merge,
       archive this change (`openspec archive voice-anatomy-layer --store huhhb`)

@@ -14,7 +14,7 @@ stores (`memory-setup`), author new decisions (`repo-memory`), or bootstrap a re
 
 ## The routing test
 
-Ask what kind of fact it is. There are only four answers, and each has exactly one home.
+Ask what kind of fact it is. There are only five answers, and each has exactly one home.
 
 | The fact is… | It belongs in | Because |
 | ------------ | ------------- | ------- |
@@ -22,6 +22,7 @@ Ask what kind of fact it is. There are only four answers, and each has exactly o
 | **A ratified decision** — what was chosen, what it cost, what was rejected | an **ADR** via `repo-memory` | Versioned with the code it governs, reviewable in a PR |
 | **Deliberation, outcome, or preference scoped to this repo** — why we tried X, what failed, what we learned here | this repo's **Hindsight bank** | Nothing regenerates it; it is the only copy |
 | **A preference that holds across every project** — how the user works, standing constraints | the **`personal` bank**, or `~/.claude/CLAUDE.md` via `user-kickstart` if it is a directive | Cross-project, so a repo-scoped store would strand it |
+| **A repo convention or instruction** — how work is done *here*, binding on everyone | **`AGENTS.md`** — and in no memory store at all | An instruction every session must follow belongs in the instructions, not in a store something has to recall |
 
 **Decision vs deliberation is the call people get wrong.** A record often contains both.
 Split it: the decision and its cost become the ADR; the reasoning, the alternatives and

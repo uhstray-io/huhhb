@@ -118,7 +118,7 @@ huhhb uses **two stores that never hold the same fact**:
 
 | | [codebase-memory-mcp](https://github.com/DeusData/codebase-memory-mcp) | [Hindsight](https://github.com/vectorize-io/hindsight) |
 |---|---|---|
-| Holds | **What is** — present-tense structural truth about code | **What happened and why** — decisions, attempts, outcomes, preferences |
+| Holds | **What is** — present-tense structural truth about code | **What happened and why** — deliberation, attempts, outcomes, preferences. *Ratified* decisions are ADRs in `plans/architecture/`, not here |
 | Rebuilt from | source, deterministically, any time | nothing — it is the only copy |
 | Write cost | zero, no LLM | a model call per retain |
 | Authoritative on | call graphs, blast radius, dead code, routes, architecture | rationale, rejected alternatives, failures, what worked |

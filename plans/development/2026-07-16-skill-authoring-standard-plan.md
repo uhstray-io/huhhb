@@ -15,9 +15,10 @@ marketplace is efficient (token-economical), effective (complied with), discrete
 inside `writing-skills` (eating our own progressive-disclosure dogfood). Everything
 machine-checkable in it is enforced by new `skill-lint.ts` checks (S9–S12) with the
 existing `skill-lint-baseline.json` grandfathering mechanism; the triggering claims
-are enforced by a new negative-activation scenario type in `skill-bench.ts`; the
-judgment-only rules are enforced by making the standard a required read in
-`writing-skills`, `evolve-distill`, and `evolve-skills`. No new dependencies.
+are enforced by a new negative-activation scenario type in `skill-bench.ts`;
+refinement superiority is proven by a pairwise battle judge in `skill-bench.ts`
+(Task 7); the judgment-only rules are enforced by making the standard a required
+read in `writing-skills`, `evolve-distill`, and `evolve-skills`. No new dependencies.
 
 **Tech Stack:** TypeScript (Node ≥22.18 native type stripping, stdlib only, erasable
 TS), `node --test`, existing `scripts/skill-lint.ts` / `scripts/skill-bench.ts` /
@@ -27,7 +28,8 @@ TS), `node --test`, existing `scripts/skill-lint.ts` / `scripts/skill-bench.ts` 
 
 ## Evidence base (read this before executing)
 
-Seven sources ground the standard. Each normative rule in Task 1 cites back to these
+Seven sources ground the standard (an eighth reference, autoevals, is tooling
+context for Task 7, not evidence). Each normative rule in Task 1 cites back to these
 by bracket tag. **Full citations in the References section at the bottom.**
 
 | Tag | Source | What it contributes |
@@ -52,10 +54,11 @@ skill to *prove* both its positive and negative triggering with bench scenarios.
 
 ## File structure
 
-- Create: `skills/writing-skills/references/huhhb-skill-standard.md` — the standard (single source of truth)
+- Create: `skills/writing-skills/references/skill-authoring.md` — the standard (single source of truth)
 - Modify: `scripts/skill-lint.ts` — checks S9–S12 (machine-enforceable subset)
 - Modify: `scripts/skill-lint-baseline.json` — grandfather existing violations
-- Modify: `scripts/skill-bench.ts` — `expect_no_activation` scenario support
+- Modify: `scripts/skill-bench.ts` — `expect_no_activation` scenario support; `--battle` pairwise judging (Task 7)
+- Create: `plans/development/skill-retrofit-order.md` — dependency-ordered burndown for retro-fitting all skills (Task 8)
 - Modify: `tests/test_evolve.test.ts` — lint-gate subtest already runs the linter; add unit rows for S9–S12
 - Modify: `skills/writing-skills/SKILL.md` — pointer + the three genuinely new rules (TDD-gated, see Task 5)
 - Modify: `skills/evolve-distill/SKILL.md`, `skills/evolve-skills/SKILL.md` — standard consultation wired into the pipeline
@@ -67,7 +70,7 @@ skill to *prove* both its positive and negative triggering with bench scenarios.
 ### Task 1: Author the standard document
 
 **Files:**
-- Create: `skills/writing-skills/references/huhhb-skill-standard.md`
+- Create: `skills/writing-skills/references/skill-authoring.md`
 
 - [ ] **Step 1: Write the file with exactly this content** (tags cite the Evidence
   base table; keep them — they make every rule auditable):
@@ -78,7 +81,8 @@ skill to *prove* both its positive and negative triggering with bench scenarios.
 The normative checklist for every skill in this repo — hand-written or
 evolve-generated. Machine-checkable rules are enforced by `scripts/skill-lint.ts`
 (S-numbers below); triggering rules by `scripts/skill-bench.ts` scenarios;
-judgment rules by review. Evidence tags ([SKILLOPT] etc.) resolve in
+refinement superiority by `scripts/skill-bench.ts --battle`; judgment rules by
+review. Evidence tags ([SKILLOPT] etc.) resolve in
 `plans/development/2026-07-16-skill-authoring-standard-plan.md` → References.
 
 ## 1. Discoverable — the description is the product
@@ -191,6 +195,12 @@ rules carry the whole gain [SKILLOPT].
   merge; keep rejected-edit rationale in the PR record so bad changes aren't
   re-proposed. Author/refine with the strongest available model even when a
   weaker one will execute the skill.
+- E5. Refinements prove superiority pairwise, not on absolute judge scores:
+  challenger vs champion outputs on the same scenarios, position-swapped
+  battle verdicts with cited evidence, logged to `tests/bench/battles.jsonl`.
+  Ordering: objective gates first (asserts, budget ratios), judge
+  second (only ranks variants that already pass the gates), humans last
+  (adjudicate splits). The judge never opines on what can be measured.
 
 ## Split of enforcement
 
@@ -199,6 +209,7 @@ rules carry the whole gain [SKILLOPT].
 | Frontmatter shape, name/dir match, description length + trigger phrasing, body caps, link integrity, versions | `skill-lint.ts` S1–S8 (existing) |
 | Spec-valid name charset, reference depth, description POV, 500-line body | `skill-lint.ts` S9–S12 (this standard) |
 | Positive + negative triggering, obsolescence | `skill-bench.ts` scenarios (E2/E3) |
+| Refinement superiority (output better/worse than champion) | `skill-bench.ts --battle` (E5) |
 | Scoping, cut test, gotchas, prescriptiveness, procedures | writing-skills flow + review + evolve-skills lifecycle pass |
 ````
 
@@ -211,7 +222,7 @@ Expected: `0 FAIL` (same counts as before the change)
 - [ ] **Step 3: Commit**
 
 ```bash
-git add skills/writing-skills/references/huhhb-skill-standard.md
+git add skills/writing-skills/references/skill-authoring.md
 git commit -m "docs(writing-skills): huhhb skill authoring standard v1 (evidence-tagged)"
 ```
 
@@ -346,7 +357,7 @@ git commit -m "feat(bench): expect_no_activation scenarios — prove negative tr
 
 ```markdown
 **Standard gate (required):** before proposing the skill, read
-`skills/writing-skills/references/huhhb-skill-standard.md` and check the draft
+`skills/writing-skills/references/skill-authoring.md` and check the draft
 against D1–D5, C1–C4, T1–T5, P1–P7. Then run `node scripts/skill-lint.ts` and
 author the E2 bench file (≥2 positive + ≥1 `expect_no_activation` scenario).
 A draft that fails the standard is revised, not proposed.
@@ -356,9 +367,11 @@ A draft that fails the standard is revised, not proposed.
 
 ```markdown
 - Every create/refine verdict is checked against
-  `skills/writing-skills/references/huhhb-skill-standard.md`; refine
+  `skills/writing-skills/references/skill-authoring.md`; refine
   proposals that grow a body past its S6/S12 budgets must move content to
   references/ (with explicit load triggers) instead.
+- Once `skill-bench.ts --battle` exists (E5), refine verdicts cite its
+  battle tally under the non-regression rule — never absolute judge scores.
 ```
 
 - [ ] **Step 3: Validate and commit**
@@ -393,7 +406,7 @@ test FIRST.
     {
       "id": "standard-consulted-on-authoring",
       "prompt": "Draft a new huhhb skill that converts CSV exports to our reporting format. Sketch the SKILL.md frontmatter and body outline first.",
-      "assert": "grep -qiE 'huhhb-skill-standard|negative.?trigger|expect_no_activation|coherent unit' result.txt",
+      "assert": "grep -qiE 'skill-authoring|negative.?trigger|expect_no_activation|coherent unit' result.txt",
       "judge": "The response should show the huhhb skill authoring standard being applied: description with what+when and a negative trigger, a scoping (coherent-unit) judgment, and mention of the required bench scenarios including a negative-activation one. Score 1 if it drafts a skill with no evidence the standard was consulted."
     },
     {
@@ -416,7 +429,7 @@ Expected: `standard-consulted-on-authoring` FAILS without the Step 3 edit.
   frontmatter-adjacent top matter (right after the Overview):
 
 ```markdown
-**REQUIRED READING for huhhb skills:** `references/huhhb-skill-standard.md` —
+**REQUIRED READING for huhhb skills:** `references/skill-authoring.md` —
 the repo's normative checklist (evidence-tagged). Three rules it adds beyond
 this skill's guidance: (1) negative triggers in descriptions for near-neighbor
 skills, tested with an `expect_no_activation` bench scenario; (2) never let an
@@ -448,7 +461,7 @@ git commit -m "feat(writing-skills): require the authoring standard; bench prove
 
 ```markdown
 Skill authoring follows the huhhb Skill Authoring Standard
-(`skills/writing-skills/references/huhhb-skill-standard.md`) — discoverable,
+(`skills/writing-skills/references/skill-authoring.md`) — discoverable,
 discrete, efficient, effective, evaluated. Lint S9–S12 and the
 `expect_no_activation` bench scenario enforce its machine-checkable half;
 writing-skills and the evolve lifecycle pass enforce the judgment half.
@@ -474,11 +487,185 @@ and `.claude-plugin/plugin.json`.
 
 ---
 
+### Task 7: Battle mode — pairwise output judging (E5)
+
+Independent follow-on: can land in its own PR after Tasks 1–6; only Task 1's
+E5 text refers to it.
+
+**Files:**
+- Modify: `scripts/skill-bench.ts`
+- Created at runtime: `tests/bench/battles.jsonl` (append-only),
+  `tests/bench/outputs/<skill>/<scenario>-<side>-<sha>.txt` (persisted outputs)
+
+**Why pairwise.** The repo already compares runs objectively —
+`skill-trends.ts regressions` diffs latest-vs-previous history rows, and PR
+#47's R3 gate (`championRow`/`beatsChampion` in skill-bench.ts) holds pass
+rate and a 1.1× token ceiling against the champion version. What none of
+those see is per-output *quality*: the 1–5 judge scores each output in
+isolation, absolute scores compress (most land 3–4) and drift across
+judge-model versions. Battle adds the missing axis — pairwise verdicts on
+the same scenario. Design principle (E5): **objective gates first, judge
+second, humans last** — battle only ranks variants that already pass asserts,
+budget ratios, and the R3 objective gate, and never overrides them.
+
+**Sequencing:** this task touches the same skill-bench.ts region as PR #47 —
+land it after #47 merges and build on `championRow`/`beatsChampion`; do not
+re-implement them.
+
+- [ ] **Step 1: CLI + generation.** `node scripts/skill-bench.ts --battle
+  <skill>` runs each scenario in `tests/bench/<skill>.json` for the
+  working-tree skill (challenger) and the champion — by default the R3
+  champion lineage from PR #47's `championRow`; `--champion <git-ref>`
+  overrides by materializing that version. Reuse the existing session-driving
+  path, and persist all raw outputs to `tests/bench/outputs/` keyed by
+  (prompt hash, skill content hash) using the existing `promptHash` helper.
+  **Never regenerate a hit:** before generating either side, look the pair up
+  in `outputs/` — the same cache-first shape as the existing
+  `cachedBaseline()` — so an unchanged champion costs zero across
+  revise-and-rebattle cycles, and a plain bench run's persisted outputs serve
+  as the challenger side (with gate verdicts already computed) instead of a
+  second generation pass. Scenarios where either side fails its `assert` or
+  budget gate are excluded from battle (the gate already decided), as are
+  `expect_no_activation` scenarios (no comparable output); log every
+  exclusion.
+
+- [ ] **Step 2: Evidence-cited battle judge.** Alongside `JUDGE_TEMPLATE`
+  (~line 45), add `BATTLE_TEMPLATE`: given the scenario rubric and outputs A
+  and B, the judge must emit one verbatim quote *from each output* justifying
+  its verdict, then a single line `A`, `B`, or `TIE`. Missing/unquotable
+  evidence forces `TIE` (ports the R4 evidence rule from the 1–5 judge).
+
+- [ ] **Step 3: Position-swap.** Judge every pair twice — champion-first and
+  challenger-first — reusing the persisted outputs. The verdicts must agree
+  (after un-swapping) to count as a win; disagreement records as `TIE`.
+  This kills position bias, the dominant known failure of pairwise judges,
+  for the cost of one extra judge call per scenario. Short-circuit: a `TIE`
+  on the first call is `TIE` regardless of the second — skip the swapped
+  call (ties are likely the modal case).
+
+- [ ] **Step 4: Audit log.** Append one record per judged pair to
+  `tests/bench/battles.jsonl` (via the existing `recordHistory`/`pyJson`
+  writer machinery, new path): skill, scenario id, prompt hash, champion +
+  challenger git SHAs and skill content hashes, output artifact paths, judge
+  model ID, both presentation orders' raw judge responses (rationale
+  verbatim), final verdict, cost. The per-skill *tally* additionally lands as
+  a row in `history.jsonl` so `skill-trends.ts` — the designated reader —
+  reports on battles without a new query layer; battles.jsonl holds only the
+  per-pair judge detail. Every verdict stays re-inspectable and re-judgeable;
+  verdicts that aren't logged are gone.
+
+- [ ] **Step 5: Decision rules (two, for two consumers).**
+  - **Non-regression** — the Task 8 retrofit gate: among decided (non-tie)
+    scenarios, wins ≥ losses; zero decided scenarios (all ties) passes as
+    not-worse. The objective half stays R3's `beatsChampion` (pass rate
+    holds, tokens ≤ 1.1×) — battle rules only on quality. This floor is
+    satisfiable at E2-minimum bench size (~2 battle-eligible scenarios).
+  - **Superiority** — required to *declare the challenger better* (victory/
+    replacement): ≥5 decided scenarios AND ≥70% wins, mirroring R3's "no
+    victory, no replacement" conservatism. Below the floor: report the tally,
+    declare nothing. E2-minimum benches can therefore gate non-regression but
+    never claim superiority — growing the scenario set is what unlocks it.
+
+- [ ] **Step 6: Verify offline + commit**
+
+Run: `node scripts/skill-bench.ts --battle repo-memory --dry-run`
+Expected: renders the battle plan (scenario list, both sides, judge calls) without spending tokens.
+
+```bash
+git add scripts/skill-bench.ts
+git commit -m "feat(bench): --battle pairwise judging — position-swapped, evidence-cited, logged (E5)"
+```
+
+**Deferred (not in this task; the persisted outputs + battles.jsonl schema
+are the stable contract they all build on):**
+- Escalation panel: a split verdict (Step 3 disagreement) escalates to a
+  3-vote judge panel instead of auto-tie; panel cost lands only where
+  uncertainty lives.
+- `--review`: replay split/escalated cases for human adjudication; record
+  overrides in `battles.jsonl` and report judge-vs-human agreement rate —
+  the number that says whether to trust the automation at all.
+- Per-axis verdicts (correctness, clarity) as separate battle rubrics; token
+  efficiency stays objective — never judged.
+- Distractor-present battles ([WILD]: distractors cost −7.7 points) once the
+  bench spec grows realistic-retrieval scenarios.
+- autoevals adoption point (References #8): if maintaining homegrown judge
+  prompts stops being worth it, its calibrated scorers (Battle, Factuality,
+  ClosedQA) slot in as alternative judges over the same persisted outputs.
+  Friction to weigh then: it speaks the OpenAI SDK, so judging with Claude
+  needs an OpenAI-compatible endpoint.
+
+---
+
+### Task 8: Retro-fit every existing skill (iterative, dependency order)
+
+Follow-on to Tasks 1–7: requires the standard (Task 1), lint S9–S12 (Task 2),
+negative-activation scenarios (Task 3), and battle mode (Task 7) to exist,
+because they are the per-skill gate. Runs as many small PRs, not one sweep.
+Where possible, batches execute through the existing evolve-skills lifecycle
+pass (it already audits every skill against lint debt, bench history, and
+telemetry) — this task defines the order and the per-skill gate, not a
+parallel process.
+
+**Files:**
+- Create: `plans/development/skill-retrofit-order.md` (generated once, checked in)
+- Modify per batch: `skills/<name>/SKILL.md`, `tests/bench/<name>.json`,
+  `scripts/skill-lint-baseline.json` (shrinks each batch)
+
+- [ ] **Step 1: Derive the dependency order (once, mechanically).** Seed the
+  skill inventory from the existing
+  `node scripts/evolve/skill_graph.ts inventory --json --tier repo` (don't
+  re-implement enumeration); the new work is only edge extraction and the
+  sort. A skill *depends on* another when its SKILL.md (or references/)
+  names, links, or invokes it — grep each skill body for every other skill's
+  name. Topo-sort with dependencies first, so a skill is only updated after
+  the skills it points at already conform. Tie-break equal ranks by bench
+  coverage (already-benched first — cheapest to verify). Cycles (e.g.
+  mutually-referencing pairs) form one batch and update together. Skills in
+  the same rank are independent — their batches may proceed in parallel; the
+  edge order is a hard constraint only when a retrofit renames or moves a
+  file other skills link to. Roots to seed rank 0 explicitly:
+  `writing-skills` (the instrument — its references/ hosts the standard),
+  then `evolve-distill`/`evolve-skills` (they mass-produce skills; updating
+  them first stops new debt). Write the ordered list with its edge evidence
+  to `plans/development/skill-retrofit-order.md` — the checked-in *ordering*,
+  immutable once generated; progress lives in the shrinking lint baseline,
+  not here.
+
+- [ ] **Step 2: Iterate in batches of 3–5 skills, in that order.** Per skill:
+  1. Lint clean: fix its S1–S12 findings; delete its entries from
+     `skill-lint-baseline.json` (the shrinking baseline IS the progress
+     tracker — no separate status file).
+  2. Apply the judgment half of the standard (D/C/T/P rules): description
+     rewrite against the cut test, body → references/ moves past budget,
+     gotchas inline, explicit load triggers.
+  3. Bench coverage: create or extend `tests/bench/<name>.json` to E2 shape
+     (≥2 positive incl. a phrasing variant, ≥1 `expect_no_activation`).
+  4. Prove not-worse: `skill-bench.ts --battle <name>` under Task 7's
+     **non-regression rule** (wins ≥ losses among decided; R3's
+     `beatsChampion` covers the objective half) — the battle consumes step
+     3's persisted bench outputs as the challenger side, no second
+     generation pass. Fails → at most 2 revise-and-rebattle attempts, then
+     revert and move the skill to the tail of the order; never merge a
+     regression. Record the tally in the PR.
+
+- [ ] **Step 3: Batch close-out.** One PR per batch (commit per skill inside
+  it), CodeRabbit + battle tallies in the description. Re-run
+  `node scripts/skill-lint.ts` at each merge — WARN count must be monotonically
+  falling; done when the baseline file is empty, every skill has an E2 bench
+  file, and lint reports 0 FAIL / 0 grandfathered.
+
+```bash
+git add plans/development/skill-retrofit-order.md
+git commit -m "docs(plans): skill retrofit burndown — dependency-ordered, battle-gated"
+```
+
+---
+
 ## Out of scope (deliberate)
 
-- Retro-fitting the 48 existing skills to S9–S12 (grandfathered via baseline;
-  the evolve-skills lifecycle pass burns the list down skill-by-skill with
-  bench coverage per change).
+- ~~Retro-fitting the existing skills to S9–S12~~ — **now in scope as
+  Task 8** (iterative, dependency-ordered, battle-gated); the grandfather
+  baseline remains the progress tracker.
 - Retrieval/index tooling over the marketplace ([WILD]'s search findings) —
   huhhb's skill count doesn't yet warrant it; revisit at ~100+ skills [ANTH].
 - Auto-compression of bodies ([SKILLRED]'s tool) — the standard makes authors
@@ -507,6 +694,10 @@ and `.claude-plugin/plugin.json`.
    https://www.digitalocean.com/community/tutorials/how-to-implement-agent-skills
 7. Anthropic. *Skill authoring best practices.* Claude platform docs.
    https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices
+8. Braintrust. *autoevals — LLM-as-judge and heuristic evaluators
+   (Battle, Factuality, ClosedQA; Python + TypeScript, standalone).* Tooling
+   reference for Task 7's deferred adoption point, not evidence.
+   <https://github.com/braintrustdata/autoevals>
 
 Numeric claims from sources 1–3 were extracted via summarizing fetches of the
 arXiv HTML; spot-check exact table values against the papers before quoting

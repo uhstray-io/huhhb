@@ -87,7 +87,9 @@ verdicts: healthy=<n> refine=<n> merge=<n> prune=<n> create=<n>
   human merge + CI evals).
 - Archive, never delete. Pinned skills are exempt from merge/prune, never
   from refinement.
-- Upstream-synced skills (caveman family; mempalace, pending retirement) are refined **upstream**
+- Upstream-synced skills (caveman family) are refined **upstream**. The mempalace-synced
+  skill is **retired from routing (2026-08-01)** — do not refine it upstream; removal is
+  planned in `plans/development/2026-08-02-memory-skill-migration-plan.md`
   — propose an issue/PR against the source repo, never a local divergence.
 - Verdicts need evidence you can quote (journal line, bench row, lint code).
   A library pass that "finds" work without receipts is inventing it —

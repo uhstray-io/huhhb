@@ -820,7 +820,7 @@ alternative back, and a domain-language recall that actually returned the charte
 | KICKSTART / ARCHITECTURE | file exists |
 | plans tree | `plans/development/00-implementation-plan.md` + both READMEs exist |
 | plans/product | `plans/product/README.md` exists (content optional — inception is opt-in, never mandatory) |
-| ADR structure | `plans/architecture/DECISIONS.md` and `TEMPLATE.md` exist; every ADR in a `YYYY/YYYY-MM.md` has a row in that year's `INDEX.md` AND a line in `DECISIONS.md` — an index that omits a record is a **fail**, not a warning |
+| ADR structure | `plans/architecture/DECISIONS.md` and `TEMPLATE.md` exist; the record set and the index sets match **both ways** — every ADR in a `YYYY/YYYY-MM.md` has a row in that year's `INDEX.md` AND a line in `DECISIONS.md`, **and** every index row and master line resolves to an existing record. An index that omits a record is a **fail**; so is an index row pointing at a record that does not exist, because an orphaned row reads as a decision that was never made |
 | OpenSpec | `plans/development/openspec/config.yaml` + `.openspec-store/store.yaml` (id `<store-id>`) exist; `openspec store list` includes `<store-id>` (else re-run `register` — it no-ops) |
 | OpenSpec context | `config.yaml` `context:` already names the bank id and the graph/rationale split |
 | AGENTS.md memory block | AGENTS.md carries the `## Memory & specs` heading and it names this repo's bank id |

@@ -95,8 +95,8 @@ The graph MCP server not being installed at all is likewise a skip — report
 
 **Name the remedy, don't just shrug.** Installing and binding the two servers is
 **machine scope and not this skill's job** — it belongs to huhhb's
-`two-store-memory-setup`. So a missing server reports
-`skipped — <tool> not installed; run two-store-memory-setup (machine scope), then
+`memory-setup`. So a missing server reports
+`skipped — <tool> not installed; run memory-setup (machine scope), then
 re-run` rather than a bare skip. This skill is repo scope: it assumes the machine
 is set up and never installs, binds or configures a server itself.
 
@@ -379,8 +379,8 @@ Keep it to prose the model can act on; don't restate the whole store map there �
 
 ## 4. Memory — two routed stores + Honcho (owned by THIS skill; registry-free)
 
-`repo-kickstart` performs this setup itself; it no longer delegates §4 to
-`memory-onboarding`, and no longer seeds `.claude/memory/`. **Ownership is stated
+`repo-kickstart` performs this setup itself and no longer seeds
+`.claude/memory/`. **Ownership is stated
 in §4.6 — put that answer in the run's report** so no reader has to guess which
 skill is authoritative for which store.
 
@@ -630,21 +630,22 @@ The two-store move changed the **terminal write**, not the capture:
 records into it. Existing records stay exactly where they are, as history.
 
 ### 4.6 Who owns what now — state this in the report
-- **`two-store-memory-setup`** owns **machine scope**: installing, binding and
+- **`memory-setup`** owns **machine scope**: installing, binding and
   configuring both servers plus the global routing policy. This skill *depends on*
   that having been done and never does it — see §0's remedy line.
 - **`repo-kickstart`** (this skill) owns **repo scope**: the two routed stores in
   *this* repo, Honcho, OpenSpec, and the wiring between them.
-- **`memory-init`** (a user-scope command that `two-store-memory-setup` installs)
+- **`memory-init`** (a user-scope command that `memory-setup` installs)
   performs the same per-repo bootstrap standalone. Both are idempotent and take
   the same steps, so running both is redundant rather than harmful — but for a
   repo being kickstarted, **`repo-kickstart` is the one to run**; `memory-init`
   is for repos you are not kickstarting. Never treat them as two halves of one
   job.
-- **`repo-memory`** and **`memory-onboarding`** are **not deprecated.** They still
-  own `.claude/memory/` — its format, its Record Contract, its diagnostics — and
-  remain correct on direct invocation. What changed is that the store they govern
-  is no longer where new knowledge is routed.
+- **`repo-memory`** is **not deprecated** — it owns architecture decision records
+  at `plans/architecture/`, their format and their lifecycle. Machine-scope memory
+  health is `memory-setup` Phase 5. What changed is that `.claude/memory/` is no
+  longer where new knowledge is routed: structure goes to the graph, experience to
+  the bank, ratified decisions to `plans/architecture/`.
 - No store in this arrangement has two owners. If a reader has to guess which
   skill is authoritative for one, that is a defect in the report.
 

@@ -80,7 +80,7 @@ The skill SHALL apply only to establishing a user-level voice-and-goals profile 
 explicitly and route to them rather than absorbing their scope: repo or project
 CLAUDE.md quality audits to `claude-md-management:claude-md-improver`, folding session
 learnings into repo files to `/revise-claude-md`, `settings.json`, hooks and permissions
-to `update-config`, and store installation or repair to `two-store-memory-setup`. The
+to `update-config`, and store installation or repair to `memory-setup`. The
 skill MUST NOT write to any repository-level `CLAUDE.md` or `AGENTS.md`.
 
 #### Scenario: A repo-audit request is routed away

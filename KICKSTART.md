@@ -9,7 +9,7 @@ Onboarding for humans and agents working on **huhhb**.
 - **`gh`** — GitHub CLI, for PRs and branch protection.
 - **`openspec` ≥ 1.6.0** — the plans store CLI (`plans/development` is store `huhhb`).
 - **Memory stores** (optional) — needed only to exercise the memory skills. Run
-  `/two-store-memory-setup` rather than installing by hand; it reviews the installer,
+  `/memory-setup` rather than installing by hand; it reviews the installer,
   snapshots config before writing, and control-tests containment at each gate.
   - [codebase-memory-mcp](https://github.com/DeusData/codebase-memory-mcp) — the code
     graph. Structural truth, regenerated from source, zero write cost.

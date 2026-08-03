@@ -27,9 +27,8 @@ routing path.
 
 | Skill | Command | Description |
 |-------|---------|-------------|
-| two-store-memory-setup | `/two-store-memory-setup` | Use when installing, repairing, or verifying the two-store agent-memory architecture on a machine — a code-graph store for structural truth plus an experience store for decisions and outcomes. Gated phases, control-test verification at every gate, a catalogue of verified defects indexed by symptom, and the per-repo `memory-init` command it writes |
+| memory-setup | `/memory-setup` | Use when installing, repairing, or verifying the two-store agent-memory architecture on a machine — a code-graph store for structural truth plus an experience store for decisions and outcomes. Gated phases, control-test verification at every gate, a catalogue of verified defects indexed by symptom, and the per-repo `memory-init` command it writes |
 | repo-memory | `/repo-memory` | Repo-local memory in `.claude/memory/` — committed to git, no external service |
-| memory-onboarding | `/memory-onboarding` | Use when checking or setting up the memory system on this machine and in the current project — "is my memory set up right", a fresh machine/repo, or a reported memory degradation. Pass/warn/fail matrix + at most three next actions; diagnose-then-ask; credentials never transit chat |
 
 ### MemPalace (retired from routing)
 
@@ -40,7 +39,7 @@ Powered by [MemPalace](https://github.com/mempalace/mempalace). Runs via the plu
 | memory | `/memory` | **Legacy** — read existing nexus data |
 | memory-search | `/memory-search` | **Legacy** — nexus search; now Hindsight `recall` or `repo-memory` |
 | memory-mine | `/memory-mine` | **Legacy** — nexus ingest; now codebase-memory-mcp indexing |
-| memory-status | `/memory-status` | **Legacy** — nexus stats; now `memory-onboarding` |
+| memory-status | `/memory-status` | **Legacy** — nexus stats; now `memory-setup` |
 
 ## Self-Learning (evolve)
 
@@ -72,7 +71,7 @@ managed setup; unconfigured machines behave as if it were not installed.
 | markdown-to-pdf | `/markdown-to-pdf` | Use when converting a Markdown file into a beautiful, print-ready PDF — styled cover page, running headers/footers, page numbers, GFM tables, syntax-highlighted code, and rendered mermaid diagrams (WeasyPrint + mermaid-cli, run via `uv`) |
 | openspec-conformance | `/openspec-conformance` | Use when making OpenSpec conform to Uhstray's plans/development + plans/architecture layout — the once-per-repo store-registration setup, the house config rules, and the archive-time ADR promotion; the source of truth that repo-kickstart and pr-shepherd both call |
 | pr-shepherd | `/pr-shepherd` | Use when buhhdy's Development workflow has open PRs to drive to merge — monitors CI + CodeRabbit + human review, routes findings back to the original implementer (2-attempts-then-human), gates the merge on a human approval (never merges autonomously), then runs post-merge close-out and a buhhdy/*-only branch janitor |
-| repo-kickstart | `/repo-kickstart` | Use when bootstrapping any repo — greenfield or brownfield — into Uhstray's standard conventions: the README/AGENTS/KICKSTART/ARCHITECTURE doc set, the plans/ tree, OpenSpec, the two-store memory init for this repo (.cbmignore + index + bank + charter) plus a Honcho probe, CodeRabbit, and a branch-protection check. Owns repo scope; machine-scope install is `two-store-memory-setup`. Idempotent, registry-free, and non-destructive |
+| repo-kickstart | `/repo-kickstart` | Use when bootstrapping any repo — greenfield or brownfield — into Uhstray's standard conventions: the README/AGENTS/KICKSTART/ARCHITECTURE doc set, the plans/ tree, OpenSpec, the two-store memory init for this repo (.cbmignore + index + bank + charter) plus a Honcho probe, CodeRabbit, and a branch-protection check. Owns repo scope; machine-scope install is `memory-setup`. Idempotent, registry-free, and non-destructive |
 | session-resume | `/session-resume` | Use when picking up prior work in a fresh session — verifies the continuation file against the repo, re-hydrates context, briefs, then acts |
 | session-save | `/session-save` | Use when ending or pausing a session and you want to resume cleanly later — writes a gitignored continuation file with the exact next action and chat-only context |
 | subagent-driven-development | `/subagent-driven-development` | Use when executing implementation plans with independent tasks in the current session |

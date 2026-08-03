@@ -29,7 +29,7 @@ claude plugin install --scope project huhhb
 ```
 
 The skills work standalone. The **memory stores are optional** and only needed by the
-memory skills — see [Memory](#memory) below, and run `/two-store-memory-setup` rather
+memory skills — see [Memory](#memory) below, and run `/memory-setup` rather
 than installing them by hand.
 
 ---
@@ -131,8 +131,7 @@ domain concepts.
 
 | Skill | Trigger | Purpose |
 |-------|---------|---------|
-| `two-store-memory-setup` | `/two-store-memory-setup` | Install, repair, or verify both stores on a machine — gated phases, control-test verification at each gate, a defect catalogue indexed by symptom |
-| `memory-onboarding` | `/memory-onboarding` | "Is my memory set up right?" — diagnoses each stratum on this machine and repo into a pass/warn/fail matrix; credentials never transit chat |
+| `memory-setup` | `/memory-setup` | Install, repair, or verify both stores on a machine — gated phases, control-test verification at each gate, a defect catalogue indexed by symptom |
 
 ### Self-learning (evolve)
 

@@ -2,7 +2,7 @@
 description: Bootstrap the current repo into the two-store memory setup (code-graph index + experience-store bank). Idempotent.
 ---
 
-<!-- Template shipped by huhhb's two-store-memory-setup skill (Phase 4).
+<!-- Template shipped by huhhb's memory-setup skill (Phase 4).
      Install to ~/.claude/commands/memory-init.md ONLY if no command is
      already there. If one exists, read it, verify it covers all eight steps
      below, and keep it — never clobber a working command.

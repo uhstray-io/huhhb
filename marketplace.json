@@ -2,7 +2,7 @@
   "name": "huhhb",
   "publisher": "uhstray-io",
   "displayName": "Uhstray Skills Hub",
-  "description": "Uhstray.io's curated Claude Code skills marketplace \u2014 workflows and automation for engineering teams.",
+  "description": "Uhstray.io's curated Claude Code skills marketplace — workflows and automation for engineering teams.",
   "version": "0.8.20",
   "homepage": "https://github.com/uhstray-io/huhhb",
   "license": "MIT",
@@ -10,7 +10,7 @@
     {
       "name": "session-save",
       "path": "skills/session-save/SKILL.md",
-      "description": "Use when ending or pausing a session and you want to resume cleanly later \u2014 writes a gitignored continuation file (.claude/CONTINUE.md) with the exact next action, conversation context, and working-tree state.",
+      "description": "Use when ending or pausing a session and you want to resume cleanly later — writes a gitignored continuation file (.claude/CONTINUE.md) with the exact next action, conversation context, and working-tree state.",
       "category": "dev",
       "tags": [
         "continuity",
@@ -23,7 +23,7 @@
     {
       "name": "session-resume",
       "path": "skills/session-resume/SKILL.md",
-      "description": "Use when picking up prior work in a fresh session \u2014 consumes the continuation file written by session-save: verifies it against the repo, re-hydrates context, briefs, deletes the file, then acts.",
+      "description": "Use when picking up prior work in a fresh session — consumes the continuation file written by session-save: verifies it against the repo, re-hydrates context, briefs, deletes the file, then acts.",
       "category": "dev",
       "tags": [
         "continuity",
@@ -36,7 +36,7 @@
     {
       "name": "memory",
       "path": "skills/memory/SKILL.md",
-      "description": "LEGACY, retired from routing 2026-08-01 \u2014 MemPalace nexus, kept only to read existing MemPalace data; still installed with data intact. NOT the current memory system: structural truth is codebase-memory-mcp and experience is Hindsight, set up via two-store-memory-setup. Do not use for new work.",
+      "description": "LEGACY, retired from routing 2026-08-01 — MemPalace nexus, kept only to read existing MemPalace data; still installed with data intact. NOT the current memory system: structural truth is codebase-memory-mcp and experience is Hindsight, set up via memory-setup. Do not use for new work.",
       "category": "memory",
       "tags": [
         "memory",
@@ -50,7 +50,7 @@
     {
       "name": "memory-search",
       "path": "skills/memory-search/SKILL.md",
-      "description": "LEGACY, retired from routing 2026-08-01 \u2014 semantic search over an existing MemPalace nexus only. For current memory use hindsight recall; for repo knowledge use repo-memory.",
+      "description": "LEGACY, retired from routing 2026-08-01 — semantic search over an existing MemPalace nexus only. For current memory use hindsight recall; for repo knowledge use repo-memory.",
       "category": "memory",
       "tags": [
         "memory",
@@ -62,7 +62,7 @@
     {
       "name": "memory-mine",
       "path": "skills/memory-mine/SKILL.md",
-      "description": "LEGACY, retired from routing 2026-08-01 \u2014 ingest a directory into an existing MemPalace nexus. For current code structure use codebase-memory-mcp indexing instead.",
+      "description": "LEGACY, retired from routing 2026-08-01 — ingest a directory into an existing MemPalace nexus. For current code structure use codebase-memory-mcp indexing instead.",
       "category": "memory",
       "tags": [
         "memory",
@@ -74,7 +74,7 @@
     {
       "name": "memory-status",
       "path": "skills/memory-status/SKILL.md",
-      "description": "LEGACY, retired from routing 2026-08-01 \u2014 MemPalace nexus stats. For current memory health use memory-onboarding.",
+      "description": "LEGACY, retired from routing 2026-08-01 — MemPalace nexus stats. For current memory health use memory-setup.",
       "category": "memory",
       "tags": [
         "memory",
@@ -85,7 +85,7 @@
     {
       "name": "repo-memory",
       "path": "skills/repo-memory/SKILL.md",
-      "description": "Save and retrieve project knowledge in .claude/memory/ \u2014 triggers on 'remember', 'don't forget', 'recall', 'what do we know about', and similar phrases.",
+      "description": "Save and retrieve project knowledge in .claude/memory/ — triggers on 'remember', 'don't forget', 'recall', 'what do we know about', and similar phrases.",
       "category": "memory",
       "tags": [
         "memory",
@@ -286,7 +286,7 @@
     {
       "name": "training",
       "path": "skills/training/SKILL.md",
-      "description": "Socratic teaching mode (Sensei). Never writes new code \u2014 guides users through problems by describing approaches, naming APIs, linking docs, and asking questions that lead to the answer.",
+      "description": "Socratic teaching mode (Sensei). Never writes new code — guides users through problems by describing approaches, naming APIs, linking docs, and asking questions that lead to the answer.",
       "category": "persona",
       "tags": [
         "training",
@@ -311,7 +311,7 @@
     {
       "name": "caveman-commit",
       "path": "skills/caveman-commit/SKILL.md",
-      "description": "Ultra-compressed commit message generator. Conventional Commits format, subject \u226450 chars, body only when why isn't obvious.",
+      "description": "Ultra-compressed commit message generator. Conventional Commits format, subject ≤50 chars, body only when why isn't obvious.",
       "category": "persona",
       "tags": [
         "caveman",
@@ -357,7 +357,7 @@
     {
       "name": "caveman-stats",
       "path": "skills/caveman-stats/SKILL.md",
-      "description": "Real-time token usage metrics for the current session. Requires caveman plugin hooks to function \u2014 install via JuliusBrussee/caveman for full functionality.",
+      "description": "Real-time token usage metrics for the current session. Requires caveman plugin hooks to function — install via JuliusBrussee/caveman for full functionality.",
       "category": "persona",
       "tags": [
         "caveman",
@@ -369,7 +369,7 @@
     {
       "name": "cavecrew",
       "path": "skills/cavecrew/SKILL.md",
-      "description": "Use when delegating code tasks to compressed subagents \u2014 investigator, builder, and reviewer \u2014 to preserve main context length.",
+      "description": "Use when delegating code tasks to compressed subagents — investigator, builder, and reviewer — to preserve main context length.",
       "category": "dev",
       "tags": [
         "caveman",
@@ -393,7 +393,7 @@
     {
       "name": "strict-refactor",
       "path": "skills/strict-refactor/SKILL.md",
-      "description": "Decompose large functions into named single-purpose units \u2014 extract computation blocks, guard clauses, or setup phases, or move a function to a better module. Strict: verbatim extraction only, no logic changes, no renames.",
+      "description": "Decompose large functions into named single-purpose units — extract computation blocks, guard clauses, or setup phases, or move a function to a better module. Strict: verbatim extraction only, no logic changes, no renames.",
       "category": "review",
       "tags": [
         "review",
@@ -406,7 +406,7 @@
     {
       "name": "explaining-plans",
       "path": "skills/explaining-plans/SKILL.md",
-      "description": "Use when augmenting or explaining a plan, spec, or RFC \u2014 enriches the document in place with decision criteria, cited source context, target-outcome framing, and prose-introduced mermaid diagrams. Composes with writing-plans rather than replacing it.",
+      "description": "Use when augmenting or explaining a plan, spec, or RFC — enriches the document in place with decision criteria, cited source context, target-outcome framing, and prose-introduced mermaid diagrams. Composes with writing-plans rather than replacing it.",
       "category": "dev",
       "tags": [
         "explanation",
@@ -420,7 +420,7 @@
     {
       "name": "explaining-changes",
       "path": "skills/explaining-changes/SKILL.md",
-      "description": "Use during implementation to narrate changes as they happen \u2014 explains each logical change, each completed plan task, and every commit, using brief prose plus simple ASCII diagrams. Chat/CLI only.",
+      "description": "Use during implementation to narrate changes as they happen — explains each logical change, each completed plan task, and every commit, using brief prose plus simple ASCII diagrams. Chat/CLI only.",
       "category": "dev",
       "tags": [
         "explanation",
@@ -434,7 +434,7 @@
     {
       "name": "grounding",
       "path": "skills/grounding/SKILL.md",
-      "description": "Use when a long session should pause for a checkpoint \u2014 surfaces in-flight work, runs /simplify + /security-review and test/build/lint health, checks the diff against the repo's documented conventions, and re-confirms goals. Fired by the grounding hook (default 2h, configurable) or run manually. Opt-in; offers a user-selectable check menu.",
+      "description": "Use when a long session should pause for a checkpoint — surfaces in-flight work, runs /simplify + /security-review and test/build/lint health, checks the diff against the repo's documented conventions, and re-confirms goals. Fired by the grounding hook (default 2h, configurable) or run manually. Opt-in; offers a user-selectable check menu.",
       "category": "dev",
       "tags": [
         "dev",
@@ -448,7 +448,7 @@
     {
       "name": "buhhdy-model-calibration-refresh",
       "path": "skills/buhhdy-model-calibration-refresh/SKILL.md",
-      "description": "Use when buhhdy's provider/model/auth facts need re-verifying \u2014 the operator says \"run calibration refresh\", the monthly refresh is due, a dispatch just failed on a bad or retired model ID, or a provider announced a model change. Covers model-ID drift, deprecation/shutdown dates, per-token pricing, auth/tier/billing status, and CLI/harness behavior claims going stale in buhhdy's `config.yaml` and `MODEL-MANIFEST.md`.",
+      "description": "Use when buhhdy's provider/model/auth facts need re-verifying — the operator says \"run calibration refresh\", the monthly refresh is due, a dispatch just failed on a bad or retired model ID, or a provider announced a model change. Covers model-ID drift, deprecation/shutdown dates, per-token pricing, auth/tier/billing status, and CLI/harness behavior claims going stale in buhhdy's `config.yaml` and `MODEL-MANIFEST.md`.",
       "category": "ops",
       "tags": [
         "ops",
@@ -461,25 +461,9 @@
       "version": "0.1.0"
     },
     {
-      "name": "memory-onboarding",
-      "path": "skills/memory-onboarding/SKILL.md",
-      "description": "Use when checking or setting up the four-strata memory system on this machine and in the current project \u2014 'is my memory set up right', after a fresh machine or repo, or when repo-kickstart or buhhdy's preflight reports memory degradation. Diagnoses first (pass/warn/fail matrix, at most three next actions), then guides fixes; only repo-memory first-run setup ever auto-applies, and credentials never transit chat.",
-      "category": "ops",
-      "tags": [
-        "ops",
-        "memory",
-        "onboarding",
-        "diagnostics",
-        "mempalace",
-        "evolve",
-        "buhhdy"
-      ],
-      "version": "0.2.0"
-    },
-    {
-      "name": "two-store-memory-setup",
-      "path": "skills/two-store-memory-setup/SKILL.md",
-      "description": "Use when installing, repairing, or verifying the two-store agent-memory architecture on a machine \u2014 a code-graph store (codebase-memory-mcp) for present-tense structural truth plus an experience store (Hindsight) for decisions, rationale and outcomes. Machine scope: install, bind, configure, routing policy; per-repo bootstrap belongs to repo-kickstart. Gated phases with control-test verification at each gate.",
+      "name": "memory-setup",
+      "path": "skills/memory-setup/SKILL.md",
+      "description": "Use when installing, repairing, or verifying the two-store agent-memory architecture on a machine — a code-graph store (codebase-memory-mcp) for present-tense structural truth plus an experience store (Hindsight) for decisions, rationale and outcomes. Machine scope: install, bind, configure, routing policy; per-repo bootstrap belongs to repo-kickstart. Gated phases with control-test verification at each gate.",
       "category": "ops",
       "tags": [
         "ops",
@@ -495,7 +479,7 @@
     {
       "name": "pr-shepherd",
       "path": "skills/pr-shepherd/SKILL.md",
-      "description": "Use when buhhdy's Development workflow has open PRs that need driving from creation to merge and cleaned-up afterward \u2014 the terminal step once PRs are open. Monitors CI and CodeRabbit/human review, routes findings back to the original implementer, gates the merge on a human approval (never merges autonomously), then runs post-merge close-out: closes issues, updates the plan, archives the change, removes the worktree, and janitors stale buhhdy/* branches.",
+      "description": "Use when buhhdy's Development workflow has open PRs that need driving from creation to merge and cleaned-up afterward — the terminal step once PRs are open. Monitors CI and CodeRabbit/human review, routes findings back to the original implementer, gates the merge on a human approval (never merges autonomously), then runs post-merge close-out: closes issues, updates the plan, archives the change, removes the worktree, and janitors stale buhhdy/* branches.",
       "category": "review",
       "tags": [
         "review",
@@ -511,7 +495,7 @@
     {
       "name": "evolve",
       "path": "skills/evolve/SKILL.md",
-      "description": "Cross-session memory protocol backed by Honcho \u2014 how to recall what evolve has learned about you, persist durable facts, and route knowledge to the right memory stratum. Inert until configured.",
+      "description": "Cross-session memory protocol backed by Honcho — how to recall what evolve has learned about you, persist durable facts, and route knowledge to the right memory stratum. Inert until configured.",
       "category": "memory",
       "tags": [
         "memory",
@@ -524,7 +508,7 @@
     {
       "name": "evolve-review",
       "path": "skills/evolve-review/SKILL.md",
-      "description": "The learning pass \u2014 triage captured session observations into overlay-skill patches, new overlays, or repo-memory entries, with diffs and approval; also approves proposals staged by headless runs.",
+      "description": "The learning pass — triage captured session observations into overlay-skill patches, new overlays, or repo-memory entries, with diffs and approval; also approves proposals staged by headless runs.",
       "category": "memory",
       "tags": [
         "memory",
@@ -537,7 +521,7 @@
     {
       "name": "evolve-status",
       "path": "skills/evolve-status/SKILL.md",
-      "description": "Health check for the evolve learning loop \u2014 spool depth, deriver queue, cache age, overlay confidence table, pending proposals.",
+      "description": "Health check for the evolve learning loop — spool depth, deriver queue, cache age, overlay confidence table, pending proposals.",
       "category": "memory",
       "tags": [
         "memory",
@@ -549,7 +533,7 @@
     {
       "name": "evolve-skills",
       "path": "skills/evolve-skills/SKILL.md",
-      "description": "The library lifecycle pass \u2014 audits every skill against usage telemetry, bench history, and lint debt; issues refine/merge/prune/create verdicts and distills new skills from proven successful sessions, eval-gated.",
+      "description": "The library lifecycle pass — audits every skill against usage telemetry, bench history, and lint debt; issues refine/merge/prune/create verdicts and distills new skills from proven successful sessions, eval-gated.",
       "category": "memory",
       "tags": [
         "memory",
@@ -563,7 +547,7 @@
     {
       "name": "evolve-distill",
       "path": "skills/evolve-distill/SKILL.md",
-      "description": "Distill a repeated, successful multi-step workflow from past sessions into a reusable overlay skill \u2014 eval-gated, \u22652-session evidence, human-approved; stages a proposal, never writes a skill directly.",
+      "description": "Distill a repeated, successful multi-step workflow from past sessions into a reusable overlay skill — eval-gated, ≥2-session evidence, human-approved; stages a proposal, never writes a skill directly.",
       "category": "memory",
       "tags": [
         "memory",
@@ -591,7 +575,7 @@
     {
       "name": "repo-kickstart",
       "path": "skills/repo-kickstart/SKILL.md",
-      "description": "Bootstrap any repo \u2014 greenfield or brownfield \u2014 into Uhstray's standard development conventions: the README/AGENTS/KICKSTART/ARCHITECTURE doc set, the plans/ tree, OpenSpec store registration, the two-store memory init for this repo (.cbmignore + index + bank + charter) plus a Honcho probe, a CodeRabbit config, and a branch-protection check. Owns repo scope; machine-scope install is two-store-memory-setup. Idempotent, registry-free, and non-destructive.",
+      "description": "Bootstrap any repo — greenfield or brownfield — into Uhstray's standard development conventions: the README/AGENTS/KICKSTART/ARCHITECTURE doc set, the plans/ tree, OpenSpec store registration, the two-store memory init for this repo (.cbmignore + index + bank + charter) plus a Honcho probe, a CodeRabbit config, and a branch-protection check. Owns repo scope; machine-scope install is memory-setup. Idempotent, registry-free, and non-destructive.",
       "category": "dev",
       "tags": [
         "dev",
@@ -606,7 +590,7 @@
     {
       "name": "openspec-conformance",
       "path": "skills/openspec-conformance/SKILL.md",
-      "description": "Use when making OpenSpec conform to Uhstray's plans/development + plans/architecture layout \u2014 the once-per-repo store-registration setup, the house openspec/config.yaml rules, and the archive-time ADR promotion into plans/architecture/. The single source of truth repo-kickstart (setup) and pr-shepherd (archive) both call.",
+      "description": "Use when making OpenSpec conform to Uhstray's plans/development + plans/architecture layout — the once-per-repo store-registration setup, the house openspec/config.yaml rules, and the archive-time ADR promotion into plans/architecture/. The single source of truth repo-kickstart (setup) and pr-shepherd (archive) both call.",
       "category": "dev",
       "tags": [
         "dev",
@@ -621,7 +605,7 @@
     {
       "name": "markdown-to-pdf",
       "path": "skills/markdown-to-pdf/SKILL.md",
-      "description": "Use when converting a Markdown file into a beautiful, print-ready PDF \u2014 reports, docs, specs, or exports with a styled cover page, running headers/footers, page numbers, tables, syntax-highlighted code, and mermaid diagrams.",
+      "description": "Use when converting a Markdown file into a beautiful, print-ready PDF — reports, docs, specs, or exports with a styled cover page, running headers/footers, page numbers, tables, syntax-highlighted code, and mermaid diagrams.",
       "category": "dev",
       "tags": [
         "dev",
@@ -637,7 +621,7 @@
     {
       "name": "discovering-context",
       "path": "skills/discovering-context/SKILL.md",
-      "description": "Use when a goal is big, vague, or dependency-heavy and you need to map every piece of context required before planning \u2014 builds a context dependency DAG (mermaid) by relentlessly interviewing with recommended answers, expanding each node until it saturates, then hands the map to writing-plans.",
+      "description": "Use when a goal is big, vague, or dependency-heavy and you need to map every piece of context required before planning — builds a context dependency DAG (mermaid) by relentlessly interviewing with recommended answers, expanding each node until it saturates, then hands the map to writing-plans.",
       "category": "dev",
       "tags": [
         "dev",
@@ -652,7 +636,7 @@
     {
       "name": "product-inception",
       "path": "skills/product-inception/SKILL.md",
-      "description": "Use when the user EXPLICITLY requests product inception \u2014 \"new product\", \"product inception\", \"new major initiative\", \"greenfield product planning\" \u2014 or explicitly asks for a BMAD-style phase (product brief, PRD, product architecture) for a major initiative. Never inferred from task size \u2014 for a feature, change, or bug (even \"use our full planning process\"), use core-workflows Workflow 1 instead.",
+      "description": "Use when the user EXPLICITLY requests product inception — \"new product\", \"product inception\", \"new major initiative\", \"greenfield product planning\" — or explicitly asks for a BMAD-style phase (product brief, PRD, product architecture) for a major initiative. Never inferred from task size — for a feature, change, or bug (even \"use our full planning process\"), use core-workflows Workflow 1 instead.",
       "category": "dev",
       "tags": [
         "dev",

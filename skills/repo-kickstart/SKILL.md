@@ -46,7 +46,7 @@ conforming" per item is the desired result on huhhb and on any re-run.
   recorded gap**; **none of them fails the run**, and none is a silent pass.
   Probe the experience store, never assume its endpoint (commands in §0).
   Installing/binding a server is **machine scope** — not this skill's job. Name
-  the remedy (`two-store-memory-setup`) instead of shrugging.
+  the remedy (`memory-setup`) instead of shrugging.
 - **Detect existing state before deciding you're initializing.** An OpenSpec root
   (house convention: `plans/development`, *not* the repo root — also check
   `openspec store list`), an existing index or bank, and every memory store
@@ -105,11 +105,12 @@ it the repo has two systems rather than one workflow.
 ### 4. Memory kickstart — two-store, owned by THIS skill
 Two routed stores plus Honcho (mechanism and every worked-around defect in
 `reference.md` §4); registry-free — this skill does **not** track or register
-conformance anywhere. `repo-kickstart` performs this itself and **no longer
-delegates to `memory-onboarding`**. **Hard rule, unchanged in force: `plans/`
-holds planning/architecture/development/specification DOCUMENTS — no memory of
-any kind is ever written under `plans/`.** Experience goes to the bank, structure
-to the graph, instructions to AGENTS.md.
+conformance anywhere. `repo-kickstart` performs this itself. **Hard rule,
+unchanged in force: `plans/` holds planning/architecture/development/specification
+DOCUMENTS — no memory of any kind is ever written under `plans/`.** Architecture
+decision records ARE documents and belong at `plans/architecture/` (owned by
+`repo-memory`); that is the rule working, not an exception to it. Experience goes
+to the bank, structure to the graph, instructions to AGENTS.md.
 - **codebase-memory-mcp — the structure store.** `.cbmignore` written *before*
   indexing (secrets pass included) → index with `persistence=true` → prove
   `git check-attr merge -- .codebase-memory/graph.db.zst` prints `merge: ours` →
@@ -133,8 +134,8 @@ to the graph, instructions to AGENTS.md.
   unconfigured reports `skipped`. None of the three fails the run.
 - **`.claude/memory/` — retired from routing, data kept.** Never delete, move or
   migrate it. This skill no longer seeds the store or writes records into it;
-  `repo-memory` and `memory-onboarding` still own it and remain correct on direct
-  invocation (§4.6 — **state that ownership split in the report**).
+  `repo-memory` still owns it and remains correct on direct invocation (§4.6 —
+  **state that ownership split in the report**).
 - **Activate the repo's git hooks** (still seeded): `.githooks/` post-commit
   capture + pre-commit record lint, then `git config core.hooksPath .githooks`.
   The per-commit journal under `.claude/memory/wip/` is a **staging buffer, not a

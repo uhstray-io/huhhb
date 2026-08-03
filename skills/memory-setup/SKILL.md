@@ -1,9 +1,9 @@
 ---
-name: two-store-memory-setup
+name: memory-setup
 description: Use when installing, repairing, or verifying the two-store agent-memory architecture on a machine — a code-graph store (codebase-memory-mcp) for structural truth plus an experience store (Hindsight) for decisions and outcomes. Triggers on "set up two-store memory", "install codebase-memory-mcp", "install hindsight", "configure the memory stores on this machine", "verify my two-store setup", and on symptoms: both MCP servers show connected but none of their tools are callable, recall returns nothing useful while everything reports healthy, the code graph never self-indexes or stays empty, retains report accepted but never land, the routing policy is not loading. Machine scope — per-repo bootstrap is repo-kickstart; general memory health is memory-onboarding.
 ---
 
-# two-store-memory-setup
+# memory-setup
 
 Install, repair and verify the **device-level** two-store memory architecture.
 The code-graph store holds structural truth and is regenerated from source for
@@ -18,7 +18,8 @@ policy. **Repo scope belongs to `repo-kickstart`**, which performs the per-repo
 two-store init itself; for a repo being kickstarted, that is the one to run.
 The `memory-init` command Phase 4 writes does the same per-repo steps standalone,
 for repos you are *not* kickstarting — the two are redundant, not two halves of
-one job. General memory health is `memory-onboarding`. Honcho is out of scope.
+one job. This skill also answers **"is my memory set up right?"** — health and
+verification are Phase 5, not a separate skill. Honcho is out of scope.
 No store here has two owners; if a reader has to guess which skill is
 authoritative for one, that is a defect.
 

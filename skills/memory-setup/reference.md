@@ -1,4 +1,4 @@
-# two-store-memory-setup — reference
+# memory-setup — reference
 
 Phase detail, the verified-defect catalogue, templates and guardrails for
 `SKILL.md`. Read **§1 Diagnosing** before you test anything.

@@ -66,13 +66,13 @@ server is opt-in.
 
 - **For:** smallest diff; preserves an in-plugin read path for existing data.
 - **Against:** keeps four skills competing for trigger matching against `repo-memory`,
-  `memory-onboarding` and `two-store-memory-setup` — the `memory-*` prefix is exactly
+  `memory-onboarding` and `memory-setup` — the `memory-*` prefix is exactly
   what a user types when they mean the current system. Leaves the vendoring constraint
   unresolved and the docs-versus-code gap only half closed.
 
 ### C. Repoint — rewrite the four skills to front the two stores
 
-- **Against, decisively:** the ground is already covered. `two-store-memory-setup`
+- **Against, decisively:** the ground is already covered. `memory-setup`
   (install/repair/verify), `memory-onboarding` (health), `repo-memory` (repo-scoped) and
   `repo-kickstart` (per-repo init) exist and are specified. Repointing would create four
   more skills competing for the same triggers — the duplicate-source-of-truth failure the
@@ -139,7 +139,7 @@ why it is here rather than in the documentation sweep.
       deliberately broken and confirm it reports healthy. That failure is the test
 - [ ] 4.2 Replace M1 (MemPalace) with two rows: the code graph (indexed, containment root
       set, `auto_index` on) and the experience store (reachable, bank exists, `sync_retain`
-      round-trips). Reuse `two-store-memory-setup`'s own checks — orchestrate, never
+      round-trips). Reuse `memory-setup`'s own checks — orchestrate, never
       reimplement, which is this skill's stated contract
 - [ ] 4.3 Drop "four-strata" from the description and body; the count changes and a
       hardcoded number goes stale on the next stratum change

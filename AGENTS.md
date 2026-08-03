@@ -286,7 +286,7 @@ for free; experience is the only copy.
   repo works on a machine that has none — which is most machines installing
   this marketplace.
 - Setup, repair, the verified defect catalogue and measured costs:
-  [`skills/two-store-memory-setup/reference.md`](skills/two-store-memory-setup/reference.md).
+  [`skills/memory-setup/reference.md`](skills/memory-setup/reference.md).
 
 #### Reading across the stores — translate, don't substitute
 

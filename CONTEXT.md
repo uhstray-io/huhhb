@@ -21,7 +21,7 @@ huhhb/
 ├── buhhdy/              # Four-provider coding orchestrator (omnigent config +
 │                        #   its own skills/ + MODEL-MANIFEST.md); huhhb ops
 │                        #   skills (pr-shepherd, repo-kickstart, openspec-
-│                        #   conformance, buhhdy-model-calibration-refresh, memory-onboarding)
+│                        #   conformance, buhhdy-model-calibration-refresh, memory-setup)
 │                        #   serve this stack — see buhhdy/README.md
 ├── .claude-plugin/      # plugin.json (version + hooks), marketplace.json, hook scripts
 ├── marketplace.json     # Skill manifest — source of truth for discovery

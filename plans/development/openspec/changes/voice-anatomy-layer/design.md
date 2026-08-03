@@ -25,7 +25,7 @@ enforceable and testable in a way "educate, don't report" is not.
 Prior art that must not be duplicated or displaced:
 `claude-md-management:claude-md-improver` (project CLAUDE.md coverage audit, A–F
 rubric, write-capable) [8], `/revise-claude-md` (session learnings → repo CLAUDE.md)
-[9], `update-config` (settings.json and hooks), `two-store-memory-setup` (machine-level
+[9], `update-config` (settings.json and hooks), `memory-setup` (machine-level
 store installation), `memory-onboarding` (memory-strata health).
 
 Human decisions resolved by interview before this design (2026-08-01) [11]: scope is
@@ -97,7 +97,7 @@ this design's assertion about the pattern, not a claim the source makes.
 - No repo-level CLAUDE.md or AGENTS.md authoring — that is `claude-md-improver` and
   `/revise-claude-md`, and `user-kickstart` routes to them by name.
 - No settings.json, hooks, or permissions — that is `update-config`.
-- No store installation or repair — that is `two-store-memory-setup`.
+- No store installation or repair — that is `memory-setup`.
 - No automatic writes. Nothing reaches `~/.claude/CLAUDE.md` or the `personal` bank
   without a shown diff and an explicit approval.
 - No inference-only profile. The interview is the source; the audit is a check on it.
@@ -285,7 +285,7 @@ list, so it never has to be bought with description text — see Decision 11).
     tightly to *user-level `~/.claude/CLAUDE.md`, established by interview*, and names
     its four handoffs explicitly so trigger matching does not collide with
     `claude-md-improver` [8], `/revise-claude-md` [9], `update-config`, or
-    `two-store-memory-setup`. Alternative rejected: `voice-profile` (accurate for the
+    `memory-setup`. Alternative rejected: `voice-profile` (accurate for the
     voice half, misleading once goals and store routing are in scope). **C4.**
 
 11. **The description carries triggers only, never the workflow.** `writing-skills`
@@ -374,7 +374,7 @@ None required. Both artifacts are additive:
 ## References
 
 Repo files are cited `path:line-range` at the state of this branch
-(`feat/two-store-memory-setup`); line numbers will drift as those files change, so the
+(`feat/memory-setup`); line numbers will drift as those files change, so the
 section anchors are authoritative where both are given.
 
 1. `skills/explaining-changes/principles.md` *(repo file, 54 lines)* — §1 diagram rule,
@@ -399,7 +399,7 @@ section anchors are authoritative where both are given.
    `--disallowedTools Skill` baseline arm that makes the bench a skill-off/skill-on A/B.
 7. `.claude/memory/feedback-rule-vs-example-drift.md` *(repo file)* — rule-vs-example
    drift recorded as a class of defect after recurring across review rounds on
-   `two-store-memory-setup/memory-init-template.md`; fixed in 039e1c9.
+   `memory-setup/memory-init-template.md`; fixed in 039e1c9.
 8. `claude-md-improver` SKILL.md:2-3 *(installed plugin,
    `claude-plugins-official/claude-md-management@1.0.0`)* — project-scoped CLAUDE.md
    audit; the prior art `user-kickstart` routes to rather than replaces.

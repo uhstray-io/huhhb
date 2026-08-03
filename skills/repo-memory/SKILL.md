@@ -194,7 +194,7 @@ Conforming rewrite:
 **`promote: candidate`** has one terminal state: when a record is
 actually promoted, flip the tag to **`promote: done:<ISO date>`** — a
 metadata-only update, same class as the supersession flip — so promoted
-records exit the candidate pool (memory-onboarding counts only
+records exit the candidate pool (the count includes only
 `candidate`). It marks a record worth pushing to team Honcho via
 the evolve-suite later (integration not implemented — the tag is the whole
 seam today). Criteria: useful beyond this machine, this repo, and this

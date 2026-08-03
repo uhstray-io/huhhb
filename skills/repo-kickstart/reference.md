@@ -308,8 +308,8 @@ Architecture decision records, owned by the `repo-memory` skill:
 - `YYYY/INDEX.md` — that year's decision log, one row per ADR
 - `YYYY/YYYY-MM.md` — the records in full, one file per month
 
-`ADR-NNNN` is globally sequential and never reused. Records are append-only:
-never edit an accepted one — supersede it and link both. `ARCHITECTURE.md` at
+**The rules live in `DECISIONS.md` — that file is canonical.** This README does not
+restate them; a second copy is a second thing to keep in sync. `ARCHITECTURE.md` at
 the repo root summarizes current state; the decisions that produced it live
 here. Current-state capability specs live in the store at
 `plans/development/openspec/specs/` — OpenSpec writes specifications, not

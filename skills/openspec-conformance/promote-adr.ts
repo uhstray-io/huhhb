@@ -94,6 +94,21 @@ function existingRecord(archDir: string, slug: string): { id: string; file: stri
   return null;
 }
 
+/* Insert a row into the markdown table that starts at/after `from`, rather than
+   at end-of-file. Real index files carry prose AFTER their table, and appending
+   puts the row outside it where nothing renders it as a row — the defect this
+   helper exists to make unrepeatable. A "no records yet" placeholder is replaced
+   rather than stacked under. Returns false when no table was found. */
+function insertTableRow(lines: string[], from: number, row: string): boolean {
+  const sep = lines.findIndex((l, i) => i >= from && /^\|[-\s|]+\|\s*$/.test(l));
+  if (sep === -1) return false;
+  let last = sep;
+  while (last + 1 < lines.length && /^\|/.test(lines[last + 1])) last++;
+  if (/_no records yet_/.test(lines[last])) lines.splice(last, 1, row);
+  else lines.splice(last + 1, 0, row);
+  return true;
+}
+
 const args = process.argv.slice(2);
 const VALUE_FLAGS = ["--change-url", "--from", "--slug", "--domain", "--date"];
 const flags: Record<string, string> = {};
@@ -216,16 +231,7 @@ ${sourceLink}
      row below that prose where nothing renders it as a row. Find the table by
      its header separator, walk to the last contiguous `|` line, insert there. */
   const yLines = (existsSync(yearIndexPath) ? readFileSync(yearIndexPath, "utf-8") : yHeader).split("\n");
-  const sep = yLines.findIndex((l) => /^\|[-\s|]+\|\s*$/.test(l));
-  if (sep === -1) {
-    yLines.push(yRow); // no table found — degrade to append rather than lose the row
-  } else {
-    let last = sep;
-    while (last + 1 < yLines.length && /^\|/.test(yLines[last + 1])) last++;
-    // drop a "no records yet" placeholder rather than stacking a row under it
-    if (/_no records yet_/.test(yLines[last])) yLines.splice(last, 1, yRow);
-    else yLines.splice(last + 1, 0, yRow);
-  }
+  if (!insertTableRow(yLines, 0, yRow)) yLines.push(yRow); // no table — append rather than lose it
   writeFileSync(yearIndexPath, yLines.join("\n").replace(/\s*$/, "") + "\n");
 
   // 3. master index line, filed under its domain
@@ -234,13 +240,10 @@ ${sourceLink}
   const mRow = `| [${adrId}](${year}/${month}.md#${adrId.toLowerCase()}--${slug}) | ${slug} | Accepted | ${month} |`;
   const domainHeading = `### ${domain}`;
   if (master.includes(domainHeading)) {
-    const at = master.indexOf(domainHeading);
-    const nextH = master.indexOf("\n### ", at + 1);
-    const nextTop = master.indexOf("\n## ", at + 1);
-    const endCandidates = [nextH, nextTop].filter((n) => n !== -1);
-    const end = endCandidates.length ? Math.min(...endCandidates) : master.length;
-    let block = master.slice(at, end).replace(/^\| — \| _no records yet_ \| — \| — \|\s*$/m, "").replace(/\s*$/, "");
-    master = `${master.slice(0, at)}${block}\n${mRow}\n${master.slice(end)}`;
+    const mLines = master.split("\n");
+    const at = mLines.findIndex((l) => l.trim() === domainHeading);
+    if (insertTableRow(mLines, at, mRow)) master = mLines.join("\n");
+    else master = `${master.replace(/\s*$/, "")}\n${mRow}\n`;
   } else {
     master = `${master.replace(/\s*$/, "")}\n\n${domainHeading}\n\n| ADR | Decision | Status | Record |\n|-----|----------|--------|--------|\n${mRow}\n`;
   }

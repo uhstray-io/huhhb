@@ -214,10 +214,11 @@ Every skill needs an entry; bump its `version` and `.claude-plugin/plugin.json` 
 
 First install runs `onboarding/welcome.md` — a short guided tour: what's installed, how to invoke (`/skill-name`), and where the full list lives (`onboarding/skills-list.md`). Keep it brief.
 
-## Repo Memory — architecture decision records
+## Repo Memory
 
 Ratified decisions live in `plans/architecture/` (committed to git),
-authored and looked up via the `/repo-memory` skill: a master `DECISIONS.md`
+saved/retrieved via the `/repo-memory`
+skill: a master `DECISIONS.md`
 indexed by domain, a per-year `INDEX.md` decision log, and one detail file
 per month. **Before answering a question about why this repo is built the way
 it is, check `DECISIONS.md` first.** Records are append-only — never edit an
@@ -233,24 +234,30 @@ It is not deleted and not bulk-migrated; records are triaged individually by
 
 ### When to save
 
-| What | Type |
-| ---- | ---- |
-| Architectural decisions and their rationale | `project` |
-| Chosen libraries/frameworks and why alternatives were rejected | `project` |
-| Team conventions; what to repeat or avoid | `feedback` |
-| Anti-patterns tried here that didn't work | `feedback` |
-| Preferred naming, code-style, and formatting rules | `feedback` |
-| Things Claude got wrong repeatedly and had to be corrected on | `feedback` |
-| Links to external systems, dashboards, docs, wikis | `reference` |
-| Environment setup notes (non-obvious deps, quirks, build steps) | `reference` |
-| Domain knowledge the user has that shouldn't be re-explained | `user` |
-| Personal notes about this repo (gitignore `user_*.md` if private) | `user` |
+Record an architecture decision when it is **architecturally significant** — it changes
+the system's structure, trades a key quality attribute, or is difficult to reverse.
 
-These are **repo-scoped** records, committed and shared with the team.
-Cross-project preferences and cross-session decisions belong to the
-device-level stores below, not here. The MemPalace and Honcho strata are
-**retired from routing** as of 2026-08-01 — still shipped, data intact,
-invoked only when asked for by name; see
+| What | Where |
+| ---- | ----- |
+| A decision, what it cost, what was rejected | ADR in `plans/architecture/` |
+| Why we tried something first, what we feared, how it turned out | this repo's Hindsight bank |
+| What calls what, blast radius, dead code, routes | the code graph — never written by hand |
+| Cross-project preferences and working style | the `personal` bank |
+
+A reversible implementation choice is not an ADR. Neither is a convention or a bug fix.
+
+### What NOT to save
+
+- Anything already in AGENTS.md, README.md, or a spec — link it, do not copy it.
+- Anything the code graph regenerates. It is free there and stale here.
+- Deliberation. The record states what was decided and what it cost; the reasoning
+  behind it belongs in the bank.
+- Credential values, tokens, or real addresses — name the variable, never the value.
+
+Legacy `.claude/memory/` records are **repo-scoped** and retired for new writes.
+Cross-project preferences and cross-session decisions belong to the device-level stores
+below. The MemPalace and Honcho strata are **retired from routing** as of 2026-08-01 —
+still shipped, data intact, invoked only when asked for by name; see
 [`project-two-store-memory-supersedes-mempalace.md`](.claude/memory/project-two-store-memory-supersedes-mempalace.md).
 
 <!-- two-store-memory:start -->

@@ -51,6 +51,28 @@ Template and field definitions:
 Rules and domains:
 [`../../plans/architecture/DECISIONS.md`](../../plans/architecture/DECISIONS.md).
 
+## In a repo that has not adopted this layout
+
+**Do not assume a path — not `plans/architecture/`, not `docs/adr/`, not any of them.**
+Discover where this repo already keeps decisions, and follow what you find:
+
+```bash
+git ls-files | grep -iE '(^|/)(adr|adrs|decisions?|architecture)(/|$)|(^|/)[0-9]{3,4}-[a-z0-9-]+\.md$'
+```
+
+Also check `README`, `CONTRIBUTING` and `AGENTS.md`/`CLAUDE.md` for a stated location, and
+look for a `docs/` tree that is already the documentation home.
+
+- **Found an existing convention** → use it, match its numbering and file shape, and say
+  which convention you matched. Do not migrate the repo to this layout as a side effect
+  of recording one decision.
+- **Found nothing** → ask where decisions belong. Do not invent a directory. Offer this
+  layout as the recommendation and let the human choose; `repo-kickstart` is what adopts
+  it deliberately.
+
+Creating a second decision location in a repo that already has one is the failure this
+skill exists to prevent.
+
 ## Recording a decision
 
 1. **Check it qualifies.** If not, route it and stop.

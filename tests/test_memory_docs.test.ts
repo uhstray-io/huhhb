@@ -245,12 +245,18 @@ describe("AGENTS.md", () => {
     assert.ok(existsSync(join(REPO, "onboarding", "skills-list.md")));
   });
 
-  test("Repo Memory section documents all four memory types in its table", () => {
+  /* Repo-memory was repurposed as the ADR store (ADR-0004, 2026-08-02): the typed
+     record table (project/feedback/reference/user in .claude/memory/) is retired, and
+     the section now routes each kind of fact to the store that owns it. Asserting the
+     routing rather than the old types. */
+  test("Repo Memory section routes each fact kind to its owning store", () => {
     const section = text.split(/^## Repo Memory$/m)[1]?.split(/^## /m)[0] ?? "";
-    assert.match(section, /\| What \| Type \|/);
-    for (const type of ["project", "feedback", "reference", "user"]) {
-      assert.match(section, new RegExp("`" + type + "`"), `Repo Memory table missing type '${type}'`);
-    }
+    assert.match(section, /\| What \| Where \|/);
+    assert.match(section, /plans\/architecture\//, "ADRs must name plans/architecture/");
+    assert.match(section, /Hindsight bank/, "deliberation must route to the Hindsight bank");
+    assert.match(section, /code graph/, "structure must route to the code graph");
+    assert.match(section, /architecturally significant/,
+      "the section must state the bar for recording a decision");
   });
 
   test("What NOT to save references AGENTS.md, not CLAUDE.md", () => {

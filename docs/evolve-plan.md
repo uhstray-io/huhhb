@@ -477,6 +477,24 @@ through gated proposals).
 Record every evolve change here: date, what changed, roadmap item or
 provenance.
 
+- **2026-08-08** — E5 shipped: `--battle` pairwise judging (ADR-0005). Absolute
+  1–5 scores answer "did this run get worse", never "is this version better
+  than the one it replaces"; battle answers the second. Every bench run now
+  banks its response under `tests/bench/outputs/` keyed by (prompt hash, skill
+  content hash), and history rows carry `skill_hash` — the join from a champion
+  *version* to its banked *content*. `--battle` re-judges banked pairs only: it
+  spends judge calls, runs no scenarios, and **never generates the champion
+  side**, because the installed plugin is the challenger and a champion
+  synthesised from it would be a self-vs-self battle wearing the costume of a
+  verdict. Each pair is judged twice with positions swapped and must agree
+  after un-swapping; both cited quotes are verified as real substrings of the
+  side they cite, and anything unquotable or unparseable records TIE with the
+  reason kept. Gate is non-regression (wins ≥ losses, all-ties passes);
+  superiority (≥5 decided, ≥70% wins) is reported and never gated. An empty
+  battle exits **NO VERDICT**, not PASS — a gate with no evidence must not
+  certify. Per-pair detail lands in `tests/bench/battles.jsonl`, only the tally
+  in `history.jsonl`, so `skill-trends.ts` stays the single reader.
+
 - **2026-07-14** — R3 shipped: champion/challenger benching. The champion is
   the latest fully-passing history row from a different version of the same
   skill+scenario; a challenger must hold its pass rate and stay within 1.1x

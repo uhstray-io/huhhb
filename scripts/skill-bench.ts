@@ -24,8 +24,8 @@ COSTS REAL TOKENS. Requires the plugin installed from the branch under test.
 import { createHash } from "node:crypto";
 import { spawnSync } from "node:child_process";
 import {
-  accessSync, appendFileSync, constants, existsSync, mkdtempSync, readFileSync,
-  rmSync, writeFileSync,
+  accessSync, appendFileSync, constants, existsSync, mkdirSync, mkdtempSync,
+  readdirSync, readFileSync, rmSync, statSync, writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
@@ -50,12 +50,39 @@ const JUDGE_TEMPLATE =
   "shortest verbatim quote from the response that justifies your score " +
   "(or NONE if nothing does — that implies 1-2). Second line: ONLY the digit.\n" +
   "RUBRIC: {rubric}\nRESPONSE:\n{response}";
+/* E5 battle judge: the same R4 evidence rule, made *checkable*. The 1-5 judge
+   asks for a quote and nobody verifies it; here both quotes are confirmed as
+   verbatim substrings of the side they claim to cite, and a quote that isn't
+   really there forces TIE. That is the difference between citing evidence and
+   being seen to cite it. */
+const BATTLE_TEMPLATE =
+  "Two responses answer the same request. Judge which one better satisfies " +
+  "the rubric.\n" +
+  "Line 1: `QUOTE_A: ` then the shortest verbatim quote from RESPONSE A that " +
+  "justifies your verdict.\n" +
+  "Line 2: `QUOTE_B: ` then the shortest verbatim quote from RESPONSE B that " +
+  "justifies your verdict.\n" +
+  "Line 3: ONLY one of A, B, or TIE.\n" +
+  "Copy both quotes character-for-character. If you cannot quote both sides, " +
+  "answer TIE.\n" +
+  "RUBRIC: {rubric}\nRESPONSE A:\n{a}\nRESPONSE B:\n{b}";
 const MAX_BUFFER = 64 * 1024 * 1024; // stream-json transcripts outgrow node's 1MB default
+// SKILL_BENCH_BATTLES / SKILL_BENCH_OUTPUTS: test-only overrides, same shape
+// as SKILL_BENCH_HISTORY
+const BATTLES = process.env.SKILL_BENCH_BATTLES
+  ?? join(REPO, "tests", "bench", "battles.jsonl");
+const OUTPUTS = process.env.SKILL_BENCH_OUTPUTS
+  ?? join(REPO, "tests", "bench", "outputs");
+// E5 superiority floor: below this a tally is reported and nothing is declared
+const SUPERIORITY_MIN_DECIDED = 5;
+const SUPERIORITY_WIN_RATE = 0.7;
 
 type Json = Record<string, unknown>;
 type Scenario = {
   id: string; prompt: string; assert: string;
   phrasing?: boolean; judge?: string; env?: Record<string, string>;
+  // E2 scenarios asserting the skill stays silent have no comparable output
+  expect_no_activation?: boolean;
 };
 type Spec = {
   skill: string; scenarios: Scenario[];
@@ -65,6 +92,9 @@ type Spec = {
 type RunRow = {
   pass: boolean; tokens: number; cost: number; duration_ms: number;
   api_ms: number; turns: number; result: string;
+  // untruncated response, banked for battle judging — `result` stays clipped
+  // because it is what lands in an error message, not what gets compared
+  full: string;
 };
 
 /* Single owner of claude-session invocation — both wrappers route here so
@@ -168,6 +198,7 @@ export function runScenario(scenario: Scenario, runs: number, baseline: boolean)
         api_ms: Number(data.duration_api_ms) || 0,
         turns: Number(data.num_turns) || 0,
         result: String(data.result ?? "").slice(0, 2000),
+        full: String(data.result ?? ""),
       });
     } finally {
       rmSync(workdir, { recursive: true, force: true });
@@ -176,9 +207,17 @@ export function runScenario(scenario: Scenario, runs: number, baseline: boolean)
   return rows;
 }
 
+/* Replacer-function form on purpose: String.replace expands $&, $', $1 … in a
+   REPLACEMENT string, so a response containing "$&" would silently rewrite the
+   prompt around it. A function replacement is inert. */
+function fill(template: string, slots: Record<string, string>): string {
+  let out = template;
+  for (const [key, value] of Object.entries(slots)) out = out.replace(`{${key}}`, () => value);
+  return out;
+}
+
 function judge(rubric: string, response: string): number {
-  const data = runClaude(
-    JUDGE_TEMPLATE.replace("{rubric}", rubric).replace("{response}", response));
+  const data = runClaude(fill(JUDGE_TEMPLATE, { rubric, response }));
   // the score is the FINAL line, bare 1-5 only — the evidence quote above
   // may itself contain digits, and a scavenged digit recorded as a score is
   // worse than failing closed (0 fails the B3 gate loudly)
@@ -314,6 +353,275 @@ export function cachedBaseline(skill: string, scenario: Scenario): Json | null {
   return null;
 }
 
+/* ------------------------------------------------------------ E5 battle mode
+
+   Pairwise judging of two skill versions over the same scenario. Absolute 1-5
+   scores compress and drift across judge-model versions, so they answer "did
+   this run get worse" but never "is this version better than the one it
+   replaces". Battle answers the second question, and only ever ranks variants
+   that already cleared the objective gates — asserts, budgets, R3.
+
+   Battle NEVER generates the champion side. The bench drives whatever plugin
+   is installed, so the installed skill *is* the challenger; producing a
+   "champion" output from the same process would be a self-vs-self battle
+   wearing the costume of a verdict. Champion output comes from the bank or
+   the scenario is excluded and the exclusion logged.                        */
+
+export type BattleVerdict = "A" | "B" | "TIE";
+export type BattleSide = "challenger" | "champion" | "TIE";
+export type Tally = { wins: number; losses: number; ties: number; decided: number };
+
+/** Content identity of a skill: every file under skills/<name>/, sorted.
+    `ref` reads that version out of git instead of the working tree. Paths are
+    normalized relative to the skill dir so a ref hash and a worktree hash of
+    identical content agree. */
+export function skillContentHash(skill: string, ref: string | null = null): string {
+  const rel = `skills/${skill}`;
+  const h = createHash("sha256");
+  if (ref) {
+    const ls = spawnSync("git", ["ls-tree", "-r", "--name-only", ref, "--", rel],
+      { cwd: REPO, encoding: "utf-8" });
+    const files = (ls.stdout ?? "").split("\n").filter(Boolean).sort();
+    if (ls.status !== 0 || !files.length) throw new Error(`no ${rel} at ref ${ref}`);
+    for (const f of files) {
+      const blob = spawnSync("git", ["show", `${ref}:${f}`],
+        { cwd: REPO, encoding: "utf-8", maxBuffer: MAX_BUFFER });
+      h.update(f.slice(rel.length + 1)).update(" ")
+        .update(blob.stdout ?? "").update(" ");
+    }
+    return h.digest("hex").slice(0, 12);
+  }
+  const dir = join(REPO, rel);
+  if (!existsSync(dir)) throw new Error(`no skill directory ${rel}`);
+  const files = (readdirSync(dir, { recursive: true, encoding: "utf-8" }) as string[])
+    .filter((f) => statSync(join(dir, f)).isFile()).sort();
+  for (const f of files) {
+    h.update(f).update(" ").update(readFileSync(join(dir, f))).update(" ");
+  }
+  return h.digest("hex").slice(0, 12);
+}
+
+/* Outputs are keyed by (prompt hash, skill content hash), so an unchanged
+   champion costs zero across revise-and-rebattle cycles and a plain bench run
+   banks the challenger side as a side effect. */
+export function outputPath(skill: string, scenarioId: string,
+                           pHash: string, sHash: string): string {
+  return join(OUTPUTS, skill, `${scenarioId}-${pHash}-${sHash}.txt`);
+}
+
+function bankOutput(skill: string, scenarioId: string, pHash: string,
+                    sHash: string, text: string): void {
+  const p = outputPath(skill, scenarioId, pHash, sHash);
+  mkdirSync(dirname(p), { recursive: true });
+  writeFileSync(p, text);
+}
+
+export function loadOutput(skill: string, scenarioId: string,
+                           pHash: string, sHash: string): string | null {
+  const p = outputPath(skill, scenarioId, pHash, sHash);
+  return existsSync(p) ? readFileSync(p, "utf-8") : null;
+}
+
+/** A judge fond of wrapping its quote in quotation marks the source never had. */
+function unquote(s: string): string {
+  const m = /^(["'`])([\s\S]*)\1$/.exec(s.trim());
+  return m ? m[2] : s.trim();
+}
+
+/* The R4 evidence rule, enforced rather than requested: each cited quote must
+   actually occur in the side it claims to cite. A verdict that cannot be
+   grounded in both outputs is a TIE, not a win. */
+export function parseBattleVerdict(raw: string, outA: string, outB: string):
+    { verdict: BattleVerdict; reason: string } {
+  const lines = String(raw ?? "").trim().split(/\r?\n/)
+    .map((l) => l.trim()).filter(Boolean);
+  const last = lines[lines.length - 1] ?? "";
+  // Fail closed to TIE, but record WHY: "the judge tied" and "the judge
+  // emitted garbage" are different facts, and this bench has already been
+  // bitten once by conflating a parse failure with a score (judge() → 0/5).
+  if (!/^(A|B|TIE)$/.test(last)) return { verdict: "TIE", reason: "unparseable" };
+  if (last === "TIE") return { verdict: "TIE", reason: "judge-tie" };
+  const quoted = (label: string): string => {
+    const line = lines.find((l) => l.toUpperCase().startsWith(label));
+    return line ? unquote(line.slice(label.length)) : "";
+  };
+  const qa = quoted("QUOTE_A:");
+  const qb = quoted("QUOTE_B:");
+  if (!qa || !outA.includes(qa)) return { verdict: "TIE", reason: "unquotable-a" };
+  if (!qb || !outB.includes(qb)) return { verdict: "TIE", reason: "unquotable-b" };
+  return { verdict: last as BattleVerdict, reason: "cited" };
+}
+
+/* Call 1 presents the champion as A; call 2 swaps the sides. Un-swap and
+   require agreement — a verdict that flips with position is position bias,
+   the dominant known failure of pairwise judges, not a preference. */
+export function reconcileSwap(first: BattleVerdict, second: BattleVerdict): BattleSide {
+  const a: BattleSide = first === "A" ? "champion" : first === "B" ? "challenger" : "TIE";
+  const b: BattleSide = second === "A" ? "challenger" : second === "B" ? "champion" : "TIE";
+  return a === b ? a : "TIE";
+}
+
+export function battleTally(results: BattleSide[]): Tally {
+  const wins = results.filter((r) => r === "challenger").length;
+  const losses = results.filter((r) => r === "champion").length;
+  return {
+    wins, losses,
+    ties: results.filter((r) => r === "TIE").length,
+    decided: wins + losses,
+  };
+}
+
+/** Non-regression — the retrofit gate. All-ties passes: nothing got worse. */
+export function nonRegression(t: Tally): { ok: boolean; detail: string } {
+  if (!t.decided) return { ok: true, detail: `${t.ties} tie(s), 0 decided — not worse` };
+  return {
+    ok: t.wins >= t.losses,
+    detail: `${t.wins}W/${t.losses}L/${t.ties}T — wins ` +
+      `${t.wins >= t.losses ? ">=" : "<"} losses`,
+  };
+}
+
+/** Superiority — required to *declare* a challenger better. Deliberately
+    unreachable for a minimum-size bench: growing the scenario set is what
+    unlocks it, rather than letting a two-scenario sample crown a winner. */
+export function superiority(t: Tally): { declared: boolean; detail: string } {
+  const rate = t.decided ? t.wins / t.decided : 0;
+  return {
+    declared: t.decided >= SUPERIORITY_MIN_DECIDED && rate >= SUPERIORITY_WIN_RATE,
+    detail: `${t.wins}/${t.decided} decided (${(rate * 100).toFixed(0)}%) — needs ` +
+      `>=${SUPERIORITY_MIN_DECIDED} decided and >=${SUPERIORITY_WIN_RATE * 100}%`,
+  };
+}
+
+function battleJudge(rubric: string, a: string, b: string):
+    { verdict: BattleVerdict; reason: string; raw: string } {
+  const data = runClaude(fill(BATTLE_TEMPLATE, { rubric, a, b }));
+  const raw = String(data.result ?? "");
+  return { ...parseBattleVerdict(raw, a, b), raw };
+}
+
+/* One record per judged pair — both presentation orders verbatim. A verdict
+   that isn't logged is gone, and an unlogged verdict cannot be re-adjudicated. */
+function recordBattle(row: Json): void {
+  mkdirSync(dirname(BATTLES), { recursive: true });
+  const git = spawnSync("git", ["rev-parse", "--short", "HEAD"],
+    { cwd: REPO, encoding: "utf-8" });
+  const ts = new Date().toISOString().slice(0, 19) + "Z";
+  appendFileSync(BATTLES, pyJson({ ts, commit: (git.stdout ?? "").trim() || "?", ...row }) + "\n");
+}
+
+function battleSkill(spec: Spec, championRef: string | null, dryRun: boolean,
+                     record: boolean): { ok: boolean; judged: number } {
+  const skill = spec.skill;
+  const version = skillVersion(skill);
+  const challengerHash = skillContentHash(skill);
+  const results: BattleSide[] = [];
+  console.log(`battle ${skill} — challenger ${challengerHash} vs ` +
+    (championRef ? `ref ${championRef}` : "the R3 champion lineage"));
+
+  for (const scenario of spec.scenarios) {
+    const sid = scenario.id;
+    const skip = (why: string): void => console.log(`  SKIP ${sid}: ${why}`);
+    if (scenario.expect_no_activation) {
+      skip("expect_no_activation — no comparable output");
+      continue;
+    }
+    if (!scenario.judge) {
+      skip("no rubric — battle ranks against a rubric or not at all");
+      continue;
+    }
+    let champHash: string | null = null;
+    let champVersion = championRef ?? "?";
+    if (championRef) {
+      champHash = skillContentHash(skill, championRef);
+    } else {
+      const row = championRow(skill, sid, version);
+      if (row?.skill_hash) {
+        champHash = String(row.skill_hash);
+        champVersion = String(row.version);
+      }
+    }
+    if (!champHash) {
+      skip("no champion lineage carrying a skill hash — bench an earlier version first");
+      continue;
+    }
+    if (champHash === challengerHash) {
+      skip(`champion and challenger are the same content (${champHash})`);
+      continue;
+    }
+    const pHash = promptHash(scenario.prompt, scenario.assert);
+    const champOut = loadOutput(skill, sid, pHash, champHash);
+    if (champOut === null) {
+      skip(`champion output not banked (${champHash}) — bench that version ` +
+        "first; battle never generates the champion side");
+      continue;
+    }
+    const challOut = loadOutput(skill, sid, pHash, challengerHash);
+    if (challOut === null) {
+      skip(`challenger output not banked (${challengerHash}) — run a plain bench first`);
+      continue;
+    }
+    if (dryRun) {
+      console.log(`  would judge ${sid}: champion ${champHash} vs challenger ` +
+        `${challengerHash}, 2 calls (champion-first, then swapped)`);
+      continue;
+    }
+
+    // Champion as A first. A TIE there is a TIE regardless of the swap, so the
+    // second call is skipped — ties are the modal case and this halves them.
+    const first = battleJudge(scenario.judge, champOut, challOut);
+    let second: { verdict: BattleVerdict; reason: string; raw: string } | null = null;
+    let verdict: BattleSide = "TIE";
+    if (first.verdict !== "TIE") {
+      second = battleJudge(scenario.judge, challOut, champOut);
+      verdict = reconcileSwap(first.verdict, second.verdict);
+    }
+    results.push(verdict);
+    const flipped = second && verdict === "TIE";
+    console.log(`  ${sid}: ${verdict}${flipped ? " (positions disagreed)" : ""} ` +
+      `[${first.reason}${second ? "/" + second.reason : ""}]`);
+    if (record) {
+      recordBattle({
+        skill, scenario: sid, prompt_hash: pHash,
+        champion_version: champVersion, champion_hash: champHash,
+        challenger_version: version, challenger_hash: challengerHash,
+        champion_output: outputPath(skill, sid, pHash, champHash),
+        challenger_output: outputPath(skill, sid, pHash, challengerHash),
+        order1_verdict: first.verdict, order1_reason: first.reason, order1_raw: first.raw,
+        order2_verdict: second ? second.verdict : null,
+        order2_reason: second ? second.reason : null,
+        order2_raw: second ? second.raw : null,
+        verdict,
+      });
+    }
+  }
+
+  if (dryRun) {
+    console.log("\ndry-run OK — battle plan above, no tokens spent");
+    return { ok: true, judged: results.length };
+  }
+  // Print no tally for an empty battle: "PASS non-regression: 0 decided" above
+  // a NO VERDICT line is precisely the reassuring-green this gate exists to
+  // stop emitting.
+  if (!results.length) return { ok: false, judged: 0 };
+  const tally = battleTally(results);
+  const nr = nonRegression(tally);
+  const sup = superiority(tally);
+  console.log(`\n  ${nr.ok ? "PASS" : "FAIL"} non-regression: ${nr.detail}`);
+  console.log(`  ${sup.declared ? "DECLARED" : "not declared"} superiority: ${sup.detail}`);
+  // Only the tally lands in history — skill-trends.ts stays the single reader,
+  // and battles.jsonl keeps the per-pair detail it would never aggregate.
+  if (record && results.length) {
+    recordHistory({
+      skill, version, scenario: "battle",
+      wins: tally.wins, losses: tally.losses, ties: tally.ties,
+      decided: tally.decided, non_regression: nr.ok, superiority: sup.declared,
+      champion_version: championRef ?? null,
+    });
+  }
+  return { ok: nr.ok, judged: results.length };
+}
+
 /** Python repr() for the dry-run plan line. */
 function pyRepr(s: string): string {
   const q = s.includes("'") && !s.includes('"') ? '"' : "'";
@@ -351,6 +659,14 @@ function benchSkill(spec: Spec, runs: number, dryRun: boolean,
   }
 
   const version = skillVersion(spec.skill);
+  // A bench spec may name a skill this repo doesn't own (plugin-provided);
+  // that costs banking, not the run.
+  let skillHash: string | null = null;
+  try {
+    skillHash = skillContentHash(spec.skill);
+  } catch {
+    console.log(`  INFO no skills/${spec.skill}/ — outputs not banked, battle unavailable`);
+  }
   for (const scenario of spec.scenarios) {
     const sid = scenario.id;
     console.log(`\nscenario ${sid} (${runs} runs + baseline)`);
@@ -359,6 +675,14 @@ function benchSkill(spec: Spec, runs: number, dryRun: boolean,
       continue;
     }
     const skilled = runScenario(scenario, runs, false);
+    // Bank a representative output for battle: the first run that passed its
+    // assert, else the first run. A failing output is still worth banking —
+    // battle excludes it via the gate, but --review may want to look at it.
+    if (skillHash && skilled.length) {
+      const rep = skilled.find((r) => r.pass) ?? skilled[0];
+      bankOutput(spec.skill, sid, promptHash(scenario.prompt, scenario.assert),
+        skillHash, rep.full);
+    }
     const cached = rebaseline ? null : cachedBaseline(spec.skill, scenario);
     let bt: number;
     let bd: number;
@@ -447,6 +771,9 @@ function benchSkill(spec: Spec, runs: number, dryRun: boolean,
         baseline_tokens: bt, baseline_ms: bd, baseline_turns: bn,
         baseline_passes: basePass, verdicts: scoped(sid),
         champion_version: champ ? champ.version : null,
+        // the join from a champion history row to its banked outputs —
+        // championRow yields a version, the output bank is keyed by content
+        skill_hash: skillHash,
       });
     }
   }
@@ -496,9 +823,11 @@ function die(msg: string): never {
   process.exit(1);
 }
 
+const USAGE = "usage: skill-bench.ts [-h] [--runs RUNS] [--dry-run] " +
+  "[--no-record] [--rebaseline] [--battle] [--champion REF] skill";
+
 function usageError(msg: string): never {
-  console.error("usage: skill-bench.ts [-h] [--runs RUNS] [--dry-run] " +
-    "[--no-record] [--rebaseline] skill");
+  console.error(USAGE);
   console.error(`skill-bench.ts: error: ${msg}`);
   process.exit(2);
 }
@@ -517,19 +846,29 @@ function main(): void {
   let dryRun = false;
   let noRecord = false;
   let rebaseline = false;
+  let battle = false;
+  let championRef: string | null = null;
 
   const argv = process.argv.slice(2);
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === "-h" || a === "--help") {
-      console.log("usage: skill-bench.ts [-h] [--runs RUNS] [--dry-run] " +
-        "[--no-record] [--rebaseline] skill\n\n" +
+      console.log(USAGE + "\n\n" +
         "options:\n" +
         "  --runs RUNS   runs per scenario (default 3)\n" +
         "  --dry-run     validate the scenario file and print the plan; no claude calls\n" +
         "  --no-record   skip appending scores to tests/bench/history.jsonl\n" +
-        "  --rebaseline  re-measure the no-skill baseline instead of reusing history");
+        "  --rebaseline  re-measure the no-skill baseline instead of reusing history\n" +
+        "  --battle      judge banked outputs pairwise against the champion;\n" +
+        "                runs no scenarios and never generates the champion side\n" +
+        "  --champion REF  battle against the skill as of this git ref instead\n" +
+        "                of the R3 champion lineage");
       process.exit(0);
+    } else if (a === "--battle") {
+      battle = true;
+    } else if (a === "--champion" || a.startsWith("--champion=")) {
+      championRef = a === "--champion" ? argv[++i] : a.slice("--champion=".length);
+      if (!championRef) usageError("argument --champion: expected a git ref");
     } else if (a === "--runs" || a.startsWith("--runs=")) {
       const raw = a === "--runs" ? argv[++i] : a.slice("--runs=".length);
       runs = parseInt(raw, 10);
@@ -567,6 +906,26 @@ function main(): void {
   }
 
   if (!dryRun && !which("claude")) die("claude CLI not on PATH");
+
+  if (battle) {
+    // Battle is a re-judging pass over banked outputs, not a bench run — it
+    // spends judge calls only, and gates on non-regression alone. Superiority
+    // is reported, never gated: declaring a winner is a human's call.
+    const { ok, judged } = battleSkill(spec, championRef, dryRun, !noRecord);
+    if (dryRun) return;
+    // An empty battle is NOT a pass. Every scenario excluded means the gate has
+    // no evidence, and a gate with no evidence must not certify — that is the
+    // exact failure this bench already has thirteen times over (issue #53).
+    if (!judged) {
+      console.log("\nBATTLE NO VERDICT — every scenario was excluded, nothing " +
+        "was judged; this is not a pass");
+      process.exit(1);
+    }
+    console.log(`\n${ok ? "BATTLE PASS" : "BATTLE FAIL"}`);
+    process.exit(ok ? 0 : 1);
+  }
+  if (championRef) usageError("--champion requires --battle");
+
   console.log(`bench ${spec.skill} — ${spec.scenarios.length} scenario(s)`);
   const verdicts = benchSkill(spec, runs, dryRun, !noRecord, rebaseline);
   if (dryRun) {

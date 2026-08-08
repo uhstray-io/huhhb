@@ -12,3 +12,9 @@ plan/
 # npm install --no-save vendoring for the optional Honcho SDK — never committed
 node_modules/
 package-lock.json
+
+# Banked bench outputs — a machine-local cache keyed by content hash, and bulk
+# model prose besides. The verdicts and their cited rationale live in the
+# committed tests/bench/battles.jsonl; commit these too if cross-machine
+# re-judging ever becomes a thing worth paying git weight for.
+tests/bench/outputs/

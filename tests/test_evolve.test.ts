@@ -1665,6 +1665,161 @@ describe("BenchTests", () => {
   });
 });
 
+// ------------------------------------------------------------ E5 battle mode
+// Pure surfaces only — verdict parsing, position-swap reconciliation and the
+// two decision rules. The judge calls and the output bank are I/O and stay out
+// of the offline suite; what is tested here is every way a verdict can be
+// refused, because refusing is the whole safety property.
+
+describe("BattleTests", () => {
+  let bench: any;
+  beforeEach(async () => {
+    bench = await import(path.join(REPO, "scripts", "skill-bench.ts"));
+  });
+
+  test("test_verdict_requires_evidence_present_in_both_sides", () => {
+    const A = "the skill declined to record a reversible rename";
+    const B = "wrote the record and both index rows";
+
+    const good = bench.parseBattleVerdict(
+      `QUOTE_A: declined to record\nQUOTE_B: both index rows\nA`, A, B);
+    assert.equal(good.verdict, "A");
+    assert.equal(good.reason, "cited");
+
+    // a quote that is not actually in the side it cites is not evidence —
+    // this is the check the 1-5 judge asks for and never performs
+    const fabricated = bench.parseBattleVerdict(
+      `QUOTE_A: declined to record\nQUOTE_B: superseded the earlier ADR\nB`, A, B);
+    assert.equal(fabricated.verdict, "TIE");
+    assert.equal(fabricated.reason, "unquotable-b");
+
+    const missing = bench.parseBattleVerdict(`QUOTE_A: declined to record\nA`, A, B);
+    assert.equal(missing.verdict, "TIE", "a one-sided citation cannot decide a pair");
+
+    // surrounding quotation marks the source never had must not fail the check
+    const wrapped = bench.parseBattleVerdict(
+      `QUOTE_A: "declined to record"\nQUOTE_B: 'both index rows'\nB`, A, B);
+    assert.equal(wrapped.verdict, "B");
+  });
+
+  test("test_parse_failure_is_distinguishable_from_a_real_tie", () => {
+    const A = "alpha";
+    const B = "bravo";
+    // both land on TIE, but conflating them is how judge()'s 0/5 came to read
+    // as a catastrophic score instead of "the last line wasn't a bare digit"
+    assert.equal(bench.parseBattleVerdict("I prefer the second one.", A, B).reason,
+      "unparseable");
+    assert.equal(bench.parseBattleVerdict("QUOTE_A: alpha\nQUOTE_B: bravo\nTIE", A, B).reason,
+      "judge-tie");
+    // a digit-scavenging parser would read the verdict off the quote line
+    assert.equal(bench.parseBattleVerdict("QUOTE_A: pick A always\nB", A, B).verdict,
+      "TIE", "verdict is the LAST line only");
+  });
+
+  test("test_position_swap_must_agree_after_unswapping", () => {
+    // call 1 presents champion as A; call 2 swaps the sides
+    assert.equal(bench.reconcileSwap("B", "A"), "challenger",
+      "challenger won from both positions");
+    assert.equal(bench.reconcileSwap("A", "B"), "champion",
+      "champion won from both positions");
+    // the judge picked whatever was shown first — bias, not a preference
+    assert.equal(bench.reconcileSwap("A", "A"), "TIE");
+    assert.equal(bench.reconcileSwap("B", "B"), "TIE");
+    assert.equal(bench.reconcileSwap("A", "TIE"), "TIE");
+  });
+
+  test("test_non_regression_passes_on_all_ties_but_not_on_a_losing_record", () => {
+    const t = (r: string[]) => bench.battleTally(r);
+    assert.ok(bench.nonRegression(t(["TIE", "TIE"])).ok,
+      "all ties is not-worse — nothing regressed");
+    assert.ok(bench.nonRegression(t([])).ok, "nothing decided is not-worse");
+    assert.ok(bench.nonRegression(t(["challenger", "champion"])).ok, "1W/1L holds the line");
+    assert.ok(!bench.nonRegression(t(["champion", "champion", "challenger"])).ok,
+      "more losses than wins is a regression");
+  });
+
+  test("test_superiority_needs_both_a_sample_floor_and_a_win_rate", () => {
+    const t = (r: string[]) => bench.battleTally(r);
+    const sweep2 = t(["challenger", "challenger"]);
+    assert.ok(bench.nonRegression(sweep2).ok);
+    assert.ok(!bench.superiority(sweep2).declared,
+      "a 2-scenario sweep is below the decided floor — report, declare nothing");
+
+    // 5 decided at 80% clears both bars
+    assert.ok(bench.superiority(t(["challenger", "challenger", "challenger",
+      "challenger", "champion"])).declared);
+    // 5 decided at 60% clears the floor but not the rate
+    assert.ok(!bench.superiority(t(["challenger", "challenger", "challenger",
+      "champion", "champion"])).declared);
+    // ties pad the record but never the denominator
+    const withTies = t(["challenger", "challenger", "TIE", "TIE", "TIE"]);
+    assert.equal(withTies.decided, 2);
+    assert.ok(!bench.superiority(withTies).declared);
+  });
+
+  test("test_battle_resolves_champion_outputs_through_the_history_join", () => {
+    // The load-bearing join: championRow yields a VERSION, the output bank is
+    // keyed by CONTENT HASH, and skill_hash on the history row is the only
+    // thing connecting them. Exercised end-to-end through the CLI with a
+    // seeded bank — no model calls, --dry-run stops short of judging.
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "bench-battle-"));
+    try {
+      const hist = path.join(tmp, "hist.jsonl");
+      const outs = path.join(tmp, "outputs");
+      const env = { ...process.env, SKILL_BENCH_HISTORY: hist, SKILL_BENCH_OUTPUTS: outs };
+      const CHAMP = "aaaabbbbcccc";
+      const seed = path.join(tmp, "seed.mjs");
+      fs.writeFileSync(seed, [
+        `const m = await import(${JSON.stringify(
+          pathToFileURL(path.join(REPO, "scripts", "skill-bench.ts")).href)});`,
+        `const fs = await import("node:fs"), path = await import("node:path");`,
+        `const spec = JSON.parse(fs.readFileSync(${JSON.stringify(
+          path.join(REPO, "tests", "bench", "repo-memory.json"))}, "utf-8"));`,
+        `const chall = m.skillContentHash("repo-memory");`,
+        `const rows = [];`,
+        `for (const s of spec.scenarios) {`,
+        `  const ph = m.promptHash(s.prompt, s.assert);`,
+        `  rows.push(JSON.stringify({ skill: "repo-memory", scenario: s.id,`,
+        `    version: "0.0.1-old", runs: 3, passes: 3, tokens: 1000,`,
+        `    skill_hash: ${JSON.stringify(CHAMP)} }));`,
+        `  for (const h of [${JSON.stringify(CHAMP)}, chall]) {`,
+        `    const p = m.outputPath("repo-memory", s.id, ph, h);`,
+        `    fs.mkdirSync(path.dirname(p), { recursive: true });`,
+        `    fs.writeFileSync(p, "output for " + h);`,
+        `  }`,
+        `}`,
+        `fs.writeFileSync(process.env.SKILL_BENCH_HISTORY, rows.join("\\n") + "\\n");`,
+      ].join("\n"));
+      const s = spawnSync(process.execPath, [seed], { encoding: "utf-8", env });
+      assert.equal(s.status, 0, s.stderr);
+
+      const r = spawnSync(process.execPath,
+        [path.join(REPO, "scripts", "skill-bench.ts"),
+          "--battle", "repo-memory", "--dry-run"],
+        { encoding: "utf-8", env, cwd: REPO });
+      assert.equal(r.status, 0, r.stderr);
+      assert.match(r.stdout, /would judge/,
+        "a banked champion and challenger must resolve to a judgeable pair");
+      assert.doesNotMatch(r.stdout, /SKIP/,
+        "nothing should be excluded once both sides are banked");
+      assert.match(r.stdout, new RegExp(`champion ${CHAMP}`),
+        "the champion hash must come from the history row, not the working tree");
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  test("test_skill_content_hash_is_stable_and_covers_every_file", () => {
+    // the bank key must change when ANY file in the skill changes, or a
+    // revised skill silently re-uses its predecessor's banked output
+    const a = bench.skillContentHash("repo-memory");
+    assert.match(a, /^[0-9a-f]{12}$/);
+    assert.equal(a, bench.skillContentHash("repo-memory"), "must be deterministic");
+    assert.notEqual(a, bench.skillContentHash("explaining-changes"));
+    assert.throws(() => bench.skillContentHash("no-such-skill-here"));
+  });
+});
+
 // ---------------------------------------------------------------- C-16
 
 describe("SkillContractTests", () => {

@@ -96,6 +96,28 @@ Three measured gates — full criteria, thresholds, and the improvement loop in
   `tests/bench/history.jsonl`; use `--runs 3 --rebaseline` when the verdict
   has to mean something.
 
+  **Asserts run under `/bin/sh`, not your shell.** The bench spawns `sh -c`, so
+  an assert gets BSD `grep` — while the interactive shell here has `grep` as a
+  function wrapping ugrep. A pattern that errors `exceeds complexity limits`
+  when you try it by hand can run fine in the bench, and vice versa. Replay
+  every candidate assert through `/bin/sh -c` or you are testing a different
+  engine than the one that will judge it.
+
+  **Benching a branch needs a manual install.** `plugin install` reports success
+  and does nothing; `plugin update` reads a stale catalog; `marketplace update`
+  refreshes it by resetting the clone to `main` and deleting your branch
+  (`autoUpdate: true`). To bench a branch: `git fetch <repo> <branch>:tmp` into
+  `~/.claude/plugins/marketplaces/huhhb`, `git archive` into
+  `cache/huhhb/huhhb/<version>/`, and point `installed_plugins.json` at it. It
+  can self-revert to `main` later, so re-check before trusting a long run. This
+  is also how you bank a champion for `--battle`, which never generates the
+  champion side itself.
+
+  **Heavy benching degrades around the hour mark.** Past roughly 57 minutes of
+  sustained runs, `claude -p` starts returning `tokens=0` empty responses and
+  trigger probes die with `probe exited 1`. Those rows are not data — purge
+  them (see the empty-run note below) rather than reading them as regressions.
+
   **Reading `history.jsonl` as a trend.** Every row carries the repo `commit`, so
   `git archive <sha>` reconstructs exactly the code a measurement was taken against —
   that file, not the plugin cache, is the durable record. Two discontinuities to respect

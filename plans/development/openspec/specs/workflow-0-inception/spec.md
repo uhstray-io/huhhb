@@ -1,7 +1,9 @@
 # workflow-0-inception Specification
 
 ## Purpose
-TBD - created by archiving change product-inception-layer. Update Purpose after archive.
+Defines how the inception phase is dispatched and reviewed as an orchestrated
+workflow, and the boundary at which it terminates and hands its epic queue to
+normal change delivery.
 ## Requirements
 ### Requirement: Workflow 0 table in core-workflows
 `buhhdy/skills/core-workflows/SKILL.md` SHALL define "Workflow 0 — Product

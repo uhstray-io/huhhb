@@ -1,7 +1,9 @@
 # inception-scaffold Specification
 
 ## Purpose
-TBD - created by archiving change product-inception-layer. Update Purpose after archive.
+Defines what a repository must already have in place for a product-inception
+run to write its artifacts somewhere legitimate, rather than inventing a home
+for them mid-run.
 ## Requirements
 ### Requirement: repo-kickstart seeds plans/product/
 `repo-kickstart` SHALL add `plans/product/` (with a one-paragraph README

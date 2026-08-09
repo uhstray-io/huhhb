@@ -1,7 +1,9 @@
 # product-inception Specification
 
 ## Purpose
-TBD - created by archiving change product-inception-layer. Update Purpose after archive.
+Governs the gated inception workflow — how a product idea becomes a brief, a
+PRD and an architecture document, where it stops, and what it hands off — so
+that inception stays a rare, explicitly-requested phase rather than a default.
 ## Requirements
 ### Requirement: Three sequential human-gated phases
 The `product-inception` skill SHALL run three phases in order — Analyst

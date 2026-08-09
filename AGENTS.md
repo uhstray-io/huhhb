@@ -194,11 +194,12 @@ worktrees → branches → PRs → human-authorized merge:
   `caveman-help`, `caveman-review`, `caveman-stats`, `cavecrew`): synced via
   `./scripts/sync-caveman.sh` from upstream `JuliusBrussee/caveman` — do not
   edit directly; refine upstream.
-- **Memory skill** (`skills/memory/SKILL.md`): synced via
-  `./scripts/sync-mempalace.sh` (+ `patch-mempalace.sh`, which re-applies the
-  branding, the retirement description read from `marketplace.json`, and the opt-in
-  prerequisite — a sync overwrites all three). The other
-  memory skills (`memory-mine`, `memory-search`, `memory-status`) are ours.
+- **Memory family** (`memory`, `memory-mine`, `memory-search`,
+  `memory-status`): ours, edited directly. `skills/memory/SKILL.md` began as a
+  vendored copy of MemPalace's and forked: four of its six sections have no
+  upstream counterpart. Its sync/patch pair was deleted on 2026-08-09 —
+  re-running it would have overwritten those sections, and it anchored its
+  insert on an H1 the sync never produces.
 
 After syncing, review the diff, bump versions, cut a release if changed.
 
@@ -240,7 +241,7 @@ After syncing, review the diff, bump versions, cut a release if changed.
 - `.claude-plugin/plugin.json` — plugin version read by Claude Code for update detection (keep in sync with `marketplace.json`)
 - `scripts/skill-lint.ts`, `scripts/skill-bench.ts`, `scripts/skill-trends.ts` — the skill quality gates (see Skill Quality Bar)
 - `scripts/evolve/` — the `evolve` self-learning suite (TypeScript, MIT; optional integrations load dynamically, never vendored)
-- `scripts/sync-caveman.sh`, `scripts/sync-mempalace.sh`, `scripts/patch-mempalace.sh` — upstream sync/patch for vendored skills
+- `scripts/sync-caveman.sh` — upstream sync for the vendored caveman family (the only vendored skills left)
 - `tests/` — `test_evolve.test.ts` + `test_openspec_conformance.test.ts` (offline, `node --test`) and `bench/` scenarios
 - `docs/evolve-plan.md` — the evolve living plan (architecture, guardrails, gates, roadmap; every evolve change recorded in its change log)
 - `CONTEXT.md` — project context for AI assistants

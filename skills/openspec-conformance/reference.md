@@ -121,8 +121,8 @@ node "${CLAUDE_PLUGIN_ROOT}/skills/openspec-conformance/promote-adr.ts" \
 | store id stable | `plans/development/.openspec-store/store.yaml` has `id: <repo>` |
 | machine registration | `openspec store list --json` includes `<repo>` (else run `register` — it no-ops if already there) |
 | store health | `openspec store doctor <repo>` → "Issues: none" |
-| index | `plans/development/00-implementation-plan.md` exists |
 | ADR home | `plans/architecture/` exists |
+| product home | `plans/product/` exists |
 
 Re-running `openspec init` and `openspec store register` are both safe (init
 reports structure exists; register reports "already registered"). A second

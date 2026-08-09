@@ -14,16 +14,13 @@ skips-with-note elsewhere). buhhdy's `core-workflows` drives the change
 lifecycle in between. Decision record: `buhhdy/README.md` → "Planning
 Layout (OpenSpec conformance)".
 
-**Index writers (canonical enumeration — the four roles, nothing else
-writes `00-implementation-plan.md`):** `repo-kickstart` SEEDS the file
-from this skill's template; Workflow 1's `to-issues` ADDS a change's row;
-Workflow 2 step 7 REFRESHES statuses/links; `promote-adr.ts`
-(pr-shepherd's post-merge) FLIPS a row to `archived`. Reference this
-list; don't restate subsets.
+**Change status has one home: the store.** `openspec list` reports a change's
+name, status and task counts. Adopted repos keep no second, hand-maintained
+register of the same facts — two records of one fact diverge, and the one
+maintained by hand is the one that goes stale.
 
 **Layout (what adopted repos use):**
 - `plans/development/openspec/changes/<slug>/` — active changes (proposal, specs, design, tasks)
-- `plans/development/00-implementation-plan.md` — living index over active changes
 - `plans/architecture/` — the ADR store, **owned by `repo-memory`** (ADR-0003).
   OpenSpec writes specifications; this skill only carries the promotion mechanism
 
@@ -51,8 +48,7 @@ openspec store register plans/development --id <repo> --yes  # once per MACHINE;
   id stable across machines. The machine registry
   (`~/.local/share/openspec/stores/registry.yaml`) is per-machine, so each machine
   runs the `register` line once; re-running is a no-op ("already registered").
-- Seed the index and ADR home from `templates/` (copy, then fill placeholders):
-  `templates/00-implementation-plan.md` → `plans/development/00-implementation-plan.md`;
+- Seed the ADR home from `templates/` (copy, then fill placeholders):
   `templates/adr-NNN-slug.md` is the ADR shape the promoter emits.
 - Add the house rules + `context:` to `plans/development/openspec/config.yaml`
   (block in `reference.md`).
@@ -94,11 +90,13 @@ node "${CLAUDE_PLUGIN_ROOT}/skills/openspec-conformance/promote-adr.ts" \
 It extracts **only** the archived `design.md` `## Decisions` section into one
 `## ADR-NNNN — <slug>` record appended to `plans/architecture/YYYY/YYYY-MM.md`,
 plus a row in that year's `INDEX.md` and a line in `DECISIONS.md` (globally
-sequential numbering; the template's field block
-+ a link back to the archived design), and flips exactly that change's row in
-`00-implementation-plan.md` to `archived` with the ADR link. It never copies the
-full design doc. A change with no `## Decisions` promotes no ADR but still updates
-the index. Offline check: `node --test tests/test_openspec_conformance.test.ts`.
+sequential numbering; the template's field block + a link back to the archived
+design). **That is the whole of it — the script owns decision records and their
+two indexes, and nothing else.** It never copies the full design doc, and it
+reads no change-status register in any mode: a promotion that failed on a
+missing row made an unrelated file a precondition of writing a decision. A
+change with no `## Decisions` promotes no ADR and exits 0. Offline check:
+`node --test tests/test_openspec_conformance.test.ts`.
 
 ## Inception promotion (on architecture approval — what product-inception runs)
 

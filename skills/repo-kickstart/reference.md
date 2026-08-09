@@ -65,12 +65,18 @@ reports that id taken by a different path, disambiguate then and record it.
 
 ### Probe every prerequisite — none of them is fatal
 Each missing prerequisite reports `skipped — <reason>` in the closing checklist
-**and** records the gap in `plans/development/00-implementation-plan.md`. A
-missing prerequisite is never a silent pass and never a hard failure of the whole
-run — the same graceful-degradation contract Honcho already has here.
+**and** reports it in the run's summary. A missing prerequisite is never a
+silent pass and never a hard failure of the whole run — the same graceful-degradation contract Honcho already has here.
 
 ```bash
-command -v openspec >/dev/null 2>&1 || echo "skipped — openspec not installed"
+# OpenSpec is RESOLVED, not skipped: an absent CLI leaves the store steps
+# undone, so the closing checklist must not report the repo as conformed.
+# Never install it here — a global package touches state outside the repo,
+# binds to whichever Node is active, and fails in ways a scaffolder cannot
+# recover from. Name the command; the operator decides.
+command -v openspec >/dev/null 2>&1 \
+  || echo "UNRESOLVED — openspec CLI absent; OpenSpec steps not run. \
+Install: npm install -g @fission-ai/openspec@latest (then re-run)"
 
 # Graph tool — containment FIRST: indexing refuses a path outside the allowed
 # root, so an out-of-root repo is a skip to report, not an error to debug.
@@ -244,8 +250,8 @@ Onboarding for humans and agents.
 
 ## Develop here
 - Read **AGENTS.md** first (conventions), then **ARCHITECTURE.md**.
-- Plans live in `plans/development/`; the living index is
-  `plans/development/00-implementation-plan.md`.
+- Plans live in `plans/development/`; change status comes from the store
+  (`openspec list --store <store-id>`), not from a file.
 - Branch → PR → CodeRabbit + cross-review → human review.
 ```
 
@@ -267,10 +273,12 @@ Current-state architecture. Proposals and deltas live in
 
 ## 2. Planning tree
 
-### plans/development/00-implementation-plan.md — living index
-Canonical copy: `skills/openspec-conformance/templates/00-implementation-plan.md`. Keep
-the 5 columns exactly — `promote-adr.ts` matches a row by its first cell and
-edits the Status/Links cells in place, so a divergent format breaks promotion.
+### No change index is seeded
+Change status, task counts and identity come from the store — `openspec list`.
+A hand-maintained register of the same facts is a second source that drifts:
+measured here, one read `proposed` for six days on a change that was merged and
+24 of 25 tasks done. `promote-adr.ts` owns decision records only and reads no
+such file.
 ```markdown
 # Implementation Plan — living index
 
@@ -292,7 +300,7 @@ _Status: proposed · in-progress · in-review · archived._
 ```markdown
 # plans/development
 
-Implementation plans and the living index (`00-implementation-plan.md`).
+Implementation plans. Change status lives in the store, not in a file here.
 This dir is the **OpenSpec store root** — `openspec/` lives here (registered as
 store `<store-id>`), so active changes are `openspec/changes/<slug>/`.
 ```
@@ -338,7 +346,7 @@ sibling huhhb skill) owns the full mechanism, the house `config.yaml` rules, and
 the `/opsx:*` per-tool notes; run its **Setup** section. Summary + the caveat:
 
 ```bash
-mkdir -p plans/development plans/architecture
+mkdir -p plans/development plans/architecture plans/product
 
 # 1. Create the root. store register requires an existing openspec/ dir, so init
 #    FIRST. --tools none = just openspec/config.yaml, no tool dirs to commit.
@@ -756,7 +764,7 @@ else
 fi
 ```
 If **404**, do NOT enable it yourself. Emit these commands for the human (needs
-admin) and record the gap in `plans/development/00-implementation-plan.md`:
+admin) and report the gap in the run's summary:
 ```bash
 gh api -X PUT "repos/$OWNER_REPO/branches/$BR/protection" --input - <<'JSON'
 {
@@ -801,8 +809,8 @@ repo-kickstart — <owner>/<repo> (<greenfield|brownfield>, <stack>)
 ```
 `❌ branch protection` with emitted commands (or `N/A` when the repo has no
 GitHub remote yet) is an **expected pass** for a fresh repo. So is any
-`⚠ skipped — <reason>` row **whose gap was recorded** in
-`plans/development/00-implementation-plan.md`: a missing prerequisite is a status,
+`⚠ skipped — <reason>` row **whose gap was reported in the summary**: a
+missing prerequisite is a status,
 not a failure. Only fabricated or unverified rows are failures — and these four
 rows may never be ✅ without their evidence in hand: the node/edge counts, the
 passing `check-attr` output, a verbatim round-trip that brought a rejected
@@ -818,7 +826,7 @@ alternative back, and a domain-language recall that actually returned the charte
 | AGENTS.md | file exists |
 | CLAUDE.md pointer | file exists and references AGENTS.md |
 | KICKSTART / ARCHITECTURE | file exists |
-| plans tree | `plans/development/00-implementation-plan.md` + both READMEs exist |
+| plans tree | `plans/development/`, `plans/architecture/` and `plans/product/` exist, each with its README, and **no change-index file** is present |
 | plans/product | `plans/product/README.md` exists (content optional — inception is opt-in, never mandatory) |
 | ADR structure | `plans/architecture/DECISIONS.md` and `TEMPLATE.md` exist; the record set and the index sets match **both ways** — every ADR in a `YYYY/YYYY-MM.md` has a row in that year's `INDEX.md` AND a line in `DECISIONS.md`, **and** every index row and master line resolves to an existing record. An index that omits a record is a **fail**; so is an index row pointing at a record that does not exist, because an orphaned row reads as a decision that was never made |
 | OpenSpec | `plans/development/openspec/config.yaml` + `.openspec-store/store.yaml` (id `<store-id>`) exist; `openspec store list` includes `<store-id>` (else re-run `register` — it no-ops) |

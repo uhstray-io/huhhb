@@ -27,9 +27,9 @@ Workflow 2 left three PRs open: **#41, #42** (implementer PRs, worktrees
    #41/#42 stay blocked until each gets BOTH a current-head human approval and
    an explicit instruction.
 6. **Post-merge (#43).** Close `Closes #38`; the conformance probe finds
-   `plans/development/00-implementation-plan.md`, so `openspec archive` +
-   `promote-adr.ts` (its index row flips to `archived`; one ADR lands in
-   `plans/architecture/` if #38's design had a `## Decisions`); write the
+   `plans/development/openspec/config.yaml`, so `openspec archive` +
+   `promote-adr.ts` (one ADR lands in `plans/architecture/` with both index
+   rows, if #38's design had a `## Decisions`); write the
    outcome via `repo-memory` to `.claude/memory/` (CI 0 / CodeRabbit 0 /
    human 0; escalations 0). No `git worktree remove` is needed — #43 is
    buhhdy's own docs commit with no task worktree.
@@ -47,9 +47,9 @@ merged+inactive branches deleted (unmerged stale ones skipped); janitor
 structurally confined to `buhhdy/*`.
 
 **Not-yet-adopted variant:** on a repo without
-`plans/development/00-implementation-plan.md`, step 6's archive/promote/index
-work is skipped with the note "archive/ADR/index skipped — conventions not
+`plans/development/openspec/config.yaml`, step 6's archive/promote work is
+skipped with the note "archive/ADR skipped — conventions not
 yet adopted"; issue closing, the repo-memory outcome record, worktree
-removal, and the janitor all still run. The missing index never fails the
+removal, and the janitor all still run. A non-adopted repo never fails the
 archive/ADR handling — other steps (the branch-protection hard gate, CI,
 merge conditions) can still fail on their own terms.

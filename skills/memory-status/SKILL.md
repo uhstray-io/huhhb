@@ -1,6 +1,6 @@
 ---
 name: memory-status
-description: Show memory nexus statistics — drawer count, wings, rooms. Triggers on "memory status", "nexus stats", "how much is in memory", "what wings exist".
+description: LEGACY, retired from routing 2026-08-01 — MemPalace nexus stats. Use when MemPalace is named explicitly. For current memory health use memory-setup. The memory MCP server is opt-in.
 ---
 
 # memory-status

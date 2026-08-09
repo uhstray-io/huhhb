@@ -1,6 +1,6 @@
 ---
 name: memory-search
-description: Search the memory nexus for relevant team knowledge, decisions, or context. Triggers on "search memory", "find in memory", "look up in nexus", "what do we know about X".
+description: LEGACY, retired from routing 2026-08-01 — semantic search over an existing MemPalace nexus only. Use when MemPalace is named explicitly. For current memory use hindsight recall; for repo knowledge use repo-memory. The memory MCP server is opt-in.
 ---
 
 # memory-search

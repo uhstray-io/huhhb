@@ -35,10 +35,12 @@
       "configure memory on my device",
       "verify my two-store memory setup",
       "both memory servers show connected but none of their tools are callable",
-      "my recall returns nothing useful even though everything reports healthy"
+      "my recall returns nothing useful even though everything reports healthy",
+      "is my memory set up right",
+      "memory status",
+      "how healthy is my memory setup"
     ],
     "negative": [
-      "is my memory set up right",
       "save this to repo memory",
       "bootstrap this repo into our conventions",
       "review the skill library",

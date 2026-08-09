@@ -1,6 +1,6 @@
 ---
 name: memory-mine
-description: Mine a project directory or raw text into the memory nexus for future recall. Triggers on "mine this project", "index this directory", "add project to memory", "mine into memory".
+description: LEGACY, retired from routing 2026-08-01 — ingest a directory into an existing MemPalace nexus. Use when MemPalace is named explicitly. For current code structure use codebase-memory-mcp indexing instead. The memory MCP server is opt-in.
 ---
 
 # memory-mine

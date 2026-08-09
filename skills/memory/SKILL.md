@@ -1,6 +1,6 @@
 ---
 name: memory
-description: Access, search, and manage the team memory nexus — mine projects, store context, and recall knowledge. Triggers on "remember this", "save to memory", "check memory", "what do we know about", "recall". Auto-triggers at session start to load context.
+description: LEGACY, retired from routing 2026-08-01 — the MemPalace nexus, kept only to read data already stored in it. Use when MemPalace is named explicitly. Not the current memory system — structural truth is codebase-memory-mcp and experience is Hindsight, both set up via memory-setup. The memory MCP server is opt-in. Do not use for new work.
 ---
 
 # memory

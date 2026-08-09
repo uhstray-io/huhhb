@@ -59,22 +59,47 @@ frontmatter still carries the originals, and the frontmatter is what an agent is
 handed at session start — so the retirement is currently a claim the runtime does
 not honour. This phase is a rewrite, not a confirmation.
 
-- [ ] 3.1 Verify once more which surface governs matching before editing: compare
+- [x] 3.1 Verify once more which surface governs matching before editing: compare
       this session's skill list against both copies. The list showed the
       frontmatter text verbatim; do not take that on trust from this task
-- [ ] 3.2 Rewrite the frontmatter `description` of `memory`, `memory-search`,
+      → confirmed: the list shows `memory-mine` as "Mine a project directory…
+      Triggers on 'mine this project'" — frontmatter verbatim, no trace of the
+      marketplace LEGACY wording
+- [x] 3.2 Rewrite the frontmatter `description` of `memory`, `memory-search`,
       `memory-mine` and `memory-status` to match their `marketplace.json`
       entries — LEGACY marker first, then the redirect by name. `memory` must
       also lose its "auto-triggers at session start" claim, which is the single
       most aggressive line in the four
-- [ ] 3.3 `skills/memory/SKILL.md` is overwritten by `sync-mempalace.sh`, so
+      → **deviation, deliberate.** Copying the marketplace text verbatim would
+      have added three new S4 WARNs (no trigger phrasing) and left the retired
+      skills unreachable *by name*, which the spec requires. So one corrected
+      description was written and applied to BOTH surfaces: LEGACY marker,
+      explicit "Use when MemPalace is named explicitly", redirect, opt-in note.
+      Also avoided a YAML hazard — `memory`'s marketplace text contained ": ",
+      invalid in an unquoted scalar
+- [x] 3.3 `skills/memory/SKILL.md` is overwritten by `sync-mempalace.sh`, so
       extend `patch-mempalace.sh` to re-apply its description and prerequisite
       after a sync. The other three are ours and need no patch
-- [ ] 3.4 Add the current-system phrasings ("remember this", "what do we know
+      → the script reads the description from `marketplace.json` rather than
+      hardcoding it, so the two surfaces cannot drift again by construction.
+      Verified: byte-identical restoration after a simulated sync that reset the
+      description, the name, the branding and stripped the block
+- [~] 3.4 Add the current-system phrasings ("remember this", "what do we know
       about", "search my memory", "memory status") to the negative-trigger lists
       of the retired skills, and the positive lists of whichever current skill
       owns each
-- [ ] 3.5 Note the measurement caveat with any number produced: ~50 untracked
+      → **partly unactionable as written, and it surfaced a real defect.** The
+      four retired skills have **no bench fixtures**, so there are no negative
+      lists to edit; creating four would need live baselines. And "remember
+      this" / "what do we know about" route to hindsight, which is MCP tools
+      governed by the routing policy — not a skill with a positive list.
+      What WAS actionable: `memory-status`'s notice redirects health questions
+      to `memory-setup`, which listed "is my memory set up right" as a
+      **negative** — orphaned since ADR-0002 deleted `memory-onboarding`, which
+      owned it. Claimed by nobody, refused by three. Moved to memory-setup's
+      positives with "memory status", so the redirect lands somewhere that
+      accepts it
+- [x] 3.5 Note the measurement caveat with any number produced: ~50 untracked
       auto-loading skills in `.claude/skills/` contaminate every trigger figure
 - [ ] 3.6 **Gate:** both copies of all four descriptions agree; a reload shows
       the LEGACY text in the session's skill list; a trigger run shows current
@@ -82,21 +107,26 @@ not honour. This phase is a rewrite, not a confirmation.
       only by name, reported with the contamination caveat — proves *A
       current-system phrasing routes to the current system* and *A retired skill
       is reachable by name*
+      → **partially verified.** Both copies agree (checked mechanically); lint
+      53/0 FAIL with no new WARNs; 232 tests pass; openspec 20/20. NOT verified:
+      a reload showing the LEGACY text in a live skill list, and a trigger run —
+      the latter costs real money and every figure it produced would carry the
+      `.claude/skills/` contamination caveat anyway
 
 ## 3b. Record the wider defect without absorbing it
 
-- [ ] 3b.1 Record the measurement for whoever picks it up: **28 of 51 skills**
+- [x] 3b.1 Record the measurement for whoever picks it up: **28 of 51 skills**
       carry semantically different descriptions between `marketplace.json` and
       their frontmatter (6 more differ cosmetically, 17 agree). Frontmatter is
       routinely the longer of the two, several exceeding the 500-character cap
       `skill-lint` S4 enforces — on the marketplace copy
-- [ ] 3b.2 Record that **S4 and S11 check `entry.description` from
+- [x] 3b.2 Record that **S4 and S11 check `entry.description` from
       `marketplace.json`, not the frontmatter that loads**, so the house
       description rules are enforced against a copy the runtime never reads
-- [ ] 3b.3 Route both to `skill-retrofit`, which owns per-skill debt burndown —
+- [x] 3b.3 Route both to `skill-retrofit`, which owns per-skill debt burndown —
       **do not fix them here**. A 28-skill sweep inside a MemPalace change is how
       a scoped change becomes unreviewable
-- [ ] 3b.4 **Gate:** the finding is written where the retrofit will see it, and
+- [x] 3b.4 **Gate:** the finding is written where the retrofit will see it, and
       this change still touches only the four memory skills
 
 ## 4. Reconcile the documentation

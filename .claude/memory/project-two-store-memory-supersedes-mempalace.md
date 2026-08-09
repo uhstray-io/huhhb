@@ -54,5 +54,8 @@ Two facts it states have changed shape, so read them this way now:
   The 2026-08-01 rewrite marking them LEGACY landed only in `marketplace.json`;
   the frontmatter kept the originals, and the frontmatter is what an agent is
   handed. Verified against an installed cache carrying both texts. The
-  retirement was invisible to every agent for eight days. Both copies now agree
-  and `patch-mempalace.sh` sources one from the other so they cannot drift again.
+  retirement was invisible to every agent for eight days. Both copies now agree.
+  A patch script briefly sourced one from the other; it was deleted with the
+  rest of the MemPalace sync tooling on 2026-08-09, so the guard that survives
+  is `skill-lint` comparing the two copies for all 51 skills — routed to
+  `skill-retrofit` with the 28-skill drift burndown, not yet built.

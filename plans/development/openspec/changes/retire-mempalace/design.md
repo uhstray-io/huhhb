@@ -67,12 +67,28 @@ requires — and produced invalid YAML, because `memory`'s manifest text contain
 `": "`. One corrected description was written and applied to both surfaces
 instead: LEGACY marker, explicit by-name trigger, redirect, opt-in note.
 
-**The patch script reads the description from `marketplace.json`.** Hardcoding it
-would have made the two copies drift-able again — the exact defect that had gone
-unnoticed for eight days. Sourcing one from the other makes drift impossible
-rather than merely discouraged. Verified by simulating a sync that reset the
-description, the name and the branding and stripped the prerequisite: the script
-restores the file byte-identically.
+**The sync/patch pair is deleted; `skills/memory/SKILL.md` is ours — a third
+reversal, again on evidence.** The patch script was first extended to re-apply
+the description (read from `marketplace.json`) and the prerequisite. Both edits
+were real improvements to a script that should not exist, and the verification
+that passed them was flawed: it simulated a sync by mutating the *committed*
+file rather than fetching upstream, so it preserved an H1 (`# memory`) that a
+real sync never produces. Fetching upstream showed the patch anchored its insert
+on `/^# memory$/` while a real sync yields `# MemPalace`, rebranded to `# Nexus`
+— the insert silently no-ops and the script still prints `✓ ... re-applied`.
+
+Worse, the vendoring itself was already fiction: upstream ships 35 lines and
+three sections, the committed file 54 lines and six. `Session Start`, `When to
+Save`, `Wing Conventions` and `Sub-Skills` have no upstream counterpart, so a
+sync *destroys* them and the patch restores none. Nothing automated ran either
+script; every change since the initial commit was a direct edit.
+
+So the file is a fork, and is now owned like its three siblings —
+`memory-search`, `memory-mine` and `memory-status` were always plain committed
+files carrying the identical prerequisite. Deleting both scripts removes the
+drift surface rather than policing it. *Alternative rejected:* fix the anchor —
+it makes a destructive script look runnable, which is worse than one that
+visibly is not.
 
 **The opt-in block is written once and pointed at four times.** Four copies of a
 config snippet is four things to keep in sync, and this repo already has a
@@ -103,10 +119,17 @@ description rule this repo enforces is enforced against the copy nothing reads.
   Recorded as partial rather than claimed, and carried to a follow-up change.
   All four are blocked on one action: this branch installed into a real profile.
 
-- **The vendored skill is one upstream change away from a surprise.** If upstream
-  restructures `SKILL.md`, `patch-mempalace.sh`'s insertion point may not match.
-  → It fails loudly rather than silently: the description step exits non-zero if
-  no `description:` line is found.
+- **The four descriptions can drift from `marketplace.json` again**, now that no
+  script sources one from the other. → That guard only ever covered 1 of 51
+  skills, and `skill-lint` already reads both copies inside one function without
+  comparing them. The comparison belongs there, covering all 51, and is routed
+  to `skill-retrofit` with the rest of the 28-skill drift burndown — not
+  re-added as a bespoke fix for one skill.
+
+- **Upstream improvements to the MemPalace skill no longer arrive.** → Intended.
+  The skill is retired from routing and reads a store this project does not
+  write to; tracking upstream on a fork whose sections upstream does not have
+  was never actually happening.
 
 ## Migration Plan
 

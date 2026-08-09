@@ -50,11 +50,12 @@ and the store's skills still compete for the phrasings the current system owns.
 - Documentation reconciles: `AGENTS.md`, `README.md` and `KICKSTART.md` describe
   MemPalace as opt-in rather than shipped, and the routing policy says which
   stores are registered, which are opt-in, and which are current.
-- The sync scripts and the vendoring relationship **stay** — the skills stay, so
-  their upstream source stays with them. `patch-mempalace.sh` gains the job of
-  re-applying the description and prerequisite to `skills/memory/SKILL.md` after
-  each sync, since that one file is overwritten from upstream while the other
-  three are ours.
+- The sync scripts **go**, and `skills/memory/SKILL.md` becomes ours like its
+  three siblings. They were kept at first, with `patch-mempalace.sh` extended to
+  re-apply the description and prerequisite after a sync; measuring against real
+  upstream then showed the vendoring had already forked — four of the file's six
+  sections have no upstream counterpart, so a sync destroys them and the patch
+  restores none. See design.md, third reversal.
 
 **No user data is touched.** MemPalace remains installed, its data intact, and
 reachable both through the opt-in registration and through its own CLI.
@@ -90,8 +91,8 @@ routes to.
 - The four `skills/memory*/SKILL.md` — a prerequisite pointer and a corrected
   frontmatter description each. `skills/memory/reference.md` is new and holds the
   opt-in block once.
-- `scripts/patch-mempalace.sh` — re-applies both to the vendored `memory` skill
-  after a sync.
+- `scripts/sync-mempalace.sh` and `scripts/patch-mempalace.sh` — deleted; the
+  `memory` skill is now maintained directly, like the other three.
 - **Wider defect found while measuring, deliberately out of scope:** 28 of 51
   skills carry semantically different descriptions in `marketplace.json` versus
   their frontmatter, and `skill-lint`'s S4 and S11 check the marketplace copy —

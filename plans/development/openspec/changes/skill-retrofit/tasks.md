@@ -32,6 +32,17 @@
 This phase repeats per skill; it is the definition of done for one skill, not a
 one-time task. Batches are 3–5 skills, in rank order.
 
+- [ ] 2.0 Add the description-drift rule to `skill-lint` (S13, WARN) before the
+      first batch: the frontmatter `description` and the `marketplace.json`
+      entry must agree. `lintEntry` already reads both — `entry.description` and
+      `fmDesc`, about 40 lines apart — and never compares them. **28 of 51
+      currently differ semantically, 6 cosmetically**, so it lands as WARN with
+      the rest of the S9–S12 debt and burns down per batch. This is the guard
+      that replaces `patch-mempalace.sh`, which enforced the same agreement for
+      1 skill and was deleted with the MemPalace sync tooling on 2026-08-09.
+      Frontmatter is the surface an agent matches on; the manifest copy is the
+      one nothing reads, which is exactly how the drift went unseen for eight
+      days (`retire-mempalace` design.md)
 - [ ] 2.1 Fix the skill's S1–S12 findings and delete its entries from
       `scripts/skill-lint-baseline.json` in the same commit — the baseline
       shrinking IS the progress record

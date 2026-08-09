@@ -47,10 +47,11 @@ only the bodies gain the prerequisite.
       0 FAIL (the count is unchanged — nothing is removed) — proves *A legacy
       skill names what it needs* and *Invoking a legacy skill without its server
       fails legibly*
-      → 53 skills / 0 FAIL, 232 tests pass. All four point at the single
-      `skills/memory/reference.md`. `patch-mempalace.sh` re-applies the block to
-      the vendored skill — verified idempotent, and verified to restore it
-      byte-identically after a simulated sync stripped it
+      → 53 skills / 0 FAIL, tests pass. All four point at the single
+      `skills/memory/reference.md`, and all four now carry the block as ordinary
+      committed files. **Superseded:** the block was first re-applied to
+      `skills/memory/SKILL.md` by `patch-mempalace.sh` after a sync; that script
+      was deleted on 2026-08-09 — see design.md, third reversal
 
 ## 3. Free the trigger surface — the work `a7d2a4a` was believed to have done
 
@@ -80,10 +81,16 @@ not honour. This phase is a rewrite, not a confirmation.
 - [x] 3.3 `skills/memory/SKILL.md` is overwritten by `sync-mempalace.sh`, so
       extend `patch-mempalace.sh` to re-apply its description and prerequisite
       after a sync. The other three are ours and need no patch
-      → the script reads the description from `marketplace.json` rather than
-      hardcoding it, so the two surfaces cannot drift again by construction.
-      Verified: byte-identical restoration after a simulated sync that reset the
-      description, the name, the branding and stripped the block
+      → done first, then **superseded and reversed on 2026-08-09**. The script
+      was extended and it did source the description from `marketplace.json`,
+      but the verification behind "byte-identical restoration after a simulated
+      sync" was flawed: the simulation mutated the *committed* file rather than
+      fetching upstream, preserving an H1 a real sync never yields. Against real
+      upstream the prerequisite insert silently no-ops. The vendoring was fiction
+      besides — four of the file's six sections have no upstream counterpart, so
+      a sync destroys them. Both scripts are deleted and the file is ours; the
+      description-drift guard is routed to `skill-retrofit`, where it covers 51
+      skills instead of 1. See design.md, third reversal
 - [~] 3.4 Add the current-system phrasings ("remember this", "what do we know
       about", "search my memory", "memory status") to the negative-trigger lists
       of the retired skills, and the positive lists of whichever current skill
@@ -168,15 +175,16 @@ not honour. This phase is a rewrite, not a confirmation.
 - [x] 5.1 Record that the four skills, the sync scripts and the vendoring
       relationship are all deliberately retained, and why — so a reviewer does
       not read their survival as an incomplete retirement
-      → **All six artifacts verified present** at close: the four `memory-*`
-      SKILL.md files, `sync-mempalace.sh`, `patch-mempalace.sh`. `skill-lint`
-      still counts **53** skills, the same as before this change — the single
-      clearest signal that nothing was removed. Retained because the store's
-      data is not regenerable and deleting a skill strands the only in-plugin
-      path to it, while un-registering a server costs a user nothing they
-      cannot restore in one config block. The vendoring stays because the
-      skills stay; `patch-mempalace.sh` now carries the retirement through a
-      sync rather than being made redundant by deletion.
+      → **All four skills verified present** at close: the `memory-*` SKILL.md
+      files. `skill-lint` still counts **53** skills, the same as before this
+      change — the single clearest signal that nothing a user can reach was
+      removed. Retained because the store's data is not regenerable and deleting
+      a skill strands the only in-plugin path to it, while un-registering a
+      server costs a user nothing they cannot restore in one config block.
+      The two sync scripts were also present at close and were **deleted
+      afterwards**, on 2026-08-09 — they are build tooling, not a user-reachable
+      capability, and the vendoring they implemented had already forked. See
+      design.md, third reversal.
 - [x] 5.2 Record the reverse risk plainly: a user who relied on the shipped
       registration loses their MemPalace tools on update until they add the
       opt-in block. That is the cost this change accepts in exchange for not

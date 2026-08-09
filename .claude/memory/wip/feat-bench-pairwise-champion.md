@@ -38,3 +38,15 @@
   Phase 2 of retire-mempalace, and the half that stops phase 1 creating the
 - 2026-08-09 · feat/bench-pairwise-champion · fix(skills): free the trigger surface — the work a7d2a4a only appeared to do (8 files)
   Phase 3 of retire-mempalace. a7d2a4a rewrote the four descriptions in
+- 2026-08-09 · feat/bench-pairwise-champion · docs: reconcile the docs with a plugin that registers no MCP server (8 files)
+  Phase 4 of retire-mempalace. README, KICKSTART and AGENTS.md all described
+- 2026-08-09 · feat/bench-pairwise-champion · chore(release): 0.8.24, and name the standalone plugin as the easy opt-in path (4 files)
+  Two corrections from reviewing what 1.4 and 4.4 actually mean.
+- 2026-08-09 · feat/bench-pairwise-champion · docs(openspec): close out retire-mempalace with honest scenario coverage (1 files)
+  Phase 5. Four records, no behaviour change.
+- 2026-08-09 · feat/bench-pairwise-champion · docs(openspec): design for retire-mempalace; scaffold verify-mempalace-retirement (5 files)
+  design.md written after the fact, which is the wrong order and says so. This
+- 2026-08-09 · feat/bench-pairwise-champion · fix(bench,lint): enumerate a skill's files from git, not from disk (6 files)
+  skillContentHash listed the worktree with readdirSync and the ref side with
+- 2026-08-09 · feat/bench-pairwise-champion · chore(memory): delete the MemPalace sync tooling; the vendored copy had forked (1 files)
+  skills/memory/SKILL.md was described as vendored from mempalace/mempalace and

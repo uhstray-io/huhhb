@@ -1,11 +1,11 @@
 {
     "schema_version": 2,
-    "commit": "f02ab0832ee015ecff5aa812e78f0bc79a4b097e",
-    "indexed_at": "2026-08-03T17:17:55Z",
+    "commit": "c827719a2a3681dddb8ce0fccdf8d163e287d5d6",
+    "indexed_at": "2026-08-09T04:20:44Z",
     "project": "Users-stray-Documents-GitHub-huhhb",
-    "nodes": 2725,
-    "edges": 3828,
-    "original_size": 7536640,
-    "compressed_size": 1298909,
+    "nodes": 3385,
+    "edges": 4477,
+    "original_size": 8323072,
+    "compressed_size": 1436179,
     "compression_level": 3
 }

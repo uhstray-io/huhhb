@@ -1,20 +1,12 @@
 {
   "name": "huhhb",
   "version": "0.8.22",
-  "description": "Uhstray.io skills marketplace \u2014 curated Claude Code skills including uhh:memory.",
+  "description": "Uhstray.io skills marketplace — curated Claude Code skills including uhh:memory.",
   "author": {
     "name": "Uhstray.io",
     "url": "https://github.com/uhstray-io"
   },
   "license": "MIT",
-  "mcpServers": {
-    "memory": {
-      "command": "uvx",
-      "args": [
-        "mempalace-mcp"
-      ]
-    }
-  },
   "hooks": {
     "SessionStart": [
       {

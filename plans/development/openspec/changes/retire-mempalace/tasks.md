@@ -1,14 +1,24 @@
 ## 1. Make the server opt-in
 
-- [ ] 1.1 Re-confirm the grep before editing: every named `mempalace_*` tool
+- [x] 1.1 Re-confirm the grep before editing: every named `mempalace_*` tool
       invocation lives inside the four `memory-*` skills. `hooks/stop-hook.sh`
       calls the **CLI** (`mempalace status`, already guarded
       `2>/dev/null || true`); `scripts/evolve/evals.ts` hits are fixture
       transcript strings. Neither breaks when the registration goes
-- [ ] 1.2 Remove the `memory` server entry from `.claude-plugin/.mcp.json`
-- [ ] 1.3 Determine whether an empty `{"mcpServers":{}}` is valid for the plugin
+- [x] 1.2 Remove the `memory` server entry from **both** places that register it:
+      `.claude-plugin/.mcp.json` **and** `.claude-plugin/plugin.json`, whose
+      `mcpServers` key duplicates it exactly. Neither this change's proposal nor
+      the 2026-08-02 migration plan named the second one — removing only
+      `.mcp.json` would have left the server shipping
+- [x] 1.3 Determine whether an empty `{"mcpServers":{}}` is valid for the plugin
       loader or whether the file must be deleted — verify against the loader, do
       not assume
+      → Both are valid, verified against installed plugins rather than inferred:
+      `mempalace`'s own plugin ships `.mcp.json` with an empty `mcpServers` and
+      loads; `caveman` ships no such file at all. **Deleted** rather than
+      emptied: `plugin.json` already supports `mcpServers`, so an empty
+      `.mcp.json` would be a file that exists to say nothing, and removing it
+      leaves exactly one place to register a server if that ever changes
 - [ ] 1.4 **Gate:** a fresh profile registers no `memory` server — proves *A
       retired store's server is absent from a fresh install*
 
@@ -35,25 +45,52 @@ only the bodies gain the prerequisite.
       skill names what it needs* and *Invoking a legacy skill without its server
       fails legibly*
 
-## 3. Confirm the routing separation still holds
+## 3. Free the trigger surface — the work `a7d2a4a` was believed to have done
 
-The coexistence this change chooses is only safe while retired skills stay off
-current phrasings. That is true today; this phase proves it rather than assuming
-it.
+`a7d2a4a` rewrote the four descriptions in `marketplace.json`. The `SKILL.md`
+frontmatter still carries the originals, and the frontmatter is what an agent is
+handed at session start — so the retirement is currently a claim the runtime does
+not honour. This phase is a rewrite, not a confirmation.
 
-- [ ] 3.1 Verify each of the four descriptions still opens with its LEGACY
-      marker and routes onward by name. Do **not** rewrite them — confirm and
-      record
-- [ ] 3.2 Add the current-system phrasings ("remember this", "what do we know
+- [ ] 3.1 Verify once more which surface governs matching before editing: compare
+      this session's skill list against both copies. The list showed the
+      frontmatter text verbatim; do not take that on trust from this task
+- [ ] 3.2 Rewrite the frontmatter `description` of `memory`, `memory-search`,
+      `memory-mine` and `memory-status` to match their `marketplace.json`
+      entries — LEGACY marker first, then the redirect by name. `memory` must
+      also lose its "auto-triggers at session start" claim, which is the single
+      most aggressive line in the four
+- [ ] 3.3 `skills/memory/SKILL.md` is overwritten by `sync-mempalace.sh`, so
+      extend `patch-mempalace.sh` to re-apply its description and prerequisite
+      after a sync. The other three are ours and need no patch
+- [ ] 3.4 Add the current-system phrasings ("remember this", "what do we know
       about", "search my memory", "memory status") to the negative-trigger lists
       of the retired skills, and the positive lists of whichever current skill
       owns each
-- [ ] 3.3 Note the measurement caveat with any number produced: ~50 untracked
+- [ ] 3.5 Note the measurement caveat with any number produced: ~50 untracked
       auto-loading skills in `.claude/skills/` contaminate every trigger figure
-- [ ] 3.4 **Gate:** a trigger run shows current phrasings routing to the current
-      system and the retired skills reachable only by name, reported with the
-      contamination caveat attached — proves *A current-system phrasing routes to
-      the current system* and *A retired skill is reachable by name*
+- [ ] 3.6 **Gate:** both copies of all four descriptions agree; a reload shows
+      the LEGACY text in the session's skill list; a trigger run shows current
+      phrasings routing to the current system and the retired skills reachable
+      only by name, reported with the contamination caveat — proves *A
+      current-system phrasing routes to the current system* and *A retired skill
+      is reachable by name*
+
+## 3b. Record the wider defect without absorbing it
+
+- [ ] 3b.1 Record the measurement for whoever picks it up: **28 of 51 skills**
+      carry semantically different descriptions between `marketplace.json` and
+      their frontmatter (6 more differ cosmetically, 17 agree). Frontmatter is
+      routinely the longer of the two, several exceeding the 500-character cap
+      `skill-lint` S4 enforces — on the marketplace copy
+- [ ] 3b.2 Record that **S4 and S11 check `entry.description` from
+      `marketplace.json`, not the frontmatter that loads**, so the house
+      description rules are enforced against a copy the runtime never reads
+- [ ] 3b.3 Route both to `skill-retrofit`, which owns per-skill debt burndown —
+      **do not fix them here**. A 28-skill sweep inside a MemPalace change is how
+      a scoped change becomes unreviewable
+- [ ] 3b.4 **Gate:** the finding is written where the retrofit will see it, and
+      this change still touches only the four memory skills
 
 ## 4. Reconcile the documentation
 

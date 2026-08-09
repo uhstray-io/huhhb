@@ -8,23 +8,28 @@ dir and the dated archive dirname that `openspec archive` printed, it:
      architecture record — never the whole design doc),
   2. appends exactly one `## ADR-NNNN — <slug>` record to the repo-memory ADR
      store at plans/architecture/YYYY/YYYY-MM.md,
-  3. adds its row to that year's INDEX.md and its line to DECISIONS.md,
-  4. flips that change's row in plans/development/00-implementation-plan.md to
-     `archived` and links the record — exactly one row touched.
+  3. adds its row to that year's INDEX.md and its line to DECISIONS.md.
+
+That is the whole of it: this script owns decision records and their two
+indexes, and nothing else. It previously also flipped a row in
+plans/development/00-implementation-plan.md and exited 1 when no such row
+existed — which made promotion fail in a repo that deliberately keeps no change
+index. Change status comes from the store (`openspec list`); a writer spanning
+two concerns made the second a precondition of the first.
 
 The store shape and its rules are owned by `repo-memory`; OpenSpec writes
 specifications, not decisions (ADR-0003). This script is only the mechanism.
 ADR-NNNN is globally sequential across every month and never reused.
 
-A design with no "## Decisions" section promotes NO record (not every change
-earns one) but still updates the index row. Node stdlib only; no deps.
+A design with no "## Decisions" section promotes NO record — not every change
+earns one. Node stdlib only; no deps.
 
     node promote-adr.ts <plans-dir> <archived-dirname> [--change-url <url>]
                         [--domain <name>] [--date YYYY-MM-DD]
 
 Source-file mode (inception promotion): promote the ## Decisions section of an
 arbitrary file (e.g. plans/product/<slug>/architecture.md), same
-extraction/numbering/idempotency, NO implementation-plan involvement:
+extraction/numbering/idempotency:
 
     node promote-adr.ts <plans-dir> --from <file> --slug <slug> [...]
 
@@ -146,7 +151,6 @@ if (sourceMode && !flags["--slug"]) die("--from requires --slug");
 if (!sourceMode && /(^|[/\\])\.\.([/\\]|$)/.test(archivedDirname)) die(`invalid archived dirname (path traversal): ${archivedDirname}`);
 
 const archDir = join(plansDir, "architecture");
-const indexPath = join(plansDir, "development", "00-implementation-plan.md");
 const yearDir = join(archDir, year);
 const monthPath = join(yearDir, `${month}.md`);
 const yearIndexPath = join(yearDir, "INDEX.md");
@@ -274,55 +278,13 @@ ${sourceLink}
   writeFileSync(masterPath, master);
 }
 
-// 4. flip exactly the one index row for this slug → archived, link the record.
-// The 5-column table splits into 7 cells (empty leading + trailing edges):
-// ['', Change, Title, Status, Owner, Links, ''].
-const adrLink = adrId ? `[${adrId}](../architecture/${year}/${month}.md)` : "";
-let rowUpdated = false;
-let rowFound = false;
-if (!sourceMode && existsSync(indexPath)) {
-  const lines = readFileSync(indexPath, "utf-8").split("\n");
-  for (let i = 0; i < lines.length; i++) {
-    const cells = lines[i].split("|").map((c) => c.trim());
-    if (cells.length >= 6 && cells[1] === slug) {
-      rowFound = true;
-      if (cells[3] === "archived") break; // already promoted — idempotent no-op
-      cells[3] = "archived"; // Status
-      if (adrLink && !cells[5].includes(adrId)) {
-        cells[5] = cells[5] ? `${cells[5]} · ${adrLink}` : adrLink; // Links
-      }
-      lines[i] = `| ${cells.slice(1, cells.length - 1).join(" | ")} |`;
-      rowUpdated = true;
-      break;
-    }
-  }
-  if (rowUpdated) writeFileSync(indexPath, lines.join("\n"));
-}
-
+/* The record and its two indexes are the whole job. No change-status register is
+   read or written in any mode: status lives in the store, and a promotion that
+   failed on a missing row made an unrelated file a precondition of writing a
+   decision. */
 const adrMsg = wrote
   ? `wrote ${adrId} to ${monthPath} (+ year index, + master index)`
   : existing
     ? `record already present (${existing.id} in ${basename(existing.file)}) — skipped`
     : "no ## Decisions — no ADR promoted";
-const rowMsg = rowUpdated
-  ? "updated → archived"
-  : rowFound
-    ? "already archived — no change"
-    : "NOT found";
 console.log(`promote-adr: ${adrMsg}`);
-if (sourceMode) {
-  // Inception promotion: no change row exists yet, the implementation plan is
-  // not this mode's concern — report and exit clean.
-  console.log(`promote-adr: source-file mode — implementation plan untouched`);
-  process.exit(0);
-}
-console.log(`promote-adr: index row for '${slug}' ${rowMsg}`);
-if (!rowFound) {
-  // A missing row means archive would complete without the status flip —
-  // fail loudly so the caller (pr-shepherd close-out) surfaces it instead
-  // of reporting a clean archive.
-  console.error(
-    `promote-adr: FAIL — no index row for '${slug}' in 00-implementation-plan.md; add the row (see openspec-conformance "Index writers") and re-run`,
-  );
-  process.exit(1);
-}

@@ -22,15 +22,15 @@ const YEAR_INDEX = join("2026", "INDEX.md");
 const read = (root: string, ...p: string[]) => readFileSync(join(root, "plans", "architecture", ...p), "utf-8");
 const monthOf = (root: string) => read(root, MONTH);
 
+/* No implementation-plan index is written: a conformed repo has none, and change
+   status comes from the store. The fixture omitting it is the point — promotion
+   must complete without one, rather than failing closed on a missing row. */
 function scaffold(designBody: string): string {
   const root = mkdtempSync(join(tmpdir(), "opsx-"));
   const archived = join(root, "plans", "development", "openspec", "changes", "archive", "2026-07-15-add-widget");
   mkdirSync(archived, { recursive: true });
   mkdirSync(join(root, "plans", "architecture"), { recursive: true });
   writeFileSync(join(archived, "design.md"), designBody);
-  writeFileSync(join(root, "plans", "development", "00-implementation-plan.md"),
-    "# idx\n\n| Change | Title | Status | Owner | Links |\n|--|--|--|--|--|\n" +
-    "| add-widget | W | in-review | @j | [tasks](t) |\n");
   return root;
 }
 
@@ -68,9 +68,9 @@ test("promotes one record into the month file and wires both indexes", () => {
   assert.match(read(root, YEAR_INDEX), /\|\s*ADR-0001\s*\|/, "year index has a row");
   assert.match(read(root, "DECISIONS.md"), /ADR-0001/, "master index references it");
 
-  const idx = readFileSync(join(root, "plans", "development", "00-implementation-plan.md"), "utf-8");
-  assert.equal(idx.split("\n").filter((l) => /\|\s*archived\s*\|/.test(l)).length, 1, "exactly one row flipped");
-  assert.match(idx, /ADR-0001/, "implementation-plan row links the ADR");
+  // the writer owns the record and its two indexes — and nothing else
+  assert.equal(existsSync(join(root, "plans", "development", "00-implementation-plan.md")), false,
+    "no implementation-plan index is created or required");
 });
 
 test("re-running is idempotent — no duplicate record, no double-appended rows", () => {
@@ -81,8 +81,6 @@ test("re-running is idempotent — no duplicate record, no double-appended rows"
   assert.equal(monthOf(root).match(/^## ADR-/gm)?.length, 1, "still exactly one record");
   assert.equal(read(root, YEAR_INDEX).match(/\|\s*ADR-0001\s*\|/g)?.length, 1, "year index row written once");
   assert.equal(read(root, "DECISIONS.md").match(/ADR-0001/g)?.length, 1, "master index line written once");
-  const idx = readFileSync(join(root, "plans", "development", "00-implementation-plan.md"), "utf-8");
-  assert.equal(idx.match(/ADR-0001/g)?.length, 1, "ADR link appended exactly once");
 });
 
 test("numbering is global across months, not per-file", () => {
@@ -97,12 +95,23 @@ test("numbering is global across months, not per-file", () => {
   assert.doesNotMatch(monthOf(root), /ADR-0007/, "does not reuse or move the earlier record");
 });
 
-test("no ## Decisions section promotes nothing but still flips the index row", () => {
+test("no ## Decisions section promotes nothing and exits 0", () => {
   const root = scaffold("## Context\n\nTrivial doc-only change.\n");
-  run(root, "2026-07-15-add-widget");
+  const out = run(root, "2026-07-15-add-widget");
   assert.equal(existsSync(join(root, "plans", "architecture", MONTH)), false, "no month file created");
-  const idx = readFileSync(join(root, "plans", "development", "00-implementation-plan.md"), "utf-8");
-  assert.match(idx, /\|\s*archived\s*\|/, "index row still flipped");
+  assert.match(out, /no ## Decisions/, "reports why nothing was promoted");
+});
+
+test("promotion completes in a repo with no implementation-plan index", () => {
+  /* The missing-row path used to exit 1 here, which made a conformed repo — one
+     that deliberately keeps no change index — fail its very first archive. */
+  const root = scaffold(WITH_DECISIONS);
+  assert.equal(existsSync(join(root, "plans", "development", "00-implementation-plan.md")), false,
+    "fixture has no index, as a conformed repo does not");
+  run(root, "2026-07-15-add-widget"); // execFileSync throws on a non-zero exit
+  assert.match(monthOf(root), /^## ADR-0001 — add-widget$/m, "the record is still written");
+  assert.match(read(root, YEAR_INDEX), /\|\s*ADR-0001\s*\|/, "year index row still written");
+  assert.match(read(root, "DECISIONS.md"), /ADR-0001/, "master index row still written");
 });
 
 test("exact-slug match: an existing add-widget record does not block promoting 'widget'", () => {
@@ -113,23 +122,14 @@ test("exact-slug match: an existing add-widget record does not block promoting '
   const changeDir = join(root, "plans", "development", "openspec", "changes", "archive", "2026-07-16-widget");
   mkdirSync(changeDir, { recursive: true });
   writeFileSync(join(changeDir, "design.md"), WITH_DECISIONS);
-  writeFileSync(join(root, "plans", "development", "00-implementation-plan.md"),
-    "# idx\n\n| Change | Title | Status | Owner | Links |\n|--|--|--|--|--|\n" +
-    "| add-widget | W | archived | @j | [ADR-0001](../architecture/2026/2026-08.md) |\n" +
-    "| widget | Wid | in-review | @j | [tasks](t) |\n");
 
   run(root, "2026-07-16-widget");
 
   const month = monthOf(root);
   assert.match(month, /^## ADR-0001 — add-widget$/m, "the unrelated record survives");
   assert.match(month, /^## ADR-0002 — widget$/m, "widget gets its own new record");
-  const idx = readFileSync(join(root, "plans", "development", "00-implementation-plan.md"), "utf-8");
-  const widgetRow = idx.split("\n").find((l) => /^\|\s*widget\s*\|/.test(l)) ?? "";
-  assert.match(widgetRow, /archived/, "the widget row flipped");
-  assert.match(widgetRow, /ADR-0002/, "widget row links its own record");
-  assert.equal(idx.split("\n").find((l) => /^\|\s*add-widget\s*\|/.test(l)),
-    "| add-widget | W | archived | @j | [ADR-0001](../architecture/2026/2026-08.md) |",
-    "the unrelated add-widget row is untouched");
+  assert.equal(read(root, YEAR_INDEX).match(/\|\s*ADR-0002\s*\|/g)?.length, 1,
+    "the new record gets exactly one year-index row");
 });
 
 /* Source-file mode (inception promotion): promotes ## Decisions from an
@@ -157,7 +157,9 @@ Modular monolith.
 - Sharding.
 `;
 
-test("source-file mode promotes one record and never touches the implementation plan", () => {
+/* Sentinel guard: even where a legacy implementation plan still exists — an
+   older repo that has not dropped its index — the writer must leave it alone. */
+test("source-file mode promotes one record and never touches an implementation plan", () => {
   const root = scaffoldProduct(ARCH_WITH_DECISIONS);
   mkdirSync(join(root, "plans", "development"), { recursive: true });
   writeFileSync(join(root, "plans", "development", "00-implementation-plan.md"), "untouched-sentinel");

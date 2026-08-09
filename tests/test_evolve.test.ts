@@ -859,10 +859,20 @@ describe("ManifestTests", () => {
     for (const s of mp.skills) {
       assert.ok(fs.existsSync(path.join(REPO, s.path)), s.path);
     }
-    const mcp = JSON.parse(
-      fs.readFileSync(path.join(REPO, ".claude-plugin", ".mcp.json"), "utf-8"),
-    );
-    assert.deepEqual(mcp.mcpServers, pj.mcpServers);
+    /* This plugin registers NO MCP server, in either of the two places that can
+       carry one. The mirror assertion this replaces existed to keep `.mcp.json`
+       and plugin.json in sync — which is only a problem worth solving while both
+       hold something. Registration is imposition: it reaches every installer
+       regardless of whether they want the tools, so adding one back should be a
+       deliberate act that trips this test rather than a quiet edit. */
+    assert.ok(!("mcpServers" in pj),
+      "plugin.json must not register an MCP server — see AGENTS.md § Memory");
+    /* Scope: this plugin's OWN manifest. Users opting into MemPalace write a
+       `.mcp.json` in their project or user config — that is the documented
+       opt-in path (skills/memory/reference.md) and is unaffected by this. */
+    assert.ok(!fs.existsSync(path.join(REPO, ".claude-plugin", ".mcp.json")),
+      "the plugin's own .mcp.json must not exist — plugin.json is the one place " +
+      "a shipped server would go; a user's opt-in .mcp.json is a different file");
   });
 
   test("test_skill_lint_gate_passes", () => {

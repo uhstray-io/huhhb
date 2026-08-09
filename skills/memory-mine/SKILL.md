@@ -5,6 +5,11 @@ description: Mine a project directory or raw text into the memory nexus for futu
 
 # memory-mine
 
+> **Prerequisite — the `memory` MCP server is opt-in.** These tools come from a
+> server this plugin no longer registers. If a `mempalace_*` tool is
+> unavailable, it is not configured in this session — that is the expected
+> state, not a fault. [How to enable it, and what to use instead](../memory/reference.md).
+
 Ingest project files or raw text into the team memory nexus.
 
 ## Mine a Project Directory

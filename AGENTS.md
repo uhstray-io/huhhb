@@ -45,10 +45,10 @@ already has, keep the skill self-contained, and document any runtime
 prerequisites in the skill's `SKILL.md`.
 
 Licensing boundary: our code is MIT and only *imports* externally installed
-packages — nothing AGPL is ever vendored into the tree. The memory MCP server
-runs from its published PyPI package via `uvx` (configured in
-`.claude-plugin/plugin.json` + `.claude-plugin/.mcp.json`), not vendored repo
-code.
+packages — nothing AGPL is ever vendored into the tree. This plugin registers
+**no** MCP server: the MemPalace server it used to ship was retired from routing
+and is now opt-in, configured by the user rather than by us
+(`skills/memory/reference.md`).
 
 ## When Adding a Skill
 
@@ -236,7 +236,6 @@ After syncing, review the diff, bump versions, cut a release if changed.
 - `hooks/` — plugin lifecycle hook scripts (SessionStart, PreToolUse, Stop). They run from `${CLAUDE_PLUGIN_ROOT}` = `~/.claude/plugins/cache/huhhb/huhhb/<version>/`, never the working tree — a hook edit has no effect on the running session until reinstall (Release Checklist 4)
 - `marketplace.json` — skill manifest (name, path, description, category, tags, version per skill)
 - `.claude-plugin/plugin.json` — plugin version read by Claude Code for update detection (keep in sync with `marketplace.json`)
-- `.claude-plugin/.mcp.json` — MCP server config (must match `plugin.json` mcpServers)
 - `scripts/skill-lint.ts`, `scripts/skill-bench.ts`, `scripts/skill-trends.ts` — the skill quality gates (see Skill Quality Bar)
 - `scripts/evolve/` — the `evolve` self-learning suite (TypeScript, MIT; optional integrations load dynamically, never vendored)
 - `scripts/sync-caveman.sh`, `scripts/sync-mempalace.sh`, `scripts/patch-mempalace.sh` — upstream sync/patch for vendored skills

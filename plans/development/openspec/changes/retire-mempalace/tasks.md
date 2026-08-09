@@ -19,8 +19,11 @@
       emptied: `plugin.json` already supports `mcpServers`, so an empty
       `.mcp.json` would be a file that exists to say nothing, and removing it
       leaves exactly one place to register a server if that ever changes
-- [ ] 1.4 **Gate:** a fresh profile registers no `memory` server — proves *A
+- [x] 1.4 **Gate:** a fresh profile registers no `memory` server — proves *A
       retired store's server is absent from a fresh install*
+      → **partially verified.** The shipped manifest registers nothing in either
+      place, and the regression test now asserts that. A scratch-profile install
+      was not run — same constraint as every live gate on this branch
 
 ## 2. Give the surviving skills a stated prerequisite
 
@@ -28,22 +31,26 @@ This is what keeps step 1 from creating the dangling call it exists to avoid.
 Their **descriptions** are already correct (`a7d2a4a`) and are not re-edited —
 only the bodies gain the prerequisite.
 
-- [ ] 2.1 Add a short prerequisite block to each of `skills/memory/`,
+- [x] 2.1 Add a short prerequisite block to each of `skills/memory/`,
       `memory-search/`, `memory-mine/`, `memory-status/`: the tools require the
       `memory` MCP server, which is opt-in since this change, plus the exact
       config block to add
-- [ ] 2.2 Write the opt-in block once, in one place, and have the four skills
+- [x] 2.2 Write the opt-in block once, in one place, and have the four skills
       point at it — four copies of a config snippet is four things to keep in
       sync, and this repo has already had a "canonical source" drift out of the
       repository entirely
-- [ ] 2.3 State the failure legibly: invoked without the server, the skill should
+- [x] 2.3 State the failure legibly: invoked without the server, the skill should
       report the missing prerequisite and how to add it, not surface an
       unexplained missing tool
-- [ ] 2.4 **Gate:** each of the four names the prerequisite and resolves to the
+- [x] 2.4 **Gate:** each of the four names the prerequisite and resolves to the
       single opt-in block; `node scripts/skill-lint.ts` reports **53** skills,
       0 FAIL (the count is unchanged — nothing is removed) — proves *A legacy
       skill names what it needs* and *Invoking a legacy skill without its server
       fails legibly*
+      → 53 skills / 0 FAIL, 232 tests pass. All four point at the single
+      `skills/memory/reference.md`. `patch-mempalace.sh` re-applies the block to
+      the vendored skill — verified idempotent, and verified to restore it
+      byte-identically after a simulated sync stripped it
 
 ## 3. Free the trigger surface — the work `a7d2a4a` was believed to have done
 

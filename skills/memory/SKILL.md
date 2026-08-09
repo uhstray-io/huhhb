@@ -5,7 +5,12 @@ description: Access, search, and manage the team memory nexus — mine projects,
 
 # memory
 
-Team memory nexus — organize knowledge as wings → rooms → drawers, searchable semantically via MemPalace.
+> **Prerequisite — the `memory` MCP server is opt-in.** These tools come from a
+> server this plugin no longer registers. If a `mempalace_*` tool is
+> unavailable, it is not configured in this session — that is the expected
+> state, not a fault. [How to enable it, and what to use instead](reference.md).
+
+Team memory nexus — organize knowledge as wings → rooms → drawers, searchable semantically via Nexus.
 
 ## Prerequisites
 

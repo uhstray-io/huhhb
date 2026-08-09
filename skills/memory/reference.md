@@ -11,8 +11,10 @@ server is one config block away.
 
 ## Enable it
 
-The plugin used to register this for you. Add it to your own MCP configuration —
-a project `.mcp.json`, or your user-level Claude Code config:
+The plugin used to register this for you. Write it into **your own
+`.mcp.json`** — either at the root of a project, or in your user-level Claude
+Code config. It is the same block this plugin used to ship, moved from our
+manifest to yours:
 
 ```json
 {

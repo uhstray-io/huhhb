@@ -865,8 +865,16 @@ describe("ManifestTests", () => {
        hold something. Registration is imposition: it reaches every installer
        regardless of whether they want the tools, so adding one back should be a
        deliberate act that trips this test rather than a quiet edit. */
-    assert.ok(!("mcpServers" in pj),
-      "plugin.json must not register an MCP server — see AGENTS.md § Memory");
+    /* Stated over the whole manifest directory, not just plugin.json, so a
+       third registration site is covered by construction rather than by
+       someone remembering to add a line here. */
+    const manifestDir = path.join(REPO, ".claude-plugin");
+    for (const f of fs.readdirSync(manifestDir, { recursive: true, encoding: "utf-8" }) as string[]) {
+      if (!f.endsWith(".json") || !fs.statSync(path.join(manifestDir, f)).isFile()) continue;
+      const json = JSON.parse(fs.readFileSync(path.join(manifestDir, f), "utf-8"));
+      assert.ok(!("mcpServers" in json),
+        `.claude-plugin/${f} must not register an MCP server — see AGENTS.md § Memory`);
+    }
     /* Scope: this plugin's OWN manifest. Users opting into MemPalace write a
        `.mcp.json` in their project or user config — that is the documented
        opt-in path (skills/memory/reference.md) and is unaffected by this. */
@@ -1777,7 +1785,7 @@ describe("BattleTests", () => {
       const hist = path.join(tmp, "hist.jsonl");
       const outs = path.join(tmp, "outputs");
       const env = { ...process.env, SKILL_BENCH_HISTORY: hist, SKILL_BENCH_OUTPUTS: outs };
-      const CHAMP = "aaaabbbbcccc";
+      const CHAMP = "a".repeat(bench.HASH_CHARS); // a bank key is exactly this wide
       const seed = path.join(tmp, "seed.mjs");
       fs.writeFileSync(seed, [
         `const m = await import(${JSON.stringify(
@@ -1810,18 +1818,20 @@ describe("BattleTests", () => {
       assert.equal(r.status, 0, r.stderr);
       assert.match(r.stdout, /would judge/,
         "a banked champion and challenger must resolve to a judgeable pair");
-      /* Every scenario with a rubric resolves. The only permitted exclusion is
-         the negative-activation scenario — and it is excluded for a CAPABILITY
-         reason (it carries no rubric and banks no output), not because battle
-         checks its type. Asserting on the id rather than the reason is what
-         keeps this test honest when the guard that catches it changes. */
-      const negative = "stays-silent-on-a-change-proposal";
-      for (const line of r.stdout.split("\n").filter((l) => l.includes("SKIP"))) {
-        assert.ok(line.includes(negative),
-          `unexpected battle exclusion once both sides are banked: ${line.trim()}`);
-      }
-      assert.match(r.stdout, new RegExp(`SKIP ${negative}`),
-        "the probe scenario must still be excluded, by whichever guard catches it");
+      /* Every scenario with a rubric resolves. The only permitted exclusions are
+         the negative-activation scenarios — excluded for a CAPABILITY reason
+         (they carry no rubric and bank no output), not because battle checks
+         their type. Derived from the spec rather than named here, so the rule is
+         stated once and a spec that grows a second probe is covered. */
+      const spec = JSON.parse(fs.readFileSync(
+        path.join(REPO, "tests", "bench", "repo-memory.json"), "utf-8"));
+      const expected = spec.scenarios.filter((s: any) => s.expect_no_activation)
+        .map((s: any) => s.id).sort();
+      assert.ok(expected.length, "the spec must still carry a negative-activation scenario");
+      const skipped = r.stdout.split("\n").filter((l) => l.includes("SKIP"))
+        .map((l) => expected.find((id: string) => l.includes(id)) ?? l.trim()).sort();
+      assert.deepEqual(skipped, expected,
+        "battle must skip exactly the non-judgeable scenarios, by whichever guard catches it");
       assert.match(r.stdout, new RegExp(`champion ${CHAMP}`),
         "the champion hash must come from the history row, not the working tree");
     } finally {
@@ -1860,14 +1870,12 @@ describe("BattleTests", () => {
       assert.ok(!lint.NAME_CHARSET.test(bad), `${bad} must be rejected`);
     }
 
-    // S10 — reference depth below the skill dir
+    /* S10 — how deep a shipped file sits below its skill dir. These are
+       skill-relative paths out of `git ls-files`, not links: `../`, absolute
+       and `#anchor` forms cannot reach this check. */
+    assert.equal(lint.refDepth("SKILL.md"), 0, "a file beside SKILL.md is level zero");
     assert.equal(lint.refDepth("references/api.md"), 1, "a reference is one level down");
-    assert.equal(lint.refDepth("SKILL.md"), 0, "a sibling file is level zero");
     assert.equal(lint.refDepth("references/api/errors.md"), 2, "nested reference");
-    assert.equal(lint.refDepth("../other-skill/SKILL.md"), null,
-      "a link leaving the skill is a cross-reference — S7's business, not S10's");
-    assert.equal(lint.refDepth("/AGENTS.md"), null, "absolute links are not references");
-    assert.equal(lint.refDepth("references/api.md#anchor"), 1, "anchors do not add depth");
 
     // S11 — third-person description
     assert.ok(lint.FIRST_PERSON.test("Use when I need to record a decision"));
@@ -1885,33 +1893,26 @@ describe("BattleTests", () => {
     assert.ok(lint.BODY_WARN_LINES > 0);
   });
 
-  test("test_skill_content_hash_agrees_between_a_git_ref_and_the_worktree", async () => {
+  test("test_skill_content_hash_agrees_between_a_git_ref_and_the_worktree", (t) => {
     /* The doc-comment promises "a ref hash and a worktree hash of identical
-       content agree" — the reason both sources feed one hashing loop. Nothing
-       checked it, so a path-normalization drift between the two branches would
-       have silently made every --champion battle compare against a bank key
-       that could never exist. */
-    const bench = await import(path.join(REPO, "scripts", "skill-bench.ts"));
+       content agree". Nothing checked it, so a drift between the two branches
+       would have silently made every --champion battle compare against a bank
+       key that could never exist. Both sides enumerate from git precisely so
+       that a file git ignores cannot move one of them and not the other. */
     const skill = "repo-memory";
     const dirty = spawnSync("git", ["status", "--porcelain", "--", `skills/${skill}`],
       { encoding: "utf-8", cwd: REPO }).stdout.trim();
-    const worktree = bench.skillContentHash(skill);
-    const atHead = bench.skillContentHash(skill, "HEAD");
-    if (dirty) {
-      assert.notEqual(worktree, atHead,
-        "an edited skill must hash differently from its committed form");
-    } else {
-      assert.equal(worktree, atHead,
-        "a clean skill must hash identically whether read from git or from disk");
-    }
-    assert.equal(atHead, bench.skillContentHash(skill, "HEAD"), "ref hashing is deterministic");
+    // skip rather than assert something weaker under the same name
+    if (dirty) return t.skip(`skills/${skill} is dirty — nothing to compare`);
+    assert.equal(bench.skillContentHash(skill), bench.skillContentHash(skill, "HEAD"),
+      "a clean skill must hash identically whether read from git or from disk");
   });
 
   test("test_skill_content_hash_is_stable_and_covers_every_file", () => {
     // the bank key must change when ANY file in the skill changes, or a
     // revised skill silently re-uses its predecessor's banked output
     const a = bench.skillContentHash("repo-memory");
-    assert.match(a, /^[0-9a-f]{12}$/);
+    assert.match(a, new RegExp(`^[0-9a-f]{${bench.HASH_CHARS}}$`));
     assert.equal(a, bench.skillContentHash("repo-memory"), "must be deterministic");
     assert.notEqual(a, bench.skillContentHash("explaining-changes"));
     assert.throws(() => bench.skillContentHash("no-such-skill-here"));

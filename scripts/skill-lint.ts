@@ -2,13 +2,15 @@
 /* huhhb G0 static lint — the free quality gate (docs/evolve-plan.md S1-S12).
 
 Checks every marketplace.json entry. FAIL blocks merge (exit 1); WARN is
-advisory. Node stdlib only, no network — safe for CI and pre-commit.
+advisory. Node stdlib only, no network — safe for CI and pre-commit. Shells out
+to `git ls-files` for S10, so it wants a checkout, not a bare directory.
 
     node scripts/skill-lint.ts [--strict]   # --strict promotes WARN to FAIL
 */
 
-import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
-import { basename, dirname, join, resolve } from "node:path";
+import { spawnSync } from "node:child_process";
+import { existsSync, readFileSync, statSync } from "node:fs";
+import { basename, dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import process from "node:process";
 
@@ -26,22 +28,29 @@ export const NAME_CHARSET = /^[a-z0-9]+(-[a-z0-9]+)*$/; // S9 (spec: lowercase, 
 export const FIRST_PERSON = /\b(I|we|my|our|us)\b/; // S11 — case-sensitive 'I' on purpose
 export const BODY_WARN_LINES = 500; // S12 [SKILLOPT] — rules, not prose
 
-/** The path part of a markdown link: no `:line` suffix, no `#anchor`. One
-    definition so S7's existence check and S10's depth count cannot disagree
-    about what the link points at. */
-export function linkTarget(link: string): string {
-  return link.split(":")[0].split("#")[0];
+/* S10 — how deep a file sits below its skill directory. 0 = beside SKILL.md,
+   1 = a reference (references/x.md), 2+ = too deep. Takes a skill-relative
+   path, not a link: S10 measures the shipped file tree, so `../` and `#anchor`
+   forms cannot reach it. Exported because a check nothing can trigger is
+   indistinguishable from a clean repo, and this one currently fires on no
+   skill in the marketplace. */
+export function refDepth(relPath: string): number {
+  return relPath.split("/").filter((s) => s && s !== ".").length - 1;
 }
 
-/* S10 — how deep a link sits below the skill directory. 0 = same dir, 1 = a
-   reference (references/x.md), 2+ = too deep. Returns null for links that
-   leave the skill (../, /) — those are cross-references, which S7 owns.
-   Exported because a check nothing can trigger is indistinguishable from a
-   clean repo, and this one currently fires on no skill in the marketplace. */
-export function refDepth(link: string): number | null {
-  const rel = linkTarget(link);
-  if (!rel || rel.startsWith("../") || rel.startsWith("/")) return null;
-  return rel.split("/").filter((s) => s && s !== ".").length - 1;
+/* The files a skill actually ships: tracked, plus untracked ones git would not
+   ignore, so a reference added but not yet committed still counts. Read from
+   git rather than the directory because a directory walk sees files git
+   ignores — a .DS_Store from opening the folder in Finder made S10 report
+   `reference nested 2 levels deep: a/b/.DS_Store` and fail --strict on an
+   otherwise clean tree. Paths come back relative to `dir`. */
+function shippedFiles(dir: string): string[] {
+  const r = spawnSync(
+    "git", ["ls-files", "--cached", "--others", "--exclude-standard", "--", dir],
+    { cwd: REPO, encoding: "utf-8" });
+  if (r.status !== 0) throw new Error(`git ls-files failed for ${dir}`);
+  const prefix = `${relative(REPO, dir)}/`;
+  return (r.stdout ?? "").split("\n").filter(Boolean).map((f) => f.slice(prefix.length));
 }
 
 type Issue = { level: "FAIL" | "WARN"; skill: string; code: string; msg: string };
@@ -142,7 +151,8 @@ function lintEntry(entry: Entry, seenNames: Set<string>, seenDescriptions: Set<s
   const text = readFileSync(path, "utf-8");
   const { keys, fm, body } = parseSkillMd(text);
 
-  if (basename(path) === "SKILL.md") {
+  const isSkillMd = basename(path) === "SKILL.md";
+  if (isSkillMd) {
     if (keys === null) {
       report("FAIL", name, "S2", "no parseable frontmatter");
     } else {
@@ -194,21 +204,21 @@ function lintEntry(entry: Entry, seenNames: Set<string>, seenDescriptions: Set<s
   for (const m of prose.matchAll(/\]\((?!http|#|mailto)([^)\s]+)\)/g)) {
     // S7
     const link = m[1];
-    const rel = linkTarget(link);
+    // the path part only: no `:line` suffix, no `#anchor`
+    const rel = link.split(":")[0].split("#")[0];
     if (!existsSync(resolve(dirname(path), rel)) && !existsSync(resolve(REPO, rel))) {
       report("FAIL", name, "S7", `broken relative link: ${link}`);
     }
   }
 
-  /* S10 — measured against the skill's own file tree, not its links. Checking
-     only linked paths would exempt a nested file nothing happens to link to,
-     and would misread `${CLAUDE_PLUGIN_ROOT}/...` refs, which are repo-rooted
-     rather than skill-rooted and carry a legitimately deeper path. */
-  const skillDir = dirname(path);
-  if (basename(path) === "SKILL.md") {
-    for (const entry of readdirSync(skillDir, { recursive: true, encoding: "utf-8" }) as string[]) {
+  /* S10 — measured against the skill's own shipped file tree, not its links.
+     Checking only linked paths would exempt a nested file nothing happens to
+     link to, and would misread `${CLAUDE_PLUGIN_ROOT}/...` refs, which are
+     repo-rooted rather than skill-rooted and carry a legitimately deeper path. */
+  if (isSkillMd) {
+    for (const entry of shippedFiles(dirname(path))) {
       const depth = refDepth(entry);
-      if (depth !== null && depth > 1 && statSync(join(skillDir, entry)).isFile()) {
+      if (depth > 1) {
         report("WARN", name, "S10", `reference nested ${depth} levels deep: ${entry}`);
       }
     }
@@ -258,14 +268,14 @@ function main(): void {
   const baseline = new Set<string>(
     existsSync(baselinePath)
       ? (JSON.parse(readFileSync(baselinePath, "utf-8")) as [string, string][])
-          .map(([skill, code]) => `${skill} ${code}`)
+          .map(([skill, code]) => `${skill}\x00${code}`)
       : []);
 
   const fails: Issue[] = [];
   const warns: Issue[] = [];
   const grandfathered: Issue[] = [];
   for (const issue of issues) {
-    if (issue.level === "FAIL" && baseline.has(`${issue.skill} ${issue.code}`)) {
+    if (issue.level === "FAIL" && baseline.has(`${issue.skill}\x00${issue.code}`)) {
       grandfathered.push(issue);
     } else if (issue.level === "FAIL") {
       fails.push(issue);

@@ -25,7 +25,7 @@ import { createHash } from "node:crypto";
 import { spawnSync } from "node:child_process";
 import {
   accessSync, appendFileSync, constants, existsSync, mkdirSync, mkdtempSync,
-  readdirSync, readFileSync, rmSync, statSync, writeFileSync,
+  readFileSync, rmSync, writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
@@ -66,7 +66,7 @@ const BATTLE_TEMPLATE =
   "Copy both quotes character-for-character. If you cannot quote both sides, " +
   "answer TIE.\n" +
   "RUBRIC: {rubric}\nRESPONSE A:\n{a}\nRESPONSE B:\n{b}";
-const HASH_CHARS = 12; // identity width — promptHash and skillContentHash join in outputPath
+export const HASH_CHARS = 12; // identity width — promptHash and skillContentHash join in outputPath
 const MAX_BUFFER = 64 * 1024 * 1024; // stream-json transcripts outgrow node's 1MB default
 // SKILL_BENCH_BATTLES / SKILL_BENCH_OUTPUTS: test-only overrides, same shape
 // as SKILL_BENCH_HISTORY
@@ -223,20 +223,16 @@ function judge(rubric: string, response: string): number {
   // the score is the FINAL line, bare 1-5 only — the evidence quote above
   // may itself contain digits, and a scavenged digit recorded as a score is
   // worse than failing closed (0 fails the B3 gate loudly)
-  const score = lastLine(String(data.result ?? ""));
+  const score = cleanLines(String(data.result ?? "")).at(-1) ?? "";
   return /^[1-5]$/.test(score) ? Number(score) : 0;
 }
 
-/* The verdict line of a judge response. Both judges take the FINAL line: the
-   evidence quote above it may itself contain digits or a bare A/B, and a
-   scavenged token recorded as a verdict is worse than failing closed. */
+/* A judge response split into trimmed, non-empty lines. Both judges read the
+   verdict off the FINAL one: the evidence quote above it may itself contain
+   digits or a bare A/B, and a scavenged token recorded as a verdict is worse
+   than failing closed. */
 function cleanLines(raw: string): string[] {
   return String(raw ?? "").trim().split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
-}
-
-function lastLine(raw: string): string {
-  const lines = cleanLines(raw);
-  return lines[lines.length - 1] ?? "";
 }
 
 function median(nums: number[]): number {
@@ -272,29 +268,20 @@ function pyJsonStr(s: string): string {
     (c) => "\\u" + c.charCodeAt(0).toString(16).padStart(4, "0"));
 }
 
-/* Append one score row to the git-tracked history (tests/bench/history.jsonl).
+/* Append one row to a git-tracked ledger (tests/bench/history.jsonl by default,
+   battles.jsonl for the pairwise ones). One writer for both: the ts+commit stamp
+   is the key skill-trends.ts reads rows by, so it is defined here and nowhere
+   else.
 
    Append-only JSONL on purpose: rows are diffable in PRs, survive forever in
    git, and skill-trends.ts reads the file directly — the query layer is a
    reader, never a deployment (docs/evolve-plan.md, History & trends). */
-let cachedCommit: string | null = null;
-
-/** Short HEAD, resolved once — it cannot change mid-run. */
-function headCommit(): string {
-  if (cachedCommit === null) {
-    const git = spawnSync("git", ["rev-parse", "--short", "HEAD"],
-      { cwd: REPO, encoding: "utf-8" });
-    cachedCommit = (git.stdout ?? "").trim() || "?";
-  }
-  return cachedCommit;
-}
-
-/* One writer for every append-only ledger. The ts+commit stamp is the key
-   skill-trends.ts reads rows by, so it is defined here and nowhere else. */
 function recordHistory(row: Json, file = HISTORY): void {
+  const git = spawnSync("git", ["rev-parse", "--short", "HEAD"],
+    { cwd: REPO, encoding: "utf-8" });
   const ts = new Date().toISOString().slice(0, 19) + "Z";
   mkdirSync(dirname(file), { recursive: true });
-  appendFileSync(file, pyJson({ ts, commit: headCommit(), ...row }) + "\n");
+  appendFileSync(file, pyJson({ ts, commit: (git.stdout ?? "").trim() || "?", ...row }) + "\n");
 }
 
 /* Identity of a baseline measurement. The ASSERT is part of it, not just the
@@ -310,9 +297,11 @@ export function promptHash(prompt: string, assertion = ""): string {
     .digest("hex").slice(0, HASH_CHARS);
 }
 
-/* The one place that knows how the ledger is read: newest-first, tolerating
+/* The one place in THIS file that reads the ledger: newest-first, tolerating
    unparseable lines. Both champion lookup and baseline caching are predicates
-   over this — two copies would drift the moment either grows a guard. */
+   over it — two copies would drift the moment either grows a guard.
+   skill-trends.ts and evolve/g2.ts parse the same file with their own readers,
+   so the contract they share with this one is the row shape, not this code. */
 function latestHistoryRow(match: (row: Json) => boolean): Json | null {
   if (!existsSync(HISTORY)) return null;
   const lines = readFileSync(HISTORY, "utf-8").split("\n");
@@ -388,36 +377,38 @@ export type BattleVerdict = "A" | "B" | "TIE";
 export type BattleSide = "challenger" | "champion" | "TIE";
 export type Tally = { wins: number; losses: number; ties: number; decided: number };
 
-/** Content identity of a skill: every file under skills/<name>/, sorted.
+/** Content identity of a skill: every tracked file under skills/<name>/, sorted.
     `ref` reads that version out of git instead of the working tree. Paths are
     normalized relative to the skill dir so a ref hash and a worktree hash of
     identical content agree. */
 export function skillContentHash(skill: string, ref: string | null = null): string {
   const rel = `skills/${skill}`;
-  /* Both sources produce [name-relative-to-the-skill-dir, content] and feed ONE
-     hashing loop. Two loops would have to stay byte-identical forever for the
-     agreement this doc-comment promises to hold, and nothing would catch the
-     day they diverged. */
-  let entries: [string, string | Buffer][];
-  if (ref) {
-    const ls = spawnSync("git", ["ls-tree", "-r", "--name-only", ref, "--", rel],
-      { cwd: REPO, encoding: "utf-8" });
-    const files = (ls.stdout ?? "").split("\n").filter(Boolean).sort();
-    if (ls.status !== 0 || !files.length) throw new Error(`no ${rel} at ref ${ref}`);
-    entries = files.map((f) => [
-      f.slice(rel.length + 1),
-      spawnSync("git", ["show", `${ref}:${f}`],
-        { cwd: REPO, encoding: "utf-8", maxBuffer: MAX_BUFFER }).stdout ?? "",
-    ]);
-  } else {
-    const dir = join(REPO, rel);
-    if (!existsSync(dir)) throw new Error(`no skill directory ${rel}`);
-    entries = (readdirSync(dir, { recursive: true, encoding: "utf-8" }) as string[])
-      .filter((f) => statSync(join(dir, f)).isFile()).sort()
-      .map((f) => [f, readFileSync(join(dir, f))]);
+  /* BOTH sides enumerate from git and read raw bytes. Listing the worktree from
+     disk instead let a file git ignores — a .DS_Store from opening the folder in
+     Finder — change one side only: measured, worktree 528ddf93ff4a -> ed6056fcd8c2
+     while HEAD stayed put, on a tree `git status` called clean. A banked champion
+     then resolves to a key the challenger side can never produce. Raw bytes for
+     the same reason: `git show` decoded as utf-8 substitutes U+FFFD, so a
+     committed non-UTF-8 file would diverge from readFileSync's bytes. */
+  const list = ref
+    ? spawnSync("git", ["ls-tree", "-r", "--name-only", ref, "--", rel],
+        { cwd: REPO, encoding: "utf-8" })
+    : spawnSync("git", ["ls-files", "--cached", "--", rel],
+        { cwd: REPO, encoding: "utf-8" });
+  const files = (list.stdout ?? "").split("\n").filter(Boolean).sort();
+  if (list.status !== 0 || !files.length) {
+    throw new Error(ref ? `no ${rel} at ref ${ref}` : `no tracked files under ${rel}`);
   }
+  /* One file at a time: the ref branch would otherwise hold every file's
+     contents at once, each capped at MAX_BUFFER. */
   const h = createHash("sha256");
-  for (const [name, body] of entries) h.update(name).update(" ").update(body).update(" ");
+  for (const f of files) {
+    const body = ref
+      ? spawnSync("git", ["show", `${ref}:${f}`],
+          { cwd: REPO, maxBuffer: MAX_BUFFER }).stdout ?? Buffer.alloc(0)
+      : readFileSync(join(REPO, f));
+    h.update(f.slice(rel.length + 1)).update(" ").update(body).update(" ");
+  }
   return h.digest("hex").slice(0, HASH_CHARS);
 }
 
@@ -519,12 +510,6 @@ function battleJudge(rubric: string, a: string, b: string):
   return { ...parseBattleVerdict(raw, a, b), raw };
 }
 
-/* One record per judged pair — both presentation orders verbatim. A verdict
-   that isn't logged is gone, and an unlogged verdict cannot be re-adjudicated. */
-function recordBattle(row: Json): void {
-  recordHistory(row, BATTLES);
-}
-
 function battleSkill(spec: Spec, championRef: string | null, dryRun: boolean,
                      record: boolean): { ok: boolean; judged: number } {
   const skill = spec.skill;
@@ -596,7 +581,10 @@ function battleSkill(spec: Spec, championRef: string | null, dryRun: boolean,
     console.log(`  ${sid}: ${verdict}${flipped ? " (positions disagreed)" : ""} ` +
       `[${first.reason}${second ? "/" + second.reason : ""}]`);
     if (record) {
-      recordBattle({
+      /* One record per judged pair — both presentation orders verbatim. A
+         verdict that isn't logged is gone, and an unlogged verdict cannot be
+         re-adjudicated. */
+      recordHistory({
         skill, scenario: sid, prompt_hash: pHash,
         champion_version: champVersion, champion_hash: champHash,
         challenger_version: version, challenger_hash: challengerHash,
@@ -607,7 +595,7 @@ function battleSkill(spec: Spec, championRef: string | null, dryRun: boolean,
         order2_reason: second ? second.reason : null,
         order2_raw: second ? second.raw : null,
         verdict,
-      });
+      }, BATTLES);
     }
   }
 

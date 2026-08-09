@@ -52,3 +52,5 @@
   skills/memory/SKILL.md was described as vendored from mempalace/mempalace and
 - 2026-08-09 · feat/bench-pairwise-champion · docs(openspec): record retire-mempalace's third reversal, route the drift guard (8 files)
   This change reversed its own premise twice while being applied and has now done
+- 2026-08-09 · feat/bench-pairwise-champion · chore(memory): re-index the code graph after deleting the MemPalace sync tooling (3 files)
+  3510 nodes / 4574 edges. The two deleted scripts are gone from the graph; a

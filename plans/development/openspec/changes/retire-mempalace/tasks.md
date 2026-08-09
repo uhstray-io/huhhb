@@ -1,85 +1,89 @@
-## 1. Stop shipping the MCP server
+## 1. Make the server opt-in
 
-Independently shippable, and deliberately first: it is the highest-value item and
-does not depend on what happens to the skills.
-
-- [ ] 1.1 Grep `hooks/`, `scripts/evolve/` and `buhhdy/` for invocations of the
-      `memory` MCP tools by name. Read each hit — some are strata *descriptions*
-      that stay true, not calls that break. Record which is which before editing
-      anything
+- [ ] 1.1 Re-confirm the grep before editing: every named `mempalace_*` tool
+      invocation lives inside the four `memory-*` skills. `hooks/stop-hook.sh`
+      calls the **CLI** (`mempalace status`, already guarded
+      `2>/dev/null || true`); `scripts/evolve/evals.ts` hits are fixture
+      transcript strings. Neither breaks when the registration goes
 - [ ] 1.2 Remove the `memory` server entry from `.claude-plugin/.mcp.json`
 - [ ] 1.3 Determine whether an empty `{"mcpServers":{}}` is valid for the plugin
       loader or whether the file must be deleted — verify against the loader, do
       not assume
-- [ ] 1.4 **Gate:** install the plugin from this branch into a scratch profile,
-      start a session, and confirm no `memory` MCP server is registered and no
-      tool call fails — proves *A retired store is absent from a fresh install*
-      and *A scratch-profile session completes without a failed tool call*
+- [ ] 1.4 **Gate:** a fresh profile registers no `memory` server — proves *A
+      retired store's server is absent from a fresh install*
 
-## 2. Remove the four skills
+## 2. Give the surviving skills a stated prerequisite
 
-- [ ] 2.1 Delete `skills/memory/`, `skills/memory-search/`, `skills/memory-mine/`
-      and `skills/memory-status/`
-- [ ] 2.2 Delete `scripts/sync-mempalace.sh` and `scripts/patch-mempalace.sh` in
-      the same commit as the skills — the vendored `skills/memory/SKILL.md` is
-      recoverable from either git or the sync script, and removing them together
-      keeps that true until the moment both are gone
-- [ ] 2.3 Remove the four `marketplace.json` entries and the four
-      `onboarding/skills-list.md` rows, including the "MemPalace (retired from
-      routing)" section header
-- [ ] 2.4 Update `AGENTS.md`: drop the vendored-memory-skill rule (keep the
-      caveman vendoring rule) and drop both scripts from Key Files
-- [ ] 2.5 Fix `tests/test_evolve.test.ts`, `scripts/evolve/evals.ts` and
-      `hooks/stop-hook.sh` where they name the removed skills, using the
-      call-versus-description determination from 1.1
-- [ ] 2.6 **Gate:** `node scripts/skill-lint.ts` reports 49 skills with 0 FAIL and
-      no new baseline debt; `node --test tests/*.test.ts` is no worse than before
-      — proves *Removing a store leaves no dangling invocation*
+This is what keeps step 1 from creating the dangling call it exists to avoid.
+Their **descriptions** are already correct (`a7d2a4a`) and are not re-edited —
+only the bodies gain the prerequisite.
 
-## 3. Reconcile the freed trigger surface
+- [ ] 2.1 Add a short prerequisite block to each of `skills/memory/`,
+      `memory-search/`, `memory-mine/`, `memory-status/`: the tools require the
+      `memory` MCP server, which is opt-in since this change, plus the exact
+      config block to add
+- [ ] 2.2 Write the opt-in block once, in one place, and have the four skills
+      point at it — four copies of a config snippet is four things to keep in
+      sync, and this repo has already had a "canonical source" drift out of the
+      repository entirely
+- [ ] 2.3 State the failure legibly: invoked without the server, the skill should
+      report the missing prerequisite and how to add it, not surface an
+      unexplained missing tool
+- [ ] 2.4 **Gate:** each of the four names the prerequisite and resolves to the
+      single opt-in block; `node scripts/skill-lint.ts` reports **53** skills,
+      0 FAIL (the count is unchanged — nothing is removed) — proves *A legacy
+      skill names what it needs* and *Invoking a legacy skill without its server
+      fails legibly*
 
-Four `memory-*` skills disappearing at once frees the phrasings they matched.
-Confirm the survivors claim them rather than assuming it.
+## 3. Confirm the routing separation still holds
 
-- [ ] 3.1 Decide, per freed phrasing — "remember this", "what do we know about",
-      "search my memory", "memory status" — which surviving skill should own it,
-      and add it to that skill's positive triggers and to the negative triggers
-      of the skills that should not match
-- [ ] 3.2 Note the `.claude/skills/` contamination in the result: ~50 untracked
-      auto-loading BMAD skills are present, so any activation number taken now is
-      provisional and must be labelled as such
-- [ ] 3.3 **Gate:** `node scripts/skill-bench.ts memory-setup` measures trigger
-      precision and recall, reported with the contamination caveat attached —
-      proves *A freed phrasing routes to the surviving owner* and *Contaminated
-      activation measurements are reported as such*
+The coexistence this change chooses is only safe while retired skills stay off
+current phrasings. That is true today; this phase proves it rather than assuming
+it.
+
+- [ ] 3.1 Verify each of the four descriptions still opens with its LEGACY
+      marker and routes onward by name. Do **not** rewrite them — confirm and
+      record
+- [ ] 3.2 Add the current-system phrasings ("remember this", "what do we know
+      about", "search my memory", "memory status") to the negative-trigger lists
+      of the retired skills, and the positive lists of whichever current skill
+      owns each
+- [ ] 3.3 Note the measurement caveat with any number produced: ~50 untracked
+      auto-loading skills in `.claude/skills/` contaminate every trigger figure
+- [ ] 3.4 **Gate:** a trigger run shows current phrasings routing to the current
+      system and the retired skills reachable only by name, reported with the
+      contamination caveat attached — proves *A current-system phrasing routes to
+      the current system* and *A retired skill is reachable by name*
 
 ## 4. Reconcile the documentation
 
-- [ ] 4.1 `README.md` — delete the "Legacy memory skills" subsection and the
-      pointer to the superseded migration plan
-- [ ] 4.2 `KICKSTART.md` — drop the legacy `mempalace` prerequisite bullet
-- [ ] 4.3 `AGENTS.md` — the "retired from routing" note becomes "removed in
-      `<version>`"; keep the link to the supersedes record as history
-- [ ] 4.4 Supersede rather than edit `.claude/memory/project-mempalace-architecture.md`,
-      per the repo-memory Record Contract
-- [ ] 4.5 Bump the version in **both** `marketplace.json` and
-      `.claude-plugin/plugin.json` — a removal of shipped surface is a minor bump
-      with the patch value carried over
-- [ ] 4.6 **Gate:** `git grep -i mempalace` returns only historical plans under
-      `plans/development/`, superseded memory records, and changelog entries — no
-      live documentation and no shipped code, with `buhhdy/` excluded as
-      deliberately out of scope — proves *A search for the retired store finds
-      only history* and *Documentation and shipped code agree on what is live*
+- [ ] 4.1 `AGENTS.md` — MemPalace is opt-in, not shipped; the routing policy
+      states which stores are registered, which are opt-in, which are current
+- [ ] 4.2 `README.md` and `KICKSTART.md` — same distinction wherever they
+      describe what an installer receives
+- [ ] 4.3 `.claude/memory/project-two-store-memory-supersedes-mempalace.md` —
+      this change **agrees** with that record ("retired from routing, not
+      deleted"), so it is confirmed rather than superseded. Append the opt-in
+      detail so it stays accurate about *how* MemPalace is now reached
+- [ ] 4.4 Bump the version in **both** `marketplace.json` and
+      `.claude-plugin/plugin.json` at PR-open per AGENTS.md — removing shipped
+      surface is a minor bump with the patch value carried over
+- [ ] 4.5 **Gate:** the manifest, the routing policy and the skill descriptions
+      agree on which stores are registered, opt-in and current — proves *The
+      manifest and the docs tell the same story*
 
 ## 5. Close out
 
-- [ ] 5.1 Confirm the out-of-scope boundary held: `buhhdy/config.yaml`,
-      `buhhdy/README.md` and `buhhdy/skills/core-workflows/SKILL.md` still name
-      MemPalace and are deliberately untouched — record this in the PR body so a
-      reviewer does not read it as an oversight
-- [ ] 5.2 Verify no user-facing destruction occurred: MemPalace remains
-      installable via `uv tool install mempalace` and no local data was touched —
-      proves *Local data survives the removal*
-- [ ] 5.3 **Gate:** `openspec validate retire-mempalace --store huhhb` passes and
-      every scenario in `specs/memory-routing/spec.md` has been exercised by a
-      gate above
+- [ ] 5.1 Record that the four skills, the sync scripts and the vendoring
+      relationship are all deliberately retained, and why — so a reviewer does
+      not read their survival as an incomplete retirement
+- [ ] 5.2 Record the reverse risk plainly: a user who relied on the shipped
+      registration loses their MemPalace tools on update until they add the
+      opt-in block. That is the cost this change accepts in exchange for not
+      imposing a store on everyone
+- [ ] 5.3 Confirm `buhhdy/` was left untouched and say why (removal pending
+      elsewhere)
+- [ ] 5.4 **Gate:** `node scripts/skill-lint.ts` 0 FAIL at 53 skills,
+      `node --test tests/*.test.ts` green, `openspec validate --all --store
+      huhhb` green, and every scenario in `specs/memory-routing/spec.md`
+      exercised by a gate above

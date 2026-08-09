@@ -11,10 +11,14 @@ server is one config block away.
 
 ## Enable it
 
-The plugin used to register this for you. Write it into **your own
-`.mcp.json`** — either at the root of a project, or in your user-level Claude
-Code config. It is the same block this plugin used to ship, moved from our
-manifest to yours:
+**Easiest: install the standalone MemPalace plugin.** It registers its own
+server and is maintained by MemPalace rather than by us — nothing here is
+needed. Note it names the server `mempalace` where huhhb named it `memory`;
+either works, because these skills call the tools by bare name.
+
+**Or register it yourself.** Write it into **your own `.mcp.json`** — at the
+root of a project, or in your user-level Claude Code config. This is the same
+block this plugin used to ship, moved from our manifest to yours:
 
 ```json
 {

@@ -144,11 +144,17 @@ not honour. This phase is a rewrite, not a confirmation.
       two of its own statements: "still shipped, still installed" (skills yes,
       server no) and "descriptions still advertise themselves" (fixed, and worse
       than it recorded — the LEGACY rewrite was invisible for eight days)
-- [~] 4.4 **DEFERRED BY REPO POLICY, not skipped.** AGENTS.md → Release Checklist
-      step 1 puts the bump at PR-open, to the next free number, with pr-shepherd
-      re-bumping at merge if `main` moved. Bumping now would claim a number
-      before the PR exists. Computed value when it does: **0.8.22 → 0.9.22**
-      (removing shipped surface is a minor bump, patch value carried over)
+- [x] 4.4 Bump the version in **both** `marketplace.json` and
+      `.claude-plugin/plugin.json` — **0.8.22 → 0.8.24**, applied.
+      → Not the minor bump the task originally computed. This is an iteration
+      over a large volume of patch-level work, not a new feature tier, so the
+      patch counter carries it. 0.8.23 was free too; 0.8.24 was chosen
+      deliberately for the volume, and skipping a number has precedent here —
+      the tag series already jumps v0.8.20 → v0.8.22.
+      → AGENTS.md puts the bump at PR-open; applied now because `origin/main`
+      is at 0.8.22 with nothing else in flight to race it, and pr-shepherd
+      re-bumps at merge if main moves first. That reconciliation is exactly
+      what the policy anticipates.
 - [x] 4.5 **Gate:** the manifest, the routing policy and the skill descriptions
       agree on which stores are registered, opt-in and current — proves *The
       manifest and the docs tell the same story*

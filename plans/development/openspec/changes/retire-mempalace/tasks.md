@@ -131,20 +131,31 @@ not honour. This phase is a rewrite, not a confirmation.
 
 ## 4. Reconcile the documentation
 
-- [ ] 4.1 `AGENTS.md` — MemPalace is opt-in, not shipped; the routing policy
+- [x] 4.1 `AGENTS.md` — MemPalace is opt-in, not shipped; the routing policy
       states which stores are registered, which are opt-in, which are current
-- [ ] 4.2 `README.md` and `KICKSTART.md` — same distinction wherever they
+- [x] 4.2 `README.md` and `KICKSTART.md` — same distinction wherever they
       describe what an installer receives
-- [ ] 4.3 `.claude/memory/project-two-store-memory-supersedes-mempalace.md` —
+- [x] 4.3 `.claude/memory/project-two-store-memory-supersedes-mempalace.md` —
       this change **agrees** with that record ("retired from routing, not
       deleted"), so it is confirmed rather than superseded. Append the opt-in
       detail so it stays accurate about *how* MemPalace is now reached
-- [ ] 4.4 Bump the version in **both** `marketplace.json` and
-      `.claude-plugin/plugin.json` at PR-open per AGENTS.md — removing shipped
-      surface is a minor bump with the patch value carried over
-- [ ] 4.5 **Gate:** the manifest, the routing policy and the skill descriptions
+      → appended a dated amendment rather than editing the body — `.claude/memory/`
+      is retired for new writes, and the record's judgement was right. It corrects
+      two of its own statements: "still shipped, still installed" (skills yes,
+      server no) and "descriptions still advertise themselves" (fixed, and worse
+      than it recorded — the LEGACY rewrite was invisible for eight days)
+- [~] 4.4 **DEFERRED BY REPO POLICY, not skipped.** AGENTS.md → Release Checklist
+      step 1 puts the bump at PR-open, to the next free number, with pr-shepherd
+      re-bumping at merge if `main` moved. Bumping now would claim a number
+      before the PR exists. Computed value when it does: **0.8.22 → 0.9.22**
+      (removing shipped surface is a minor bump, patch value carried over)
+- [x] 4.5 **Gate:** the manifest, the routing policy and the skill descriptions
       agree on which stores are registered, opt-in and current — proves *The
       manifest and the docs tell the same story*
+      → verified mechanically: plugin registers nothing in either place; all
+      three docs use the same "opt-in" vocabulary and link to the one block;
+      all four descriptions say opt-in; lint 53/0 FAIL (S7 proves every link
+      resolves), 232 tests, openspec 20/20
 
 ## 5. Close out
 

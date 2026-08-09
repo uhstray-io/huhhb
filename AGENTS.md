@@ -195,7 +195,9 @@ worktrees → branches → PRs → human-authorized merge:
   `./scripts/sync-caveman.sh` from upstream `JuliusBrussee/caveman` — do not
   edit directly; refine upstream.
 - **Memory skill** (`skills/memory/SKILL.md`): synced via
-  `./scripts/sync-mempalace.sh` (+ `patch-mempalace.sh` branding). The other
+  `./scripts/sync-mempalace.sh` (+ `patch-mempalace.sh`, which re-applies the
+  branding, the retirement description read from `marketplace.json`, and the opt-in
+  prerequisite — a sync overwrites all three). The other
   memory skills (`memory-mine`, `memory-search`, `memory-status`) are ours.
 
 After syncing, review the diff, bump versions, cut a release if changed.
@@ -313,7 +315,9 @@ A reversible implementation choice is not an ADR. Neither is a convention or a b
 Legacy `.claude/memory/` records are **repo-scoped** and retired for new writes.
 Cross-project preferences and cross-session decisions belong to the device-level stores
 below. The MemPalace and Honcho strata are **retired from routing** as of 2026-08-01 —
-still shipped, data intact, invoked only when asked for by name; see
+their skills still ship and their data is intact, invoked only when asked for by name,
+but huhhb registers **no** MCP server for them: MemPalace's is opt-in, configured by the
+user ([`skills/memory/reference.md`](skills/memory/reference.md)). See
 [`project-two-store-memory-supersedes-mempalace.md`](.claude/memory/project-two-store-memory-supersedes-mempalace.md).
 
 <!-- two-store-memory:start -->

@@ -165,16 +165,52 @@ not honour. This phase is a rewrite, not a confirmation.
 
 ## 5. Close out
 
-- [ ] 5.1 Record that the four skills, the sync scripts and the vendoring
+- [x] 5.1 Record that the four skills, the sync scripts and the vendoring
       relationship are all deliberately retained, and why — so a reviewer does
       not read their survival as an incomplete retirement
-- [ ] 5.2 Record the reverse risk plainly: a user who relied on the shipped
+      → **All six artifacts verified present** at close: the four `memory-*`
+      SKILL.md files, `sync-mempalace.sh`, `patch-mempalace.sh`. `skill-lint`
+      still counts **53** skills, the same as before this change — the single
+      clearest signal that nothing was removed. Retained because the store's
+      data is not regenerable and deleting a skill strands the only in-plugin
+      path to it, while un-registering a server costs a user nothing they
+      cannot restore in one config block. The vendoring stays because the
+      skills stay; `patch-mempalace.sh` now carries the retirement through a
+      sync rather than being made redundant by deletion.
+- [x] 5.2 Record the reverse risk plainly: a user who relied on the shipped
       registration loses their MemPalace tools on update until they add the
       opt-in block. That is the cost this change accepts in exchange for not
       imposing a store on everyone
-- [ ] 5.3 Confirm `buhhdy/` was left untouched and say why (removal pending
+      → **Stated, and measured smaller than feared on at least this machine.**
+      Neither `mcp__memory__*` nor `mcp__mempalace__*` tools were offered in
+      the session that made this change, so the huhhb registration was already
+      producing nothing here. The risk is real for anyone it *was* working for;
+      it is mitigated three ways — the skills say the tools are unavailable by
+      design and point at the fix, `reference.md` leads with the standalone
+      MemPalace plugin (which registers its own server independently), and the
+      hand-written block reproduces exactly what huhhb used to ship.
+- [x] 5.3 Confirm `buhhdy/` was left untouched and say why (removal pending
       elsewhere)
-- [ ] 5.4 **Gate:** `node scripts/skill-lint.ts` 0 FAIL at 53 skills,
+      → **Verified: zero changes under `buhhdy/` across all five commits.** It
+      still names MemPalace as the user-memory system of record in
+      `config.yaml`, `README.md` and `core-workflows/SKILL.md`. Deliberate —
+      buhhdy is being removed from this repo with its practices carried
+      elsewhere, so correcting its memory references belongs to that migration.
+      Fixing them here would be work thrown away.
+- [x] 5.4 **Gate:** `node scripts/skill-lint.ts` 0 FAIL at 53 skills,
       `node --test tests/*.test.ts` green, `openspec validate --all --store
       huhhb` green, and every scenario in `specs/memory-routing/spec.md`
       exercised by a gate above
+      → Gates green. Scenario coverage, stated honestly rather than claimed:
+      | Scenario | Evidence |
+      |---|---|
+      | A retired store's server is absent from a fresh install | **partial** — manifest verified in both places + regression test; no live install |
+      | Retiring obliges un-registering, not deleting | **full** — registration gone, 53 skills unchanged, all six artifacts present |
+      | A legacy skill names what it needs | **full** — all four point at one block; lint S7 proves the link resolves |
+      | Invoking a legacy skill without its server fails legibly | **partial** — the wording exists and is reachable; not exercised against a live missing server |
+      | A current-system phrasing routes to the current system | **partial** — the four no longer claim those phrasings; no trigger run |
+      | A retired skill is reachable by name | **partial** — all four carry "Use when MemPalace is named explicitly"; no trigger run |
+      | Local data survives the retirement | **full** — nothing deleted; the standalone plugin and CLI are untouched |
+      | The manifest and the docs tell the same story | **full** — verified mechanically across manifest, three docs and four descriptions |
+      **Four full, four partial.** Every partial is blocked on the same thing:
+      this branch installed into a real profile. That is one action, not four.

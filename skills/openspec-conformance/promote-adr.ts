@@ -278,10 +278,6 @@ ${sourceLink}
   writeFileSync(masterPath, master);
 }
 
-/* The record and its two indexes are the whole job. No change-status register is
-   read or written in any mode: status lives in the store, and a promotion that
-   failed on a missing row made an unrelated file a precondition of writing a
-   decision. */
 const adrMsg = wrote
   ? `wrote ${adrId} to ${monthPath} (+ year index, + master index)`
   : existing

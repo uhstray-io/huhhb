@@ -1800,13 +1800,18 @@ describe("BattleTests", () => {
       assert.equal(r.status, 0, r.stderr);
       assert.match(r.stdout, /would judge/,
         "a banked champion and challenger must resolve to a judgeable pair");
-      // Every scenario with a rubric resolves; the only permitted exclusion is
-      // a negative-activation scenario, which has no output to compare because
-      // a correctly-silent skill produces none.
+      /* Every scenario with a rubric resolves. The only permitted exclusion is
+         the negative-activation scenario — and it is excluded for a CAPABILITY
+         reason (it carries no rubric and banks no output), not because battle
+         checks its type. Asserting on the id rather than the reason is what
+         keeps this test honest when the guard that catches it changes. */
+      const negative = "stays-silent-on-a-change-proposal";
       for (const line of r.stdout.split("\n").filter((l) => l.includes("SKIP"))) {
-        assert.match(line, /expect_no_activation/,
+        assert.ok(line.includes(negative),
           `unexpected battle exclusion once both sides are banked: ${line.trim()}`);
       }
+      assert.match(r.stdout, new RegExp(`SKIP ${negative}`),
+        "the probe scenario must still be excluded, by whichever guard catches it");
       assert.match(r.stdout, new RegExp(`champion ${CHAMP}`),
         "the champion hash must come from the history row, not the working tree");
     } finally {
@@ -1868,6 +1873,28 @@ describe("BattleTests", () => {
     // S12 — body line cap
     assert.equal(typeof lint.BODY_WARN_LINES, "number");
     assert.ok(lint.BODY_WARN_LINES > 0);
+  });
+
+  test("test_skill_content_hash_agrees_between_a_git_ref_and_the_worktree", async () => {
+    /* The doc-comment promises "a ref hash and a worktree hash of identical
+       content agree" — the reason both sources feed one hashing loop. Nothing
+       checked it, so a path-normalization drift between the two branches would
+       have silently made every --champion battle compare against a bank key
+       that could never exist. */
+    const bench = await import(path.join(REPO, "scripts", "skill-bench.ts"));
+    const skill = "repo-memory";
+    const dirty = spawnSync("git", ["status", "--porcelain", "--", `skills/${skill}`],
+      { encoding: "utf-8", cwd: REPO }).stdout.trim();
+    const worktree = bench.skillContentHash(skill);
+    const atHead = bench.skillContentHash(skill, "HEAD");
+    if (dirty) {
+      assert.notEqual(worktree, atHead,
+        "an edited skill must hash differently from its committed form");
+    } else {
+      assert.equal(worktree, atHead,
+        "a clean skill must hash identically whether read from git or from disk");
+    }
+    assert.equal(atHead, bench.skillContentHash(skill, "HEAD"), "ref hashing is deterministic");
   });
 
   test("test_skill_content_hash_is_stable_and_covers_every_file", () => {

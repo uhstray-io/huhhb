@@ -105,4 +105,4 @@ artifacts pass the same per-phase gates; dispatch stays canonical.
 | "No live reviewer, so I adapted the gate / approved-in-principle" | A gate without a human is an open gate. Present and wait. |
 | "Artifacts are approved — the natural next step is epics → stories → sprints" | The natural next step is the Epic Queue handoff. Stories don't exist in this system. |
 | "They said 'full planning process' about this feature" | Feature ⇒ Workflow 1. Inception is never inferred. |
-| "I'll just also write the first change/index row while I'm here" | Changes are Workflow 1's; the index is `to-issues`'/`promote-adr`'s. Hands off. |
+| "I'll just also write the first change while I'm here" | Changes are Workflow 1's. Hands off. |

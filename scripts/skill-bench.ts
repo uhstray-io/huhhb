@@ -29,7 +29,7 @@ import {
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import process from "node:process";
 
 const REPO = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -66,6 +66,7 @@ const BATTLE_TEMPLATE =
   "Copy both quotes character-for-character. If you cannot quote both sides, " +
   "answer TIE.\n" +
   "RUBRIC: {rubric}\nRESPONSE A:\n{a}\nRESPONSE B:\n{b}";
+const HASH_CHARS = 12; // identity width — promptHash and skillContentHash join in outputPath
 const MAX_BUFFER = 64 * 1024 * 1024; // stream-json transcripts outgrow node's 1MB default
 // SKILL_BENCH_BATTLES / SKILL_BENCH_OUTPUTS: test-only overrides, same shape
 // as SKILL_BENCH_HISTORY
@@ -91,10 +92,12 @@ type Spec = {
 };
 type RunRow = {
   pass: boolean; tokens: number; cost: number; duration_ms: number;
-  api_ms: number; turns: number; result: string;
-  // untruncated response, banked for battle judging — `result` stays clipped
-  // because it is what lands in an error message, not what gets compared
-  full: string;
+  api_ms: number; turns: number;
+  /* The response, untruncated. It was previously carried twice — clipped for
+     the 1-5 judge and whole for battle — which meant the two judges scored
+     different artifacts and neither said so. Clip at the call site that needs
+     a short form. */
+  result: string;
 };
 
 /* Single owner of claude-session invocation — both wrappers route here so
@@ -197,8 +200,7 @@ export function runScenario(scenario: Scenario, runs: number, baseline: boolean)
         duration_ms: Number(data.duration_ms) || 0,
         api_ms: Number(data.duration_api_ms) || 0,
         turns: Number(data.num_turns) || 0,
-        result: String(data.result ?? "").slice(0, 2000),
-        full: String(data.result ?? ""),
+        result: String(data.result ?? ""),
       });
     } finally {
       rmSync(workdir, { recursive: true, force: true });
@@ -221,10 +223,20 @@ function judge(rubric: string, response: string): number {
   // the score is the FINAL line, bare 1-5 only — the evidence quote above
   // may itself contain digits, and a scavenged digit recorded as a score is
   // worse than failing closed (0 fails the B3 gate loudly)
-  const lines = String(data.result ?? "").trim().split(/\r?\n/);
-  const score_line = lines[lines.length - 1]?.trim();
-  if (/^[1-5]$/.test(score_line ?? "")) return Number(score_line);
-  return 0;
+  const score = lastLine(String(data.result ?? ""));
+  return /^[1-5]$/.test(score) ? Number(score) : 0;
+}
+
+/* The verdict line of a judge response. Both judges take the FINAL line: the
+   evidence quote above it may itself contain digits or a bare A/B, and a
+   scavenged token recorded as a verdict is worse than failing closed. */
+function cleanLines(raw: string): string[] {
+  return String(raw ?? "").trim().split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+}
+
+function lastLine(raw: string): string {
+  const lines = cleanLines(raw);
+  return lines[lines.length - 1] ?? "";
 }
 
 function median(nums: number[]): number {
@@ -265,13 +277,24 @@ function pyJsonStr(s: string): string {
    Append-only JSONL on purpose: rows are diffable in PRs, survive forever in
    git, and skill-trends.ts reads the file directly — the query layer is a
    reader, never a deployment (docs/evolve-plan.md, History & trends). */
-function recordHistory(row: Json): void {
-  const git = spawnSync("git", ["rev-parse", "--short", "HEAD"],
-    { cwd: REPO, encoding: "utf-8" });
-  const commit = (git.stdout ?? "").trim();
+let cachedCommit: string | null = null;
+
+/** Short HEAD, resolved once — it cannot change mid-run. */
+function headCommit(): string {
+  if (cachedCommit === null) {
+    const git = spawnSync("git", ["rev-parse", "--short", "HEAD"],
+      { cwd: REPO, encoding: "utf-8" });
+    cachedCommit = (git.stdout ?? "").trim() || "?";
+  }
+  return cachedCommit;
+}
+
+/* One writer for every append-only ledger. The ts+commit stamp is the key
+   skill-trends.ts reads rows by, so it is defined here and nowhere else. */
+function recordHistory(row: Json, file = HISTORY): void {
   const ts = new Date().toISOString().slice(0, 19) + "Z";
-  const full = { ts, commit: commit || "?", ...row };
-  appendFileSync(HISTORY, pyJson(full) + "\n");
+  mkdirSync(dirname(file), { recursive: true });
+  appendFileSync(file, pyJson({ ts, commit: headCommit(), ...row }) + "\n");
 }
 
 /* Identity of a baseline measurement. The ASSERT is part of it, not just the
@@ -284,14 +307,13 @@ function recordHistory(row: Json): void {
 export function promptHash(prompt: string, assertion = ""): string {
   return createHash("sha256")
     .update(assertion ? `${prompt}\u0000${assertion}` : prompt, "utf-8")
-    .digest("hex").slice(0, 12);
+    .digest("hex").slice(0, HASH_CHARS);
 }
 
-/* R3: the champion is the latest history row for this skill+scenario from a
-   DIFFERENT version that completed all its runs — the bar a challenger must
-   meet ("no victory, no replacement"). Same-version rows are re-runs, not
-   rivals; rows that never fully passed set no bar. */
-export function championRow(skill: string, scenarioId: string, version: string): Json | null {
+/* The one place that knows how the ledger is read: newest-first, tolerating
+   unparseable lines. Both champion lookup and baseline caching are predicates
+   over this — two copies would drift the moment either grows a guard. */
+function latestHistoryRow(match: (row: Json) => boolean): Json | null {
   if (!existsSync(HISTORY)) return null;
   const lines = readFileSync(HISTORY, "utf-8").split("\n");
   for (let i = lines.length - 1; i >= 0; i--) {
@@ -301,13 +323,20 @@ export function championRow(skill: string, scenarioId: string, version: string):
     } catch {
       continue;
     }
-    if (row.skill === skill && row.scenario === scenarioId
-        && row.version && row.version !== version
-        && Number(row.runs) > 0 && Number(row.passes) === Number(row.runs)) {
-      return row;
-    }
+    if (match(row)) return row;
   }
   return null;
+}
+
+/* R3: the champion is the latest history row for this skill+scenario from a
+   DIFFERENT version that completed all its runs — the bar a challenger must
+   meet ("no victory, no replacement"). Same-version rows are re-runs, not
+   rivals; rows that never fully passed set no bar. */
+export function championRow(skill: string, scenarioId: string, version: string): Json | null {
+  return latestHistoryRow((row) =>
+    row.skill === skill && row.scenario === scenarioId
+    && Boolean(row.version) && row.version !== version
+    && Number(row.runs) > 0 && Number(row.passes) === Number(row.runs));
 }
 
 /* Pure challenger-vs-champion verdict: hold the pass rate, keep tokens
@@ -332,25 +361,13 @@ export function beatsChampion(
    baseline is invariant to the skill version under test, so re-measuring it
    every bench burns real tokens for no new information. */
 export function cachedBaseline(skill: string, scenario: Scenario): Json | null {
-  if (!existsSync(HISTORY)) return null;
   const want = promptHash(scenario.prompt, scenario.assert);
-  const lines = readFileSync(HISTORY, "utf-8").split("\n");
-  for (let i = lines.length - 1; i >= 0; i--) {
-    let row: Json;
-    try {
-      row = JSON.parse(lines[i]);
-    } catch {
-      continue;
-    }
-    if (row.skill === skill && row.scenario === scenario.id
-        && row.prompt_hash === want && row.baseline_tokens
-        // rows predating baseline_passes can't prove the baseline ever
-        // completed — re-measure instead of trusting them
-        && row.baseline_passes !== null && row.baseline_passes !== undefined) {
-      return row;
-    }
-  }
-  return null;
+  return latestHistoryRow((row) =>
+    row.skill === skill && row.scenario === scenario.id
+    && row.prompt_hash === want && Boolean(row.baseline_tokens)
+    // rows predating baseline_passes can't prove the baseline ever
+    // completed — re-measure instead of trusting them
+    && row.baseline_passes !== null && row.baseline_passes !== undefined);
 }
 
 /* ------------------------------------------------------------ E5 battle mode
@@ -377,28 +394,31 @@ export type Tally = { wins: number; losses: number; ties: number; decided: numbe
     identical content agree. */
 export function skillContentHash(skill: string, ref: string | null = null): string {
   const rel = `skills/${skill}`;
-  const h = createHash("sha256");
+  /* Both sources produce [name-relative-to-the-skill-dir, content] and feed ONE
+     hashing loop. Two loops would have to stay byte-identical forever for the
+     agreement this doc-comment promises to hold, and nothing would catch the
+     day they diverged. */
+  let entries: [string, string | Buffer][];
   if (ref) {
     const ls = spawnSync("git", ["ls-tree", "-r", "--name-only", ref, "--", rel],
       { cwd: REPO, encoding: "utf-8" });
     const files = (ls.stdout ?? "").split("\n").filter(Boolean).sort();
     if (ls.status !== 0 || !files.length) throw new Error(`no ${rel} at ref ${ref}`);
-    for (const f of files) {
-      const blob = spawnSync("git", ["show", `${ref}:${f}`],
-        { cwd: REPO, encoding: "utf-8", maxBuffer: MAX_BUFFER });
-      h.update(f.slice(rel.length + 1)).update(" ")
-        .update(blob.stdout ?? "").update(" ");
-    }
-    return h.digest("hex").slice(0, 12);
+    entries = files.map((f) => [
+      f.slice(rel.length + 1),
+      spawnSync("git", ["show", `${ref}:${f}`],
+        { cwd: REPO, encoding: "utf-8", maxBuffer: MAX_BUFFER }).stdout ?? "",
+    ]);
+  } else {
+    const dir = join(REPO, rel);
+    if (!existsSync(dir)) throw new Error(`no skill directory ${rel}`);
+    entries = (readdirSync(dir, { recursive: true, encoding: "utf-8" }) as string[])
+      .filter((f) => statSync(join(dir, f)).isFile()).sort()
+      .map((f) => [f, readFileSync(join(dir, f))]);
   }
-  const dir = join(REPO, rel);
-  if (!existsSync(dir)) throw new Error(`no skill directory ${rel}`);
-  const files = (readdirSync(dir, { recursive: true, encoding: "utf-8" }) as string[])
-    .filter((f) => statSync(join(dir, f)).isFile()).sort();
-  for (const f of files) {
-    h.update(f).update(" ").update(readFileSync(join(dir, f))).update(" ");
-  }
-  return h.digest("hex").slice(0, 12);
+  const h = createHash("sha256");
+  for (const [name, body] of entries) h.update(name).update(" ").update(body).update(" ");
+  return h.digest("hex").slice(0, HASH_CHARS);
 }
 
 /* Outputs are keyed by (prompt hash, skill content hash), so an unchanged
@@ -433,8 +453,7 @@ function unquote(s: string): string {
    grounded in both outputs is a TIE, not a win. */
 export function parseBattleVerdict(raw: string, outA: string, outB: string):
     { verdict: BattleVerdict; reason: string } {
-  const lines = String(raw ?? "").trim().split(/\r?\n/)
-    .map((l) => l.trim()).filter(Boolean);
+  const lines = cleanLines(raw);
   const last = lines[lines.length - 1] ?? "";
   // Fail closed to TIE, but record WHY: "the judge tied" and "the judge
   // emitted garbage" are different facts, and this bench has already been
@@ -456,9 +475,9 @@ export function parseBattleVerdict(raw: string, outA: string, outB: string):
    require agreement — a verdict that flips with position is position bias,
    the dominant known failure of pairwise judges, not a preference. */
 export function reconcileSwap(first: BattleVerdict, second: BattleVerdict): BattleSide {
-  const a: BattleSide = first === "A" ? "champion" : first === "B" ? "challenger" : "TIE";
-  const b: BattleSide = second === "A" ? "challenger" : second === "B" ? "champion" : "TIE";
-  return a === b ? a : "TIE";
+  if (first === "A" && second === "B") return "champion";
+  if (first === "B" && second === "A") return "challenger";
+  return "TIE";
 }
 
 export function battleTally(results: BattleSide[]): Tally {
@@ -503,11 +522,7 @@ function battleJudge(rubric: string, a: string, b: string):
 /* One record per judged pair — both presentation orders verbatim. A verdict
    that isn't logged is gone, and an unlogged verdict cannot be re-adjudicated. */
 function recordBattle(row: Json): void {
-  mkdirSync(dirname(BATTLES), { recursive: true });
-  const git = spawnSync("git", ["rev-parse", "--short", "HEAD"],
-    { cwd: REPO, encoding: "utf-8" });
-  const ts = new Date().toISOString().slice(0, 19) + "Z";
-  appendFileSync(BATTLES, pyJson({ ts, commit: (git.stdout ?? "").trim() || "?", ...row }) + "\n");
+  recordHistory(row, BATTLES);
 }
 
 function battleSkill(spec: Spec, championRef: string | null, dryRun: boolean,
@@ -515,6 +530,8 @@ function battleSkill(spec: Spec, championRef: string | null, dryRun: boolean,
   const skill = spec.skill;
   const version = skillVersion(skill);
   const challengerHash = skillContentHash(skill);
+  // invariant across scenarios: resolve the ref once, not once per scenario
+  const refHash = championRef ? skillContentHash(skill, championRef) : null;
   const results: BattleSide[] = [];
   console.log(`battle ${skill} — challenger ${challengerHash} vs ` +
     (championRef ? `ref ${championRef}` : "the R3 champion lineage"));
@@ -522,19 +539,17 @@ function battleSkill(spec: Spec, championRef: string | null, dryRun: boolean,
   for (const scenario of spec.scenarios) {
     const sid = scenario.id;
     const skip = (why: string): void => console.log(`  SKIP ${sid}: ${why}`);
-    if (scenario.expect_no_activation) {
-      skip("expect_no_activation — no comparable output");
-      continue;
-    }
+    /* Eligibility is decided by what a scenario can SUPPLY, not by what kind it
+       is: a probe scenario carries no rubric and banks no output, so the two
+       guards below already exclude it. A type check here would be a third rule
+       saying the same thing, and a new scenario kind would need an edit. */
     if (!scenario.judge) {
       skip("no rubric — battle ranks against a rubric or not at all");
       continue;
     }
-    let champHash: string | null = null;
+    let champHash: string | null = refHash;
     let champVersion = championRef ?? "?";
-    if (championRef) {
-      champHash = skillContentHash(skill, championRef);
-    } else {
+    if (!championRef) {
       const row = championRow(skill, sid, version);
       if (row?.skill_hash) {
         champHash = String(row.skill_hash);
@@ -598,7 +613,7 @@ function battleSkill(spec: Spec, championRef: string | null, dryRun: boolean,
 
   if (dryRun) {
     console.log("\ndry-run OK — battle plan above, no tokens spent");
-    return { ok: true, judged: results.length };
+    return { ok: true, judged: 0 }; // a dry run judges nothing, by construction
   }
   // Print no tally for an empty battle: "PASS non-regression: 0 decided" above
   // a NO VERDICT line is precisely the reassuring-green this gate exists to
@@ -710,7 +725,7 @@ function benchSkill(spec: Spec, runs: number, dryRun: boolean,
     if (skillHash && skilled.length) {
       const rep = skilled.find((r) => r.pass) ?? skilled[0];
       bankOutput(spec.skill, sid, promptHash(scenario.prompt, scenario.assert),
-        skillHash, rep.full);
+        skillHash, rep.result);
     }
     const cached = rebaseline ? null : cachedBaseline(spec.skill, scenario);
     let bt: number;
@@ -785,7 +800,8 @@ function benchSkill(spec: Spec, runs: number, dryRun: boolean,
 
     let judgeScore: number | null = null;
     if (scenario.judge && skilled.length) {
-      const scores = skilled.map((r) => judge(scenario.judge!, r.result));
+      // clip here: the rubric judge only needs the head of the response
+      const scores = skilled.map((r) => judge(scenario.judge!, r.result.slice(0, 2000)));
       judgeScore = median(scores);
       gate(sid, "B3 quality", judgeScore >= 4, `judge median ${judgeScore}/5`);
     }
@@ -919,6 +935,7 @@ function main(): void {
     }
   }
   if (skill === null) usageError("the following arguments are required: skill");
+  if (championRef && !battle) usageError("--champion requires --battle");
 
   const specPath = join(REPO, "tests", "bench", `${skill}.json`);
   if (!existsSync(specPath)) {
@@ -959,8 +976,6 @@ function main(): void {
     console.log(`\n${ok ? "BATTLE PASS" : "BATTLE FAIL"}`);
     process.exit(ok ? 0 : 1);
   }
-  if (championRef) usageError("--champion requires --battle");
-
   console.log(`bench ${spec.skill} — ${spec.scenarios.length} scenario(s)`);
   const verdicts = benchSkill(spec, runs, dryRun, !noRecord, rebaseline);
   if (dryRun) {
@@ -977,7 +992,6 @@ function main(): void {
 
 // main-module guard: the regression tests import runScenario/cachedBaseline;
 // only run the CLI when executed directly
-import { pathToFileURL } from "node:url";
-if (process.argv[1] && pathToFileURL(process.argv[1]).href === import.meta.url) {
+if (process.argv[1] && pathToFileURL(resolve(process.argv[1])).href === import.meta.url) {
   main();
 }

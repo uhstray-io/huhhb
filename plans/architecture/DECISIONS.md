@@ -71,6 +71,7 @@ Find a decision three ways: **by domain** (the tables below), **by date** (the y
 | ADR | Decision | Status | Record |
 |-----|----------|--------|--------|
 | [ADR-0003](2026/2026-08.md#adr-0003--architecture-decision-records-live-in-plansarchitecture-openspec-writes-specifications-only) | ADRs live in plans/architecture/; OpenSpec writes specs only | Accepted | 2026-08 |
+| [ADR-0006](2026/2026-08.md#adr-0006--product-inception-layer) | product-inception-layer | Accepted | 2026-08 |
 
 ### Tooling and CI
 

@@ -36,4 +36,9 @@
 - [x] 5.1 Dry run on a scratch repo: Workflow 0 end-to-end on a toy product — confirm three gated artifacts, immediate ADR promotion, termination at architecture, epic-queue handoff
 - [x] 5.2 Continue the dry run: consume one epic via a normal Workflow 1 run into an OpenSpec change whose proposal links back to its PRD epic
 - [x] 5.3 Run `evolve-map`; confirm the skill registers cleanly and reports no unflagged overlap with brainstorming/writing-plans/discovering-context
-- [ ] 5.4 Open the batched PR(s) with test evidence; after human merge, archive this change (`openspec archive product-inception-layer --store huhhb`) and promote its ADR via pr-shepherd close-out
+- [x] 5.4 Open the batched PR(s) with test evidence; after human merge, archive this change (`openspec archive product-inception-layer --store huhhb`) and promote its ADR via pr-shepherd close-out
+      → merged as `dbb2613b` (verified an ancestor of `origin/main`); archived
+      2026-08-08. Deliverables re-verified at archive time: `promote-adr.ts`
+      `--from/--slug` mode present, `skills/product-inception/{SKILL,reference}.md`
+      present, `plans/product` wired into repo-kickstart, and
+      `test_openspec_conformance.test.ts` 11/11 green

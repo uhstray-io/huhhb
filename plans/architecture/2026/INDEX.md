@@ -13,6 +13,7 @@ Template: [../TEMPLATE.md](../TEMPLATE.md).
 | ADR-0003 | 2026-08-02 | ADRs live in plans/architecture/; OpenSpec writes specifications only | Planning and specs | Accepted | High | [2026-08.md](2026-08.md) |
 | ADR-0004 | 2026-08-02 | repo-memory owns ADRs; all other memory defers to the two stores | Memory architecture | Accepted | Medium | [2026-08.md](2026-08.md) |
 | ADR-0005 | 2026-08-02 | Prove a skill refinement pairwise against a champion, not on absolute judge scores | Tooling and CI | Proposed | Medium | [2026-08.md](2026-08.md) |
+| ADR-0006 | 2026-08-08 | product-inception-layer | Planning and specs | Accepted | Medium | [2026-08.md](2026-08.md) |
 
 ## Months
 

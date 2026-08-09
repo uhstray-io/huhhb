@@ -1,5 +1,20 @@
 # huhhb Skill Authoring Standard — Implementation Plan (2026-07-16)
 
+> **Status (2026-08-08): superseded as a task list; retained as the evidence record.**
+>
+> | Tasks | Where they live now |
+> |---|---|
+> | 1–6 (standard, lint S9–S12, negative activation, pipeline wiring, pointers) | OpenSpec change **`skill-authoring-standard`** — implemented |
+> | 7 (battle mode) | shipped `ef59373b`; the "As built" note below records one deliberate deviation |
+> | 8 (retro-fit all 53 skills) | **follow-on change, not yet created** — gated by battle non-regression |
+>
+> **This file is not deleted, and its checkboxes are not the source of truth.**
+> The standard at `skills/writing-skills/references/skill-authoring.md` cites this
+> plan's Evidence base and References tables by tag ([WILD], [SKILLOPT], [ANTH],
+> [SPEC], [SKILLRED], [MGECHEV], [DO]); deleting it would strip every rule of its
+> citation. Track task state in the OpenSpec change; read this for *why* a rule
+> exists.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development
 > (recommended) or superpowers:executing-plans to implement this plan task-by-task.
 > Steps use checkbox (`- [ ]`) syntax for tracking.

@@ -82,6 +82,14 @@ verdicts: healthy=<n> refine=<n> merge=<n> prune=<n> create=<n>
 
 ## Hard rules
 
+- **Verdicts cite the house standard**, not taste:
+  `skills/writing-skills/references/skill-authoring.md` names which layer proves
+  each property — turning "feels bloated" into S6/S12 and "never fires" into a
+  bench row.
+- **A refinement ships only if it is not worse than what it replaces** —
+  `skill-bench.ts <skill> --battle`, pairwise against the champion. Absolute
+  scores drift across judge-model versions and cannot answer it. Below the
+  sample floor, report the tally and declare nothing.
 - Hub skills are read-only on-device; every hub change is a PR (consequence
   radius gates promotion — device: automatic, overlay: user approval, hub:
   human merge + CI evals).

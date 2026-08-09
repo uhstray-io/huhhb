@@ -27,6 +27,12 @@
       "phrasing": true,
       "assert": "grep -qE '1\\.5' result.txt && grep -qE '1\\.25' result.txt && grep -qE '(\\-\\->|\\->|→)' result.txt",
       "judge": "This scenario tests that a value-only change still gets a visual delta. The correct response names RATIO_TOKENS and scripts/skill-bench.ts, states both the old and new values, says what now fails that previously passed — a skill arm spending between 1.25x and 1.5x its baseline tokens now trips the gate — and renders the delta visually, at minimum as '1.5 -> 1.25' or a two-line before/after. Penalize prose-only narration with no delta rendering, on the reasoning that nothing structural changed; the diagram rule is default-on and a value delta is drawable. Penalize omitting either value. Penalize claiming the change affects wall-time or turn ratios, which are separate constants. Keep it to about five sentences."
+    },
+    {
+      "id": "stays-silent-on-a-code-walkthrough",
+      "prompt": "Walk me through what this function does and how its branches interact.",
+      "expect_no_activation": true,
+      "note": "Explaining existing code is not narrating a change. The description's 'explain' verb is the collision, and a skill that fires here narrates edits that were never made."
     }
   ],
   "triggers": {

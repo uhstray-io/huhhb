@@ -76,13 +76,25 @@ for Skill-tool matching. No skill duplicates built-in agent behavior.
 
 ## Skill Quality Bar
 
+**The normative standard is
+[`skills/writing-skills/references/skill-authoring.md`](skills/writing-skills/references/skill-authoring.md)** —
+five properties (discoverable, discrete, efficient, effective, evaluated), each
+rule evidence-tagged, with a table naming which layer enforces which. Read it
+before writing or revising a skill. The gates below are how it is enforced, not
+a substitute for it: lint decides what is visible in the file, bench decides what
+the model actually does, battle decides which of two versions is better, and
+everything left is review — named as such rather than approximated by a script.
+
 Three measured gates — full criteria, thresholds, and the improvement loop in
 `docs/evolve-plan.md`:
 
 - **G0 static lint** (`node scripts/skill-lint.ts`) — frontmatter, trigger
-  phrasing, body size, link integrity, manifest sync. Free; run on every PR.
-  Pre-existing debt is grandfathered in `scripts/skill-lint-baseline.json` —
-  shrink it, never grow it.
+  phrasing, body size, link integrity, manifest sync (S1–S8), plus the
+  standard's machine-enforceable subset S9–S12: spec name charset, reference
+  depth, third-person description, 500-line body. Free; run on every PR.
+  S9–S12 are WARN until the retrofit burns the debt down. Pre-existing FAIL debt
+  is grandfathered in `scripts/skill-lint-baseline.json` — shrink it, never grow
+  it.
 - **G1 merge bench** (`node scripts/skill-bench.ts <skill>`) — real
   `claude -p` runs against `tests/bench/<skill>.json` scenarios, with an A/B
   baseline (skill disabled) the skill must beat. Costs tokens; run when a

@@ -669,6 +669,35 @@ function benchSkill(spec: Spec, runs: number, dryRun: boolean,
   }
   for (const scenario of spec.scenarios) {
     const sid = scenario.id;
+
+    /* E2 negative activation: the skill must stay SILENT on its nearest
+       neighbour. This is a property of the description, not of the body, so it
+       is decided by the trigger probe alone — no assert run, no judge call, no
+       baseline arm. Running the scenario would measure the wrong thing: a skill
+       that never fired has no output to assert against, and an assert that
+       passes on the baseline's answer would score the absence as a success. */
+    if (scenario.expect_no_activation) {
+      console.log(`\nscenario ${sid} (negative activation — trigger probe only)`);
+      if (dryRun) {
+        console.log(`  would probe: claude -p ${pyRepr(scenario.prompt)}  expect: no activation`);
+        continue;
+      }
+      // skillInvoked throws on a probe that did not actually run — a silent
+      // non-run must never be recorded as "the skill correctly declined"
+      const fired = skillInvoked(scenario.prompt, spec.skill);
+      gate(sid, "B10 negative activation", !fired,
+        fired ? "skill fired on a prompt it must ignore" : "stayed silent");
+      if (record) {
+        recordHistory({
+          skill: spec.skill, version, scenario: sid,
+          prompt_hash: promptHash(scenario.prompt, scenario.assert),
+          expect_no_activation: true, activated: fired,
+          verdicts: scoped(sid), skill_hash: skillHash,
+        });
+      }
+      continue;
+    }
+
     console.log(`\nscenario ${sid} (${runs} runs + baseline)`);
     if (dryRun) {
       console.log(`  would run: claude -p ${pyRepr(scenario.prompt)}  assert: ${scenario.assert}`);
@@ -900,7 +929,13 @@ function main(): void {
     if (!pyTruthy(spec[field])) throw new Error(`scenario file missing '${field}'`);
   }
   for (const s of spec.scenarios) {
-    for (const field of ["id", "prompt", "assert"] as const) {
+    // a negative-activation scenario is decided by the trigger probe, so it has
+    // no output to assert against and requiring one would invite a meaningless
+    // placeholder that later reads as a real check
+    const required = s.expect_no_activation
+      ? (["id", "prompt"] as const)
+      : (["id", "prompt", "assert"] as const);
+    for (const field of required) {
       if (!pyTruthy(s[field])) throw new Error(`scenario missing '${field}'`);
     }
   }

@@ -26,6 +26,12 @@
       "phrasing": true,
       "assert": "tr '\\n' ' ' < result.txt > flat.txt && grep -qiE '(supersede|new record|do not edit|never edit|append-only)' flat.txt && grep -qiE '(ADR-000[3-9]|next number|new ADR)' flat.txt && grep -qiE 'Supersedes' flat.txt && grep -qiE 'Superseded by' flat.txt",
       "judge": "The request explicitly asks to EDIT an accepted record, which the skill forbids. The correct response declines to rewrite ADR-0002, writes a NEW record that supersedes it, and links the two — setting the new record's Supersedes field and the old record's Status to 'Superseded by', which is the only permitted modification to an accepted record. It must state WHY in terms of consequence rather than ceremony: editing erases when and why the direction shifted, which is the only thing a decision log is for. Credit noting that both indexes need updating for the new record. Penalize editing ADR-0002's context, decision, or consequences; penalize deleting it; and penalize agreeing to 'just update it' because the user asked directly. Superseding is TWO edits and the assert now requires both to be named: the new record sets `Supersedes: ADR-0002` and the old record's Status becomes `Superseded by ADR-NNNN`. A response that only says \"write a new ADR\" leaves the old record still reading as in-force, which is the same broken state as editing it."
+    },
+    {
+      "id": "stays-silent-on-a-change-proposal",
+      "prompt": "Write a proposal for the change we're making to how skills get authored — what it covers, why now, and what it touches.",
+      "expect_no_activation": true,
+      "note": "Nearest neighbour is the OpenSpec propose workflow, not the ADR store. Both write a durable 'why' document, and this repo now holds live OpenSpec changes carrying decisions, so the confusion is real rather than hypothetical. Not in triggers.negative, and B10's 0.9 aggregate would tolerate a miss here; this is hard-gated."
     }
   ],
   "triggers": {

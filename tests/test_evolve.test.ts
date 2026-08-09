@@ -1800,13 +1800,74 @@ describe("BattleTests", () => {
       assert.equal(r.status, 0, r.stderr);
       assert.match(r.stdout, /would judge/,
         "a banked champion and challenger must resolve to a judgeable pair");
-      assert.doesNotMatch(r.stdout, /SKIP/,
-        "nothing should be excluded once both sides are banked");
+      // Every scenario with a rubric resolves; the only permitted exclusion is
+      // a negative-activation scenario, which has no output to compare because
+      // a correctly-silent skill produces none.
+      for (const line of r.stdout.split("\n").filter((l) => l.includes("SKIP"))) {
+        assert.match(line, /expect_no_activation/,
+          `unexpected battle exclusion once both sides are banked: ${line.trim()}`);
+      }
       assert.match(r.stdout, new RegExp(`champion ${CHAMP}`),
         "the champion hash must come from the history row, not the working tree");
     } finally {
       fs.rmSync(tmp, { recursive: true, force: true });
     }
+  });
+
+  test("test_negative_activation_scenarios_need_no_assert", () => {
+    // E2 negative scenarios are decided by the trigger probe, so they carry no
+    // assert. Requiring one would force a placeholder that later reads as a
+    // real check — the dry-run path is what proves the spec still validates.
+    const r = spawnSync(process.execPath,
+      [path.join(REPO, "scripts", "skill-bench.ts"), "repo-memory", "--dry-run"],
+      { encoding: "utf-8", cwd: REPO });
+    assert.equal(r.status, 0, r.stderr);
+    assert.match(r.stdout, /negative activation — trigger probe only/,
+      "a negative scenario must be routed to the probe, not the assert path");
+    assert.doesNotMatch(r.stdout,
+      /stays-silent-on-a-change-proposal[\s\S]{0,120}assert:/,
+      "a negative scenario must never render an assert plan");
+    assert.match(r.stdout, /dry-run OK/);
+  });
+
+  test("test_lint_s9_to_s12_predicates_fire_and_stay_silent", async () => {
+    // S9 and S10 currently fire on zero skills in the marketplace, which is
+    // indistinguishable from a check that can never fire at all. These rows are
+    // the difference: each predicate must reject a violating input AND accept a
+    // clean one, so a broken regex cannot masquerade as a clean repo.
+    const lint = await import(path.join(REPO, "scripts", "skill-lint.ts"));
+
+    // S9 — spec name charset
+    for (const ok of ["repo-memory", "evolve", "markdown-to-pdf", "s3"]) {
+      assert.ok(lint.NAME_CHARSET.test(ok), `${ok} is a valid skill name`);
+    }
+    for (const bad of ["Repo-Memory", "repo_memory", "repo--memory", "-repo", "repo-"]) {
+      assert.ok(!lint.NAME_CHARSET.test(bad), `${bad} must be rejected`);
+    }
+
+    // S10 — reference depth below the skill dir
+    assert.equal(lint.refDepth("references/api.md"), 1, "a reference is one level down");
+    assert.equal(lint.refDepth("SKILL.md"), 0, "a sibling file is level zero");
+    assert.equal(lint.refDepth("references/api/errors.md"), 2, "nested reference");
+    assert.equal(lint.refDepth("../other-skill/SKILL.md"), null,
+      "a link leaving the skill is a cross-reference — S7's business, not S10's");
+    assert.equal(lint.refDepth("/AGENTS.md"), null, "absolute links are not references");
+    assert.equal(lint.refDepth("references/api.md#anchor"), 1, "anchors do not add depth");
+
+    // S11 — third-person description
+    assert.ok(lint.FIRST_PERSON.test("Use when I need to record a decision"));
+    assert.ok(lint.FIRST_PERSON.test("Helps us keep the specs current"));
+    assert.ok(!lint.FIRST_PERSON.test(
+      "Use when a decision about this repository's architecture needs recording"),
+      "a correct third-person description must not warn");
+    // the pronoun check is case-sensitive on 'I' so ordinary words survive it
+    for (const innocent of ["Use when indexing a repository", "Wear it well", "ambitious"]) {
+      assert.ok(!lint.FIRST_PERSON.test(innocent), `${innocent} must not trip S11`);
+    }
+
+    // S12 — body line cap
+    assert.equal(typeof lint.BODY_WARN_LINES, "number");
+    assert.ok(lint.BODY_WARN_LINES > 0);
   });
 
   test("test_skill_content_hash_is_stable_and_covers_every_file", () => {

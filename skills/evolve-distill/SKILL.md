@@ -95,6 +95,13 @@ never present a fresh distilled skill as proven.
 
 ## Hard rules
 
+- **The house standard applies to generated skills too.** Read
+  `skills/writing-skills/references/skill-authoring.md` before proposing one.
+  A pipeline whose output is exempt from the standard reintroduces every
+  problem the standard exists to prevent, only faster. In particular: the
+  description carries trigger conditions and never a workflow summary (D2), and
+  the proposal is not complete without a negative-activation scenario proving
+  the skill stays silent on its nearest neighbour (E2).
 - **De-identification reuse test (R1)**: after stripping case-specific
   entities, ask whether this user would need the same policy again — if what
   remains is generic advice, distill nothing. Empty is the default success.

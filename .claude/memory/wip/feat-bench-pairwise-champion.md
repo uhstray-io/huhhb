@@ -50,3 +50,5 @@
   skillContentHash listed the worktree with readdirSync and the ref side with
 - 2026-08-09 · feat/bench-pairwise-champion · chore(memory): delete the MemPalace sync tooling; the vendored copy had forked (1 files)
   skills/memory/SKILL.md was described as vendored from mempalace/mempalace and
+- 2026-08-09 · feat/bench-pairwise-champion · docs(openspec): record retire-mempalace's third reversal, route the drift guard (8 files)
+  This change reversed its own premise twice while being applied and has now done

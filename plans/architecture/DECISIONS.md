@@ -77,7 +77,7 @@ Find a decision three ways: **by domain** (the tables below), **by date** (the y
 
 | ADR | Decision | Status | Record |
 |-----|----------|--------|--------|
-| [ADR-0005](2026/2026-08.md#adr-0005--prove-a-skill-refinement-pairwise-against-a-champion-not-on-absolute-judge-scores) | Skill refinements prove superiority pairwise against a champion; objective gates first, judge second, humans last | Proposed | 2026-08 |
+| [ADR-0005](2026/2026-08.md#adr-0005--prove-a-skill-refinement-pairwise-against-a-champion-not-on-absolute-judge-scores) | Skill refinements prove superiority pairwise against a champion; objective gates first, judge second, humans last | Accepted | 2026-08 |
 
 ## Years
 

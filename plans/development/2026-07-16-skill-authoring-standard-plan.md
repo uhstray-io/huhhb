@@ -6,7 +6,7 @@
 > |---|---|
 > | 1–6 (standard, lint S9–S12, negative activation, pipeline wiring, pointers) | OpenSpec change **`skill-authoring-standard`** — implemented |
 > | 7 (battle mode) | shipped `ef59373b`; the "As built" note below records one deliberate deviation |
-> | 8 (retro-fit all 53 skills) | **follow-on change, not yet created** — gated by battle non-regression |
+> | 8 (retro-fit the skills) | OpenSpec change **`skill-retrofit`** — scaffolded, not started. Scope corrected to **51**, not 53: `huhhb-welcome` and `huhhb-skills` are onboarding docs with no `SKILL.md`, so they are lint-only and cannot be battled |
 >
 > **This file is not deleted, and its checkboxes are not the source of truth.**
 > The standard at `skills/writing-skills/references/skill-authoring.md` cites this

@@ -18,3 +18,15 @@ package-lock.json
 # committed tests/bench/battles.jsonl; commit these too if cross-machine
 # re-judging ever becomes a thing worth paying git weight for.
 tests/bench/outputs/
+
+# OpenSpec's per-tool skill copies. `openspec init plans/development` writes
+# the same six workflows twice for every tool it targets: once as a skill and
+# once as a slash command. The commands are committed and are what the workflow
+# is actually driven through; these skill duplicates are regenerable and were
+# only bulk. Run that init to get them back.
+# Deliberately narrow: .claude/skills/two-store-memory-setup is a symlink into
+# skills/ and must stay tracked, so this cannot be a blanket .claude/skills/.
+.agents/skills/
+.claude/skills/openspec-*/
+.gemini/skills/
+.opencode/skills/

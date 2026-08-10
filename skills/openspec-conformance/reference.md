@@ -1,7 +1,9 @@
 # openspec-conformance — reference
 
 Heavy detail kept out of `SKILL.md`. Placeholders: `<repo>`, `<stack>`,
-`<slug>`. Everything here was verified live against **openspec 1.6.0**.
+`<slug>`. Everything here was verified live against **openspec 1.6.0**, and has
+since been exercised on **1.8.0** without change. Treat 1.6.0 as the verified
+floor rather than a pin; re-verify the store commands when the major moves.
 
 ---
 

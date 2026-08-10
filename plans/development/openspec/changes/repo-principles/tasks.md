@@ -66,9 +66,13 @@ the skeleton in phase 3 is derived from this file rather than invented for it.
       interview transcript — the pass is interactive and a transcript assert would
       measure phrasing
 - [ ] 3.6 **Gate:** `node scripts/skill-lint.ts` reports 0 FAIL with the new skill
-      registered, and its bench fixture discriminates against a skill-disabled
-      baseline — proves *The mechanism travels with the plugin* and *The crawl
-      precedes the questions*
+      registered, and **`node scripts/skill-bench.ts <skill>` is actually run**
+      and passes with at least one positive scenario discriminating against the
+      skill-disabled baseline. Naming the command matters: the fixture's
+      `expect_no_activation` scenario is decided by a trigger probe and never
+      reaches the G1 judge, so a fixture that carried only negatives would look
+      complete while measuring nothing — proves *The mechanism travels with the
+      plugin* and *The crawl precedes the questions*
 
 ## 4. Seed the skeleton from repo-kickstart
 

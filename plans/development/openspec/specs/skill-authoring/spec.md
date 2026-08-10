@@ -98,6 +98,48 @@ NOT be counted as evidence.
 - **WHEN** every scenario for a skill is excluded or non-discriminating
 - **THEN** the gate reports that nothing was measured, and MUST NOT report a pass
 
+### Requirement: A pairwise comparison controls for position and cites evidence
+
+Where two revisions of a skill are compared by judgement rather than by an
+absolute score, the comparison SHALL control for presentation order and SHALL
+require the verdict to cite evidence. A judge asked "which is better" reliably
+prefers whatever it read first, so an uncontrolled comparison measures ordering;
+and a verdict with no citation cannot be re-adjudicated by a reader who
+disagrees with it.
+
+#### Scenario: A decided verdict is confirmed by the swapped order
+
+- **WHEN** a judged pair returns a decided verdict in the first presentation
+  order
+- **THEN** the same pair is judged again with the sides swapped, and the result
+  counts as decided only if both orders name the same side; orders that disagree
+  reconcile to a tie
+
+#### Scenario: A first-order tie needs no swap
+
+- **WHEN** the first presentation order returns a tie
+- **THEN** the pair is recorded as a tie without a second call, because
+  reconciling a tie with any second verdict yields a tie. The saving is
+  deliberate — ties are the modal case and each judgement costs a model call —
+  and the cost is that position sensitivity is measured on decided pairs only
+
+#### Scenario: An uncited verdict does not count
+
+- **WHEN** a judge returns a verdict without an evidence citation
+- **THEN** the verdict is not counted toward the tally
+
+### Requirement: A challenger proves itself before it contests a champion
+
+Both sides of a pairwise comparison SHALL have satisfied their own objective
+checks before either is judged. Banked output proves a run happened, not that it
+passed; a side that cannot pass its own assert has not earned a comparison, and
+a judge that likes its prose would otherwise promote it.
+
+#### Scenario: A side that failed its own assert is excluded
+
+- **WHEN** one side of a pair has no fully-passing run recorded for the scenario
+- **THEN** the pair is skipped with that reason, and no verdict is recorded
+
 ### Requirement: Silence is proven, not assumed
 
 A skill SHALL be measured for when it must *not* activate, not only for when it

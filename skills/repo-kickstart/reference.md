@@ -74,9 +74,13 @@ silent pass and never a hard failure of the whole run — the same graceful-degr
 # Never install it here — a global package touches state outside the repo,
 # binds to whichever Node is active, and fails in ways a scaffolder cannot
 # recover from. Name the command; the operator decides.
+# Version policy: install latest, record what was exercised. The store layout
+# and `store register` are the surfaces a release could move, so state a verified
+# floor rather than pinning — a pin goes stale silently, @latest fails loudly.
+# Verified against 1.6.0, exercised on 1.8.0. Re-verify when the major moves.
 command -v openspec >/dev/null 2>&1 \
   || echo "UNRESOLVED — openspec CLI absent; OpenSpec steps not run. \
-Install: npm install -g @fission-ai/openspec@latest (then re-run)"
+Install: npm install -g @fission-ai/openspec@latest (verified 1.6.0+, then re-run)"
 
 # Graph tool — containment FIRST: indexing refuses a path outside the allowed
 # root, so an out-of-root repo is a skip to report, not an error to debug.

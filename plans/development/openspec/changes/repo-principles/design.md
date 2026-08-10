@@ -32,8 +32,11 @@ See proposal.md — Why. The design-relevant state:
   (D1–D5, C1–C4, T1–T5, P1–P7, E1–E5) and its lint-code citations.
 - Rewriting `AGENTS.md`'s operational content. It gains an audience statement and
   a maintenance clause, not a reorganization.
-- Making `PRINCIPLES.md` machine-enforced. Nothing gates on it; its consumers are
-  people and the derivation clause.
+- Making `PRINCIPLES.md`'s **content** machine-enforced. No check reads a
+  principle and judges it; its consumers are people and the derivation clause.
+  Its *presence* and *skeleton status* are checked — the verification checklist
+  reports an unfilled template as unauthored — because "the file exists" and
+  "someone wrote it" are different facts and only the second one means anything.
 - Authoring principles for other repositories. This change writes huhhb's and
   ships the mechanism.
 

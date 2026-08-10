@@ -56,7 +56,7 @@ None. This store currently holds no main specs.
   The spec becomes the source of truth; the reference points at it. **The
   promotion must be lossless**, and the first draft was not: it carried the
   merge proofs and the fail-closed rule but dropped the namespace scope and the
-  90-day inactivity cutoff, which are the only things keeping the default branch
+  >90-day inactivity cutoff, which are the only things keeping the default branch
   out of range. A tip is an ancestor of itself and its diff against itself is
   empty, so both proofs pass for the default branch — the script is safe because
   it enumerates `refs/heads/<prefix>/`, not because the proofs protect it.

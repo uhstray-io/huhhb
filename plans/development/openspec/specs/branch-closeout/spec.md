@@ -16,10 +16,25 @@ be the reason work is lost.
 ### Requirement: Only an eligible branch is a deletion candidate
 
 A branch SHALL be considered for deletion only if it sits inside the sweep's
-configured namespace, has been inactive for at least 90 days, and is neither the
-default branch nor any other protected ref. These checks run BEFORE any merge
-proof. A branch failing one is not skipped-with-a-reason; it is never a
-candidate and is never examined.
+configured namespace, has been inactive for **more than** 90 days, and is
+neither the default branch nor any other protected ref. These checks run BEFORE
+any merge proof and define the run's *candidate set* — they are not checks a
+candidate can fail.
+
+The inactivity boundary is strict on purpose: at exactly 90 days a branch is
+kept. `janitor.md` compares against `now - 90 days` and deletes only when the
+last commit is strictly older, so an inclusive reading here would delete one
+day's worth of branches the script keeps.
+
+That candidate/failure distinction is a reporting contract, not pedantry. The
+three disjoint sets a run reports partition the **candidates**, not every branch
+in the repository. An ineligible branch belongs to none of them and is not
+listed individually — this repository carries 37 local branches, most outside
+any sweep namespace, and reporting them as "deliberately kept" would bury the
+handful that were actually considered. To keep that honest, a run SHALL state
+the scope it applied — the namespace, the cutoff and the protected refs — so
+that "nothing deleted" from an empty candidate set is distinguishable from
+"nothing deleted" because every candidate failed its proof.
 
 Eligibility is separate from proof because **the merge proofs cannot exclude the
 default branch on their own**. A tip is trivially an ancestor of itself, so the
@@ -41,10 +56,18 @@ aborts the run rather than silently widening its scope.
 - **WHEN** a branch does not sit under the configured namespace prefix
 - **THEN** it is not examined and not deleted
 
-#### Scenario: A recently active branch is kept
+#### Scenario: A branch inside the inactivity cutoff is not a candidate
 
-- **WHEN** a branch's last commit is newer than the 90-day inactivity cutoff
-- **THEN** it is kept, regardless of whether it satisfies a merge proof
+- **WHEN** a branch's last commit is at, or newer than, the 90-day cutoff —
+  exactly 90 days included, since the boundary is strict
+- **THEN** it is not a candidate, regardless of whether it satisfies a merge
+  proof
+
+#### Scenario: A run states the scope it applied
+
+- **WHEN** a close-out reports its results
+- **THEN** it names the namespace, the inactivity cutoff and the protected refs
+  it applied, so an empty candidate set cannot be read as a clean sweep
 
 #### Scenario: An unusable namespace aborts the run
 
@@ -132,10 +155,12 @@ reported instead.
 
 ### Requirement: A close-out fails closed
 
-Any item failing any check SHALL be skipped and reported rather than forced. A
-close-out run SHALL report three disjoint sets — deleted, skipped with reason,
-and deliberately kept — so that an incomplete sweep is visible rather than being
-mistaken for a clean one.
+Any **candidate** failing any check SHALL be skipped and reported rather than
+forced. A close-out run SHALL report three disjoint sets — deleted, skipped with
+reason, and deliberately kept — which together account for every candidate, so
+that an incomplete sweep is visible rather than being mistaken for a clean one.
+Branches that never became candidates are covered by the run's stated scope
+rather than by these sets.
 
 #### Scenario: An unresolvable default branch stops the run
 

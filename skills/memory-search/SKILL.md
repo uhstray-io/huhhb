@@ -1,6 +1,6 @@
 ---
 name: memory-search
-description: LEGACY, retired from routing 2026-08-01 — semantic search over an existing MemPalace nexus only. Use when MemPalace is named explicitly. For current memory use hindsight recall; for repo knowledge use repo-memory. The memory MCP server is opt-in.
+description: Use when MemPalace is named explicitly and an existing MemPalace nexus must be searched semantically. Legacy, retired from routing 2026-08-01. For current memory use hindsight recall; for repo knowledge use repo-memory. The memory MCP server is opt-in.
 ---
 
 # memory-search

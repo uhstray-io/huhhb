@@ -1,6 +1,6 @@
 ---
 name: memory-status
-description: LEGACY, retired from routing 2026-08-01 — MemPalace nexus stats. Use when MemPalace is named explicitly. For current memory health use memory-setup. The memory MCP server is opt-in.
+description: Use when MemPalace is named explicitly and stats for an existing MemPalace nexus are wanted. Legacy, retired from routing 2026-08-01. For current memory health use memory-setup. The memory MCP server is opt-in.
 ---
 
 # memory-status

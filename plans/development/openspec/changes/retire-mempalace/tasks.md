@@ -105,7 +105,13 @@ not honour. This phase is a rewrite, not a confirmation.
       **negative** — orphaned since ADR-0002 deleted `memory-onboarding`, which
       owned it. Claimed by nobody, refused by three. Moved to memory-setup's
       positives with "memory status", so the redirect lands somewhere that
-      accepts it
+      accepts it.
+      **A review has since asked for "memory status" to be removed from that
+      list as belonging to the `memory-status` skill. It is deliberate and
+      stays.** `memory-status` is retired from routing and its description now
+      requires MemPalace to be named explicitly, so a bare "memory status"
+      cannot reach it — leaving the phrasing unclaimed is the state this task
+      exists to end
 - [x] 3.5 Note the measurement caveat with any number produced: ~50 untracked
       auto-loading skills in `.claude/skills/` contaminate every trigger figure
 - [ ] 3.6 **Gate:** both copies of all four descriptions agree; a reload shows

@@ -1,6 +1,6 @@
 ---
 name: memory
-description: LEGACY, retired from routing 2026-08-01 — the MemPalace nexus, kept only to read data already stored in it. Use when MemPalace is named explicitly. Not the current memory system — structural truth is codebase-memory-mcp and experience is Hindsight, both set up via memory-setup. The memory MCP server is opt-in. Do not use for new work.
+description: Use when MemPalace is named explicitly, or data already stored in a MemPalace nexus must be read. Legacy, retired from routing 2026-08-01. Not the current memory system — structural truth is codebase-memory-mcp and experience is Hindsight, both set up via memory-setup. The memory MCP server is opt-in. Do not use for new work.
 ---
 
 # memory
@@ -14,26 +14,26 @@ Team memory nexus — organize knowledge as wings → rooms → drawers, searcha
 
 ## Prerequisites
 
-Ensure `mempalace` is installed:
+This skill calls `mempalace_*` **MCP tools**. It does not use the `mempalace`
+CLI, and installing that CLI does not register those tools — the two are
+separate things, and conflating them is why this section used to send people to
+`uv tool install` for a problem it cannot fix.
 
-```bash
-mempalace --version
-```
+The only prerequisite is the MCP server, which this plugin no longer registers.
+If the tools are missing, that is the expected state:
+[how to enable it, and what to use instead](reference.md).
 
-If not installed:
+## Orientation
 
-```bash
-uv tool install mempalace   # recommended
-# or: pip install mempalace
-```
-
-## Session Start
-
-Call `mempalace_status` at the start of every session to orient. For deeper context, search the relevant wing.
+When the tools are available, `mempalace_status` shows what a nexus holds; for
+deeper context, search the relevant wing. This is not a session-start ritual —
+the skill is retired from routing and runs only when MemPalace is named, so
+there is no session for it to start.
 
 ## When to Save
 
-Save to the nexus when the user shares:
+Nothing new should be written through this skill; see the redirect table in
+[reference.md](reference.md). Historically the nexus took what the user shared:
 - Architectural decisions and their rationale
 - Team conventions and preferences
 - Bug root causes and fixes

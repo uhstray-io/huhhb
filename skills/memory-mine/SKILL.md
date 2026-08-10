@@ -1,6 +1,6 @@
 ---
 name: memory-mine
-description: LEGACY, retired from routing 2026-08-01 — ingest a directory into an existing MemPalace nexus. Use when MemPalace is named explicitly. For current code structure use codebase-memory-mcp indexing instead. The memory MCP server is opt-in.
+description: Use when MemPalace is named explicitly and a directory must be ingested into an existing MemPalace nexus. Legacy, retired from routing 2026-08-01. For current code structure use codebase-memory-mcp indexing instead. The memory MCP server is opt-in.
 ---
 
 # memory-mine

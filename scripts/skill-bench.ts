@@ -320,11 +320,37 @@ function latestHistoryRow(match: (row: Json) => boolean): Json | null {
 /* R3: the champion is the latest history row for this skill+scenario from a
    DIFFERENT version that completed all its runs — the bar a challenger must
    meet ("no victory, no replacement"). Same-version rows are re-runs, not
-   rivals; rows that never fully passed set no bar. */
-export function championRow(skill: string, scenarioId: string, version: string): Json | null {
+   rivals; rows that never fully passed set no bar.
+
+   `pHash` is part of the identity, not a refinement of it. A scenario can keep
+   its id while its prompt or assert changes, and then the old row measures a
+   different requirement — gating a new prompt's pass rate and tokens against it
+   compares two unrelated things. cachedBaseline already matches on prompt_hash
+   for exactly this reason; the two must agree on what "the same scenario" means.
+   No fully-passed row in the current ledger predates prompt_hash, so requiring
+   it orphans no existing champion. */
+export function championRow(
+  skill: string, scenarioId: string, version: string, pHash: string,
+): Json | null {
   return latestHistoryRow((row) =>
     row.skill === skill && row.scenario === scenarioId
+    && row.prompt_hash === pHash
     && Boolean(row.version) && row.version !== version
+    && Number(row.runs) > 0 && Number(row.passes) === Number(row.runs));
+}
+
+/* The challenger side of the same bar. battleSkill used to require only that a
+   banked output FILE existed, which let a challenger that failed its assert
+   enter a battle and take a BATTLE PASS — outputs are banked before any gate
+   runs, deliberately, so --review can inspect failures. Requiring a fully-passed
+   row makes the two sides symmetric: the champion had to pass to set the bar,
+   so the challenger has to pass to contest it. */
+export function challengerRow(
+  skill: string, scenarioId: string, version: string, pHash: string,
+): Json | null {
+  return latestHistoryRow((row) =>
+    row.skill === skill && row.scenario === scenarioId
+    && row.prompt_hash === pHash && row.version === version
     && Number(row.runs) > 0 && Number(row.passes) === Number(row.runs));
 }
 
@@ -532,10 +558,11 @@ function battleSkill(spec: Spec, championRef: string | null, dryRun: boolean,
       skip("no rubric — battle ranks against a rubric or not at all");
       continue;
     }
+    const pHash = promptHash(scenario.prompt, scenario.assert);
     let champHash: string | null = refHash;
     let champVersion = championRef ?? "?";
     if (!championRef) {
-      const row = championRow(skill, sid, version);
+      const row = championRow(skill, sid, version, pHash);
       if (row?.skill_hash) {
         champHash = String(row.skill_hash);
         champVersion = String(row.version);
@@ -549,7 +576,6 @@ function battleSkill(spec: Spec, championRef: string | null, dryRun: boolean,
       skip(`champion and challenger are the same content (${champHash})`);
       continue;
     }
-    const pHash = promptHash(scenario.prompt, scenario.assert);
     const champOut = loadOutput(skill, sid, pHash, champHash);
     if (champOut === null) {
       skip(`champion output not banked (${champHash}) — bench that version ` +
@@ -561,14 +587,31 @@ function battleSkill(spec: Spec, championRef: string | null, dryRun: boolean,
       skip(`challenger output not banked (${challengerHash}) — run a plain bench first`);
       continue;
     }
+    /* A banked file proves a run happened, not that it passed. Without this the
+       challenger's own assert failure never reaches battle, and a broken skill
+       can still take a BATTLE PASS off a judge that liked its prose. */
+    if (!challengerRow(skill, sid, version, pHash)) {
+      skip(`challenger ${version} has no fully-passing run for this scenario — ` +
+        "a side that cannot pass its own assert does not get to contest the champion");
+      continue;
+    }
     if (dryRun) {
       console.log(`  would judge ${sid}: champion ${champHash} vs challenger ` +
         `${challengerHash}, 2 calls (champion-first, then swapped)`);
       continue;
     }
 
-    // Champion as A first. A TIE there is a TIE regardless of the swap, so the
-    // second call is skipped — ties are the modal case and this halves them.
+    /* Champion as A first. The swap is skipped after a first-order TIE because
+       reconcileSwap("TIE", x) === "TIE" for every x — verdict, tally and every
+       gate are provably identical either way, and ties are the modal case, so
+       this halves the judge calls where they are most common.
+
+       What it forgoes, precisely: a judge that ties one way and picks a side the
+       other is position-sensitive, and that shows up as "(positions disagreed)"
+       only when the first order was decided. For a tied pair the evidence is not
+       collected. That costs no verdict — a swapped pair reconciles to TIE either
+       way — but it does mean position sensitivity is measured on decided pairs
+       only. Drop the condition to measure it everywhere, at double the price. */
     const first = battleJudge(scenario.judge, champOut, challOut);
     let second: { verdict: BattleVerdict; reason: string; raw: string } | null = null;
     let verdict: BattleSide = "TIE";
@@ -706,14 +749,16 @@ function benchSkill(spec: Spec, runs: number, dryRun: boolean,
       console.log(`  would run: claude -p ${pyRepr(scenario.prompt)}  assert: ${scenario.assert}`);
       continue;
     }
+    const sPHash = promptHash(scenario.prompt, scenario.assert);
     const skilled = runScenario(scenario, runs, false);
-    // Bank a representative output for battle: the first run that passed its
-    // assert, else the first run. A failing output is still worth banking —
-    // battle excludes it via the gate, but --review may want to look at it.
+    /* Bank a representative output for battle: the first run that passed its
+       assert, else the first run. Banking happens here, before any gate, so
+       --review can inspect a failure — which means the BANK IS NOT A GATE.
+       battleSkill enforces the pass separately via challengerRow; an earlier
+       comment here claimed the bank did it, and nothing did. */
     if (skillHash && skilled.length) {
       const rep = skilled.find((r) => r.pass) ?? skilled[0];
-      bankOutput(spec.skill, sid, promptHash(scenario.prompt, scenario.assert),
-        skillHash, rep.result);
+      bankOutput(spec.skill, sid, sPHash, skillHash, rep.result);
     }
     const cached = rebaseline ? null : cachedBaseline(spec.skill, scenario);
     let bt: number;
@@ -777,7 +822,7 @@ function benchSkill(spec: Spec, runs: number, dryRun: boolean,
     }
 
     // R3 champion/challenger: never replace a passing lineage with a worse one
-    const champ = championRow(spec.skill, sid, version);
+    const champ = championRow(spec.skill, sid, version, sPHash);
     if (champ) {
       const cv = beatsChampion({ passes, runs, tokens }, champ);
       gate(sid, "R3 vs champion", cv.ok, cv.detail);

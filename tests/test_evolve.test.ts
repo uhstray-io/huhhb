@@ -1794,12 +1794,24 @@ describe("BattleTests", () => {
         `const spec = JSON.parse(fs.readFileSync(${JSON.stringify(
           path.join(REPO, "tests", "bench", "repo-memory.json"))}, "utf-8"));`,
         `const chall = m.skillContentHash("repo-memory");`,
+        // the challenger's version is whatever marketplace.json says today —
+        // battle reads it there, and challengerRow matches on it
+        `const mp = JSON.parse(fs.readFileSync(${JSON.stringify(
+          path.join(REPO, "marketplace.json"))}, "utf-8"));`,
+        `const cv = String(mp.skills.find((x) => x.name === "repo-memory").version);`,
         `const rows = [];`,
         `for (const s of spec.scenarios) {`,
         `  const ph = m.promptHash(s.prompt, s.assert);`,
+        // prompt_hash is part of a champion's identity: a row without it measures
+        // some other prompt, so championRow will not accept it
         `  rows.push(JSON.stringify({ skill: "repo-memory", scenario: s.id,`,
         `    version: "0.0.1-old", runs: 3, passes: 3, tokens: 1000,`,
-        `    skill_hash: ${JSON.stringify(CHAMP)} }));`,
+        `    prompt_hash: ph, skill_hash: ${JSON.stringify(CHAMP)} }));`,
+        // and the challenger must have a fully-passing run of its own, or it
+        // does not get to contest the champion
+        `  rows.push(JSON.stringify({ skill: "repo-memory", scenario: s.id,`,
+        `    version: cv, runs: 3, passes: 3, tokens: 1000,`,
+        `    prompt_hash: ph, skill_hash: chall }));`,
         `  for (const h of [${JSON.stringify(CHAMP)}, chall]) {`,
         `    const p = m.outputPath("repo-memory", s.id, ph, h);`,
         `    fs.mkdirSync(path.dirname(p), { recursive: true });`,
@@ -1834,6 +1846,64 @@ describe("BattleTests", () => {
         "battle must skip exactly the non-judgeable scenarios, by whichever guard catches it");
       assert.match(r.stdout, new RegExp(`champion ${CHAMP}`),
         "the champion hash must come from the history row, not the working tree");
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  test("test_a_challenger_that_failed_its_own_assert_cannot_contest_the_champion", () => {
+    /* Outputs are banked before any gate runs, on purpose, so --review can
+       inspect a failure. Battle used to require only that the banked FILE
+       existed, so a challenger that never passed its own assert could still be
+       judged and take a BATTLE PASS off a judge that liked its prose. Same
+       fixture as the join test, with the challenger's row failing. */
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "bench-battle-fail-"));
+    try {
+      const hist = path.join(tmp, "hist.jsonl");
+      const outs = path.join(tmp, "outputs");
+      const env = { ...process.env, SKILL_BENCH_HISTORY: hist, SKILL_BENCH_OUTPUTS: outs };
+      const CHAMP = "b".repeat(bench.HASH_CHARS);
+      const seed = path.join(tmp, "seed.mjs");
+      fs.writeFileSync(seed, [
+        `const m = await import(${JSON.stringify(
+          pathToFileURL(path.join(REPO, "scripts", "skill-bench.ts")).href)});`,
+        `const fs = await import("node:fs"), path = await import("node:path");`,
+        `const spec = JSON.parse(fs.readFileSync(${JSON.stringify(
+          path.join(REPO, "tests", "bench", "repo-memory.json"))}, "utf-8"));`,
+        `const chall = m.skillContentHash("repo-memory");`,
+        `const mp = JSON.parse(fs.readFileSync(${JSON.stringify(
+          path.join(REPO, "marketplace.json"))}, "utf-8"));`,
+        `const cv = String(mp.skills.find((x) => x.name === "repo-memory").version);`,
+        `const rows = [];`,
+        `for (const s of spec.scenarios) {`,
+        `  const ph = m.promptHash(s.prompt, s.assert);`,
+        `  rows.push(JSON.stringify({ skill: "repo-memory", scenario: s.id,`,
+        `    version: "0.0.1-old", runs: 3, passes: 3, tokens: 1000,`,
+        `    prompt_hash: ph, skill_hash: ${JSON.stringify(CHAMP)} }));`,
+        // the only difference from the join test: 2 of 3 runs passed
+        `  rows.push(JSON.stringify({ skill: "repo-memory", scenario: s.id,`,
+        `    version: cv, runs: 3, passes: 2, tokens: 1000,`,
+        `    prompt_hash: ph, skill_hash: chall }));`,
+        `  for (const h of [${JSON.stringify(CHAMP)}, chall]) {`,
+        `    const p = m.outputPath("repo-memory", s.id, ph, h);`,
+        `    fs.mkdirSync(path.dirname(p), { recursive: true });`,
+        `    fs.writeFileSync(p, "output for " + h);`,
+        `  }`,
+        `}`,
+        `fs.writeFileSync(process.env.SKILL_BENCH_HISTORY, rows.join("\\n") + "\\n");`,
+      ].join("\n"));
+      const s = spawnSync(process.execPath, [seed], { encoding: "utf-8", env });
+      assert.equal(s.status, 0, s.stderr);
+
+      const r = spawnSync(process.execPath,
+        [path.join(REPO, "scripts", "skill-bench.ts"),
+          "--battle", "repo-memory", "--dry-run"],
+        { encoding: "utf-8", env, cwd: REPO });
+      assert.equal(r.status, 0, r.stderr);
+      assert.doesNotMatch(r.stdout, /would judge/,
+        "a challenger with a failing run must never reach the judge");
+      assert.match(r.stdout, /no fully-passing run for this scenario/,
+        "and the skip must say why, not look like a missing bank");
     } finally {
       fs.rmSync(tmp, { recursive: true, force: true });
     }

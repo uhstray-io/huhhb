@@ -113,9 +113,9 @@ node "${CLAUDE_PLUGIN_ROOT}/skills/openspec-conformance/promote-adr.ts" \
 
 The `## Decisions`-section-only rule applies unchanged (the architecture doc
 keeps its `AD-N` blocks under a literal `## Decisions` heading; nothing else
-promotes). Same numbering sequence, same per-slug idempotency. The index is
-NOT touched — no change row exists at inception time, so the four-writer
-enumeration above is unchanged by this mode.
+promotes). Same numbering sequence, same per-slug idempotency. No change-status
+register is read or written in this mode or any other — change status lives in
+the store, as stated above.
 
 ## Full detail
 

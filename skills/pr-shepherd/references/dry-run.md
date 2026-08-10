@@ -26,8 +26,9 @@ Workflow 2 left three PRs open: **#41, #42** (implementer PRs, worktrees
    #43." Now (a)+(b)+(c)+(d) all hold → buhhdy executes the merge of #43.
    #41/#42 stay blocked until each gets BOTH a current-head human approval and
    an explicit instruction.
-6. **Post-merge (#43).** Close `Closes #38`; the conformance probe finds
-   `plans/development/openspec/config.yaml`, so `openspec archive` +
+6. **Post-merge (#43).** Close `Closes #38`; the conformance probe finds all
+   three — `plans/development/openspec/config.yaml`, `.openspec-store/store.yaml`,
+   and the store id in `openspec store list --json` — so `openspec archive` +
    `promote-adr.ts` (one ADR lands in `plans/architecture/` with both index
    rows, if #38's design had a `## Decisions`); write the
    outcome via `repo-memory` to `.claude/memory/` (CI 0 / CodeRabbit 0 /
@@ -46,8 +47,9 @@ exist; post-merge checklist executed in order; worktree removed; only
 merged+inactive branches deleted (unmerged stale ones skipped); janitor
 structurally confined to `buhhdy/*`.
 
-**Not-yet-adopted variant:** on a repo without
-`plans/development/openspec/config.yaml`, step 6's archive/promote work is
+**Not-yet-adopted variant:** on a repo missing any of the three probe results —
+`plans/development/openspec/config.yaml`, `.openspec-store/store.yaml`, or its
+store id in `openspec store list --json` — step 6's archive/promote work is
 skipped with the note "archive/ADR skipped — conventions not
 yet adopted"; issue closing, the repo-memory outcome record, worktree
 removal, and the janitor all still run. A non-adopted repo never fails the

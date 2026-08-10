@@ -122,7 +122,7 @@ node "${CLAUDE_PLUGIN_ROOT}/skills/openspec-conformance/promote-adr.ts" \
 | machine registration | `openspec store list --json` includes `<repo>` (else run `register` — it no-ops if already there) |
 | store health | `openspec store doctor <repo>` → "Issues: none" |
 | ADR home | `plans/architecture/` exists |
-| product home | `plans/product/` exists |
+| product home | `plans/product/README.md` exists — the README, not just the directory. `repo-bootstrap` requires each plans subtree to carry its own README, and a bare directory passes a test for the tree while failing the requirement it stands for (content stays optional; inception is opt-in) |
 
 Re-running `openspec init` and `openspec store register` are both safe (init
 reports structure exists; register reports "already registered"). A second

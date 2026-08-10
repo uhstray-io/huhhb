@@ -148,8 +148,8 @@ merge; report which one is missing and wait.
    GitHub didn't auto-close it, close it manually with a reference to the
    merge commit.
 2. **Archive + promote (owned by `openspec-conformance`) — conforming
-   repos only (LD-1).** Probe:
-   `plans/development/openspec/config.yaml` exists. Absent → SKIP
+   repos only (LD-1).** Probe `config.yaml`, `.openspec-store/store.yaml` and
+   this repo's id in `openspec store list --json` — any absent → SKIP
    with the note "archive/ADR skipped — conventions not yet
    adopted" and continue (same warn-and-continue as `.coderabbit.yaml`);
    never fail or force-create.

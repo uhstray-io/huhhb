@@ -1,19 +1,32 @@
-# Implementation Plan — living index
+# Implementation Plan — RETIRED, historical only
 
-The index over OpenSpec changes under `openspec/changes/`, including archived
-history. One row per change; the change's own `tasks.md` is the task detail,
-not this file.
+> **This index is no longer maintained and nothing writes to it.** Change status
+> has one home: the store. `openspec list --store huhhb` reports every change's
+> name, status and task counts, derived from the changes themselves. Two records
+> of one fact diverge, and the hand-maintained one is the one that goes stale —
+> which is what happened here.
+>
+> It is kept as a **retired artifact** rather than deleted, because its rows
+> carry links to archived changes and their ADRs that predate the store. Read it
+> as history. Do not add rows, do not update statuses, and do not preserve its
+> column shape for any tool.
 
-**Update rules (who writes this file):**
-- **buhhdy Workflow 1, step 8 (`to-issues`)** adds a row when a change's tasks
-  and tracker issues are cut — status `proposed`/`in-progress`, with links to the
-  change's `tasks.md` and its issue number(s).
-- **pr-shepherd post-merge close-out** flips the row to `archived` and appends
-  the promoted `[ADR-NNNN](../architecture/YYYY/YYYY-MM.md)` link (via
-  `promote-adr.ts` — do not hand-edit the status/ADR link).
+The rows below index OpenSpec changes under `openspec/changes/` as of
+retirement. The change's own `tasks.md` is the task detail, not this file.
 
-Keep the columns exactly as below — `promote-adr.ts` matches a row by its first
-cell (the change slug) and edits the Status and Links cells in place.
+**Who used to write it, and why none of them do now:**
+- **buhhdy Workflow 1, step 8 (`to-issues`)** added a row when a change's tasks
+  and tracker issues were cut. Superseded by the store.
+- **pr-shepherd post-merge close-out** flipped the row to `archived` and
+  appended the promoted ADR link, via `promote-adr.ts`. **`promote-adr.ts` no
+  longer reads or writes this file at all** — it owns decision records and their
+  two indexes and nothing else. A promotion that failed on a missing row made an
+  unrelated file a precondition for writing a decision, so that coupling was
+  removed rather than made conditional.
+
+The columns below are frozen as they were at retirement. Nothing parses them —
+the claim that `promote-adr.ts` matches a row by its first cell and edits the
+Status and Links cells in place stopped being true when that code was removed.
 
 | Change | Title | Status | Owner | Links |
 |--------|-------|--------|-------|-------|

@@ -59,10 +59,19 @@ and prose-introduced constraints SHALL remain in force.
 ### Requirement: Narration names specifics and bans generalizations
 
 `principles.md` §7 SHALL require named file paths, symbols, values, and pattern names in
-place of generalizations, and SHALL carry an explicit banned list including *the
-codebase*, *various files*, *several changes*, *the system*, *improved error handling*,
-*refactored the logic*, *updated the config*, *better performance*, *cleaner*, *more
-robust*, and *some edge cases*. The anti-patterns subsection SHALL additionally ban
+place of generalizations.
+
+**The shared vagueness list is cited, never copied.** Phrases banned for being vague
+rather than for being voice errors — *the codebase*, *various files*, *several changes*,
+*the system*, *improved error handling*, *refactored the logic*, *updated the config*,
+*better performance*, *cleaner*, *more robust*, *some edge cases* — are owned by
+`skills/user-kickstart/reference.md` and reached from §7 by citation. §7 MUST NOT restate
+them. Two copies of a banned list is two lists the moment either is edited, and this
+requirement previously demanded both that §7 carry the list and that it not hold a second
+copy of it.
+
+The anti-patterns subsection carries what is voice-specific rather than shared, and
+SHALL ban
 edit-log framing (`I edited/updated/modified <file>`), narration preambles (`Let me…`,
 `I'll now…`), `Successfully…`, the connectives `Moreover`, `Furthermore`,
 `Additionally`, and `In conclusion`, restating the diff, narrating a change not yet

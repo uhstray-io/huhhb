@@ -25,9 +25,12 @@ Current debt, measured: **0 FAIL, 2 grandfathered (S6), 21 WARN** — 19 S6,
 - Each skill is proven not-worse by `skill-bench.ts --battle` before it merges.
   Two revise-and-rebattle attempts, then revert and move it to the tail of the
   order. **A regression is never merged.**
-- **BREAKING (for the gate, not for users)**: once the baseline is empty,
-  S9–S12 are promoted from WARN to FAIL. After that a new violation blocks a
-  merge instead of printing a line.
+- **BREAKING (for the gate, not for users)**: once the gate reports **zero
+  S9–S12 findings**, those checks are promoted from WARN to FAIL. After that a
+  new violation blocks a merge instead of printing a line. The predicate is the
+  finding count, not an empty baseline — the baseline grandfathers `FAIL` only,
+  so S9–S12 warnings never enter it and "baseline empty" would be true while
+  28 of them were still outstanding.
 
 **Scope correction the source plan does not carry.** "Retrofit every skill"
 resolves to **51, not 53**. `huhhb-welcome` (`onboarding/welcome.md`) and

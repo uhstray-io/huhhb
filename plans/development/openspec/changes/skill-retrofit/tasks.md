@@ -86,9 +86,14 @@ one-time task. Batches are 3–5 skills, in rank order.
 
 Last, and deliberately a single reversible step.
 
-- [ ] 4.1 Confirm `scripts/skill-lint-baseline.json` is empty, every retrofittable
-      skill has an E2 bench fixture, and `node scripts/skill-lint.ts` reports
-      0 FAIL and 0 grandfathered
+- [ ] 4.1 Confirm **zero S9–S12 findings** — count them directly from
+      `node scripts/skill-lint.ts`, do not infer them from the baseline. The
+      baseline grandfathers `FAIL` only (`issue.level === "FAIL" &&
+      baseline.has(...)`) and S9–S12 ship as WARN, so they never appear in it
+      and an empty baseline says nothing about them. Promoting on "baseline is
+      empty" would flip every surviving S9–S12 warning to a merge-blocking
+      failure in the same commit. Also confirm every retrofittable skill has an
+      E2 bench fixture, and that the gate reports 0 FAIL and 0 grandfathered
 - [ ] 4.2 Change S9–S12 from `WARN` to `FAIL` in `scripts/skill-lint.ts` and
       update the note beside the constants, which currently records this
       promotion as an obligation owed by this change
@@ -99,5 +104,5 @@ Last, and deliberately a single reversible step.
       fail if it silently reverted
 - [ ] 4.5 **Gate:** a deliberately violating skill fixture fails the gate, and
       the existing 51 skills still pass at 0 FAIL — proves *A new violation
-      blocks once the baseline is empty* and *The gate stays advisory while debt
-      remains* (by its absence: there is no debt left for it to apply to)
+      blocks once the debt is burned down* and *The gate stays advisory while
+      debt remains* (by its absence: there is no debt left for it to apply to)

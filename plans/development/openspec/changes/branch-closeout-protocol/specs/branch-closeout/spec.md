@@ -70,6 +70,35 @@ aborts the run rather than silently widening its scope.
 - **THEN** the run aborts before enumerating anything, rather than falling back
   to a wider scope
 
+### Requirement: The protected-ref set is resolved explicitly or the run stops
+
+The refs treated as protected SHALL be resolved at the start of a run from a
+named authoritative source, and a run that cannot resolve that set stops before
+any deletion. Protection that is merely assumed is not protection: an
+unresolvable list degrades silently into an empty one, and an empty list guards
+nothing while still reading as "protected refs were respected".
+
+The default branch is resolved from `origin/HEAD` and is always in the set —
+that resolution already fails closed. Any further protected refs come from the
+remote's branch-protection rules; where the host cannot be queried, a run either
+stops or proceeds against an explicitly supplied list, and its report SHALL say
+which of the two happened. The `janitor.md` sweep does not yet perform this
+resolution — it relies on the namespace scope alone — and gains it when this
+capability is implemented.
+
+#### Scenario: An unresolvable protected-ref set stops the run
+
+- **WHEN** the protected-ref set cannot be resolved from its authoritative
+  source
+- **THEN** the run stops before any deletion, rather than continuing with only
+  the refs it managed to resolve
+
+#### Scenario: A run says how it resolved protection
+
+- **WHEN** a close-out reports its results
+- **THEN** it names the source the protected-ref set came from, so a sweep that
+  fell back to a supplied list is distinguishable from one that queried the host
+
 ### Requirement: A deletion requires proof the work has landed
 
 A branch SHALL NOT be deleted unless its work is demonstrably present in the
@@ -114,6 +143,16 @@ deletion of work that is no longer anywhere. Where the default branch has moved
 since the audit, the run SHALL re-derive the proof against its current tip or
 abort; it MUST NOT delete on the strength of the earlier proof.
 
+**Re-deriving is necessary but not sufficient.** A revalidation that succeeds
+and a deletion that follows are still two steps, and the default branch can be
+force-pushed between them — the window shrinks but does not close. The deletion
+SHALL therefore be a single ref transaction that verifies both the candidate's
+recorded commit id *and* the default branch's, and fails as a unit if either has
+moved. `git update-ref --stdin` expresses exactly this — `verify` the default
+ref, `delete` the candidate, in one transaction — where a bare `git branch -D`
+cannot, and where a compare-and-delete on the candidate alone leaves the ref the
+proof depended on unguarded.
+
 #### Scenario: A branch that moved since the audit is not deleted
 
 - **WHEN** a branch's current tip differs from the commit id recorded during the
@@ -127,6 +166,14 @@ abort; it MUST NOT delete on the strength of the earlier proof.
   the audit
 - **THEN** no deletion proceeds on the recorded proof — each proof is re-derived
   against the current default branch, or the run aborts and reports
+
+#### Scenario: The deletion verifies both refs as one transaction
+
+- **WHEN** a branch approved for deletion is removed
+- **THEN** the removal is a single ref transaction verifying both the
+  candidate's and the default branch's recorded commit ids, so a force-push
+  landing between revalidation and deletion fails the transaction rather than
+  slipping through the gap between them
 
 ### Requirement: A worktree is removed before the branch it holds
 

@@ -86,6 +86,25 @@ the next run.
 - **THEN** the routing policy records that the store was replaced rather than
   omitting it silently, so a later reader can tell a decision from an oversight
 
+#### Scenario: Replacement stops routing and nothing else
+
+- **WHEN** a store is replaced
+- **THEN** the store's data, its installation, and any configuration the
+  operator wrote by hand are left exactly as they were — replacement edits the
+  routing policy and nothing else. Recording "replaced" while uninstalling the
+  store would satisfy the scenario above and still destroy the thing the
+  operator was told they were keeping, which is the reading this scenario
+  exists to close
+
+#### Scenario: A re-run with unchanged inputs rewrites nothing
+
+- **WHEN** memory-setup runs again on a machine whose detected stores and
+  recorded answers are both unchanged
+- **THEN** the managed routing block is left **byte-identical** and the operator
+  is not re-prompted. Stores are matched on a stable identity recorded with the
+  decision, not on presentation order or wording, so a re-run cannot re-litigate
+  a store by failing to recognise it
+
 #### Scenario: A re-run does not re-litigate a recorded decision
 
 - **WHEN** memory-setup runs again on a machine whose routing policy already

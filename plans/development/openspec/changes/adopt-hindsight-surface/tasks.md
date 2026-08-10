@@ -3,11 +3,21 @@
 Highest value and lowest uncertainty: the policy already states the need and
 names no remedy.
 
-- [ ] 1.1 Establish what each curation operation actually does against the live
-      store — `invalidate_memory`, `update_memory`, `clear_memories`,
+- [ ] 1.0 **Create a scratch bank first, and probe only there.** `clear_memories`
+      and `invalidate_memory` are destructive, the project bank holds the only
+      copy of everything in it, and this change's design says existing data is
+      not altered while its proposal calls rollback documentation-only — three
+      claims that cannot all survive a probe against the live project bank.
+      Name the scratch bank, seed it with throwaway memories, and record how it
+      is torn down
+- [ ] 1.1 Establish what each curation operation actually does **in that scratch
+      bank** — `invalidate_memory`, `update_memory`, `clear_memories`,
       `list_memories`, `list_tags`. Verify behaviour rather than inferring it
       from names; this repo has already been bitten by a store where `tags` do
       not filter and a `PUT` silently updates
+- [ ] 1.1a **Gate:** the project bank's fact count and a spot-checked recall are
+      unchanged from before the probes. A destructive probe that ran against the
+      wrong bank is not recoverable, so this is checked rather than assumed
 - [ ] 1.2 Add the correction path to the routing policy: which operation retires
       a wrong memory, which amends a stale one, and the situation each is for
 - [ ] 1.3 Distinguish correcting from deleting explicitly — a memory that is out
@@ -21,9 +31,11 @@ names no remedy.
 
 ## 2. Evaluate mental models
 
-- [ ] 2.1 Exercise the family against the live store — create, refresh, list,
-      get, update, clear — and record what a mental model *is* here as opposed to
-      a retained memory. Budget: model calls at roughly measured `reflect` cost
+- [ ] 2.1 Exercise the family **in the scratch bank from 1.0**, never the project
+      bank — create, refresh, list, get, update, clear — and record what a mental
+      model *is* here as opposed to a retained memory. `clear_mental_model` and
+      `delete_mental_model` are as destructive as their names suggest. Budget:
+      model calls at roughly measured `reflect` cost
 - [ ] 2.2 Decide adopt or decline, and write the answer into the policy either
       way. If adopted, state what belongs in a mental model versus a retained
       memory; the boundary is the whole value, and without it this becomes a

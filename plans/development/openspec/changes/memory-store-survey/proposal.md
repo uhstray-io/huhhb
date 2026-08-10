@@ -59,8 +59,25 @@ None. `memory-setup`'s install phases are untouched.
 
 ## Rollback Plan
 
-Documentation only — `memory-setup` is a skill, not a program, so both pieces
-revert as ordinary edits with nothing to migrate.
+Documentation only **in this repo** — `memory-setup` is a skill, not a program,
+so both pieces revert as ordinary edits.
+
+**But the procedure writes to operator machines, and reverting the skill does
+not un-write those.** The survey records its keep-or-replace decisions in a
+managed block in the operator's global routing policy — a file this repo does
+not own and cannot reach. So "nothing to migrate" is true of the skill and false
+of its output, and the two must not be conflated:
+
+- A machine that ran the new procedure keeps its managed block after a revert.
+  The block must therefore remain **valid and self-describing on its own** —
+  readable as a record of decisions without the version of the skill that wrote
+  it, which is what makes leaving it in place safe.
+- Cleanup is the operator's, and is an ordinary edit inside marked block
+  delimiters. The skill SHALL NOT reach outside those markers, so removing the
+  block never disturbs anything the operator wrote around it.
+- A reverted skill meeting a newer block reads it rather than rewriting it.
+  Re-deriving a decision the operator already made is the failure this whole
+  change exists to prevent.
 
 - **The detection list** — revert; phase 0 returns to its generic prompt and
   still stops for a human.

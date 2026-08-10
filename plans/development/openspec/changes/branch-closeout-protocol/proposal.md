@@ -22,7 +22,8 @@ last commit. Both were recoverable. The protocol exists so the third time is too
   than as a checklist in a dated plan.
 - The protocol codifies four properties the 2026-07-18 audit applied by hand:
   - **Two independent proofs of merge**, not one: either the tip is an ancestor
-    of `origin/main`, or the file-level diff against main over the branch's own
+    of the resolved default branch — from `origin/HEAD`, never hardcoded as
+    `main` — or the file-level diff against that branch over the branch's own
     changed files is empty (content-equivalence — how
     `refactor/buhhdy-memory-hierarchy` was cleared despite a non-ancestor tip).
   - **Compare-and-delete**, never a bare delete: capture the audited oid and

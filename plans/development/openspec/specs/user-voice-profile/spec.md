@@ -120,10 +120,11 @@ before merge.
 - **WHEN** the bench runs the negative trigger list
 - **THEN** `user-kickstart` does not match any of them
 
-### Requirement: The workflow is five ordered phases
+### Requirement: The workflow is Phase 0 plus five ordered phases
 
-`SKILL.md` SHALL define exactly five phases in order — read current state, interview,
-draft, evidence audit, resolve, write — with the write phase last and gated. Phase 0
+`SKILL.md` SHALL define a Phase 0 that reads current state, followed by exactly five
+phases in order — interview, draft, evidence audit, resolve, write — with the write
+phase last and gated. Phase 0
 SHALL read `~/.claude/CLAUDE.md`, detect existing managed-block markers, and recall from
 the hindsight `personal` bank. The skill SHALL NOT skip the interview when a block
 already exists; a re-run SHALL show what is currently in force and interview only the

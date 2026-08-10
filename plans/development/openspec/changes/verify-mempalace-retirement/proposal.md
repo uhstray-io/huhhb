@@ -30,12 +30,20 @@ surface a runtime reads.
 - **New**: the four partial scenarios are verified against a **published**
   huhhb, installed from the marketplace after this work merges — not against a
   working tree, and not against a hand-assembled cache.
-- **New**: the result is written back into the archived `retire-mempalace`
-  change, so its scenario table stops reading "partial" or records why it still
-  does.
-- A failed check **reopens the claim**. If a fresh install still registers the
-  server, or a retired skill still answers to "remember this", that is a defect
-  in `retire-mempalace`, not an observation about it.
+- **New**: the result is written back into the `retire-mempalace` change, so its
+  scenario table stops reading "partial" or records why it still does. That
+  change is **active** as this is written, not archived; task 4.0 requires
+  archiving it first and naming the resulting dated path, because writing to an
+  archived path that does not exist yet just creates a second copy.
+- A failed check **reopens the claim** — but only once it is attributed. If a
+  fresh install still registers the server, or a retired skill still answers to
+  "remember this", that is a defect in `retire-mempalace` rather than an
+  observation about it. **First establish which copy answered.** This machine
+  carries ~50 untracked auto-loading skills in `.claude/skills/`, which no
+  install replaces; a retired skill firing from that copy is contamination, and
+  the run is recorded void or partial for that phrasing rather than reopening a
+  change that shipped correctly. Only a failure attributable to the *installed*
+  artifact is a defect.
 - The verification procedure is recorded where the next post-release check can
   reuse it, because this repo's install mechanics are documented as hostile:
   `plugin install` reports success and does nothing, `plugin update` reads a
@@ -62,7 +70,8 @@ them rather than altering any.
 
 ## Impact
 
-- The archived `retire-mempalace` change — its scenario coverage table is
+- The `retire-mempalace` change, once archived (task 4.0 — it is active today) —
+  its scenario coverage table is
   updated in place with the live result. This is the one case where writing into
   an archived change is correct: the archive records what was proven, and the
   proof arrived late.

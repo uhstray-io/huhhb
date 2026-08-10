@@ -18,8 +18,8 @@ section SHALL promote no ADR and exit 0 with a note. New cases in the existing
 `tests/test_openspec_conformance.test.ts` SHALL cover the mode.
 
 #### Scenario: Immediate promotion from architecture.md
-- **WHEN** the script runs with `--from plans/product/<slug>/architecture.md --slug <slug>`
-- **THEN** exactly one `plans/architecture/NNN-<slug>.md` ADR is written from the `## Decisions` section only
+- **WHEN** the script runs with `<plans-dir> --from plans/product/<slug>/architecture.md --slug <slug>`
+- **THEN** exactly one `ADR-NNNN` record is appended to `plans/architecture/YYYY/YYYY-MM.md` from the `## Decisions` section only, plus its year-index and master-index rows
 
 #### Scenario: Idempotent re-run
 - **WHEN** the same source-file invocation runs twice

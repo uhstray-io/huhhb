@@ -31,25 +31,41 @@ proves something about the wrong thing.
       `memory` MCP server is registered and no tool call fails. Note that a
       standalone MemPalace plugin registers its own server as `mempalace`; that
       one being present is correct and is not this check failing
-- [ ] 3.2 **Fails legibly** — invoke one of the four skills with no server
-      configured. Confirm the user meets the stated prerequisite and the pointer
-      to `skills/memory/reference.md`, not an unexplained missing tool
+- [ ] 3.2 **Fails legibly** — invoke **each of the four** skills (`memory`,
+      `memory-search`, `memory-mine`, `memory-status`) with no server
+      configured, and record each result. The change rewrote four distinct
+      prerequisite surfaces; one skill answering correctly says nothing about
+      the other three. Confirm the user meets the stated prerequisite and the
+      pointer to `skills/memory/reference.md`, not an unexplained missing tool
 - [ ] 3.3 **Current phrasing routes to the current system** — issue "remember
       this", "what do we know about X", "search my memory" and "memory status".
-      Confirm none reaches a retired skill. Record the `.claude/skills/`
-      contamination caveat with any figure; installing does not fix that
-- [ ] 3.4 **Reachable by name** — name MemPalace explicitly and confirm the
-      relevant retired skill activates. Retirement removes a skill from routing,
-      not from reach; this is the half that proves the first half did not
-      overshoot
-- [ ] 3.5 **Gate:** all four exercised against the published artifact, each
-      recorded as verified or still-partial with a reason
+      For each, record **both halves**: the current owner expected to answer it
+      and whether it actually activated, then separately that no retired skill
+      claimed it. Checking only the negative half passes when a phrasing
+      activates *nothing*, which is a routing hole wearing a clean result.
+      Record the `.claude/skills/` contamination caveat with any figure;
+      installing does not fix that
+- [ ] 3.4 **Reachable by name** — name MemPalace explicitly and confirm **each
+      of the four** retired skills can still be reached, recording each.
+      Retirement removes a skill from routing, not from reach; this is the half
+      that proves the first half did not overshoot, and it has to hold for all
+      four or the overshoot is simply somewhere unmeasured
+- [ ] 3.5 **Gate:** all four scenarios exercised against the published artifact
+      across all four skills, each recorded as verified or still-partial with a
+      reason
 
 ## 4. Write the result back
 
-- [ ] 4.1 Update the archived `retire-mempalace` change's scenario coverage table
-      with the live results. This is the one sanctioned write into an archive —
-      the archive records what was proven, and the proof arrived late
+- [ ] 4.0 **Confirm where `retire-mempalace` lives before writing to it.** It is
+      **active** at `plans/development/openspec/changes/retire-mempalace/` as of
+      this change being written, not archived. Archive it first (`/opsx:archive`,
+      which dates the directory), then write to
+      `plans/development/openspec/changes/archive/YYYY-MM-DD-retire-mempalace/`.
+      Writing to the archived path before the archive exists silently creates a
+      second copy of the change
+- [ ] 4.1 Update that change's scenario coverage table with the live results.
+      This is the one sanctioned write into an archive — the archive records
+      what was proven, and the proof arrived late
 - [ ] 4.2 A scenario that still cannot be checked keeps its partial status and
       gains a stated reason. Do not drop it
 - [ ] 4.3 **Gate:** no scenario in `retire-mempalace` reads "partial" without a

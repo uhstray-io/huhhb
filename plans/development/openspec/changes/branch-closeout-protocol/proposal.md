@@ -81,10 +81,14 @@ nothing depends on it at runtime.
 Deletions performed *under* it are the real question, and the protocol is
 designed so they stay reversible:
 
-- **Branches** — `git reflog` retains deleted tips for 90 days, and the spec
-  forbids `git gc --prune` during close-out precisely to preserve that window.
-  A branch deleted in error is restored with `git branch <name> <oid>` using the
-  oid the compare-and-delete step already recorded.
+- **Branches** — a branch deleted in error is restored with
+  `git branch <name> <oid>` using the oid the compare-and-delete step already
+  recorded, and the spec forbids `git gc --prune` during close-out to preserve
+  the reflog behind it. **The window is 30 days, not 90.** A deleted tip is
+  *unreachable*, so `gc.reflogExpireUnreachable` governs it — both settings are
+  unset in this repo, so git's defaults apply and the 90 belongs to
+  `gc.reflogExpire`, which covers reachable entries. The recorded oid is the
+  durable half; the reflog is the short one.
 - **Worktrees** — removing a worktree deletes no commits; the branch is
   re-checkout-able.
 - **Stashes** — the highest-risk item, because a dropped stash is not covered by
@@ -93,4 +97,8 @@ designed so they stay reversible:
   the rollback is that the work was never only in a stash to begin with.
 
 Nothing here touches `origin` until local deletions are proven, and remote
-deletion skips any branch with an open PR.
+deletion skips any branch with an open PR. Remote deletion is also leased rather
+than bare: `git push origin --delete` compares nothing and will happily remove a
+ref somebody pushed to after the audit, so the spec requires
+`--force-with-lease=refs/heads/<b>:<oid>` and excludes remote deletion entirely
+where that lease cannot be supplied. There is no remote reflog to fall back on.

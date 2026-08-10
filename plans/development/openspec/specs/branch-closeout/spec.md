@@ -117,6 +117,16 @@ The second proof exists because a rebased or cherry-picked branch carries no
 ancestry to the commits that landed its content, yet has nothing left to lose.
 Requiring ancestry alone would strand such branches forever.
 
+**That second proof is only as sound as its inputs, so both are named and
+recorded in the audit.** The *base* is the merge-base of the branch and the
+resolved default branch. The *path set* is the files the branch changed relative
+to that base — `git diff --name-only <base>..<branch>`. The proof is that
+`git diff <default>..<branch> -- <path set>` is empty. Left undefined, the path
+set is where this proof lies: under-approximate it and the restricted diff comes
+back empty while unique work sits outside it, which reads exactly like a branch
+that landed. Recording the base and the path set is what makes a deletion
+reviewable afterwards instead of taken on trust.
+
 #### Scenario: An ancestor tip is deletable
 
 - **WHEN** a branch's tip is an ancestor of the default branch
@@ -173,6 +183,14 @@ proof depended on unguarded.
 - **THEN** no deletion proceeds on the recorded proof — each proof is re-derived
   against the current default branch, or the run aborts and reports
 
+**A remote branch is deleted under the same rule.** `git push origin --delete`
+compares nothing, so it removes a remote ref that moved after the audit —
+somebody else's push, silently. Remote deletion SHALL carry the audited object
+id as a lease (`git push --force-with-lease=refs/heads/<b>:<oid> origin
+:refs/heads/<b>`), which refuses the delete when the remote ref no longer points
+where the audit saw it. A run that cannot supply the lease SHALL exclude remote
+deletion rather than perform it unguarded.
+
 #### Scenario: The deletion verifies both refs as one transaction
 
 - **WHEN** a branch approved for deletion is removed
@@ -180,6 +198,13 @@ proof depended on unguarded.
   candidate's and the default branch's recorded commit ids, so a force-push
   landing between revalidation and deletion fails the transaction rather than
   slipping through the gap between them
+
+#### Scenario: A remote branch that moved since the audit is not deleted
+
+- **WHEN** a remote branch approved for deletion no longer points at the object
+  id recorded during the audit
+- **THEN** the lease refuses the deletion, the remote branch survives, and the
+  discrepancy is reported
 
 ### Requirement: A worktree is removed before the branch it holds
 
@@ -223,15 +248,34 @@ rather than by these sets.
 
 ### Requirement: Deleted work stays recoverable
 
-A close-out SHALL preserve the recovery window for everything it deletes. The
-reflog is the safety net the protocol depends on, so a close-out MUST NOT prune
-it, and the commit id of every deleted branch is recorded in the run's report.
+A close-out SHALL preserve the recovery window for everything it deletes, and
+SHALL state that window rather than implying one. The reflog is the safety net
+this protocol depends on, so a close-out MUST NOT prune it, and the commit id of
+every deleted branch is recorded in the run's report — the recorded id is the
+part that does not expire.
 
-#### Scenario: A branch deleted in error is restorable
+**The window is shorter than the protocol's own numbers suggest.** A deleted
+branch's tip becomes *unreachable*, so it is governed by
+`gc.reflogExpireUnreachable` — **30 days** by default — and not by
+`gc.reflogExpire`'s 90, nor by the 90-day inactivity threshold used to pick
+candidates. Two unrelated 90s invite the reading that a deleted branch is
+recoverable for 90 days. It is not. A run SHALL read the effective retention,
+including any ref-specific override, and report the real figure; where it cannot
+determine one, it SHALL describe recovery as best-effort rather than asserting a
+window it has not checked.
+
+#### Scenario: A branch deleted in error is restorable within the stated window
 
 - **WHEN** a branch is deleted during a close-out and is later found to have been
   needed
-- **THEN** its recorded commit id restores it, and the reflog still holds the tip
+- **THEN** its recorded commit id restores it, provided the run is inside the
+  retention window the run itself reported
+
+#### Scenario: An unverifiable retention window is reported as best-effort
+
+- **WHEN** effective reflog retention cannot be determined for a run
+- **THEN** the report describes recovery as best-effort and names the recorded
+  commit ids, rather than stating a window it did not check
 
 ### Requirement: A stash carrying work becomes a branch before it is dropped
 

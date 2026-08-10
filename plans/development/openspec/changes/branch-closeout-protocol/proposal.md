@@ -53,7 +53,15 @@ None. This store currently holds no main specs.
 ## Impact
 
 - `skills/pr-shepherd/references/janitor.md` — the prose this spec formalizes.
-  The spec becomes the source of truth; the reference points at it.
+  The spec becomes the source of truth; the reference points at it. **The
+  promotion must be lossless**, and the first draft was not: it carried the
+  merge proofs and the fail-closed rule but dropped the namespace scope and the
+  90-day inactivity cutoff, which are the only things keeping the default branch
+  out of range. A tip is an ancestor of itself and its diff against itself is
+  empty, so both proofs pass for the default branch — the script is safe because
+  it enumerates `refs/heads/<prefix>/`, not because the proofs protect it.
+  Those guards are now stated as an eligibility requirement that runs before any
+  proof.
 - No production code. This capability governs repository operations, so its
   "implementation" is the protocol being followed and, optionally, a script that
   performs the checks mechanically.

@@ -13,6 +13,46 @@ be the reason work is lost.
 
 ## Requirements
 
+### Requirement: Only an eligible branch is a deletion candidate
+
+A branch SHALL be considered for deletion only if it sits inside the sweep's
+configured namespace, has been inactive for at least 90 days, and is neither the
+default branch nor any other protected ref. These checks run BEFORE any merge
+proof. A branch failing one is not skipped-with-a-reason; it is never a
+candidate and is never examined.
+
+Eligibility is separate from proof because **the merge proofs cannot exclude the
+default branch on their own**. A tip is trivially an ancestor of itself, so the
+default branch satisfies the ancestry proof; its diff against itself is empty,
+so it satisfies the content proof too. Safety here rests on the scope check, not
+on the proofs — which is exactly how the `janitor.md` prose this spec formalizes
+stays safe: it enumerates only `refs/heads/<prefix>/` and re-asserts the
+namespace per branch. A prefix that is empty, or contains a slash or a space,
+aborts the run rather than silently widening its scope.
+
+#### Scenario: The default branch is never a candidate
+
+- **WHEN** a sweep enumerates branches
+- **THEN** the default branch is excluded before any proof is evaluated, even
+  though it satisfies both merge proofs
+
+#### Scenario: A branch outside the namespace is never a candidate
+
+- **WHEN** a branch does not sit under the configured namespace prefix
+- **THEN** it is not examined and not deleted
+
+#### Scenario: A recently active branch is kept
+
+- **WHEN** a branch's last commit is newer than the 90-day inactivity cutoff
+- **THEN** it is kept, regardless of whether it satisfies a merge proof
+
+#### Scenario: An unusable namespace aborts the run
+
+- **WHEN** the configured namespace prefix is empty, or contains a slash or a
+  space
+- **THEN** the run aborts before enumerating anything, rather than falling back
+  to a wider scope
+
 ### Requirement: A deletion requires proof the work has landed
 
 A branch SHALL NOT be deleted unless its work is demonstrably present in the
@@ -49,12 +89,27 @@ aborts rather than deleting the newer work. An audit and its execution are
 separated in time, and this repository has twice had in-flight commits stranded
 by acting on a stale picture.
 
+**The default branch is pinned the same way.** A merge proof is a statement
+about two refs, so recording only the candidate's commit id leaves the proof
+true on paper while the ref it was proved against is rewritten underneath it — a
+force-push or reset that drops the landed commits turns a valid proof into a
+deletion of work that is no longer anywhere. Where the default branch has moved
+since the audit, the run SHALL re-derive the proof against its current tip or
+abort; it MUST NOT delete on the strength of the earlier proof.
+
 #### Scenario: A branch that moved since the audit is not deleted
 
 - **WHEN** a branch's current tip differs from the commit id recorded during the
   audit
 - **THEN** the deletion aborts, the branch survives, and the discrepancy is
   reported
+
+#### Scenario: A rewritten default branch invalidates the audited proof
+
+- **WHEN** the default branch's tip differs from the commit id recorded during
+  the audit
+- **THEN** no deletion proceeds on the recorded proof — each proof is re-derived
+  against the current default branch, or the run aborts and reports
 
 ### Requirement: A worktree is removed before the branch it holds
 

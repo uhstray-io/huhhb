@@ -1,9 +1,14 @@
 ---
 name: memory-status
-description: Show memory nexus statistics — drawer count, wings, rooms. Triggers on "memory status", "nexus stats", "how much is in memory", "what wings exist".
+description: Use when MemPalace is named explicitly and stats for an existing MemPalace nexus are wanted. Legacy, retired from routing 2026-08-01. For current memory health use memory-setup. The memory MCP server is opt-in.
 ---
 
 # memory-status
+
+> **Prerequisite — the `memory` MCP server is opt-in.** These tools come from a
+> server this plugin no longer registers. If a `mempalace_*` tool is
+> unavailable, it is not configured in this session — that is the expected
+> state, not a fault. [How to enable it, and what to use instead](../memory/reference.md).
 
 Show nexus statistics and structure.
 

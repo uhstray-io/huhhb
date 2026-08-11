@@ -1,8 +1,0 @@
-{
-  "mcpServers": {
-    "memory": {
-      "command": "uvx",
-      "args": ["mempalace-mcp"]
-    }
-  }
-}

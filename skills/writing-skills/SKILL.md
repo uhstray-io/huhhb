@@ -19,6 +19,12 @@ You write test cases (pressure scenarios with subagents), watch them fail (basel
 
 **Official guidance:** For Anthropic's official skill authoring best practices, see anthropic-best-practices.md. This document provides additional patterns and guidelines that complement the TDD-focused approach in this skill.
 
+**REQUIRED — the house standard:** Read [references/skill-authoring.md](references/skill-authoring.md) before writing or revising any skill in this repo. It is normative where this document is instructive: five properties (discoverable, discrete, efficient, effective, evaluated), each rule evidence-tagged, and a table saying which layer enforces each — lint, bench, battle, or review. Three rules it adds that are easy to miss:
+
+- **Never summarize the workflow in the description** — Claude follows the summary instead of reading the body. Trigger conditions only.
+- **Every skill needs a negative-activation scenario** (`expect_no_activation: true`) proving it does *not* fire on its nearest neighbour. Silence is measured, not assumed.
+- **A revision must prove it is not worse than the version it replaces** (`skill-bench.ts --battle`), because absolute judge scores compress and drift and cannot answer "better than what it replaces".
+
 ## What is a Skill?
 
 A **skill** is a reference guide for proven techniques, patterns, or tools. Skills help future Claude instances find and apply effective approaches.

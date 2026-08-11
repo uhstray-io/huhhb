@@ -45,10 +45,10 @@ already has, keep the skill self-contained, and document any runtime
 prerequisites in the skill's `SKILL.md`.
 
 Licensing boundary: our code is MIT and only *imports* externally installed
-packages — nothing AGPL is ever vendored into the tree. The memory MCP server
-runs from its published PyPI package via `uvx` (configured in
-`.claude-plugin/plugin.json` + `.claude-plugin/.mcp.json`), not vendored repo
-code.
+packages — nothing AGPL is ever vendored into the tree. This plugin registers
+**no** MCP server: the MemPalace server it used to ship was retired from routing
+and is now opt-in, configured by the user rather than by us
+(`skills/memory/reference.md`).
 
 ## When Adding a Skill
 
@@ -76,13 +76,25 @@ for Skill-tool matching. No skill duplicates built-in agent behavior.
 
 ## Skill Quality Bar
 
+**The normative standard is
+[`skills/writing-skills/references/skill-authoring.md`](skills/writing-skills/references/skill-authoring.md)** —
+five properties (discoverable, discrete, efficient, effective, evaluated), each
+rule evidence-tagged, with a table naming which layer enforces which. Read it
+before writing or revising a skill. The gates below are how it is enforced, not
+a substitute for it: lint decides what is visible in the file, bench decides what
+the model actually does, battle decides which of two versions is better, and
+everything left is review — named as such rather than approximated by a script.
+
 Three measured gates — full criteria, thresholds, and the improvement loop in
 `docs/evolve-plan.md`:
 
 - **G0 static lint** (`node scripts/skill-lint.ts`) — frontmatter, trigger
-  phrasing, body size, link integrity, manifest sync. Free; run on every PR.
-  Pre-existing debt is grandfathered in `scripts/skill-lint-baseline.json` —
-  shrink it, never grow it.
+  phrasing, body size, link integrity, manifest sync (S1–S8), plus the
+  standard's machine-enforceable subset S9–S12: spec name charset, reference
+  depth, third-person description, 500-line body. Free; run on every PR.
+  S9–S12 are WARN until the retrofit burns the debt down. Pre-existing FAIL debt
+  is grandfathered in `scripts/skill-lint-baseline.json` — shrink it, never grow
+  it.
 - **G1 merge bench** (`node scripts/skill-bench.ts <skill>`) — real
   `claude -p` runs against `tests/bench/<skill>.json` scenarios, with an A/B
   baseline (skill disabled) the skill must beat. Costs tokens; run when a
@@ -95,6 +107,38 @@ Three measured gates — full criteria, thresholds, and the improvement loop in
   the real config dir). And `--runs 1` reuses a cached baseline from
   `tests/bench/history.jsonl`; use `--runs 3 --rebaseline` when the verdict
   has to mean something.
+
+  **Asserts run under `/bin/sh`, not your shell.** The bench spawns `sh -c`, so
+  an assert gets BSD `grep` — while the interactive shell here has `grep` as a
+  function wrapping ugrep. A pattern that errors `exceeds complexity limits`
+  when you try it by hand can run fine in the bench, and vice versa. Replay
+  every candidate assert through `/bin/sh -c` or you are testing a different
+  engine than the one that will judge it.
+
+  **Benching a branch needs a manual install.** `plugin install` reports success
+  and does nothing; `plugin update` reads a stale catalog; `marketplace update`
+  refreshes it by resetting the clone to `main` and deleting your branch
+  (`autoUpdate: true`). To bench a branch: `git fetch <repo> <branch>:tmp` into
+  `~/.claude/plugins/marketplaces/huhhb`, `git archive` into
+  `cache/huhhb/huhhb/<version>/`, and point `installed_plugins.json` at it. It
+  can self-revert to `main` later, so re-check before trusting a long run. This
+  is also how you bank a champion for `--battle`, which never generates the
+  champion side itself.
+
+  **Heavy benching degrades around the hour mark.** Past roughly 57 minutes of
+  sustained runs, `claude -p` starts returning `tokens=0` empty responses and
+  trigger probes die with `probe exited 1`. Those rows are not data — purge
+  them (see the empty-run note below) rather than reading them as regressions.
+
+  **Reading `history.jsonl` as a trend.** Every row carries the repo `commit`, so
+  `git archive <sha>` reconstructs exactly the code a measurement was taken against —
+  that file, not the plugin cache, is the durable record. Two discontinuities to respect
+  when comparing across time: `prompt_hash` covered only the prompt before `347a5cb` and
+  covers prompt + assert after it, so rows either side of that commit never match even
+  for an unchanged scenario, and an earlier same-hash pair may have had different
+  asserts. And rows with `tokens: 0, cost: 0, turns: 1` are empty runs — a rate limit
+  returning nothing, not a failure; seven such rows were purged in `9616fb1f`, and any
+  that reappear should be purged rather than read as a regression.
 - **G2 field promotion** (`node scripts/evolve/g2.ts report`) — evolve-loop
   telemetry (earned confidence, correction pressure) gates featured/pinned
   status.
@@ -150,9 +194,12 @@ worktrees → branches → PRs → human-authorized merge:
   `caveman-help`, `caveman-review`, `caveman-stats`, `cavecrew`): synced via
   `./scripts/sync-caveman.sh` from upstream `JuliusBrussee/caveman` — do not
   edit directly; refine upstream.
-- **Memory skill** (`skills/memory/SKILL.md`): synced via
-  `./scripts/sync-mempalace.sh` (+ `patch-mempalace.sh` branding). The other
-  memory skills (`memory-mine`, `memory-search`, `memory-status`) are ours.
+- **Memory family** (`memory`, `memory-mine`, `memory-search`,
+  `memory-status`): ours, edited directly. `skills/memory/SKILL.md` began as a
+  vendored copy of MemPalace's and forked: four of its six sections have no
+  upstream counterpart. Its sync/patch pair was deleted on 2026-08-09 —
+  re-running it would have overwritten those sections, and it anchored its
+  insert on an H1 the sync never produces.
 
 After syncing, review the diff, bump versions, cut a release if changed.
 
@@ -192,10 +239,9 @@ After syncing, review the diff, bump versions, cut a release if changed.
 - `hooks/` — plugin lifecycle hook scripts (SessionStart, PreToolUse, Stop). They run from `${CLAUDE_PLUGIN_ROOT}` = `~/.claude/plugins/cache/huhhb/huhhb/<version>/`, never the working tree — a hook edit has no effect on the running session until reinstall (Release Checklist 4)
 - `marketplace.json` — skill manifest (name, path, description, category, tags, version per skill)
 - `.claude-plugin/plugin.json` — plugin version read by Claude Code for update detection (keep in sync with `marketplace.json`)
-- `.claude-plugin/.mcp.json` — MCP server config (must match `plugin.json` mcpServers)
 - `scripts/skill-lint.ts`, `scripts/skill-bench.ts`, `scripts/skill-trends.ts` — the skill quality gates (see Skill Quality Bar)
 - `scripts/evolve/` — the `evolve` self-learning suite (TypeScript, MIT; optional integrations load dynamically, never vendored)
-- `scripts/sync-caveman.sh`, `scripts/sync-mempalace.sh`, `scripts/patch-mempalace.sh` — upstream sync/patch for vendored skills
+- `scripts/sync-caveman.sh` — upstream sync for the vendored caveman family (the only vendored skills left)
 - `tests/` — `test_evolve.test.ts` + `test_openspec_conformance.test.ts` (offline, `node --test`) and `bench/` scenarios
 - `docs/evolve-plan.md` — the evolve living plan (architecture, guardrails, gates, roadmap; every evolve change recorded in its change log)
 - `CONTEXT.md` — project context for AI assistants
@@ -270,7 +316,9 @@ A reversible implementation choice is not an ADR. Neither is a convention or a b
 Legacy `.claude/memory/` records are **repo-scoped** and retired for new writes.
 Cross-project preferences and cross-session decisions belong to the device-level stores
 below. The MemPalace and Honcho strata are **retired from routing** as of 2026-08-01 —
-still shipped, data intact, invoked only when asked for by name; see
+their skills still ship and their data is intact, invoked only when asked for by name,
+but huhhb registers **no** MCP server for them: MemPalace's is opt-in, configured by the
+user ([`skills/memory/reference.md`](skills/memory/reference.md)). See
 [`project-two-store-memory-supersedes-mempalace.md`](.claude/memory/project-two-store-memory-supersedes-mempalace.md).
 
 <!-- two-store-memory:start -->

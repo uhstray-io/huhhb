@@ -12,7 +12,8 @@ of skills that Claude Code loads. There is no server and no build.
 ```
 skills/<name>/SKILL.md   ── the skills themselves (flat, one dir each)
 marketplace.json         ── manifest Claude Code reads to list/install skills
-.claude-plugin/          ── plugin.json (version → update detection) + .mcp.json
+.claude-plugin/          ── plugin.json (version → update detection, hooks;
+                            registers no MCP servers — see AGENTS.md § Memory)
 hooks/                   ── SessionStart / PreToolUse / UserPromptSubmit scripts
 onboarding/              ── first-install guided tour (welcome.md, skills-list.md)
 scripts/                 ── quality gates + tooling (TypeScript, run via node)

@@ -1,9 +1,14 @@
 ---
 name: memory-mine
-description: Mine a project directory or raw text into the memory nexus for future recall. Triggers on "mine this project", "index this directory", "add project to memory", "mine into memory".
+description: Use when MemPalace is named explicitly and a directory must be ingested into an existing MemPalace nexus. Legacy, retired from routing 2026-08-01. For current code structure use codebase-memory-mcp indexing instead. The memory MCP server is opt-in.
 ---
 
 # memory-mine
+
+> **Prerequisite — the `memory` MCP server is opt-in.** These tools come from a
+> server this plugin no longer registers. If a `mempalace_*` tool is
+> unavailable, it is not configured in this session — that is the expected
+> state, not a fault. [How to enable it, and what to use instead](../memory/reference.md).
 
 Ingest project files or raw text into the team memory nexus.
 

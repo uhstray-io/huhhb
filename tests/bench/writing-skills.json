@@ -1,0 +1,44 @@
+{
+  "skill": "writing-skills",
+  "budget": {
+    "max_tokens": 110000,
+    "max_cost_usd": 2.0,
+    "max_duration_ms": 420000
+  },
+  "scenarios": [
+    {
+      "id": "consults-the-house-standard-before-authoring",
+      "prompt": "PLANNING ONLY. Do not create or modify any file. Answer in text. I want to add a new skill to this repo that converts CSV files to Markdown tables. Tell me what the skill's description field should say and what I have to do before it can ship.",
+      "phrasing": true,
+      "assert": "tr '\\n' ' ' < result.txt > flat.txt && grep -qiE '(negative[- ]activation|expect_no_activation|does not fire|must not (fire|activate))' flat.txt && grep -qiE '(baseline|without the skill|skill[- ]disabled)' flat.txt",
+      "judge": "The house standard requires, before a skill ships: a description carrying trigger conditions rather than a workflow summary, at least one bench scenario that discriminates against a skill-disabled baseline, and a negative-activation scenario proving the skill stays silent on its nearest neighbour. Score 5 if the response names the negative-activation requirement AND the baseline/obsolescence check as gating conditions. Score 3 if it names one. Score 1 if it only offers generic skill-writing advice with neither.",
+      "note": "Discrimination target: the baseline arm should describe a good description and stop there. The negative-activation requirement and the must-beat-baseline gate are house rules from references/skill-authoring.md (E2/E3) that an unaided agent has no reason to volunteer. NOT YET VERIFIED against a live baseline — see task 4.2."
+    },
+    {
+      "id": "refuses-to-summarize-the-workflow-in-the-description",
+      "prompt": "PLANNING ONLY. Do not create or modify any file. Answer in text. Here is a draft description for a new skill: 'This skill first reads the config file, then validates each entry against the schema, then writes a report and finally opens a PR.' Is this a good description? Rewrite it if not.",
+      "phrasing": true,
+      "assert": "tr '\\n' ' ' < result.txt > flat.txt && grep -qiE '(summariz|workflow|steps?)' flat.txt && grep -qiE 'use when' flat.txt",
+      "judge": "D2 of the house standard: a description must never summarize the skill's workflow, because Claude follows the summary instead of reading the body. The draft is a pure workflow summary. Score 5 if the response identifies that summarizing the workflow is the defect (not merely that it is too long or poorly worded) AND rewrites it as trigger conditions. Score 3 if it rewrites well without naming the reason. Score 1 if it accepts the draft or only shortens it.",
+      "note": "The rewrite is the easy half — an unaided agent will shorten a long description. The discriminating half is naming WHY workflow summaries fail, which is a measured finding in this repo's own testing rather than general advice."
+    },
+    {
+      "id": "stays-silent-on-writing-a-plan",
+      "prompt": "I have a spec for a multi-step migration. Write me an implementation plan with phases and validation gates.",
+      "expect_no_activation": true,
+      "note": "Nearest neighbour is writing-plans. Both author a structured document from requirements, and 'write me a ... plan' is the collision. Hard-gated here rather than left to B10's 0.9 aggregate."
+    }
+  ],
+  "triggers": {
+    "positive": [
+      "how do I write a new skill for this repo",
+      "review this SKILL.md before I ship it",
+      "what should this skill's description say"
+    ],
+    "negative": [
+      "write me an implementation plan for this spec",
+      "explain what changed in this commit",
+      "record an architecture decision for this"
+    ]
+  }
+}

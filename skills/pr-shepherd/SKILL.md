@@ -148,18 +148,17 @@ merge; report which one is missing and wait.
    GitHub didn't auto-close it, close it manually with a reference to the
    merge commit.
 2. **Archive + promote (owned by `openspec-conformance`) — conforming
-   repos only (LD-1).** Probe:
-   `plans/development/00-implementation-plan.md` exists. Absent → SKIP
-   with the note "archive/ADR/index skipped — conventions not yet
+   repos only (LD-1).** Probe `config.yaml`, `.openspec-store/store.yaml` and
+   this repo's id in `openspec store list --json` — any absent → SKIP
+   with the note "archive/ADR skipped — conventions not yet
    adopted" and continue (same warn-and-continue as `.coderabbit.yaml`);
    never fail or force-create.
    When conforming: run `openspec archive <slug> --store <repo> --yes`,
    then that skill's `promote-adr.ts`: it appends one ADR to
    `plans/architecture/YYYY/YYYY-MM.md` from the design's `## Decisions`
-   (not the full doc), rows both indexes, and flips the change's
-   `00-implementation-plan.md` row to `archived` + ADR link. No
-   `## Decisions` → no ADR (expected). Don't hand-edit the row or fold
-   it in — the promoter owns both.
+   (not the full doc) and rows both indexes. That is all it owns — change
+   status comes from the store, not from a file the promoter maintains. No
+   `## Decisions` → no ADR (expected).
 3. **Write the outcome** per repo-memory § Hooks — recall
    the bank FIRST; if this branch's outcome is there, the PR hook wrote it, so
    stop. Else ONE `sync_retain` (`bank_id` per repo-kickstart §0): what merged,

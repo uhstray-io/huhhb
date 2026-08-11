@@ -167,15 +167,18 @@ though you feel it on every task.
 
 ### Legacy memory skills
 
-> **Retired from routing.** These are backed by MemPalace, which huhhb no longer routes
-> to. They remain installed and their data is intact, so nothing is lost — but new work
-> should use the two stores above. Use these only if you are reading existing MemPalace
-> data. Functional migration is planned in
-> [plans/development/2026-08-02-memory-skill-migration-plan.md](plans/development/2026-08-02-memory-skill-migration-plan.md).
+> **Retired from routing, and the server is now opt-in.** These read a MemPalace nexus,
+> which huhhb no longer routes to. The skills still ship and your data is intact — but
+> **huhhb no longer registers the `memory` MCP server they depend on**, so they will
+> report their tools unavailable until you add it yourself. That is the expected state,
+> not a fault: registering a store for every installer imposed it on people who hold no
+> data in it. See
+> [`skills/memory/reference.md`](skills/memory/reference.md) for the config block and
+> what to use instead. New work belongs in the two stores above.
 
 | Skill | Trigger | Purpose |
 |-------|---------|---------|
-| `memory` | `/memory` | MemPalace nexus — store and recall context via its MCP server |
+| `memory` | `/memory` | MemPalace nexus — read existing context (needs the opt-in server) |
 | `memory-search` | `/memory-search` | Semantic search across the nexus |
 | `memory-mine` | `/memory-mine` | Ingest a directory into the nexus |
 | `memory-status` | `/memory-status` | Nexus stats — drawer count, wings, rooms |

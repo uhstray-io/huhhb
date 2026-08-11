@@ -15,10 +15,12 @@ Onboarding for humans and agents working on **huhhb**.
     graph. Structural truth, regenerated from source, zero write cost.
   - [Hindsight](https://github.com/vectorize-io/hindsight) — the experience store.
     Decisions, rationale and outcomes; the only copy of them.
-- **`mempalace`** (legacy, optional) — **retired from routing 2026-08-01.** Only needed
-  to read existing MemPalace data through the `memory` skill. A configured MCP server
-  works without the CLI; `uv tool install mempalace` is needed only for CLI access.
-  Not required for new work.
+- **`mempalace`** (legacy, optional) — **retired from routing 2026-08-01, and its MCP
+  server is now opt-in rather than shipped.** huhhb used to register it for every
+  installer; now you add it yourself if you want it, which is the only way to reach the
+  `memory` family's tools. The block to add, and what to use instead, are in
+  [`skills/memory/reference.md`](skills/memory/reference.md). `uv tool install mempalace`
+  is needed only for CLI access, which these skills do not use. Not required for new work.
 
 There is nothing to `npm install` for the runtime — Node stdlib only.
 
@@ -37,9 +39,9 @@ node --test tests/test_openspec_conformance.test.ts   # offline openspec-conform
   **[ARCHITECTURE.md](ARCHITECTURE.md)**.
 - Add a skill: `skills/<name>/SKILL.md` + `marketplace.json` entry +
   `onboarding/skills-list.md` + one real `tests/bench/<skill>.json` scenario.
-- Plans live in `plans/development/`; the living index is
-  `plans/development/00-implementation-plan.md`. Specs validate through OpenSpec
-  (`openspec validate --all --store huhhb`).
+- Plans live in `plans/development/`; change status comes from the store
+  (`openspec list --store huhhb`), not from a file. Specs validate through
+  OpenSpec (`openspec validate --all --store huhhb`).
 - Branch → PR → CodeRabbit + cross-review → human review. Never push non-trivial
   changes directly to `main`.
 

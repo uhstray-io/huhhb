@@ -10,3 +10,5 @@
 - [LD-2 memory precedence](project-ld2-memory-precedence.md) — knowledge (incl. calibrations) resolves user → team → config defaults; policy memory-immune; supersedes the PR #34 record
 - [buhhdy memory model](project-buhhdy-memory-model.md) — SUPERSEDED 2026-07-16 by LD-2 (its calibration-stays-config-owned clause no longer holds); kept as history
 - [Repo kickstart 2026-08-01](project-repo-kickstart-2026-08-01.md) — core.hooksPath was unset so repo-memory hooks were inert; `main` is ruleset-governed (classic protection 404 is expected), real gap is 0 required approvals
+- [Rule-vs-example drift](feedback-rule-vs-example-drift.md) — recurring defect: a stated rule (e.g. encode-only-for-URL) gets violated in the adjacent example; derive transformed values once, reuse everywhere
+- [Skill baselines are contaminated](feedback-skill-baselines-contaminated.md) — subagents (incl. skill-bench's `--disallowedTools Skill` baseline) inherit global CLAUDE.md; HOME/CLAUDE_CONFIG_DIR isolation breaks auth, so probe only uncovered surfaces

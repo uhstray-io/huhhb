@@ -1,7 +1,9 @@
 # openspec-conformance — reference
 
 Heavy detail kept out of `SKILL.md`. Placeholders: `<repo>`, `<stack>`,
-`<slug>`. Everything here was verified live against **openspec 1.6.0**.
+`<slug>`. Everything here was verified live against **openspec 1.6.0**, and has
+since been exercised on **1.8.0** without change. Treat 1.6.0 as the verified
+floor rather than a pin; re-verify the store commands when the major moves.
 
 ---
 
@@ -121,8 +123,8 @@ node "${CLAUDE_PLUGIN_ROOT}/skills/openspec-conformance/promote-adr.ts" \
 | store id stable | `plans/development/.openspec-store/store.yaml` has `id: <repo>` |
 | machine registration | `openspec store list --json` includes `<repo>` (else run `register` — it no-ops if already there) |
 | store health | `openspec store doctor <repo>` → "Issues: none" |
-| index | `plans/development/00-implementation-plan.md` exists |
 | ADR home | `plans/architecture/` exists |
+| product home | `plans/product/README.md` exists — the README, not just the directory. `repo-bootstrap` requires each plans subtree to carry its own README, and a bare directory passes a test for the tree while failing the requirement it stands for (content stays optional; inception is opt-in) |
 
 Re-running `openspec init` and `openspec store register` are both safe (init
 reports structure exists; register reports "already registered"). A second

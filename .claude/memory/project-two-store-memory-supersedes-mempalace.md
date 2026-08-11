@@ -39,3 +39,23 @@ that file is canonical for *how*; this memory only records *which one wins*.
 Related: [[project-mempalace-architecture]] still holds — huhhb never owns the
 MemPalace Python runtime, only its SKILL.md files and plugin config. Retirement
 from routing does not change that.
+
+**Amended 2026-08-09 (`retire-mempalace`).** This record's judgement was right and
+is confirmed, not superseded: retiring beat deleting, and nothing was deleted.
+Two facts it states have changed shape, so read them this way now:
+
+- *"Still shipped, still installed"* — the **skills** still ship; the **MCP
+  server does not**. huhhb registered it for every installer, which imposed a
+  store on people holding no data in it. It is now opt-in: the user adds the
+  block themselves (`skills/memory/reference.md`), which is also the only way to
+  reach these skills' tools.
+- *"Their SKILL.md descriptions still advertise themselves and will match a
+  generic 'remember this' prompt"* — **fixed, and it was worse than recorded.**
+  The 2026-08-01 rewrite marking them LEGACY landed only in `marketplace.json`;
+  the frontmatter kept the originals, and the frontmatter is what an agent is
+  handed. Verified against an installed cache carrying both texts. The
+  retirement was invisible to every agent for eight days. Both copies now agree.
+  A patch script briefly sourced one from the other; it was deleted with the
+  rest of the MemPalace sync tooling on 2026-08-09, so the guard that survives
+  is `skill-lint` comparing the two copies for all 51 skills — routed to
+  `skill-retrofit` with the 28-skill drift burndown, not yet built.

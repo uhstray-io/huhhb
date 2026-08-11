@@ -47,7 +47,7 @@ explicitly asked for just one phase, run only that row plus steps 0 and 4+,
 same gates):
 
 0. **Conformance probe** (canonical test: openspec-conformance →
-   idempotency detection) — `plans/development/00-implementation-plan.md`
+   idempotency detection) — `plans/development/openspec/config.yaml`
    exists AND `openspec store list` includes the repo → conforming.
    Artifacts go to `plans/product/<initiative-slug>/`; on a non-conforming
    repo, ALL phases write one document `docs/plans/product-<slug>.md`
@@ -82,7 +82,7 @@ breakdown today":
 - generate user stories, story files, or a `stories/` directory
 - write sprint plans or capacity schedules
 - bulk-open OpenSpec changes for the epics
-- write rows into `00-implementation-plan.md` (that is `to-issues`' job)
+- open OpenSpec changes for the epics (that is Workflow 1's job)
 
 A request for stories/sprints/decomposition is a request to START
 WORKFLOW 1 on the first epic — route it there, one line, no apology tour.
@@ -105,4 +105,4 @@ artifacts pass the same per-phase gates; dispatch stays canonical.
 | "No live reviewer, so I adapted the gate / approved-in-principle" | A gate without a human is an open gate. Present and wait. |
 | "Artifacts are approved — the natural next step is epics → stories → sprints" | The natural next step is the Epic Queue handoff. Stories don't exist in this system. |
 | "They said 'full planning process' about this feature" | Feature ⇒ Workflow 1. Inception is never inferred. |
-| "I'll just also write the first change/index row while I'm here" | Changes are Workflow 1's; the index is `to-issues`'/`promote-adr`'s. Hands off. |
+| "I'll just also write the first change while I'm here" | Changes are Workflow 1's. Hands off. |

@@ -859,10 +859,28 @@ describe("ManifestTests", () => {
     for (const s of mp.skills) {
       assert.ok(fs.existsSync(path.join(REPO, s.path)), s.path);
     }
-    const mcp = JSON.parse(
-      fs.readFileSync(path.join(REPO, ".claude-plugin", ".mcp.json"), "utf-8"),
-    );
-    assert.deepEqual(mcp.mcpServers, pj.mcpServers);
+    /* This plugin registers NO MCP server, in either of the two places that can
+       carry one. The mirror assertion this replaces existed to keep `.mcp.json`
+       and plugin.json in sync — which is only a problem worth solving while both
+       hold something. Registration is imposition: it reaches every installer
+       regardless of whether they want the tools, so adding one back should be a
+       deliberate act that trips this test rather than a quiet edit. */
+    /* Stated over the whole manifest directory, not just plugin.json, so a
+       third registration site is covered by construction rather than by
+       someone remembering to add a line here. */
+    const manifestDir = path.join(REPO, ".claude-plugin");
+    for (const f of fs.readdirSync(manifestDir, { recursive: true, encoding: "utf-8" }) as string[]) {
+      if (!f.endsWith(".json") || !fs.statSync(path.join(manifestDir, f)).isFile()) continue;
+      const json = JSON.parse(fs.readFileSync(path.join(manifestDir, f), "utf-8"));
+      assert.ok(!("mcpServers" in json),
+        `.claude-plugin/${f} must not register an MCP server — see AGENTS.md § Memory`);
+    }
+    /* Scope: this plugin's OWN manifest. Users opting into MemPalace write a
+       `.mcp.json` in their project or user config — that is the documented
+       opt-in path (skills/memory/reference.md) and is unaffected by this. */
+    assert.ok(!fs.existsSync(path.join(REPO, ".claude-plugin", ".mcp.json")),
+      "the plugin's own .mcp.json must not exist — plugin.json is the one place " +
+      "a shipped server would go; a user's opt-in .mcp.json is a different file");
   });
 
   test("test_skill_lint_gate_passes", () => {
@@ -1596,6 +1614,46 @@ describe("BenchTests", () => {
     assert.deepEqual(rows, []);
   });
 
+  test("test_champion_row_picks_latest_passing_other_version", () => {
+    // R3: same-version rows are re-runs, failing rows set no bar — the
+    // champion is the newest fully-passing row from a different version
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "bench-champ-"));
+    try {
+      const hist = path.join(tmp, "hist.jsonl");
+      const driver = path.join(tmp, "driver.mjs");
+      const rows = [
+        { skill: "s", scenario: "sc", version: "1.0", runs: 3, passes: 3, tokens: 1000 },
+        { skill: "s", scenario: "sc", version: "1.1", runs: 3, passes: 1, tokens: 500 },  // failed — no bar
+        { skill: "s", scenario: "sc", version: "2.0", runs: 3, passes: 3, tokens: 900 },  // current — re-run
+      ];
+      fs.writeFileSync(driver, [
+        `const m = await import(${JSON.stringify(
+          pathToFileURL(path.join(REPO, "scripts", "skill-bench.ts")).href)});`,
+        `const fs = await import("node:fs");`,
+        `fs.writeFileSync(process.env.SKILL_BENCH_HISTORY,`,
+        `  ${JSON.stringify(rows.map((r) => JSON.stringify(r)).join("\n") + "\n")});`,
+        `const champ = m.championRow("s", "sc", "2.0");`,
+        `const beat = m.beatsChampion({ passes: 3, runs: 3, tokens: 1050 }, champ);`,
+        `const regress = m.beatsChampion({ passes: 2, runs: 3, tokens: 800 }, champ);`,
+        `const blowout = m.beatsChampion({ passes: 3, runs: 3, tokens: 2000 }, champ);`,
+        `console.log(JSON.stringify({ champV: champ.version,`,
+        `  beat: beat.ok, regress: regress.ok, blowout: blowout.ok }));`,
+      ].join("\n"));
+      const r = spawnSync(process.execPath, [driver], {
+        encoding: "utf-8",
+        env: { ...process.env, SKILL_BENCH_HISTORY: hist },
+      });
+      assert.equal(r.status, 0, r.stderr);
+      const out = JSON.parse(r.stdout);
+      assert.equal(out.champV, "1.0", "failing 1.1 and same-version 2.0 must be skipped");
+      assert.ok(out.beat, "matching pass rate within token tolerance beats the champion");
+      assert.ok(!out.regress, "a regressed pass rate must never replace the champion");
+      assert.ok(!out.blowout, "a token blowout must never replace the champion");
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
   test("test_cached_baseline_requires_baseline_passes", () => {
     // rows predating the baseline_passes field can't prove the baseline
     // ever completed — cachedBaseline must re-measure, not trust them
@@ -1622,6 +1680,312 @@ describe("BenchTests", () => {
     } finally {
       fs.rmSync(tmp, { recursive: true, force: true });
     }
+  });
+});
+
+// ------------------------------------------------------------ E5 battle mode
+// Pure surfaces only — verdict parsing, position-swap reconciliation and the
+// two decision rules. The judge calls and the output bank are I/O and stay out
+// of the offline suite; what is tested here is every way a verdict can be
+// refused, because refusing is the whole safety property.
+
+describe("BattleTests", () => {
+  let bench: any;
+  beforeEach(async () => {
+    bench = await import(path.join(REPO, "scripts", "skill-bench.ts"));
+  });
+
+  test("test_verdict_requires_evidence_present_in_both_sides", () => {
+    const A = "the skill declined to record a reversible rename";
+    const B = "wrote the record and both index rows";
+
+    const good = bench.parseBattleVerdict(
+      `QUOTE_A: declined to record\nQUOTE_B: both index rows\nA`, A, B);
+    assert.equal(good.verdict, "A");
+    assert.equal(good.reason, "cited");
+
+    // a quote that is not actually in the side it cites is not evidence —
+    // this is the check the 1-5 judge asks for and never performs
+    const fabricated = bench.parseBattleVerdict(
+      `QUOTE_A: declined to record\nQUOTE_B: superseded the earlier ADR\nB`, A, B);
+    assert.equal(fabricated.verdict, "TIE");
+    assert.equal(fabricated.reason, "unquotable-b");
+
+    const missing = bench.parseBattleVerdict(`QUOTE_A: declined to record\nA`, A, B);
+    assert.equal(missing.verdict, "TIE", "a one-sided citation cannot decide a pair");
+
+    // surrounding quotation marks the source never had must not fail the check
+    const wrapped = bench.parseBattleVerdict(
+      `QUOTE_A: "declined to record"\nQUOTE_B: 'both index rows'\nB`, A, B);
+    assert.equal(wrapped.verdict, "B");
+  });
+
+  test("test_parse_failure_is_distinguishable_from_a_real_tie", () => {
+    const A = "alpha";
+    const B = "bravo";
+    // both land on TIE, but conflating them is how judge()'s 0/5 came to read
+    // as a catastrophic score instead of "the last line wasn't a bare digit"
+    assert.equal(bench.parseBattleVerdict("I prefer the second one.", A, B).reason,
+      "unparseable");
+    assert.equal(bench.parseBattleVerdict("QUOTE_A: alpha\nQUOTE_B: bravo\nTIE", A, B).reason,
+      "judge-tie");
+    // a digit-scavenging parser would read the verdict off the quote line
+    assert.equal(bench.parseBattleVerdict("QUOTE_A: pick A always\nB", A, B).verdict,
+      "TIE", "verdict is the LAST line only");
+  });
+
+  test("test_position_swap_must_agree_after_unswapping", () => {
+    // call 1 presents champion as A; call 2 swaps the sides
+    assert.equal(bench.reconcileSwap("B", "A"), "challenger",
+      "challenger won from both positions");
+    assert.equal(bench.reconcileSwap("A", "B"), "champion",
+      "champion won from both positions");
+    // the judge picked whatever was shown first — bias, not a preference
+    assert.equal(bench.reconcileSwap("A", "A"), "TIE");
+    assert.equal(bench.reconcileSwap("B", "B"), "TIE");
+    assert.equal(bench.reconcileSwap("A", "TIE"), "TIE");
+  });
+
+  test("test_non_regression_passes_on_all_ties_but_not_on_a_losing_record", () => {
+    const t = (r: string[]) => bench.battleTally(r);
+    assert.ok(bench.nonRegression(t(["TIE", "TIE"])).ok,
+      "all ties is not-worse — nothing regressed");
+    assert.ok(bench.nonRegression(t([])).ok, "nothing decided is not-worse");
+    assert.ok(bench.nonRegression(t(["challenger", "champion"])).ok, "1W/1L holds the line");
+    assert.ok(!bench.nonRegression(t(["champion", "champion", "challenger"])).ok,
+      "more losses than wins is a regression");
+  });
+
+  test("test_superiority_needs_both_a_sample_floor_and_a_win_rate", () => {
+    const t = (r: string[]) => bench.battleTally(r);
+    const sweep2 = t(["challenger", "challenger"]);
+    assert.ok(bench.nonRegression(sweep2).ok);
+    assert.ok(!bench.superiority(sweep2).declared,
+      "a 2-scenario sweep is below the decided floor — report, declare nothing");
+
+    // 5 decided at 80% clears both bars
+    assert.ok(bench.superiority(t(["challenger", "challenger", "challenger",
+      "challenger", "champion"])).declared);
+    // 5 decided at 60% clears the floor but not the rate
+    assert.ok(!bench.superiority(t(["challenger", "challenger", "challenger",
+      "champion", "champion"])).declared);
+    // ties pad the record but never the denominator
+    const withTies = t(["challenger", "challenger", "TIE", "TIE", "TIE"]);
+    assert.equal(withTies.decided, 2);
+    assert.ok(!bench.superiority(withTies).declared);
+  });
+
+  test("test_battle_resolves_champion_outputs_through_the_history_join", () => {
+    // The load-bearing join: championRow yields a VERSION, the output bank is
+    // keyed by CONTENT HASH, and skill_hash on the history row is the only
+    // thing connecting them. Exercised end-to-end through the CLI with a
+    // seeded bank — no model calls, --dry-run stops short of judging.
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "bench-battle-"));
+    try {
+      const hist = path.join(tmp, "hist.jsonl");
+      const outs = path.join(tmp, "outputs");
+      const env = { ...process.env, SKILL_BENCH_HISTORY: hist, SKILL_BENCH_OUTPUTS: outs };
+      const CHAMP = "a".repeat(bench.HASH_CHARS); // a bank key is exactly this wide
+      const seed = path.join(tmp, "seed.mjs");
+      fs.writeFileSync(seed, [
+        `const m = await import(${JSON.stringify(
+          pathToFileURL(path.join(REPO, "scripts", "skill-bench.ts")).href)});`,
+        `const fs = await import("node:fs"), path = await import("node:path");`,
+        `const spec = JSON.parse(fs.readFileSync(${JSON.stringify(
+          path.join(REPO, "tests", "bench", "repo-memory.json"))}, "utf-8"));`,
+        `const chall = m.skillContentHash("repo-memory");`,
+        // the challenger's version is whatever marketplace.json says today —
+        // battle reads it there, and challengerRow matches on it
+        `const mp = JSON.parse(fs.readFileSync(${JSON.stringify(
+          path.join(REPO, "marketplace.json"))}, "utf-8"));`,
+        `const cv = String(mp.skills.find((x) => x.name === "repo-memory").version);`,
+        `const rows = [];`,
+        `for (const s of spec.scenarios) {`,
+        `  const ph = m.promptHash(s.prompt, s.assert);`,
+        // prompt_hash is part of a champion's identity: a row without it measures
+        // some other prompt, so championRow will not accept it
+        `  rows.push(JSON.stringify({ skill: "repo-memory", scenario: s.id,`,
+        `    version: "0.0.1-old", runs: 3, passes: 3, tokens: 1000,`,
+        `    prompt_hash: ph, skill_hash: ${JSON.stringify(CHAMP)} }));`,
+        // and the challenger must have a fully-passing run of its own, or it
+        // does not get to contest the champion
+        `  rows.push(JSON.stringify({ skill: "repo-memory", scenario: s.id,`,
+        `    version: cv, runs: 3, passes: 3, tokens: 1000,`,
+        `    prompt_hash: ph, skill_hash: chall }));`,
+        `  for (const h of [${JSON.stringify(CHAMP)}, chall]) {`,
+        `    const p = m.outputPath("repo-memory", s.id, ph, h);`,
+        `    fs.mkdirSync(path.dirname(p), { recursive: true });`,
+        `    fs.writeFileSync(p, "output for " + h);`,
+        `  }`,
+        `}`,
+        `fs.writeFileSync(process.env.SKILL_BENCH_HISTORY, rows.join("\\n") + "\\n");`,
+      ].join("\n"));
+      const s = spawnSync(process.execPath, [seed], { encoding: "utf-8", env });
+      assert.equal(s.status, 0, s.stderr);
+
+      const r = spawnSync(process.execPath,
+        [path.join(REPO, "scripts", "skill-bench.ts"),
+          "--battle", "repo-memory", "--dry-run"],
+        { encoding: "utf-8", env, cwd: REPO });
+      assert.equal(r.status, 0, r.stderr);
+      assert.match(r.stdout, /would judge/,
+        "a banked champion and challenger must resolve to a judgeable pair");
+      /* Every scenario with a rubric resolves. The only permitted exclusions are
+         the negative-activation scenarios — excluded for a CAPABILITY reason
+         (they carry no rubric and bank no output), not because battle checks
+         their type. Derived from the spec rather than named here, so the rule is
+         stated once and a spec that grows a second probe is covered. */
+      const spec = JSON.parse(fs.readFileSync(
+        path.join(REPO, "tests", "bench", "repo-memory.json"), "utf-8"));
+      const expected = spec.scenarios.filter((s: any) => s.expect_no_activation)
+        .map((s: any) => s.id).sort();
+      assert.ok(expected.length, "the spec must still carry a negative-activation scenario");
+      const skipped = r.stdout.split("\n").filter((l) => l.includes("SKIP"))
+        .map((l) => expected.find((id: string) => l.includes(id)) ?? l.trim()).sort();
+      assert.deepEqual(skipped, expected,
+        "battle must skip exactly the non-judgeable scenarios, by whichever guard catches it");
+      assert.match(r.stdout, new RegExp(`champion ${CHAMP}`),
+        "the champion hash must come from the history row, not the working tree");
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  test("test_a_challenger_that_failed_its_own_assert_cannot_contest_the_champion", () => {
+    /* Outputs are banked before any gate runs, on purpose, so --review can
+       inspect a failure. Battle used to require only that the banked FILE
+       existed, so a challenger that never passed its own assert could still be
+       judged and take a BATTLE PASS off a judge that liked its prose. Same
+       fixture as the join test, with the challenger's row failing. */
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "bench-battle-fail-"));
+    try {
+      const hist = path.join(tmp, "hist.jsonl");
+      const outs = path.join(tmp, "outputs");
+      const env = { ...process.env, SKILL_BENCH_HISTORY: hist, SKILL_BENCH_OUTPUTS: outs };
+      const CHAMP = "b".repeat(bench.HASH_CHARS);
+      const seed = path.join(tmp, "seed.mjs");
+      fs.writeFileSync(seed, [
+        `const m = await import(${JSON.stringify(
+          pathToFileURL(path.join(REPO, "scripts", "skill-bench.ts")).href)});`,
+        `const fs = await import("node:fs"), path = await import("node:path");`,
+        `const spec = JSON.parse(fs.readFileSync(${JSON.stringify(
+          path.join(REPO, "tests", "bench", "repo-memory.json"))}, "utf-8"));`,
+        `const chall = m.skillContentHash("repo-memory");`,
+        `const mp = JSON.parse(fs.readFileSync(${JSON.stringify(
+          path.join(REPO, "marketplace.json"))}, "utf-8"));`,
+        `const cv = String(mp.skills.find((x) => x.name === "repo-memory").version);`,
+        `const rows = [];`,
+        `for (const s of spec.scenarios) {`,
+        `  const ph = m.promptHash(s.prompt, s.assert);`,
+        `  rows.push(JSON.stringify({ skill: "repo-memory", scenario: s.id,`,
+        `    version: "0.0.1-old", runs: 3, passes: 3, tokens: 1000,`,
+        `    prompt_hash: ph, skill_hash: ${JSON.stringify(CHAMP)} }));`,
+        // the only difference from the join test: 2 of 3 runs passed
+        `  rows.push(JSON.stringify({ skill: "repo-memory", scenario: s.id,`,
+        `    version: cv, runs: 3, passes: 2, tokens: 1000,`,
+        `    prompt_hash: ph, skill_hash: chall }));`,
+        `  for (const h of [${JSON.stringify(CHAMP)}, chall]) {`,
+        `    const p = m.outputPath("repo-memory", s.id, ph, h);`,
+        `    fs.mkdirSync(path.dirname(p), { recursive: true });`,
+        `    fs.writeFileSync(p, "output for " + h);`,
+        `  }`,
+        `}`,
+        `fs.writeFileSync(process.env.SKILL_BENCH_HISTORY, rows.join("\\n") + "\\n");`,
+      ].join("\n"));
+      const s = spawnSync(process.execPath, [seed], { encoding: "utf-8", env });
+      assert.equal(s.status, 0, s.stderr);
+
+      const r = spawnSync(process.execPath,
+        [path.join(REPO, "scripts", "skill-bench.ts"),
+          "--battle", "repo-memory", "--dry-run"],
+        { encoding: "utf-8", env, cwd: REPO });
+      assert.equal(r.status, 0, r.stderr);
+      assert.doesNotMatch(r.stdout, /would judge/,
+        "a challenger with a failing run must never reach the judge");
+      assert.match(r.stdout, /no fully-passing run for this scenario/,
+        "and the skip must say why, not look like a missing bank");
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  test("test_negative_activation_scenarios_need_no_assert", () => {
+    // E2 negative scenarios are decided by the trigger probe, so they carry no
+    // assert. Requiring one would force a placeholder that later reads as a
+    // real check — the dry-run path is what proves the spec still validates.
+    const r = spawnSync(process.execPath,
+      [path.join(REPO, "scripts", "skill-bench.ts"), "repo-memory", "--dry-run"],
+      { encoding: "utf-8", cwd: REPO });
+    assert.equal(r.status, 0, r.stderr);
+    assert.match(r.stdout, /negative activation — trigger probe only/,
+      "a negative scenario must be routed to the probe, not the assert path");
+    assert.doesNotMatch(r.stdout,
+      /stays-silent-on-a-change-proposal[\s\S]{0,120}assert:/,
+      "a negative scenario must never render an assert plan");
+    assert.match(r.stdout, /dry-run OK/);
+  });
+
+  test("test_lint_s9_to_s12_predicates_fire_and_stay_silent", async () => {
+    // S9 and S10 currently fire on zero skills in the marketplace, which is
+    // indistinguishable from a check that can never fire at all. These rows are
+    // the difference: each predicate must reject a violating input AND accept a
+    // clean one, so a broken regex cannot masquerade as a clean repo.
+    const lint = await import(path.join(REPO, "scripts", "skill-lint.ts"));
+
+    // S9 — spec name charset
+    for (const ok of ["repo-memory", "evolve", "markdown-to-pdf", "s3"]) {
+      assert.ok(lint.NAME_CHARSET.test(ok), `${ok} is a valid skill name`);
+    }
+    for (const bad of ["Repo-Memory", "repo_memory", "repo--memory", "-repo", "repo-"]) {
+      assert.ok(!lint.NAME_CHARSET.test(bad), `${bad} must be rejected`);
+    }
+
+    /* S10 — how deep a shipped file sits below its skill dir. These are
+       skill-relative paths out of `git ls-files`, not links: `../`, absolute
+       and `#anchor` forms cannot reach this check. */
+    assert.equal(lint.refDepth("SKILL.md"), 0, "a file beside SKILL.md is level zero");
+    assert.equal(lint.refDepth("references/api.md"), 1, "a reference is one level down");
+    assert.equal(lint.refDepth("references/api/errors.md"), 2, "nested reference");
+
+    // S11 — third-person description
+    assert.ok(lint.FIRST_PERSON.test("Use when I need to record a decision"));
+    assert.ok(lint.FIRST_PERSON.test("Helps us keep the specs current"));
+    assert.ok(!lint.FIRST_PERSON.test(
+      "Use when a decision about this repository's architecture needs recording"),
+      "a correct third-person description must not warn");
+    // the pronoun check is case-sensitive on 'I' so ordinary words survive it
+    for (const innocent of ["Use when indexing a repository", "Wear it well", "ambitious"]) {
+      assert.ok(!lint.FIRST_PERSON.test(innocent), `${innocent} must not trip S11`);
+    }
+
+    // S12 — body line cap
+    assert.equal(typeof lint.BODY_WARN_LINES, "number");
+    assert.ok(lint.BODY_WARN_LINES > 0);
+  });
+
+  test("test_skill_content_hash_agrees_between_a_git_ref_and_the_worktree", (t) => {
+    /* The doc-comment promises "a ref hash and a worktree hash of identical
+       content agree". Nothing checked it, so a drift between the two branches
+       would have silently made every --champion battle compare against a bank
+       key that could never exist. Both sides enumerate from git precisely so
+       that a file git ignores cannot move one of them and not the other. */
+    const skill = "repo-memory";
+    const dirty = spawnSync("git", ["status", "--porcelain", "--", `skills/${skill}`],
+      { encoding: "utf-8", cwd: REPO }).stdout.trim();
+    // skip rather than assert something weaker under the same name
+    if (dirty) return t.skip(`skills/${skill} is dirty — nothing to compare`);
+    assert.equal(bench.skillContentHash(skill), bench.skillContentHash(skill, "HEAD"),
+      "a clean skill must hash identically whether read from git or from disk");
+  });
+
+  test("test_skill_content_hash_is_stable_and_covers_every_file", () => {
+    // the bank key must change when ANY file in the skill changes, or a
+    // revised skill silently re-uses its predecessor's banked output
+    const a = bench.skillContentHash("repo-memory");
+    assert.match(a, new RegExp(`^[0-9a-f]{${bench.HASH_CHARS}}$`));
+    assert.equal(a, bench.skillContentHash("repo-memory"), "must be deterministic");
+    assert.notEqual(a, bench.skillContentHash("explaining-changes"));
+    assert.throws(() => bench.skillContentHash("no-such-skill-here"));
   });
 });
 

@@ -1,9 +1,14 @@
 ---
 name: memory-search
-description: Search the memory nexus for relevant team knowledge, decisions, or context. Triggers on "search memory", "find in memory", "look up in nexus", "what do we know about X".
+description: Use when MemPalace is named explicitly and an existing MemPalace nexus must be searched semantically. Legacy, retired from routing 2026-08-01. For current memory use hindsight recall; for repo knowledge use repo-memory. The memory MCP server is opt-in.
 ---
 
 # memory-search
+
+> **Prerequisite — the `memory` MCP server is opt-in.** These tools come from a
+> server this plugin no longer registers. If a `mempalace_*` tool is
+> unavailable, it is not configured in this session — that is the expected
+> state, not a fault. [How to enable it, and what to use instead](../memory/reference.md).
 
 Semantic search across the team memory nexus.
 

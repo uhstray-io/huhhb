@@ -1,5 +1,20 @@
 # huhhb Skill Authoring Standard — Implementation Plan (2026-07-16)
 
+> **Status (2026-08-08): superseded as a task list; retained as the evidence record.**
+>
+> | Tasks | Where they live now |
+> |---|---|
+> | 1–6 (standard, lint S9–S12, negative activation, pipeline wiring, pointers) | OpenSpec change **`skill-authoring-standard`** — implemented |
+> | 7 (battle mode) | shipped `ef59373b`; the "As built" note below records one deliberate deviation |
+> | 8 (retro-fit the skills) | OpenSpec change **`skill-retrofit`** — scaffolded, not started. Scope corrected to **51**, not 53: `huhhb-welcome` and `huhhb-skills` are onboarding docs with no `SKILL.md`, so they are lint-only and cannot be battled |
+>
+> **This file is not deleted, and its checkboxes are not the source of truth.**
+> The standard at `skills/writing-skills/references/skill-authoring.md` cites this
+> plan's Evidence base and References tables by tag ([WILD], [SKILLOPT], [ANTH],
+> [SPEC], [SKILLRED], [MGECHEV], [DO]); deleting it would strip every rule of its
+> citation. Track task state in the OpenSpec change; read this for *why* a rule
+> exists.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development
 > (recommended) or superpowers:executing-plans to implement this plan task-by-task.
 > Steps use checkbox (`- [ ]`) syntax for tracking.
@@ -512,7 +527,7 @@ budget ratios, and the R3 objective gate, and never overrides them.
 land it after #47 merges and build on `championRow`/`beatsChampion`; do not
 re-implement them.
 
-- [ ] **Step 1: CLI + generation.** `node scripts/skill-bench.ts --battle
+- [x] **Step 1: CLI + generation.** `node scripts/skill-bench.ts --battle
   <skill>` runs each scenario in `tests/bench/<skill>.json` for the
   working-tree skill (challenger) and the champion — by default the R3
   champion lineage from PR #47's `championRow`; `--champion <git-ref>`
@@ -529,13 +544,13 @@ re-implement them.
   `expect_no_activation` scenarios (no comparable output); log every
   exclusion.
 
-- [ ] **Step 2: Evidence-cited battle judge.** Alongside `JUDGE_TEMPLATE`
+- [x] **Step 2: Evidence-cited battle judge.** Alongside `JUDGE_TEMPLATE`
   (~line 45), add `BATTLE_TEMPLATE`: given the scenario rubric and outputs A
   and B, the judge must emit one verbatim quote *from each output* justifying
   its verdict, then a single line `A`, `B`, or `TIE`. Missing/unquotable
   evidence forces `TIE` (ports the R4 evidence rule from the 1–5 judge).
 
-- [ ] **Step 3: Position-swap.** Judge every pair twice — champion-first and
+- [x] **Step 3: Position-swap.** Judge every pair twice — champion-first and
   challenger-first — reusing the persisted outputs. The verdicts must agree
   (after un-swapping) to count as a win; disagreement records as `TIE`.
   This kills position bias, the dominant known failure of pairwise judges,
@@ -543,7 +558,7 @@ re-implement them.
   on the first call is `TIE` regardless of the second — skip the swapped
   call (ties are likely the modal case).
 
-- [ ] **Step 4: Audit log.** Append one record per judged pair to
+- [x] **Step 4: Audit log.** Append one record per judged pair to
   `tests/bench/battles.jsonl` (via the existing `recordHistory`/`pyJson`
   writer machinery, new path): skill, scenario id, prompt hash, champion +
   challenger git SHAs and skill content hashes, output artifact paths, judge
@@ -554,7 +569,7 @@ re-implement them.
   per-pair judge detail. Every verdict stays re-inspectable and re-judgeable;
   verdicts that aren't logged are gone.
 
-- [ ] **Step 5: Decision rules (two, for two consumers).**
+- [x] **Step 5: Decision rules (two, for two consumers).**
   - **Non-regression** — the Task 8 retrofit gate: among decided (non-tie)
     scenarios, wins ≥ losses; zero decided scenarios (all ties) passes as
     not-worse. The objective half stays R3's `beatsChampion` (pass rate
@@ -566,7 +581,7 @@ re-implement them.
     declare nothing. E2-minimum benches can therefore gate non-regression but
     never claim superiority — growing the scenario set is what unlocks it.
 
-- [ ] **Step 6: Verify offline + commit**
+- [x] **Step 6: Verify offline + commit**
 
 Run: `node scripts/skill-bench.ts --battle repo-memory --dry-run`
 Expected: renders the battle plan (scenario list, both sides, judge calls) without spending tokens.
@@ -575,6 +590,19 @@ Expected: renders the battle plan (scenario list, both sides, judge calls) witho
 git add scripts/skill-bench.ts
 git commit -m "feat(bench): --battle pairwise judging — position-swapped, evidence-cited, logged (E5)"
 ```
+
+**As built (2026-08-08) — one deviation from Step 1, deliberate.** Step 1 reads
+as though `--battle` generates both sides. It generates *neither*. The bench
+drives whatever plugin is installed, so the installed skill **is** the
+challenger; a champion "generated" in that same process would be the challenger
+answering twice, and the pairwise verdict would be self-vs-self — a green that
+measures nothing, which is the exact defect issue #53 exists to remove. So
+banking moved into the ordinary bench path (every run persists its response)
+and `--battle` became a pure re-judging pass over the bank: it spends judge
+calls only, and a side that is not banked excludes the scenario with a logged
+reason. The workflow is therefore *bench the champion version, bench the
+branch, then battle* — one extra command, and no code path that can fabricate
+a rival. Related: an all-excluded battle exits `NO VERDICT`, not `PASS`.
 
 **Deferred (not in this task; the persisted outputs + battles.jsonl schema
 are the stable contract they all build on):**

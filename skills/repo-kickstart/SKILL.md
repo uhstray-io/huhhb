@@ -75,12 +75,16 @@ Create if missing; on brownfield, **propose a merge, don't overwrite**.
 - **ARCHITECTURE.md** — current-state architecture; links `plans/architecture/`.
 
 ### 2. Planning tree
-- `plans/development/00-implementation-plan.md` — seed from the canonical
-  living-index template in `skills/openspec-conformance/templates/` (5-column table:
-  Change · Title · Status · Owner · Links — the exact shape `promote-adr.ts`
-  reads/writes; do not diverge or promotion breaks).
+Three homes under `plans/` — the house name; `plan/` is not a synonym for it.
+Where a repo already keeps planning documents under a different name, **report
+the divergence and create no second tree**: an empty tree beside a real one is
+the two-sources problem, not a fix for it.
 - `plans/development/README.md` and `plans/architecture/README.md` — one short
   README each, saying what belongs there.
+- **No change index is seeded.** Status, task counts and change identity come
+  from the store (`openspec list`). A hand-maintained register of the same facts
+  drifts — measured here: one read `proposed` for six days on a change that was
+  merged and 24 of 25 tasks done.
 - `plans/product/README.md` — one short README (template in `reference.md`);
   inception artifacts land here only when Workflow 0 is explicitly run —
   seeding the dir is standard, using it is opt-in, never a mandate.
@@ -150,9 +154,9 @@ to the bank, structure to the graph, instructions to AGENTS.md.
   from the schema.)
 - **Branch protection** — `gh api repos/{owner}/{repo}/branches/{branch}/protection`.
   If absent, **do not configure it silently**: emit the exact `gh` commands for
-  the human (in `reference.md`) **and record the gap** in
-  `plans/development/00-implementation-plan.md`. Required reviews on the default
-  branch are a precondition for pr-shepherd.
+  the human (in `reference.md`) **and report the gap in the run's summary** —
+  an unreported missing prerequisite reads as a conformed repo. Required reviews
+  on the default branch are a precondition for pr-shepherd.
 
 ### 6. Verification checklist
 End by printing the pass/fail table (format in `reference.md` §7): convention

@@ -3,7 +3,7 @@
   "publisher": "uhstray-io",
   "displayName": "Uhstray Skills Hub",
   "description": "Uhstray.io's curated Claude Code skills marketplace — workflows and automation for engineering teams.",
-  "version": "0.8.22",
+  "version": "0.8.24",
   "homepage": "https://github.com/uhstray-io/huhhb",
   "license": "MIT",
   "skills": [
@@ -36,7 +36,7 @@
     {
       "name": "memory",
       "path": "skills/memory/SKILL.md",
-      "description": "LEGACY, retired from routing 2026-08-01 — MemPalace nexus, kept only to read existing MemPalace data; still installed with data intact. NOT the current memory system: structural truth is codebase-memory-mcp and experience is Hindsight, set up via memory-setup. Do not use for new work.",
+      "description": "Use when MemPalace is named explicitly, or data already stored in a MemPalace nexus must be read. Legacy, retired from routing 2026-08-01. Not the current memory system — structural truth is codebase-memory-mcp and experience is Hindsight, both set up via memory-setup. The memory MCP server is opt-in. Do not use for new work.",
       "category": "memory",
       "tags": [
         "memory",
@@ -45,42 +45,42 @@
         "rag",
         "nexus"
       ],
-      "version": "0.1.0"
+      "version": "0.2.0"
     },
     {
       "name": "memory-search",
       "path": "skills/memory-search/SKILL.md",
-      "description": "LEGACY, retired from routing 2026-08-01 — semantic search over an existing MemPalace nexus only. For current memory use hindsight recall; for repo knowledge use repo-memory.",
+      "description": "Use when MemPalace is named explicitly and an existing MemPalace nexus must be searched semantically. Legacy, retired from routing 2026-08-01. For current memory use hindsight recall; for repo knowledge use repo-memory. The memory MCP server is opt-in.",
       "category": "memory",
       "tags": [
         "memory",
         "search",
         "semantic"
       ],
-      "version": "0.1.0"
+      "version": "0.2.0"
     },
     {
       "name": "memory-mine",
       "path": "skills/memory-mine/SKILL.md",
-      "description": "LEGACY, retired from routing 2026-08-01 — ingest a directory into an existing MemPalace nexus. For current code structure use codebase-memory-mcp indexing instead.",
+      "description": "Use when MemPalace is named explicitly and a directory must be ingested into an existing MemPalace nexus. Legacy, retired from routing 2026-08-01. For current code structure use codebase-memory-mcp indexing instead. The memory MCP server is opt-in.",
       "category": "memory",
       "tags": [
         "memory",
         "mining",
         "indexing"
       ],
-      "version": "0.1.0"
+      "version": "0.2.0"
     },
     {
       "name": "memory-status",
       "path": "skills/memory-status/SKILL.md",
-      "description": "LEGACY, retired from routing 2026-08-01 — MemPalace nexus stats. For current memory health use memory-setup.",
+      "description": "Use when MemPalace is named explicitly and stats for an existing MemPalace nexus are wanted. Legacy, retired from routing 2026-08-01. For current memory health use memory-setup. The memory MCP server is opt-in.",
       "category": "memory",
       "tags": [
         "memory",
         "status"
       ],
-      "version": "0.1.0"
+      "version": "0.2.0"
     },
     {
       "name": "repo-memory",
@@ -491,7 +491,7 @@
         "cleanup",
         "buhhdy"
       ],
-      "version": "0.2.0"
+      "version": "0.2.1"
     },
     {
       "name": "evolve",
@@ -557,7 +557,7 @@
         "workflow",
         "creation"
       ],
-      "version": "0.1.0"
+      "version": "0.1.1"
     },
     {
       "name": "evolve-map",
@@ -586,7 +586,7 @@
         "memory",
         "openspec"
       ],
-      "version": "0.3.1"
+      "version": "0.3.2"
     },
     {
       "name": "openspec-conformance",
@@ -601,7 +601,7 @@
         "planning",
         "buhhdy"
       ],
-      "version": "0.2.0"
+      "version": "0.2.1"
     },
     {
       "name": "markdown-to-pdf",

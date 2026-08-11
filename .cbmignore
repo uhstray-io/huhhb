@@ -38,6 +38,8 @@ __pycache__/
 .worktrees/
 .remember/
 .codebase-memory/
+graphify-out/
+coverage/
 
 # Generated and fixture content
 **/testdata/

@@ -1,6 +1,16 @@
 # Memory skill migration — MemPalace → two-store
 
-**Status:** partly executed · **Date:** 2026-08-02 · **Last updated:** 2026-08-02
+**Status:** superseded by the `retire-mempalace` OpenSpec change (2026-08-09) ·
+**Date:** 2026-08-02 · **Last updated:** 2026-08-09
+
+> **Read the change, not this plan.** `retire-mempalace` executed Phase 1 and
+> **reversed Phase 2 on evidence**: the four skills are un-registered from
+> routing, not deleted, because their store's data is not regenerable and
+> deleting them strands the only in-plugin path to it. Registration is
+> imposition; a skill is an offer. Task 2.3 (delete both sync scripts) did land,
+> for a different reason than this plan gives — the vendored copy had forked and
+> a sync would have destroyed four hand-authored sections. The unchecked boxes
+> below under Phase 2 are deliberately unchecked, not outstanding.
 
 **What has since landed, and what has not:**
 

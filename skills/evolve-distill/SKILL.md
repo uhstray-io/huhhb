@@ -95,6 +95,21 @@ never present a fresh distilled skill as proven.
 
 ## Hard rules
 
+- **The house standard applies to generated skills too.** Read
+  `skills/writing-skills/references/skill-authoring.md` before proposing one.
+  A pipeline whose output is exempt from the standard reintroduces every
+  problem the standard exists to prevent, only faster. In particular: the
+  description carries trigger conditions and never a workflow summary (D2), and
+  the proposal is not complete without a negative-activation scenario proving
+  the skill stays silent on its nearest neighbour (E2).
+  **Known gap — the tooling cannot carry that scenario yet.** `overlay.ts
+  propose` requires every scenario to bring an `eval.assert`, and an
+  `expect_no_activation` scenario has none by design: it is decided by a trigger
+  probe, not an assert. An accepted proposal also writes a single eval object
+  where `scripts/skill-bench.ts` expects a spec with `skill` and `scenarios`.
+  Until both schemas change together — its own change, not a patch here — author
+  the negative scenario into `tests/bench/<name>.json` by hand, and never read
+  "propose accepted it" as evidence that E2 was met.
 - **De-identification reuse test (R1)**: after stripping case-specific
   entities, ask whether this user would need the same policy again — if what
   remains is generic advice, distill nothing. Empty is the default success.

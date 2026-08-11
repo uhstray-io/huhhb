@@ -32,3 +32,11 @@
   Two asserts were wrong; the skill was not.
 - 2026-08-03 · docs/readme-tiers-and-memory-refs · test(bench): withdraw the B4 "expected failure" — it did not survive a fresh baseline (3 files)
   I documented a token overrun as an accepted cost in three places — the fixture
+- 2026-08-03 · docs/readme-tiers-and-memory-refs · fix: apply CodeRabbit review on PR #52 (20 of 21 threads) (95 files)
+  CodeRabbit found a real bug in code I wrote, and corrected a claim I had
+- 2026-08-03 · docs/readme-tiers-and-memory-refs · chore(memory): re-index the code graph at f02ab08 (2 files)
+  2639 -> 2725 nodes, 3731 -> 3828 edges. Committed before merging origin/main
+- 2026-08-03 · docs/readme-tiers-and-memory-refs · chore(bench): purge 7 empty-run rows from history (1 files)
+  The 2026-08-03T03:29 window recorded seven rows with tokens=0, cost=0 and
+- 2026-08-03 · docs/readme-tiers-and-memory-refs · docs(bench): how to read history.jsonl as a trend, and its two discontinuities (1 files)
+  The bench history is the durable record of what was measured, not the plugin

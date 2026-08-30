@@ -27,11 +27,16 @@ A change is allowed **only if it passes ALL six checks.** Otherwise: **skip it.*
 4. **No change to side effects, evaluation order, or error/exception behavior.**
 5. **Local** — not a cross-function move. Inlining a single-use variable into the very next
    line counts as local.
-6. **When in doubt, skip.** Bias is always toward leaving code alone.
+6. **When in doubt about equivalence, skip.** The doubt that blocks a change is doubt about
+   *behavioral equivalence* — checks 1–5. It is **never** a subjective "the result reads
+   worse," "the original is prettier," or "it's a stylistic wash." Once checks 1–5 hold, the
+   change is a candidate; apply it. Do not withhold a provably-equivalent simplification on
+   taste. Aesthetic preference is not a gate.
 
 > Violating the letter of these is violating the spirit. "Basically the same" that fails any
 > one check is not a candidate. If you cannot write a clear "why equivalent"
-> justification, it is not a candidate.
+> justification, it is not a candidate. But the converse also binds: if you *can* write that
+> justification and checks 1–5 hold, "I'd have written it differently" does not earn a skip.
 
 ## In-Scope Categories
 
@@ -40,7 +45,14 @@ A change is allowed **only if it passes ALL six checks.** Otherwise: **skip it.*
 2. **Dead / no-op values & args** — remove arguments/values with no effect
    (`from("", "", "Zord")` → `from("Zord")`, when a matching signature exists).
 3. **Redundant logic collapse** — `if x { true } else { false }` → `x`; double negation; a
-   variable assigned once and used once on the next line.
+   variable assigned once and used once on the next line. This explicitly includes a **chain**
+   of such rebinds (commonly shadowing one name, e.g. `let line = …; let line = line.…; let
+   line = line.…`), where each binding is consumed exactly once by the next: collapse the
+   entire chain into a single expression. Each link independently passes the "single-use, next
+   line" test in check 5, so the chain does too — the number of links is **not** a reason to
+   stop, and the resulting method chain being longer or "flatter" than the named steps is a
+   taste call, not a gate (see check 6). Evaluation order and every call are preserved, so
+   this is inlining, not the reordering/restructuring that is out of scope.
 4. **Verbose → idiomatic equivalent** — a verbose construct → a shorter one doing *exactly*
    the same thing (manual transform loop → `map`/comprehension).
 5. **Duplicate inline logic → existing project function** — inline code that reimplements
@@ -142,6 +154,18 @@ if x > 0 { return true } else { return false }   // →  return x > 0
 ```python
 result = compute(x)
 return result            # →  return compute(x)   // assigned once, used once
+```
+```rust
+// chain of single-use shadow rebinds — each `line` used once by the next
+let line = raw.lines().find(|l| !l.is_empty()).unwrap_or("");
+let line = line.trim_start_matches("Title:").trim();
+let line = line.trim_matches(['"', '\'']);
+line.chars().take(80).collect()
+// →  collapse the whole chain; order and every call preserved:
+raw.lines().find(|l| !l.is_empty()).unwrap_or("")
+    .trim_start_matches("Title:").trim()
+    .trim_matches(['"', '\''])
+    .chars().take(80).collect()
 ```
 ```js
 if (!(!isReady)) { ... }   // →  if (isReady) { ... }   // SKIP if isReady is non-boolean (!! was coercing)

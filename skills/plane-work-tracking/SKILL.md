@@ -74,7 +74,9 @@ Copy this checklist for every item.
 - [ ] **Close out** before claiming anything else, and before any branch or worktree cleanup
       (`git branch -d` deletes the binding and the start time):
   1. `work_log create`, `duration` = minutes since `planeItemStart`, one-line `description`.
-  2. `workitem_comment` with the outcome; `workitem_link create` with the PR URL.
+  2. `workitem_comment` with the outcome. A PR titled with `[ID]` is already attached by Plane's
+     GitHub app (a second `workitem_link create` answers 400 "URL already exists"); add a
+     `workitem_link` only for a PR or URL that carries no bracketed ID.
   3. State: if a PR carries `[ID]`, leave it — the PR mapping owns it from then on. Set it yourself
      only with no PR: Done (finished) or Cancelled (dropped).
   4. Update relations the work changed (unblocked items, newly found dependencies).

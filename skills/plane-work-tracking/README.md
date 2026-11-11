@@ -20,7 +20,7 @@ The full setup steps are in the Setup section of [SKILL.md](SKILL.md).
 
 - **Work one item at a time.** Claim one work item, finish it or close it out, and only then claim the next one.
 - **Update the item before you move on.** Close-out is part of the work. The time log, the outcome comment and the state come before any other item.
-- **Create work items in Plane, not as GitHub issues.** Plane syncs them with GitHub issues (section 9).
+- **Create work items in Plane, not as GitHub issues.** Plane is the only tracker for new work. GitHub issues reach Plane only when labelled `plane` (section 9).
 - **Pull requests are still created on GitHub.** Plane follows them once they are open.
 - **No bulk backfill.** Existing items are conformed to this convention when a session touches them. Nobody sweeps the backlog in one pass.
 - **Priority is never `none` on an item a session touches.** See section 6.
@@ -97,6 +97,9 @@ The session hook reads these keys at session start and tells the session which m
 
 1. Items with no open `blocked_by` relation come first.
 2. Among those, work follows the OpenSpec task number order.
+3. If every open item is blocked, the session stops and asks. It never starts a blocked item.
+
+A branch holds one claim at a time. A session that finds a claim already recorded on its branch, left by another session or an earlier one, never overwrites it. At close-out a session clears only its own claim.
 
 Before you write a filter for Plane, check the query syntax with the `get_pql_reference` tool of the Plane MCP server.
 
@@ -131,7 +134,15 @@ The mapping for issues is:
 | Open | Todo |
 | Closed | Done |
 
-Issues are created in Plane, not on GitHub. On the first item you create this way, check that its GitHub issue appears. If it does not, the `github` label is the trigger that the Plane documentation describes. That documentation is not consistent on this point, so check the result rather than relying on either account, and tell the repository owner what you found.
+**Issue sync is label-gated in both directions** ([docs.plane.so/integrations/github](https://docs.plane.so/integrations/github)):
+
+- **Plane to GitHub: we don't use it.** Plane is the only tracker for new work. A Plane item becomes a GitHub issue only if it carries the `github` label, and we never add that label.
+- **GitHub to Plane: label the issue `plane`.** A GitHub issue reaches Plane only when it carries the `plane` label. When a session meets an open GitHub issue that has no Plane item, it handles that one issue:
+  1. It creates the `plane` label in the repository if the label is missing.
+  2. It adds the label to the issue.
+  3. It conforms the resulting Plane item like any other.
+  
+  Sessions never label the backlog in bulk.
 
 A side effect is expected. Opening a pull request moves the item to Todo, or to Backlog for a draft. If you see that after a pull request opens, the mapping is working as intended.
 
@@ -145,7 +156,12 @@ The mapping is set per project in Plane's admin screens, and the Plane API does 
 
 Time is wall clock. The session records the start time when it claims an item, and it logs the elapsed minutes when it leaves the item. Plane's work log takes a duration in minutes, not a start and end time, so the start time is kept in git config until close-out.
 
-If a session finds a claim left open by an earlier session, it first logs that earlier stretch, counting from the claim's start to the branch's last commit time rather than to the present. Overnight idle time therefore does not count as work. It then restarts the clock and either carries on with the item or closes it out.
+If a session finds a claim left open by an earlier session, it first logs that earlier stretch.
+
+- It proposes the branch's last commit time as the end of that stretch, rather than the present, so overnight idle time does not count as work. You confirm it.
+- If the last commit is older than the claim, or work continued after it, the session asks you for the end time or an estimate.
+
+It then restarts the clock and either carries on with the item or closes it out.
 
 ## 11. New work found mid-item
 

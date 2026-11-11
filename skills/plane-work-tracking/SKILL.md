@@ -54,9 +54,12 @@ Copy this checklist for every item.
 
 - [ ] **Pick.** Open items of the bound module (`module list_workitems`). First those with no
       unresolved `blocked_by` relation (`workitem_relation list`), then OpenSpec task-number order
-      (`1.2` before `1.10`). Read `get_pql_reference` before writing a PQL filter.
-- [ ] **Claim.** `workitem manage_assignee` adds `member me`; `workitem update` sets state
-      **In Progress**; `git config branch.<b>.planeItem <ID>` and `planeItemStart $(date +%s)`.
+      (`1.2` before `1.10`). Read `get_pql_reference` before writing a PQL filter. If every open
+      item is blocked, stop and ask the user — never start a blocked item.
+- [ ] **Claim.** First `git config --get branch.<b>.planeItem`: if a claim is already recorded
+      (another session, or an earlier one), never overwrite it — resolve it as a resumed claim
+      below or ask the user. Then `workitem manage_assignee` adds `member me`; `workitem update` sets
+      state **In Progress**; `git config branch.<b>.planeItem <ID>` and `planeItemStart $(date +%s)`.
 - [ ] **Conform this item** (this item only — never sweep the module):
   - priority from the rubric below — never leave `none`;
   - exactly one **type** label and one or more **area** labels (`workitem manage_label`);
@@ -83,12 +86,27 @@ Copy this checklist for every item.
   5. Read back: `workitem retrieve` (assignee, priority, labels, parent), `module list_workitems`
      and `milestone list_workitems` contain it, `workitem_relation list`, `work_log list`.
      Fix anything missing and read back again.
-  6. `git config --unset branch.<b>.planeItem` and `--unset branch.<b>.planeItemStart`.
+  6. Clear only your own claim: `git config --unset branch.<b>.planeItem '^<ID>$'` (the value
+     pattern leaves another session's claim alone), then `--unset branch.<b>.planeItemStart`.
 
-**Resumed claim** (the SessionStart hook reports an OPEN CLAIM from an earlier session): first log
-that earlier segment, measured from `planeItemStart` to the branch's last commit
-(`git log -1 --format=%ct`) — not to now, which would count idle time — then reset
-`planeItemStart` to now and continue, or close out.
+**Resumed claim** (the SessionStart hook reports an OPEN CLAIM from an earlier session): log that
+earlier segment first. Propose its end as the branch's last commit (`git log -1 --format=%ct`)
+rather than now, which would count idle time, and confirm it with the user. If the last commit is
+older than `planeItemStart`, or work went on after it, ask for the end time or an estimate.
+Then reset `planeItemStart` to now and continue, or close out.
+
+## GitHub issues
+
+Plane is the only tracker for new work: **never add the `github` label** to a Plane item, so no
+GitHub issue is created from Plane. The other direction is label-gated too: a GitHub issue reaches
+Plane only when it carries the **`plane`** label. When you meet an open GitHub issue that has no
+Plane item (filed by a teammate or a bot, or named in a PR), and only that one issue:
+
+1. `gh label list` — if the repo has no `plane` label, `gh label create plane`.
+2. `gh issue edit <n> --add-label plane`.
+3. Find the new item (`workitem search` with the issue title). If it has not appeared after a
+   minute, tell the user: the repo's issue sync may not be configured.
+4. Conform it like any item. Never bulk-label the backlog.
 
 ## Rubrics
 
@@ -126,6 +144,7 @@ prereleases are not milestones. No milestone fits → propose the next version f
 | "I'll log the time at the end of the day" | The start is in git config only until the branch is cleaned up. Log at close-out. |
 | "The PR is open, I'll set the item to In Review/Done" | The bracketed PR owns the state. Setting it fights the automation. |
 | "Quick follow-up, I'll open a GitHub issue" | New work is a Plane sub-item with `parent` set. |
+| "I'll tag it `github` so the team sees it on GitHub" | Plane is the only tracker for new work. No `github` label. |
 | "It's not part of this item, so no parent" | Found while working this item → sub-item of it. Scope doesn't change that. |
 | "While I'm here, let me fix every item in the module" | One item at a time. Conform only the item you claimed. |
 | "No milestone fits, I'll create v0.16.0" | Propose and ask. Release scope is the owner's call. |

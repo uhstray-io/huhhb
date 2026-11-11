@@ -497,7 +497,7 @@
       "name": "plane-work-tracking",
       "path": "skills/plane-work-tracking/SKILL.md",
       "description": "Use when starting, picking up, finishing, or switching Plane work items in a repo that has a Plane project; when new work is discovered mid-task and must be tracked; when a session needs to know which Plane module its worktree works on; or when setting up Plane work tracking in a Claude config. Not for driving an open PR to merge — use pr-shepherd for that.",
-      "category": "workflow",
+      "category": "dev",
       "tags": [
         "plane",
         "work-tracking",

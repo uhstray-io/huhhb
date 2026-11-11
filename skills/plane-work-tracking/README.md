@@ -65,6 +65,7 @@ The shared type labels are declared in `platform/services/plane/schema.yml` in t
 |---|---|
 | agent-cloud | `platform`, `playbooks`, `semaphore`, `netbox`, `go` |
 | zerds | `rust`, `github_actions`, `batch-1-polish`, `batch-2-bug`, `batch-3-feature`, `needs-owner`, `needs-windows` |
+| huhhb | `skills` |
 
 A new area is proposed to the owner, confirmed, and then created with the same name as its GitHub label. Label names are permanent. The sync matches labels by name and never deletes them, so choose a name you can live with.
 

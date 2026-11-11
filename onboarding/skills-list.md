@@ -14,7 +14,7 @@ All available skills in the Uhstray.io marketplace.
 | huhhb-welcome | `/huhhb-welcome` | First-run tour of huhhb |
 | huhhb-skills | `/huhhb-skills` | This list |
 | onboarding | `/onboarding` | Interactive wizard to configure Auto Mode and Agent Teams |
-| user-kickstart | `/user-kickstart` | Use when establishing, changing, or reverting how Claude writes toward you personally across every project — voice, register, standing preferences at user scope. Writes a delimited, revertible, 60-line-capped block in `~/.claude/CLAUDE.md` and routes the reasoning behind it to the hindsight `personal` bank. Repo CLAUDE.md quality is `claude-md-improver`; settings.json is `update-config` |
+| user-kickstart | `/user-kickstart` | Use when establishing, changing, or reverting how Claude writes toward you personally across every project — voice, register, standing preferences at user scope. Writes a delimited, revertible, 60-line-capped block in `~/.claude/CLAUDE.md` and routes the reasoning behind it to the hindsight `personal` bank |
 
 ## Memory Skills
 
@@ -72,6 +72,7 @@ managed setup; unconfigured machines behave as if it were not installed.
 | markdown-to-pdf | `/markdown-to-pdf` | Use when converting a Markdown file into a beautiful, print-ready PDF — styled cover page, running headers/footers, page numbers, GFM tables, syntax-highlighted code, and rendered mermaid diagrams (WeasyPrint + mermaid-cli, run via `uv`) |
 | openspec-conformance | `/openspec-conformance` | Use when making OpenSpec conform to Uhstray's plans/development + plans/architecture layout — the once-per-repo store-registration setup, the house config rules, and the archive-time ADR promotion; the source of truth that repo-kickstart and pr-shepherd both call |
 | pr-shepherd | `/pr-shepherd` | Use when buhhdy's Development workflow has open PRs to drive to merge — monitors CI + CodeRabbit + human review, routes findings back to the original implementer (2-attempts-then-human), gates the merge on a human approval (never merges autonomously), then runs post-merge close-out and a buhhdy/*-only branch janitor |
+| plane-work-tracking | `/plane-work-tracking` | Track Plane work items one at a time |
 | repo-kickstart | `/repo-kickstart` | Use when bootstrapping any repo — greenfield or brownfield — into Uhstray's standard conventions: the README/AGENTS/KICKSTART/ARCHITECTURE doc set, the plans/ tree, OpenSpec, the two-store memory init for this repo (.cbmignore + index + bank + charter) plus a Honcho probe, CodeRabbit, and a branch-protection check. Owns repo scope; machine-scope install is `memory-setup`. Idempotent, registry-free, and non-destructive |
 | session-resume | `/session-resume` | Use when picking up prior work in a fresh session — verifies the continuation file against the repo, re-hydrates context, briefs, then acts |
 | session-save | `/session-save` | Use when ending or pausing a session and you want to resume cleanly later — writes a gitignored continuation file with the exact next action and chat-only context |

@@ -1,0 +1,59 @@
+{
+  "skill": "plane-work-tracking",
+  "budget": {
+    "max_tokens": 110000,
+    "max_cost_usd": 2,
+    "max_duration_ms": 420000
+  },
+  "scenarios": [
+    {
+      "id": "close-out-before-next-item",
+      "prompt": "PLANNING ONLY. Do not call any tool that creates, updates or deletes anything in Plane, GitHub or git; reading is fine. Answer in text. I just finished the work for Plane work item AC-412 in this worktree and the PR for it is open. I want to move on to the next item in the module now. List, in order, exactly what you would do in Plane before you start the next item, naming the Plane MCP tool and action for each step.",
+      "phrasing": false,
+      "assert": "tr '\\n' ' ' < result.txt > flat.txt && grep -qiE 'work_log' flat.txt && grep -qiE 'minute' flat.txt && grep -qiE '(retrieve|read.?back|re-?read)' flat.txt && grep -qiE '(comment|workitem_link)' flat.txt",
+      "judge": "The correct answer treats finishing an item as a close-out gate that must complete before any other item is touched. It must: log the time spent as a work_log entry in minutes, measured from when the item was claimed (wall clock from a recorded start), with a one-line description; record the outcome as a comment on the item, and NOT create a second work item link for a PR whose title carries the bracketed ID, because Plane GitHub app already attached it (a work item link is only for a PR or URL with no bracketed ID); NOT set the state itself when an open PR already references the item in brackets, because Plane's PR mapping owns the state from then on; bring dependency and related-item relations up to date; read the item back with a retrieve call and verify assignee, priority, labels, module and milestone are all set; and only then clear the claim and pick the next item. Penalize moving straight to the next item, skipping the time log, logging hours with no recorded start, manually forcing the state to Done while the PR is still open, or skipping the read-back verification."
+    },
+    {
+      "id": "discovered-work-becomes-sub-item",
+      "prompt": "PLANNING ONLY. Do not call any tool that creates, updates or deletes anything in Plane, GitHub or git; reading is fine. Answer in text. While working on Plane item AC-319 (an OpenSpec task in the internal-dns-naming module of the agent-cloud project) I found a separate bug: the DNS health check ignores AAAA records. It is not part of AC-319 but we must fix it. Tell me exactly where and how you would record this new work, with every field you would set.",
+      "phrasing": false,
+      "assert": "tr '\\n' ' ' < result.txt > flat.txt && grep -qiE 'parent[^.]{0,80}AC-319|(sub-?item|child) (under|of) AC-319|AC-319[^.]{0,40}(as|is) (the )?parent' flat.txt && ! grep -qiE '`?parent`?[ |:*]{0,6}(none|no parent|empty)' flat.txt && grep -qiE 'milestone' flat.txt && grep -qiE 'priority' flat.txt && grep -qiE 'module' flat.txt",
+      "judge": "The correct answer creates a Plane work item, not a GitHub issue and not a new line in the OpenSpec tasks.md (the sync only reads tasks.md from the default branch and would not link an item created in Plane, so editing tasks.md for discovered work creates duplicates later). The new item is a sub-work item: parent set to AC-319. It carries the same module (via module manage_workitems) and the same milestone (via milestone manage_workitems) as its parent, a priority chosen by a stated rubric (never left at none), exactly one type label (bug) and the area label, and the session's own user as assignee resolved with member me rather than a hard-coded id. A relation to AC-319 beyond the parent link is optional. Penalize opening a GitHub issue, editing tasks.md, creating an orphan item with no parent, or leaving priority, labels, module or milestone unset."
+    },
+    {
+      "id": "pickup-conforms-the-item",
+      "prompt": "PLANNING ONLY. Do not call any tool that creates, updates or deletes anything in Plane, GitHub or git; reading is fine. Answer in text. New session in a worktree of agent-cloud. I want you to start on the next piece of work in this worktree's Plane module. Walk me through exactly how you choose the item and everything you do in Plane before writing any code.",
+      "phrasing": false,
+      "assert": "tr '\\n' ' ' < result.txt > flat.txt && grep -qiE 'blocked.?by' flat.txt && grep -qiE 'member.{0,20}me|assign' flat.txt && grep -qiE 'in progress' flat.txt && grep -qiE '(start|timestamp|epoch|clock)' flat.txt && grep -qiE 'milestone' flat.txt",
+      "judge": "The correct answer first establishes which Plane module this worktree is bound to (a binding recorded in git config on the branch, or asks and records one), then picks the next item in dependency order: open items with no unresolved blocked_by relation first, then OpenSpec task-number order. Claiming the item means assigning it to the session's own user (resolved with member me), moving it to In Progress, and recording the start time so the time can be logged later. Before coding it conforms that one item: priority from a rubric (never none), exactly one type label plus the area label(s), module membership, milestone membership (the milestone is the release tag the work ships in; if none fits, propose the next version and ask before creating it), and dependency relations. Penalize picking items arbitrarily or by creation date, skipping assignment or the start time, bulk-updating every item in the module, or creating a milestone without asking."
+    },
+    {
+      "id": "close-out-phrasing-variant",
+      "prompt": "PLANNING ONLY. Do not call any tool that creates, updates or deletes anything in Plane, GitHub or git; reading is fine. Answer in text. Wrapping up for the day: AC-412 is done on my side and its PR is up. Before we pick up anything else, what bookkeeping do you do in Plane for AC-412? Give me the exact Plane MCP calls in order.",
+      "phrasing": true,
+      "assert": "tr '\\n' ' ' < result.txt > flat.txt && grep -qiE 'work_log' flat.txt && grep -qiE 'minute' flat.txt && grep -qiE '(retrieve|read.?back|re-?read)' flat.txt && grep -qiE '(comment|workitem_link)' flat.txt",
+      "judge": "The correct answer treats finishing an item as a close-out gate that must complete before any other item is touched. It must: log the time spent as a work_log entry in minutes, measured from when the item was claimed (wall clock from a recorded start), with a one-line description; record the outcome as a comment on the item, and NOT create a second work item link for a PR whose title carries the bracketed ID, because Plane GitHub app already attached it (a work item link is only for a PR or URL with no bracketed ID); NOT set the state itself when an open PR already references the item in brackets, because Plane's PR mapping owns the state from then on; bring dependency and related-item relations up to date; read the item back with a retrieve call and verify assignee, priority, labels, module and milestone are all set; and only then clear the claim and pick the next item. Penalize moving straight to the next item, skipping the time log, logging hours with no recorded start, manually forcing the state to Done while the PR is still open, or skipping the read-back verification."
+    },
+    {
+      "id": "does-not-fire-on-pr-shepherding",
+      "prompt": "PLANNING ONLY, change nothing in Plane, GitHub, git or any file: how would you shepherd PR #57 in uhstray-io/huhhb to merge — watch CI and CodeRabbit, fix findings, and clean up the branch after merge?",
+      "expect_no_activation": true
+    }
+  ],
+  "triggers": {
+    "positive": [
+      "PLANNING ONLY, change nothing in Plane, GitHub, git or any file: start on the next Plane work item in this worktree",
+      "PLANNING ONLY, change nothing in Plane, GitHub, git or any file: I finished AC-412, close it out in Plane and move to the next one",
+      "PLANNING ONLY, change nothing in Plane, GitHub, git or any file: track this new bug I found as a Plane work item",
+      "PLANNING ONLY, change nothing in Plane, GitHub, git or any file: set up Plane work tracking in my Claude config",
+      "PLANNING ONLY, change nothing in Plane, GitHub, git or any file: which Plane module is this worktree working on?"
+    ],
+    "negative": [
+      "PLANNING ONLY, change nothing in Plane, GitHub, git or any file: shepherd this PR to merge",
+      "PLANNING ONLY, change nothing in Plane, GitHub, git or any file: record this architecture decision",
+      "PLANNING ONLY, change nothing in Plane, GitHub, git or any file: write a continuation file so we can pick this up tomorrow",
+      "PLANNING ONLY, change nothing in Plane, GitHub, git or any file: set up two-store memory on this machine",
+      "PLANNING ONLY, change nothing in Plane, GitHub, git or any file: allow npm commands in my settings"
+    ]
+  }
+}

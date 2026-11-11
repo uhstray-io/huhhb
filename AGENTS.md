@@ -215,6 +215,25 @@ After syncing, review the diff, bump versions, cut a release if changed.
 - Conventional Commits (`fix:`, `feat:`, `docs:`, `chore:`, …); concise
   subject lines.
 
+## Plane work tracking
+
+This repository's work is tracked in Plane, project `HUHHB`. Plane's GitHub integration links
+the two, and it acts only on what these rules mark:
+
+- **An issue reaches Plane only with the `plane` label.** Adding the label imports the issue as a
+  `HUHHB` work item, and the Plane app comments on the issue with its key. After that, edits and
+  comments sync both ways. An unlabelled issue is never imported, and existing issues are not
+  backfilled, so label every issue you want tracked. A Plane work item reaches GitHub only with
+  the `github` label.
+- **Every pull request names its work item.** Put exactly one Plane key in brackets in the pull
+  request title, for example `fix(scope): short description [HUHHB-12]`. Plane links the pull
+  request to that item and moves the item with it: draft to Backlog, opened to Todo, review
+  requested or ready to merge to In Progress, merged to Done, closed without merging to
+  Cancelled. Mention any other item without brackets (`HUHHB-34`): that links the pull request
+  without moving the item. Plane reads the title and description when a pull request is opened,
+  edited, reviewed or closed, so a key added later is picked up on the next edit.
+- **A brief for any agent that may open a pull request names the work item's key.**
+
 ## What Not to Do
 
 - Do not create skills that wrap basic agent functionality (reading files,

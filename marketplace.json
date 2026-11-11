@@ -3,7 +3,7 @@
   "publisher": "uhstray-io",
   "displayName": "Uhstray Skills Hub",
   "description": "Uhstray.io's curated Claude Code skills marketplace — workflows and automation for engineering teams.",
-  "version": "0.8.24",
+  "version": "0.8.25",
   "homepage": "https://github.com/uhstray-io/huhhb",
   "license": "MIT",
   "skills": [
@@ -492,6 +492,20 @@
         "buhhdy"
       ],
       "version": "0.2.1"
+    },
+    {
+      "name": "plane-work-tracking",
+      "path": "skills/plane-work-tracking/SKILL.md",
+      "description": "Use when starting, picking up, finishing, or switching Plane work items in a repo that has a Plane project; when new work is discovered mid-task and must be tracked; when a session needs to know which Plane module its worktree works on; or when setting up Plane work tracking in a Claude config. Not for driving an open PR to merge — use pr-shepherd for that.",
+      "category": "workflow",
+      "tags": [
+        "plane",
+        "work-tracking",
+        "project-management",
+        "worktree",
+        "time-tracking"
+      ],
+      "version": "0.1.0"
     },
     {
       "name": "evolve",

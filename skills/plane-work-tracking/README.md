@@ -154,7 +154,7 @@ The mapping is set per project in Plane's admin screens, and the Plane API does 
 
 ## 10. Time tracking
 
-Time is wall clock. The session records the start time when it claims an item, and it logs the elapsed minutes when it leaves the item. Plane's work log takes a duration in minutes, not a start and end time, so the start time is kept in git config until close-out.
+Time is wall clock. The session records the start time when it claims an item, and it logs the elapsed minutes when it leaves the item. Plane's work log takes a duration in minutes, not a start and end time, so the start time is kept in git config until close-out. Time tracking is a per-project setting in Plane. If it is off, the work log is refused, so the session turns it on for that project and logs the time.
 
 If a session finds a claim left open by an earlier session, it first logs that earlier stretch.
 
@@ -169,7 +169,7 @@ When work turns up in the middle of an item, create a sub-item for it:
 
 1. Create the work item in Plane.
 2. Set its parent to the item you are working on.
-3. Give it the same module and milestone as the parent.
+3. Give it the same module as the parent, and the same milestone. If the parent's release has already shipped, use the next open milestone instead; the session proposes it and the owner confirms before it is created.
 4. Conform it like any other item: priority, type and area labels, relations.
 
 Edit the OpenSpec change's `tasks.md` only when the plan's scope changes. The sync reads OpenSpec changes from the default branch only. Adding discovered work to `tasks.md` on a feature branch would create a second copy of an item that already exists as a sub-item.

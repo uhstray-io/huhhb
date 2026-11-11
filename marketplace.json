@@ -3,7 +3,7 @@
   "publisher": "uhstray-io",
   "displayName": "Uhstray Skills Hub",
   "description": "Uhstray.io's curated Claude Code skills marketplace — workflows and automation for engineering teams.",
-  "version": "0.8.25",
+  "version": "0.8.26",
   "homepage": "https://github.com/uhstray-io/huhhb",
   "license": "MIT",
   "skills": [
@@ -505,7 +505,7 @@
         "worktree",
         "time-tracking"
       ],
-      "version": "0.1.0"
+      "version": "0.1.1"
     },
     {
       "name": "evolve",

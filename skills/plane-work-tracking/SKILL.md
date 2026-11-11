@@ -67,7 +67,8 @@ Copy this checklist for every item.
   - dependencies: `blocked_by`/`blocking` via `relation_type`; related work via the custom
     definitions *Relates to* / *Implements* / *Duplicate* (`list_definitions` for ids).
 - [ ] **Work.** New work found mid-item becomes a **sub-item**: `workitem create` with `parent` = the
-      current item, same module and milestone, conformed like any item. This holds **even when the
+      current item, same module and milestone (or, if that release has shipped, the next open
+      milestone; propose it and ask before creating one), conformed like any item. This holds **even when the
       new work is outside the current item's scope**: `parent` records where the work was found, not
       that the parent owns it, and the parent's close-out does not wait for it. Never a GitHub issue, and
       never a new line in OpenSpec `tasks.md` — the sync reads only the default branch and would
@@ -131,6 +132,9 @@ prereleases are not milestones. No milestone fits → propose the next version f
 - `module`/`milestone manage_workitems` return `null` on success and there is no module or
   milestone field on `workitem update` — membership is only provable with `list_workitems`.
 - Plane Releases return HTTP 402 on our plan; milestones stand in for releases.
+- `work_log create` returning HTTP 404 "Worklog is not enabled for the project" means the
+  project's time tracking is off. Turn it on with `project update` `is_time_tracking_enabled=true`,
+  then retry. Never skip the time log.
 - The OpenSpec sync owns which items and modules exist (keyed by `external_id`); Plane owns state,
   assignees, labels and edits. Never delete or rename a synced item or renumber a task.
 - Git stores `planeItem` keys lowercased; `git config --get` matches them case-insensitively.

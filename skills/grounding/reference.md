@@ -32,12 +32,13 @@ Heavy detail for the `grounding` skill, kept out of `SKILL.md` to keep it lean.
   committed, or neither, so committing does not change the count. Subtracting `base_lines` keeps uncommitted
   work that already existed at the baseline from counting. Lockfiles (`package-lock.json`, `yarn.lock`,
   `pnpm-lock.yaml`, `bun.lock`, `bun.lockb`, `Cargo.lock`, `poetry.lock`, `uv.lock`, `go.sum`,
-  `composer.lock`, `Gemfile.lock`) are excluded, and binary files do not count. Outside a git repo, or in a
+  `composer.lock`, `Gemfile.lock`) are excluded, and neither binary files nor files marked `-diff` in
+  `.gitattributes` count. Outside a git repo, or in a
   repo with no commits, the line trigger is skipped and only the idle check runs.
 - **Re-baseline.** The hook sets `base_commit` to the current `HEAD` and `base_lines` to the current count,
   with no line nudge, when:
   - there is no baseline yet (first prompt of the session);
-  - the state file contains `reset=1`;
+  - the state file contains `reset=1` (kept across prompts outside a repo until a re-baseline consumes it);
   - `cwd` resolves to a different repo than `base_repo`;
   - `base_commit` is missing or is no longer an ancestor of `HEAD` (branch switch, rebase, amend).
 

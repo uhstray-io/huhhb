@@ -78,7 +78,7 @@ function Get-ChangedLineCount([string]$top, [string]$base) {
     $f = $row -split '\t'
     if ($f.Count -ge 2 -and $f[0] -ne '-') { $total += [int64]($f[0]) + [int64]($f[1]) }
   }
-  $paths = Invoke-Git (@('-C', $top, '-c', 'core.quotePath=false', 'ls-files', '--others', '--exclude-standard', '--', '.') + $excl)
+  $paths = Invoke-Git (@('-C', $top, '-c', 'core.quotePath=false', 'ls-files', '--others', '--exclude-standard', '--', '.') + $excl + @(':(exclude,attr:-diff)'))   # drop untracked -diff files
   foreach ($p in $paths) {
     if ($p) {
       $n = Get-TextLineCount ([System.IO.Path]::Combine($top, $p))
@@ -150,7 +150,7 @@ if ($head) {
     if ($LASTEXITCODE -ne 0) { $rebase = $true }
   }
   if ($rebase) {
-    $baseRepo = $top; $baseCommit = $head; $baseLines = Get-ChangedLineCount $top $head
+    $baseRepo = $top; $baseCommit = $head; $baseLines = Get-ChangedLineCount $top $head; $reset = $false
   } else {
     $lines = (Get-ChangedLineCount $top $baseCommit) - $baseLines
     if ($lines -lt 0) { $lines = 0 }
@@ -168,18 +168,20 @@ if (-not $nudge -and $lastPrompt -gt 0 -and ($now - $lastPrompt) -ge $idleS) {
 # anti-nag cooldown: don't re-nudge within cooldown of the last nudge
 if ($nudge -and $lastNudge -gt 0 -and ($now - $lastNudge) -lt $cooldownS) { $nudge = $false }
 
-# --- persist state atomically (temp + move); a consumed reset=1 is dropped ---
+# --- persist state atomically (temp + move); reset=1 is kept until a re-baseline consumes it ---
 $newNudge = $lastNudge
 if ($nudge) { $newNudge = $now }
 $tmp = "$state.tmp.$PID"
+$out = @(
+  "last_prompt=$now",
+  "last_nudge=$newNudge",
+  "base_repo=$baseRepo",
+  "base_commit=$baseCommit",
+  "base_lines=$baseLines"
+)
+if ($reset) { $out += 'reset=1' }
 try {
-  Set-Content -LiteralPath $tmp -Value @(
-    "last_prompt=$now",
-    "last_nudge=$newNudge",
-    "base_repo=$baseRepo",
-    "base_commit=$baseCommit",
-    "base_lines=$baseLines"
-  )
+  Set-Content -LiteralPath $tmp -Value $out
   Move-Item -LiteralPath $tmp -Destination $state -Force
 } catch { Remove-Item -LiteralPath $tmp -Force -ErrorAction SilentlyContinue }
 

@@ -81,6 +81,15 @@ test("lockfiles and binary files are excluded", () => {
   assert.equal(s.run(), "");
 });
 
+test("untracked files marked -diff in .gitattributes are excluded", () => {
+  const s = sandbox(10);
+  writeFileSync(join(s.repo, ".gitattributes"), "*.gen -diff\n");
+  git(s.repo, "add", "-A"); git(s.repo, "commit", "-qm", "attrs");
+  s.run();
+  writeFileSync(join(s.repo, "big.gen"), lines(500));
+  assert.equal(s.run(), "");
+});
+
 test("committing work does not change the count", () => {
   const s = sandbox(10);
   s.run();
@@ -118,6 +127,15 @@ test("reset=1 from the skill restarts the count", () => {
   assert.equal(s.run(), "", "reset re-baselines");
   writeFileSync(join(s.repo, "c.txt"), lines(5));
   assert.equal(s.run(), "", "only 5 since reset");
+});
+
+test("reset=1 survives a prompt outside git until a baseline is set", () => {
+  const s = sandbox(10);
+  s.run();
+  writeFileSync(join(s.repo, "b.txt"), lines(12));
+  appendFileSync(s.state, "reset=1\n");
+  assert.equal(s.run(join(s.root, "home")), "", "non-git prompt");
+  assert.equal(s.run(), "", "reset still applied back in the repo");
 });
 
 test("switching to a non-descendant commit re-baselines instead of nudging", () => {

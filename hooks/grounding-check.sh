@@ -80,7 +80,8 @@ count_lines() (
     ':(exclude,glob)**/composer.lock' ':(exclude,glob)**/Gemfile.lock'
   base=$1; shift
   t=$(git diff --numstat "$base" -- "$@" 2>/dev/null | awk '$1 != "-" { s += $1 + $2 } END { print s + 0 }')
-  u=$(git ls-files -z --others --exclude-standard -- "$@" 2>/dev/null \
+  # attr:-diff drops untracked files .gitattributes marks -diff (git counts tracked ones as binary already)
+  u=$(git ls-files -z --others --exclude-standard -- "$@" ':(exclude,attr:-diff)' 2>/dev/null \
     | xargs -0 grep -IcH '' 2>/dev/null | awk -F: '{ s += $NF } END { print s + 0 }')
   echo $((t + u))
 )
@@ -95,7 +96,7 @@ if [ -n "$head" ]; then
   # descends from (branch switch / rebase / amend) — a merge-base diff would count others' commits.
   if [ "$reset" = "1" ] || [ -z "$base_commit" ] || [ "$base_repo" != "$top" ] \
      || ! git -C "$top" merge-base --is-ancestor "$base_commit" HEAD 2>/dev/null; then
-    base_repo=$top; base_commit=$head; base_lines=$(count_lines "$top" "$head")
+    base_repo=$top; base_commit=$head; base_lines=$(count_lines "$top" "$head"); reset=0
   else
     lines=$(( $(count_lines "$top" "$base_commit") - base_lines ))
     [ "$lines" -ge 0 ] || lines=0
@@ -115,7 +116,7 @@ if [ "$nudge" = "1" ] && [ "$last_nudge" -gt 0 ] && [ $((now - last_nudge)) -lt 
   nudge=0
 fi
 
-# --- persist state atomically (temp + mv); a consumed reset=1 is dropped ---
+# --- persist state atomically (temp + mv); reset=1 is kept until a re-baseline consumes it ---
 new_nudge=$last_nudge
 [ "$nudge" = "1" ] && new_nudge=$now
 tmp="$state.tmp.$$"
@@ -125,6 +126,7 @@ tmp="$state.tmp.$$"
   printf 'base_repo=%s\n'   "$base_repo"
   printf 'base_commit=%s\n' "$base_commit"
   printf 'base_lines=%s\n'  "$base_lines"
+  if [ "$reset" = "1" ]; then printf 'reset=1\n'; fi
 } > "$tmp" 2>/dev/null && mv -f "$tmp" "$state" 2>/dev/null
 rm -f "$tmp" 2>/dev/null
 

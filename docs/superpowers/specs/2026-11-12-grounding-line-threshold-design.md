@@ -18,7 +18,7 @@ can rewrite a subsystem. The checkpoint should fire after a chosen **volume of c
 | --- | --- |
 | Replace or combine with the timer? | **Replace.** The elapsed-interval trigger is removed. The idle-return nudge (user came back after ≥ 30 min) stays — it is about re-engagement, not work volume. |
 | What counts as a changed line? | **Added + deleted** lines from `git diff --numstat` against the baseline, plus lines in new untracked (non-ignored) files. Binary files are skipped. |
-| Exclusions | Built-in lockfile list: `package-lock.json`, `yarn.lock`, `pnpm-lock.yaml`, `bun.lock`, `bun.lockb`, `Cargo.lock`, `poetry.lock`, `uv.lock`, `go.sum`, `composer.lock`, `Gemfile.lock`. Files marked `-diff` in `.gitattributes` report as binary and are skipped by the same rule. |
+| Exclusions | Built-in lockfile list: `package-lock.json`, `yarn.lock`, `pnpm-lock.yaml`, `bun.lock`, `bun.lockb`, `Cargo.lock`, `poetry.lock`, `uv.lock`, `go.sum`, `composer.lock`, `Gemfile.lock`. Tracked files marked `-diff` in `.gitattributes` report as binary and are skipped by the same rule; untracked ones are dropped with the `:(exclude,attr:-diff)` pathspec. |
 | Selectable scale | First-run menu: **1000 / 2500 / 5000 / 10000 / custom**. |
 | Default | **2500** lines. |
 

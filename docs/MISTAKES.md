@@ -20,13 +20,13 @@ entry's `Occurrences` count and adds a dated note; it never opens a second entry
 
 | # | Summary | Class | Count | Enforced by |
 |---|---|---|---|---|
-| 1.1 | PR body listed test cases and lockfiles from memory; both lists were wrong | Unverified claim | 2 | Convention |
+| 1.1 | PR body listed test cases and lockfiles from memory; both lists were wrong | Unverified claim | 3 | Convention (guard proposed) |
 
 ## 1. Asserting something without verifying it
 
 ### 1.1 PR body described the test suite and lockfile list from memory
 
-**Occurrences: 2** — 2026-11-13, 2026-11-13
+**Occurrences: 3** — 2026-11-13, 2026-11-13, 2026-11-13
 
 **What happened.** Opening PR #59 (grounding line threshold, HUHHB-156), the
 body listed the 10 cases in `tests/test_grounding_hook.test.ts` and the
@@ -56,3 +56,19 @@ CodeRabbit finding said `hooks/` held "14 `.sh` scripts". `git ls-files` shows
 did not fire because it was framed around PR bodies, and a review reply did
 not register as the same kind of public claim. It is: any text posted to
 GitHub falls under the rule.
+
+**Occurrence 3 — 2026-11-13.** Same PR: a comment answering the independent
+review cited the JSON escape as `grounding-check.sh:140`. `grep -n '^esc='`
+shows line 141; two earlier commits in the session had each added a line above
+it. Corrected within a minute. The rule did not fire because the line number
+was carried from the reviewer's report (written against an older layout) and
+treated as already checked. A line number from another agent's report is not
+verified until re-read at the head being described.
+
+**Guard proposal (count reached 3).** A PreToolUse hook on Bash matching
+`gh pr (create|edit|comment)` and `gh api .*/comments`. It injects, at the
+moment of posting, a one-line check: every `file:line`, count and list in the
+body came from a command run against the current head in this session. The
+rule failed each time at exactly that moment, so the reminder belongs there,
+not in a document read earlier. Until that hook exists, `Enforced by` stays
+Convention.

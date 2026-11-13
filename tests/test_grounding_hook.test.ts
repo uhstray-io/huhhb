@@ -45,10 +45,22 @@ function sandbox(threshold = 10) {
       env: { ...env, ...extra },
     });
     assert.equal(r.status, 0, r.stderr.toString());
-    return r.stdout.toString();
+    const out = r.stdout.toString();
+    if (out) JSON.parse(out); // the hook's stdout must stay valid JSON (escaping)
+    return out;
   };
   return { root, repo, run, state: join(tmp, `huhhb-grounding-${SID}`) };
 }
+
+test("nudge stays valid JSON when the state path holds quotes and backslashes", () => {
+  const s = sandbox(10);
+  const odd = join(s.root, 'q"b\\s');
+  spawnSync("mkdir", ["-p", odd]);
+  s.run(s.repo, { TMPDIR: odd });
+  writeFileSync(join(s.repo, "b.txt"), lines(12));
+  const out = s.run(s.repo, { TMPDIR: odd }); // run() JSON.parses stdout
+  assert.ok(JSON.parse(out).hookSpecificOutput.additionalContext.includes(odd));
+});
 
 test("under threshold stays quiet; crossing it nudges with the count", () => {
   const s = sandbox(10);

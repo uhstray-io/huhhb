@@ -58,6 +58,11 @@ The last case deliberately re-baselines instead of diffing from `git merge-base`
 `main` or a switch to a sibling branch, the merge-base diff includes commits that are not this session's
 work and would fire a false checkpoint. Under-counting once is the cheaper error.
 
+Known limits, accepted because the nudge is advisory: a `git pull` or `git merge` of others' commits keeps
+the baseline an ancestor, so those lines count; detecting merge commits would still miss fast-forwards.
+An amend or rebase on every step re-baselines every time, so the line trigger may never fire in that
+workflow (the idle check still runs).
+
 Outside a git repo (or in a repo with no commits) the line trigger is skipped; only the idle check runs.
 
 **Nudge** when `lines ≥ threshold`, or on idle return, subject to the existing 15-min cooldown. The

@@ -45,6 +45,10 @@ Heavy detail for the `grounding` skill, kept out of `SKILL.md` to keep it lean.
   The last case re-baselines instead of diffing from the merge-base. After a rebase onto `main` or a switch
   to a sibling branch, a merge-base diff would include commits that are not this session's work and could
   fire a false checkpoint. Under-counting once is the cheaper error.
+
+  Known limits: a `git pull` or `git merge` of others' commits keeps the baseline an ancestor, so those
+  lines count and can fire an early checkpoint. An amend or rebase on every step re-baselines every time,
+  so the line trigger may never fire in that workflow; the idle check still runs.
 - **Reset is the skill's job.** The hook cannot know that a checkpoint actually finished, so the skill
   does it. When a checkpoint genuinely completes, append a `reset=1` line to the state-file path the hook
   named:
@@ -53,7 +57,7 @@ Heavy detail for the `grounding` skill, kept out of `SKILL.md` to keep it lean.
   printf 'reset=1\n' >> "<state-file path from the nudge>"
   ```
 
-  The hook re-baselines on the next prompt and drops the line when it rewrites the file. Never append it on
+  The hook re-baselines on the next prompt in a git repo and drops the line once it has. Never append it on
   a no-op skip ("still grounded — nothing to do") or on a checkpoint you did not finish.
 - **Review scope.** The review scope is the range the count uses: `git diff <base_commit>` in the repo the
   nudge names. That covers committed and uncommitted work since the baseline, plus untracked files. A manual

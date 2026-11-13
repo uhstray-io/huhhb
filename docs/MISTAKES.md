@@ -20,13 +20,13 @@ entry's `Occurrences` count and adds a dated note; it never opens a second entry
 
 | # | Summary | Class | Count | Enforced by |
 |---|---|---|---|---|
-| 1.1 | PR body listed test cases and lockfiles from memory; both lists were wrong | Unverified claim | 1 | Convention |
+| 1.1 | PR body listed test cases and lockfiles from memory; both lists were wrong | Unverified claim | 2 | Convention |
 
 ## 1. Asserting something without verifying it
 
 ### 1.1 PR body described the test suite and lockfile list from memory
 
-**Occurrences: 1** — 2026-11-13
+**Occurrences: 2** — 2026-11-13, 2026-11-13
 
 **What happened.** Opening PR #59 (grounding line threshold, HUHHB-156), the
 body listed the 10 cases in `tests/test_grounding_hook.test.ts` and the
@@ -49,3 +49,10 @@ source (`grep`, `git diff --stat`, `node --test` output) before `gh pr create`,
 not after.
 
 **Enforced by.** Convention
+
+**Occurrence 2 — 2026-11-13.** Same PR, about 40 minutes later: a reply to a
+CodeRabbit finding said `hooks/` held "14 `.sh` scripts". `git ls-files` shows
+11 `.sh`, 4 `.ps1`, 1 `.js`. The reply was edited within a minute. The rule
+did not fire because it was framed around PR bodies, and a review reply did
+not register as the same kind of public claim. It is: any text posted to
+GitHub falls under the rule.

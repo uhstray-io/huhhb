@@ -2,21 +2,67 @@
 
 Heavy detail for the `grounding` skill, kept out of `SKILL.md` to keep it lean.
 
-## State, clock, interval (mechanics)
+## State, baseline, threshold (mechanics)
 
-- **Opt-in marker** `~/.claude/grounding.on`: its existence = enabled. It may contain `interval_min=<n>`
-  (set at onboarding; default 120). `HUHHB_GROUNDING_INTERVAL_MIN` env overrides.
-- **Per-session clock** `${TMPDIR:-/tmp}/huhhb-grounding-<session_id>`: holds `last_ground=<epoch>` and
-  `last_prompt=<epoch>`. The hook reads/writes the timestamps and **passes the exact path in its nudge**.
-- **Clock reset is the skill's job.** The hook cannot know the checkpoint actually finished, so the
-  SKILL stamps `last_ground` at the end of a genuinely completed checkpoint — write a temp file then
-  `mv` it over the path the hook named (atomic). Only stamp on a real checkpoint, never on a no-op skip.
-- **Review scope since the last checkpoint.** `last_ground` is a Unix epoch, *not* a git ref — you can't
-  `git diff <timestamp>`. The reviewable scope = uncommitted work (`git status`, `git diff`,
-  `git diff --cached`) **plus** commits since the checkpoint, found with `git log --since=@<last_ground>`
-  (then diff that range, e.g. `git diff <oldest-such-commit>~1..HEAD`). For an exact range with no
-  timestamp fuzziness, the skill may also record `last_ground_commit=$(git rev-parse HEAD)` when it
-  stamps and use `git diff <last_ground_commit>..HEAD` next time.
+- **Opt-in.** The hook is active when the marker file `~/.claude/grounding.on` exists, or when the env var
+  `HUHHB_GROUNDING` is `1`, `true`, `on`, or `yes`. Otherwise it does nothing.
+- **Threshold.** The hook nudges a checkpoint once the changed lines reach the threshold. Precedence, high
+  to low: env `HUHHB_GROUNDING_LINES`, then a `lines=<n>` line in the marker file, then the default **2500**.
+  The first-run menu offers **1000 / 2500 (default) / 5000 / 10000 / custom number** and writes the choice to
+  the marker as `lines=<n>`. A legacy `interval_min=` line is ignored without error.
+- **Idle return.** The hook also nudges when the user returns after `HUHHB_GROUNDING_IDLE_MIN` minutes away
+  (default 30). After any nudge, the hook stays quiet for `HUHHB_GROUNDING_COOLDOWN_MIN` minutes (default 15).
+- **Per-session state.** The hook keeps `${TMPDIR:-/tmp}/huhhb-grounding-<session_id>` with these keys, and
+  passes this exact path in its nudge:
+  - `last_prompt` — the time of the last prompt, in Unix seconds, used by the idle check.
+  - `last_nudge` — the time of the last nudge, in Unix seconds, used by the cooldown.
+  - `base_repo` — top-level path of the repo the baseline belongs to.
+  - `base_commit` — `HEAD` when the baseline was taken.
+  - `base_lines` — changed lines already present when the baseline was taken.
+- **What is counted.** On every prompt, the hook counts changed lines in the repo that holds the payload's
+  `cwd` (falling back to `$PWD`):
+
+  ```
+  changed lines = added + deleted lines of `git diff <base_commit>` (to the working tree)
+                + lines in untracked, non-ignored text files
+                − base_lines
+  ```
+
+  Diffing the working tree against a fixed commit means a change counts once whether it is staged,
+  committed, or neither, so committing does not change the count. Subtracting `base_lines` keeps uncommitted
+  work that already existed at the baseline from counting. Lockfiles (`package-lock.json`, `yarn.lock`,
+  `pnpm-lock.yaml`, `bun.lock`, `bun.lockb`, `Cargo.lock`, `poetry.lock`, `uv.lock`, `go.sum`,
+  `composer.lock`, `Gemfile.lock`) are excluded, and neither binary files nor files marked `-diff` in
+  `.gitattributes` count. Outside a git repo, or in a
+  repo with no commits, the line trigger is skipped and only the idle check runs.
+- **Re-baseline.** The hook sets `base_commit` to the current `HEAD` and `base_lines` to the current count,
+  with no line nudge, when:
+  - there is no baseline yet (first prompt of the session);
+  - the state file contains `reset=1` (kept across prompts outside a repo until a re-baseline consumes it);
+  - `cwd` resolves to a different repo than `base_repo`;
+  - `base_commit` is missing or is no longer an ancestor of `HEAD` (branch switch, rebase, amend).
+
+  The last case re-baselines instead of diffing from the merge-base. After a rebase onto `main` or a switch
+  to a sibling branch, a merge-base diff would include commits that are not this session's work and could
+  fire a false checkpoint. Under-counting once is the cheaper error.
+
+  Known limits: a `git pull` or `git merge` of others' commits keeps the baseline an ancestor, so those
+  lines count and can fire an early checkpoint. An amend or rebase on every step re-baselines every time,
+  so the line trigger may never fire in that workflow; the idle check still runs.
+- **Reset is the skill's job.** The hook cannot know that a checkpoint actually finished, so the skill
+  does it. When a checkpoint genuinely completes, append a `reset=1` line to the state-file path the hook
+  named:
+
+  ```bash
+  printf 'reset=1\n' >> "<state-file path from the nudge>"
+  ```
+
+  The hook re-baselines on the next prompt in a git repo and drops the line once it has. Never append it on
+  a no-op skip ("still grounded — nothing to do") or on a checkpoint you did not finish.
+- **Review scope.** The review scope is the range the count uses: `git diff <base_commit>` in the repo the
+  nudge names. That covers committed and uncommitted work since the baseline, plus untracked files. A manual
+  run with no nudge has no `base_commit`, so fall back to uncommitted work plus recent commits on the branch
+  (SKILL.md step 3).
 
 ## Check menu (offer every checkpoint; default = all)
 
@@ -53,7 +99,7 @@ Questions (≤3): …
 
 | Excuse | Reality |
 | --- | --- |
-| "We're in a hurry, skip the review" | A full interval of unreviewed change IS the risk. |
+| "We're in a hurry, skip the review" | A full threshold of unreviewed change IS the risk. |
 | "I can eyeball the security" | Eyeballing IS the failure mode; the verdict comes from `/security-review`, not vibes. |
 | "The tests surely pass" | Assuming green is the failure; run the command or flag "not run." |
 | "The conventions are obvious" | They're *documented*; read CLAUDE/AGENT/CONTEXT and check the diff against EACH rule — you miss the non-salient ones otherwise. |
@@ -73,5 +119,5 @@ Questions (≤3): …
 - Running the full checkpoint when the user asked for something else first, or running checks they deselected.
 - Inventing a finding to make a no-op (or a deselected check) look productive.
 - Checking only the convention you happened to remember.
-- Stamping `last_ground` on a checkpoint you didn't actually complete.
+- Appending `reset=1` on a checkpoint you didn't actually complete.
 - Recommending an action that no finding supports (inventing work to look useful).

@@ -228,7 +228,7 @@ The day-to-day craft. These run many times a session and act on whatever is in f
 | `test-driven-development` | `/test-driven-development` | Write failing tests before implementation code |
 | `systematic-debugging` | `/systematic-debugging` | Root-cause a bug before proposing any fix |
 | `verification-before-completion` | `/verification-before-completion` | Run the verification and confirm output before claiming done |
-| `grounding` | `/grounding` | Pause a long session for a checkpoint — in-flight work, reviews, test/build/lint health, conformance, goal re-confirmation. Hook-fired (default 2h) or manual; opt-in |
+| `grounding` | `/grounding` | Pause a long session for a checkpoint — in-flight work, reviews, test/build/lint health, conformance, goal re-confirmation. Hook-fired (default every 2500 changed lines) or manual; opt-in |
 | `using-git-worktrees` | `/using-git-worktrees` | Isolate feature work in a separate worktree |
 | `finishing-a-development-branch` | `/finishing-a-development-branch` | Decide how to integrate completed work |
 | `writing-skills` | `/writing-skills` | Author, edit, or validate a huhhb skill before shipping — TDD for documentation |
@@ -268,7 +268,7 @@ Lifecycle hooks in `hooks/` fire automatically — no invocation needed:
 | `explain-changes-activate.sh` | SessionStart | Opt-in always-on narration (set `HUHHB_EXPLAIN_CHANGES=1` or create `~/.claude/explaining-changes.on`) |
 | `repo-memory-load.sh` | SessionStart | Auto-loads `.claude/memory/MEMORY.md` when present in the project |
 | `precommit-explain.sh` | PreToolUse (Bash) | Nudges a change summary before every `git commit` |
-| `grounding-check.sh` | UserPromptSubmit | Fires a grounding checkpoint after a long session — default 2h, configurable; opt-in |
+| `grounding-check.sh` | UserPromptSubmit | Fires a grounding checkpoint after a volume of changed lines — default 2500, configurable (1000/2500/5000/10000/custom); opt-in |
 
 ---
 

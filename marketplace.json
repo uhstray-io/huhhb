@@ -435,7 +435,7 @@
     {
       "name": "grounding",
       "path": "skills/grounding/SKILL.md",
-      "description": "Use when a long session should pause for a checkpoint — surfaces in-flight work, runs /simplify + /security-review and test/build/lint health, checks the diff against the repo's documented conventions, and re-confirms goals. Fired by the grounding hook (default 2h, configurable) or run manually. Opt-in; offers a user-selectable check menu.",
+      "description": "Use when a long session should pause for a checkpoint — surfaces in-flight work, runs /simplify + /security-review and test/build/lint health, checks the diff against the repo's documented conventions, and re-confirms goals. Fired by the grounding hook (default every 2500 changed lines, configurable) or run manually. Opt-in; offers a user-selectable check menu.",
       "category": "dev",
       "tags": [
         "dev",

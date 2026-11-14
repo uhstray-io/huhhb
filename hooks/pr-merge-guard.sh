@@ -12,7 +12,8 @@
 # Every `gh pr merge` in the command is checked. One GraphQL query per merge.
 # Fails open: if gh cannot answer (offline, no PR, no auth) the merge proceeds.
 # The repo comes from -R, else from the `cd`s before that merge replayed from the session cwd.
-# ponytail: first 100 threads; `cd` via variables or pushd is not followed; a quoted
+# A cd it cannot replay ($VAR, -P, inside a subshell) falls back to the session cwd.
+# ponytail: first 100 threads; pushd is not followed; a quoted
 # selector ('#62') or a glued flag (-Ro/r) fails open; a line starting `gh pr merge`
 # in a heredoc also triggers.
 
@@ -53,13 +54,12 @@ for seg in $segs; do
   before=${flat%%"$seg"*}
   dirs=$(printf '%s' "$before" | grep -Eo '(^|[;&|(][[:space:]]*|"[[:space:]]*:[[:space:]]*")cd[[:space:]]+[^;&|]+' \
     | sed -E -e 's/^([;&|(][[:space:]]*|"[[:space:]]*:[[:space:]]*")?cd[[:space:]]+//' -e 's/[[:space:]]+$//' \
-      -e "s/^'(.*)'$/\\1/" -e 's/^\\"(.*)\\"$/\\1/')
-  moved=1
+      -e "s/^'(.*)'$/\\1/" -e 's/^\\"(.*)\\"$/\1/')
   for dir in $dirs; do
     case "$dir" in '~'*) dir=$HOME${dir#\~} ;; -) continue ;; esac
-    cd "$dir" 2>/dev/null || { moved=0; break; }
+    # a cd the hook cannot replay ($VAR, -P, a subshell's): check from the session cwd instead
+    cd "$dir" 2>/dev/null || { [ -n "$cwd" ] && cd "$cwd" 2>/dev/null; break; }
   done
-  [ "$moved" = 1 ] || continue
 
   # Arguments after `merge`, up to the end of the command string (the first unescaped quote);
   # quoted values then become Q, double-quoted first so an apostrophe inside one is harmless.
@@ -90,6 +90,7 @@ for seg in $segs; do
     *) n=$sel ;;
   esac
   case "$n" in ''|*[!0-9]*) continue ;; esac
+  case "$repo" in */*/*) repo=${repo#*/} ;; esac   # [HOST/]OWNER/REPO -> OWNER/REPO
 
   open=$(unanswered "$n" "$repo")
   case "$open" in ''|*[!0-9]*|0) continue ;; esac

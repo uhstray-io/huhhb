@@ -45,7 +45,7 @@ function run(command: string | ((dir: string) => string), opts: { open?: string;
   const r = spawnSync("sh", [HOOK], {
     input: JSON.stringify({ hook_event_name: "PreToolUse", tool_name: "Bash", cwd: s.dir, tool_input: { command, description: "Merge the PR's branch" } }),
     env: {
-      PATH: `${s.dir}:${process.env.PATH}`, FAKE_LOG: s.log,
+      PATH: `${s.dir}:${process.env.PATH}`, FAKE_LOG: s.log, HOME: s.dir,
       FAKE_OPEN: opts.open ?? "0", FAKE_FAIL: opts.fail ?? "0", FAKE_JSON: opts.json ?? "",
     },
   });
@@ -104,6 +104,7 @@ test("-R / --repo / a URL choose the repository", () => {
   assert.match(run("gh pr merge --repo uhstray-io/other 5 --merge", { open: "1" }).calls, /-F owner=uhstray-io -F name=other/);
   assert.match(run("gh pr merge --repo=uhstray-io/other 5 --merge", { open: "1" }).calls, /-F owner=uhstray-io -F name=other/);
   assert.match(run("gh pr merge https://github.com/acme/tools/pull/5 --merge", { open: "1" }).calls, /-F owner=acme -F name=tools -F n=5/);
+  assert.match(run("gh pr merge -R github.com/acme/tools 5 --merge", { open: "1" }).calls, /-F owner=acme -F name=tools -F n=5/, "-R accepts [HOST/]OWNER/REPO");
   for (const cmd of ["gh pr merge my-branch -R uhstray-io/other --merge", "gh pr merge -R uhstray-io/other --merge"]) {
     const b = run(cmd, { open: "1" });
     assert.ok(denied(b), `${cmd}: -R must reach gh as two arguments`);
@@ -123,6 +124,13 @@ test("a cd before the merge decides which repository is queried", () => {
   assert.match(r.calls, new RegExp(`^${r.dir}/other repo\\|api graphql`, "m"));
   const rel = run((d) => { spawnSync("mkdir", ["-p", join(d, "rel")]); return "cd rel && gh pr merge 60 --merge"; }, { open: "0" });
   assert.match(rel.calls, new RegExp(`^${rel.dir}/rel\\|api graphql`, "m"), "a relative cd is taken from the session cwd");
+  const dq = run((d) => { spawnSync("mkdir", ["-p", join(d, "dq repo")]); return `cd "${join(d, "dq repo")}" && gh pr merge 60 --merge`; }, { open: "0" });
+  assert.match(dq.calls, new RegExp(`^${dq.dir}/dq repo\\|api graphql`, "m"), "a double-quoted path");
+  const home = run((d) => { spawnSync("mkdir", ["-p", join(d, "h")]); return "cd ~/h && gh pr merge 60 --merge"; }, { open: "0" });
+  assert.match(home.calls, new RegExp(`^${home.dir}/h\\|api graphql`, "m"), "~ expands to HOME");
+  const lost = run('cd "$WT" && gh pr merge 60 --merge', { open: "1" });
+  assert.ok(denied(lost), "a cd the hook cannot replay falls back to the session directory, not to no check");
+  assert.match(lost.calls, new RegExp(`^${lost.dir}\\|api graphql`, "m"));
   const chain = run((d) => { spawnSync("mkdir", ["-p", join(d, "a", "b")]); return "cd a && cd b && gh pr merge 60 --merge"; }, { open: "0" });
   assert.match(chain.calls, new RegExp(`^${chain.dir}/a/b\\|api graphql`, "m"), "chained cds apply in order");
 });

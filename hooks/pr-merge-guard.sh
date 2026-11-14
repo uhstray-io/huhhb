@@ -3,41 +3,81 @@
 #
 # Denies `gh pr merge` while the PR has an unresolved review thread whose last
 # comment is not by the merging user, i.e. a finding nobody has fixed-and-resolved
-# or replied to. The deny reason (shown to Claude) names the count; re-running the
-# merge with REVIEW_ANSWERED=1 directly in front of that gh call lets it through.
-# Guard for docs/MISTAKES.md entry 2.1 (PR #60 merged with 4 findings unanswered).
+# or replied to. The deny reason (shown to Claude) names the PR and the count;
+# re-running that merge with REVIEW_ANSWERED=1 directly in front of its gh call
+# lets it through. Guard for docs/MISTAKES.md entry 2.1.
 #
-# One GraphQL query per merge (two when the PR number is omitted). Fails open: if gh
-# cannot answer (offline, not a repo, no auth) the merge proceeds as before.
-# ponytail: first 100 threads only; `gh pr merge -R o/r` checks the cwd repo instead.
+# The PR is the first non-flag argument (number, …/pull/N URL, or branch, resolved
+# with `gh pr view`), else the current branch's PR; -R/--repo picks the repository.
+# Every `gh pr merge` in the command is checked. One GraphQL query per merge.
+# Fails open: if gh cannot answer (offline, no PR, no auth) the merge proceeds.
+# ponytail: first 100 threads; the repo comes from -R or the session cwd, not from
+# a `cd` inside the command; a line starting `gh pr merge` in a heredoc also triggers.
 
 payload=$(cat)
 
 start='("command"[[:space:]]*:[[:space:]]*"|[;&|`]|\$\()[[:space:]]*'
 envs='([A-Za-z_][A-Za-z0-9_]*=[^[:space:]]*[[:space:]]+)*'
-seg=$(printf '%s' "$payload" | sed -e 's/\\\\\\n/ /g' -e 's/\\n/;/g' \
-  | grep -Eo "${start}${envs}gh[[:space:]]+pr[[:space:]]+merge[^;&|]*" 2>/dev/null | head -n1)
-[ -n "$seg" ] || exit 0
-
-pre=${seg%%gh[[:space:]]*}
-case "$pre" in REVIEW_ANSWERED=1' '*|*[!A-Za-z0-9_]REVIEW_ANSWERED=1' '*) exit 0 ;; esac
+segs=$(printf '%s' "$payload" | sed -e 's/\\\\\\n/ /g' -e 's/\\n/;/g' \
+  | grep -Eo "${start}${envs}gh[[:space:]]+pr[[:space:]]+merge([[:space:]][^;&|]*)?" 2>/dev/null)
+[ -n "$segs" ] || exit 0
 
 cwd=$(printf '%s' "$payload" | sed -n 's/.*"cwd"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -n1)
 [ -n "$cwd" ] && cd "$cwd" 2>/dev/null
 
-n=$(printf '%s' "$seg" | sed -n 's/.*gh[[:space:]]*pr[[:space:]]*merge[[:space:]]*\([0-9][0-9]*\).*/\1/p')
-[ -n "$n" ] || n=$(gh pr view --json number -q .number 2>/dev/null)
-case "$n" in ''|*[!0-9]*) exit 0 ;; esac
-
-open=$(gh api graphql -F owner='{owner}' -F name='{repo}' -F n="$n" -f query='
+# Prints the count of unanswered threads on PR $1 in repo $2 (owner/name, or empty for the cwd repo).
+unanswered() {
+  if [ -n "$2" ]; then set -- "$1" "owner=${2%%/*}" "name=${2#*/}"; else set -- "$1" 'owner={owner}' 'name={repo}'; fi
+  gh api graphql -F "$2" -F "$3" -F n="$1" -f query='
 query($owner: String!, $name: String!, $n: Int!) {
   viewer { login }
   repository(owner: $owner, name: $name) { pullRequest(number: $n) {
     reviewThreads(first: 100) { nodes { isResolved comments(last: 1) { nodes { author { login } } } } }
   } }
 }' --jq '.data.viewer.login as $me | [.data.repository.pullRequest.reviewThreads.nodes[]
-  | select(.isResolved | not) | select(.comments.nodes[0].author.login != $me)] | length' 2>/dev/null)
-case "$open" in ''|*[!0-9]*|0) exit 0 ;; esac
+  | select(.isResolved | not) | select(.comments.nodes[0].author.login != $me)] | length' 2>/dev/null
+}
 
-printf '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":"pr-merge-guard: PR #%s has %s unresolved review thread(s) whose last comment is not yours. Fix each finding and push, or reply on its thread with the reason it is not changed, then merge again. If every finding is already answered elsewhere, re-run the merge with REVIEW_ANSWERED=1 directly in front of that gh call."}}\n' "$n" "$open"
+set -f
+nl='
+'
+IFS=$nl
+for seg in $segs; do
+  pre=${seg%%gh[[:space:]]*}
+  case "$pre" in REVIEW_ANSWERED=1' '*|*[!A-Za-z0-9_]REVIEW_ANSWERED=1' '*) continue ;; esac
+
+  # Arguments after `merge`: quoted values become Q, and the command string ends at the next quote.
+  args=$(printf '%s' "${seg#*merge}" | sed -e "s/'[^']*'/Q/g" -e 's/\\"[^"]*\\"/Q/g')
+  args=${args%%\"*}
+  sel=''; repo=''; want=''
+  IFS=' '
+  for w in $args; do
+    if [ -n "$want" ]; then [ "$want" = repo ] && repo=$w; want=''; continue; fi
+    case "$w" in
+      -R|--repo) want=repo ;;
+      --repo=*) repo=${w#--repo=} ;;
+      -b|--body|-F|--body-file|-t|--subject|-A|--author-email|--match-head-commit) want=skip ;;
+      -*) ;;
+      *) [ -z "$sel" ] && sel=$w ;;
+    esac
+  done
+  IFS=$nl
+
+  case "$sel" in
+    '') n=$(gh pr view ${repo:+-R "$repo"} --json number -q .number 2>/dev/null) ;;
+    *[!0-9]*)
+      case "$sel" in
+        */pull/*) n=${sel##*/pull/}; n=${n%%[!0-9]*} ;;
+        *) n=$(gh pr view "$sel" ${repo:+-R "$repo"} --json number -q .number 2>/dev/null) ;;
+      esac ;;
+    *) n=$sel ;;
+  esac
+  case "$n" in ''|*[!0-9]*) continue ;; esac
+
+  open=$(unanswered "$n" "$repo")
+  case "$open" in ''|*[!0-9]*|0) continue ;; esac
+
+  printf '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":"pr-merge-guard: PR #%s has %s unresolved review thread(s) whose last comment is not yours. Fix each finding and push, or reply on its thread with the reason it is not changed, then merge again. If every finding is already answered elsewhere, re-run the merge with REVIEW_ANSWERED=1 directly in front of that gh call."}}\n' "$n" "$open"
+  exit 0
+done
 exit 0

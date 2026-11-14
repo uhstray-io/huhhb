@@ -268,6 +268,7 @@ Lifecycle hooks in `hooks/` fire automatically — no invocation needed:
 | `explain-changes-activate.sh` | SessionStart | Opt-in always-on narration (set `HUHHB_EXPLAIN_CHANGES=1` or create `~/.claude/explaining-changes.on`) |
 | `repo-memory-load.sh` | SessionStart | Auto-loads `.claude/memory/MEMORY.md` when present in the project |
 | `precommit-explain.sh` | PreToolUse (Bash) | Nudges a change summary before every `git commit` |
+| `pr-claim-check.sh` | PreToolUse (Bash) | Before `gh pr create/edit/comment/review` or a `gh api` comment write, reminds to verify every `file:line`, count and list against the current head |
 | `grounding-check.sh` | UserPromptSubmit | Fires a grounding checkpoint after a volume of changed lines — default 2500, configurable (1000/2500/5000/10000/custom); opt-in |
 
 ---

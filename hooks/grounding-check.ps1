@@ -118,9 +118,10 @@ if (-not $cwd) { $cwd = (Get-Location).Path }
 $tmpDir = if ($env:TMPDIR) { $env:TMPDIR } else { [System.IO.Path]::GetTempPath() }
 $state = Join-Path $tmpDir ('huhhb-grounding-' + $sid)
 
-# --- session start/resume: skip the idle nudge on the next prompt (a new state file has no idle gap) ---
+# --- session resume: skip the idle nudge on the next prompt (a new session has no state, so no idle gap) ---
+# Only resume/fork: a compaction before a break must not silence the nudge for the return.
 if ([regex]::IsMatch($payload, '"hook_event_name"\s*:\s*"SessionStart"')) {
-  if ((Test-Path -LiteralPath $state) -and -not [regex]::IsMatch([string](Get-Content -LiteralPath $state -Raw), '(?m)^fresh=1')) {
+  if ([regex]::IsMatch($payload, '"source"\s*:\s*"(resume|fork)"') -and (Test-Path -LiteralPath $state) -and -not [regex]::IsMatch([string](Get-Content -LiteralPath $state -Raw), '(?m)^fresh=1')) {
     try { Add-Content -LiteralPath $state -Value 'fresh=1' } catch { }
   }
   exit 0

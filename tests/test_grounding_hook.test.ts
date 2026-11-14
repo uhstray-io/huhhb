@@ -39,9 +39,9 @@ function sandbox(threshold = 10) {
     HUHHB_GROUNDING: "1", HUHHB_GROUNDING_LINES: String(threshold),
     HUHHB_GROUNDING_IDLE_MIN: "99999", HUHHB_GROUNDING_COOLDOWN_MIN: "0",
   };
-  const run = (cwd = repo, extra: Record<string, string> = {}, event = "UserPromptSubmit") => {
+  const run = (cwd = repo, extra: Record<string, string> = {}, event = "UserPromptSubmit", source = "resume") => {
     const r = spawnSync("sh", [HOOK], {
-      input: JSON.stringify({ session_id: SID, cwd, hook_event_name: event, prompt: "hi" }),
+      input: JSON.stringify({ session_id: SID, cwd, hook_event_name: event, source, prompt: "hi" }),
       env: { ...env, ...extra },
     });
     assert.equal(r.status, 0, r.stderr.toString());
@@ -170,12 +170,19 @@ test("idle-return nudge still fires", () => {
   assert.match(s.run(s.repo, { HUHHB_GROUNDING_IDLE_MIN: "0" }), /idle gap/);
 });
 
-test("the first prompt after a session start or resume gets no idle nudge", () => {
+test("the first prompt after a resume gets no idle nudge", () => {
   const s = sandbox(10000);
   s.run();
   assert.equal(s.run(s.repo, {}, "SessionStart"), "", "SessionStart itself prints nothing");
   assert.equal(s.run(s.repo, { HUHHB_GROUNDING_IDLE_MIN: "0" }), "", "handed-off work is not interrupted");
   assert.match(s.run(s.repo, { HUHHB_GROUNDING_IDLE_MIN: "0" }), /idle gap/, "later idle gaps still nudge");
+});
+
+test("compaction does not suppress the idle nudge", () => {
+  const s = sandbox(10000);
+  s.run();
+  assert.equal(s.run(s.repo, {}, "SessionStart", "compact"), "");
+  assert.match(s.run(s.repo, { HUHHB_GROUNDING_IDLE_MIN: "0" }), /idle gap/, "a break after /compact still nudges");
 });
 
 test("a session start does not suppress the line trigger", () => {

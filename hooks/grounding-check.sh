@@ -18,8 +18,8 @@
 # Idle threshold: HUHHB_GROUNDING_IDLE_MIN (default 30). Anti-nag cooldown:
 # HUHHB_GROUNDING_COOLDOWN_MIN (default 15).
 #
-# Also registered on SessionStart (startup/resume/…): it only marks the session so the next prompt,
-# usually work handed to the session, gets no idle nudge. Prints nothing there.
+# Also registered on SessionStart: on a resume it only marks the session so the next prompt, usually
+# work handed to the session, gets no idle nudge. Prints nothing there.
 #
 # Reads the hook JSON payload on stdin. Never blocks; always exits 0.
 
@@ -61,9 +61,12 @@ cwd=$(field cwd)
 [ -n "$cwd" ] || cwd=$PWD
 state="${TMPDIR:-/tmp}/huhhb-grounding-$sid"
 
-# --- session start/resume: skip the idle nudge on the next prompt (a new state file has no idle gap) ---
+# --- session resume: skip the idle nudge on the next prompt (a new session has no state, so no idle gap) ---
+# Only resume/fork: a compaction before a break must not silence the nudge for the return.
 if [ "$(field hook_event_name)" = "SessionStart" ]; then
-  [ -f "$state" ] && ! grep -q '^fresh=1' "$state" 2>/dev/null && printf 'fresh=1\n' >> "$state" 2>/dev/null
+  case "$(field source)" in
+    resume|fork) [ -f "$state" ] && ! grep -q '^fresh=1' "$state" 2>/dev/null && printf 'fresh=1\n' >> "$state" 2>/dev/null ;;
+  esac
   exit 0
 fi
 

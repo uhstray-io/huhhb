@@ -12,8 +12,9 @@
 # Every `gh pr merge` in the command is checked. One GraphQL query per merge.
 # Fails open: if gh cannot answer (offline, no PR, no auth) the merge proceeds.
 # The repo comes from -R, else from the `cd`s before that merge replayed from the session cwd.
-# ponytail: first 100 threads; `cd` via variables or pushd is not followed; a line
-# starting `gh pr merge` in a heredoc also triggers.
+# ponytail: first 100 threads; `cd` via variables or pushd is not followed; a quoted
+# selector ('#62') or a glued flag (-Ro/r) fails open; a line starting `gh pr merge`
+# in a heredoc also triggers.
 
 payload=$(cat)
 
@@ -60,9 +61,10 @@ for seg in $segs; do
   done
   [ "$moved" = 1 ] || continue
 
-  # Arguments after `merge`: quoted values become Q, and the command string ends at the next quote.
-  args=$(printf '%s' "${seg#*merge}" | sed -e "s/'[^']*'/Q/g" -e 's/\\"[^"]*\\"/Q/g')
-  args=${args%%\"*}
+  # Arguments after `merge`, up to the end of the command string (the first unescaped quote);
+  # quoted values then become Q, double-quoted first so an apostrophe inside one is harmless.
+  args=$(printf '%s' "${seg#*[[:space:]]merge}" | sed -E -e 's/^(([^"\\]|\\.)*)".*/\1/' \
+    -e 's/\\"[^"]*\\"/Q/g' -e "s/'[^']*'/Q/g")
   sel=''; repo=''; want=''
   IFS=' '
   for w in $args; do
@@ -78,12 +80,13 @@ for seg in $segs; do
   IFS=$nl
 
   case "$sel" in
-    '') n=$(gh pr view ${repo:+-R "$repo"} --json number -q .number 2>/dev/null) ;;
-    *[!0-9]*)
-      case "$sel" in
-        */pull/*) n=${sel##*/pull/}; n=${n%%[!0-9]*} ;;
-        *) n=$(gh pr view "$sel" ${repo:+-R "$repo"} --json number -q .number 2>/dev/null) ;;
-      esac ;;
+    *[!0-9]*/pull/[0-9]*)                    # a PR URL names its own repository
+      n=${sel##*/pull/}; n=${n%%[!0-9]*}
+      [ -n "$repo" ] || { u=${sel%%/pull/*}; repo=${u#*://*/}; } ;;
+    *[!0-9]*|'')                             # a branch, or nothing: ask gh (-R as two arguments)
+      if [ -n "$repo" ]; then set -- -R "$repo"; else set --; fi
+      if [ -n "$sel" ]; then set -- "$sel" "$@"; fi
+      n=$(gh pr view "$@" --json number -q .number 2>/dev/null) ;;
     *) n=$sel ;;
   esac
   case "$n" in ''|*[!0-9]*) continue ;; esac

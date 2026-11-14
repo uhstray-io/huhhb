@@ -22,6 +22,7 @@ function stub() {
   const gh = join(dir, "gh");
   writeFileSync(gh, `#!/bin/sh
 printf '%s|%s\\n' "$PWD" "$*" >> "$FAKE_LOG"
+for a in "$@"; do case "$a" in "-R "*) exit 1 ;; esac; done   # a flag and its value glued into one argument
 case "$1 $2" in
   "pr view") [ "$3" = "--json" ] && echo 7 || echo 9 ;;
   "api graphql")
@@ -42,7 +43,7 @@ function run(command: string | ((dir: string) => string), opts: { open?: string;
   if (typeof command === "function") command = command(s.dir);
   writeFileSync(s.log, "");
   const r = spawnSync("sh", [HOOK], {
-    input: JSON.stringify({ hook_event_name: "PreToolUse", tool_name: "Bash", cwd: s.dir, tool_input: { command } }),
+    input: JSON.stringify({ hook_event_name: "PreToolUse", tool_name: "Bash", cwd: s.dir, tool_input: { command, description: "Merge the PR's branch" } }),
     env: {
       PATH: `${s.dir}:${process.env.PATH}`, FAKE_LOG: s.log,
       FAKE_OPEN: opts.open ?? "0", FAKE_FAIL: opts.fail ?? "0", FAKE_JSON: opts.json ?? "",
@@ -74,6 +75,9 @@ test("finds the PR wherever the selector sits", () => {
     "gh pr merge https://github.com/o/r/pull/62 --merge",
     "gh pr merge --body 'merging 3 fixes' --merge 62",
     "gh pr merge -t 'Ship 3' --match-head-commit abc123 62 --merge",
+    'gh pr merge --body "merging 3 fixes" --merge 62',
+    'gh pr merge --body "it\'s done" 62 --merge',
+    "MODE=merge gh pr merge 62 --merge",
   ]) {
     const r = run(cmd, { open: "1" });
     assert.ok(denied(r), cmd);
@@ -94,9 +98,16 @@ test("with no selector, asks gh for the current branch's PR", () => {
   assert.match(r.calls, /-F n=7/);
 });
 
-test("-R queries that repository", () => {
+test("-R / --repo / a URL choose the repository", () => {
   const r = run("gh pr merge -R uhstray-io/other 5 --merge", { open: "1" });
   assert.match(r.calls, /-F owner=uhstray-io -F name=other -F n=5/);
+  assert.match(run("gh pr merge --repo uhstray-io/other 5 --merge", { open: "1" }).calls, /-F owner=uhstray-io -F name=other/);
+  assert.match(run("gh pr merge --repo=uhstray-io/other 5 --merge", { open: "1" }).calls, /-F owner=uhstray-io -F name=other/);
+  assert.match(run("gh pr merge https://github.com/acme/tools/pull/5 --merge", { open: "1" }).calls, /-F owner=acme -F name=tools -F n=5/);
+  for (const cmd of ["gh pr merge my-branch -R uhstray-io/other --merge", "gh pr merge -R uhstray-io/other --merge"]) {
+    const b = run(cmd, { open: "1" });
+    assert.ok(denied(b), `${cmd}: -R must reach gh as two arguments`);
+  }
 });
 
 test("gh runs in the session's directory", () => {

@@ -118,6 +118,15 @@ if (-not $cwd) { $cwd = (Get-Location).Path }
 $tmpDir = if ($env:TMPDIR) { $env:TMPDIR } else { [System.IO.Path]::GetTempPath() }
 $state = Join-Path $tmpDir ('huhhb-grounding-' + $sid)
 
+# --- session resume: skip the idle nudge on the next prompt (a new session has no state, so no idle gap) ---
+# Only resume/fork: a compaction before a break must not silence the nudge for the return.
+if ([regex]::IsMatch($payload, '"hook_event_name"\s*:\s*"SessionStart"')) {
+  if ([regex]::IsMatch($payload, '"source"\s*:\s*"(resume|fork)"') -and (Test-Path -LiteralPath $state) -and -not [regex]::IsMatch([string](Get-Content -LiteralPath $state -Raw), '(?m)^fresh=1')) {
+    try { Add-Content -LiteralPath $state -Value 'fresh=1' } catch { }
+  }
+  exit 0
+}
+
 # --- read state ---
 $txt = ''
 if (Test-Path -LiteralPath $state) { $txt = [string](Get-Content -LiteralPath $state -Raw) }
@@ -127,6 +136,7 @@ $baseRepo   = Get-StateValue 'base_repo'
 $baseCommit = Get-StateValue 'base_commit'
 $baseLines  = Get-DigitsOr (Get-StateValue 'base_lines') 0
 $reset = [regex]::IsMatch($txt, '(?m)^reset=1')
+$fresh = [regex]::IsMatch($txt, '(?m)^fresh=1')   # set by SessionStart; consumed by this prompt's state write
 
 # --- git: repo top and HEAD (line trigger runs only in a repo with at least one commit) ---
 $top = ''
@@ -161,7 +171,7 @@ if ($head) {
 }
 
 # --- idle-return trigger ---
-if (-not $nudge -and $lastPrompt -gt 0 -and ($now - $lastPrompt) -ge $idleS) {
+if (-not $nudge -and -not $fresh -and $lastPrompt -gt 0 -and ($now - $lastPrompt) -ge $idleS) {
   $nudge = $true; $reason = "you returned after a long idle gap (>= $idleMin min)"
 }
 

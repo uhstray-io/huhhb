@@ -11,15 +11,16 @@
 # with `gh pr view`), else the current branch's PR; -R/--repo picks the repository.
 # Every `gh pr merge` in the command is checked. One GraphQL query per merge.
 # Fails open: if gh cannot answer (offline, no PR, no auth) the merge proceeds.
-# ponytail: first 100 threads; the repo comes from -R or the session cwd, not from
-# a `cd` inside the command; a line starting `gh pr merge` in a heredoc also triggers.
+# The repo comes from -R, else from the `cd`s before that merge replayed from the session cwd.
+# ponytail: first 100 threads; `cd` via variables or pushd is not followed; a line
+# starting `gh pr merge` in a heredoc also triggers.
 
 payload=$(cat)
 
 start='("command"[[:space:]]*:[[:space:]]*"|[;&|`]|\$\()[[:space:]]*'
 envs='([A-Za-z_][A-Za-z0-9_]*=[^[:space:]]*[[:space:]]+)*'
-segs=$(printf '%s' "$payload" | sed -e 's/\\\\\\n/ /g' -e 's/\\n/;/g' \
-  | grep -Eo "${start}${envs}gh[[:space:]]+pr[[:space:]]+merge([[:space:]][^;&|]*)?" 2>/dev/null)
+flat=$(printf '%s' "$payload" | sed -e 's/\\\\\\n/ /g' -e 's/\\n/;/g')
+segs=$(printf '%s' "$flat" | grep -Eo "${start}${envs}gh[[:space:]]+pr[[:space:]]+merge([[:space:]][^;&|]*)?" 2>/dev/null)
 [ -n "$segs" ] || exit 0
 
 cwd=$(printf '%s' "$payload" | sed -n 's/.*"cwd"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -n1)
@@ -45,6 +46,19 @@ IFS=$nl
 for seg in $segs; do
   pre=${seg%%gh[[:space:]]*}
   case "$pre" in REVIEW_ANSWERED=1' '*|*[!A-Za-z0-9_]REVIEW_ANSWERED=1' '*) continue ;; esac
+
+  # The merge runs wherever the `cd`s before it left the shell: replay them, in order, from the cwd.
+  [ -n "$cwd" ] && cd "$cwd" 2>/dev/null
+  before=${flat%%"$seg"*}
+  dirs=$(printf '%s' "$before" | grep -Eo '(^|[;&|(][[:space:]]*|"[[:space:]]*:[[:space:]]*")cd[[:space:]]+[^;&|]+' \
+    | sed -E -e 's/^([;&|(][[:space:]]*|"[[:space:]]*:[[:space:]]*")?cd[[:space:]]+//' -e 's/[[:space:]]+$//' \
+      -e "s/^'(.*)'$/\\1/" -e 's/^\\"(.*)\\"$/\\1/')
+  moved=1
+  for dir in $dirs; do
+    case "$dir" in '~'*) dir=$HOME${dir#\~} ;; -) continue ;; esac
+    cd "$dir" 2>/dev/null || { moved=0; break; }
+  done
+  [ "$moved" = 1 ] || continue
 
   # Arguments after `merge`: quoted values become Q, and the command string ends at the next quote.
   args=$(printf '%s' "${seg#*merge}" | sed -e "s/'[^']*'/Q/g" -e 's/\\"[^"]*\\"/Q/g')

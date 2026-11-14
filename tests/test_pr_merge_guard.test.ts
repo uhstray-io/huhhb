@@ -37,8 +37,9 @@ esac
   return { dir, log: join(dir, "calls.log") };
 }
 
-function run(command: string, opts: { open?: string; fail?: string; json?: string } = {}) {
+function run(command: string | ((dir: string) => string), opts: { open?: string; fail?: string; json?: string } = {}) {
   const s = stub();
+  if (typeof command === "function") command = command(s.dir);
   writeFileSync(s.log, "");
   const r = spawnSync("sh", [HOOK], {
     input: JSON.stringify({ hook_event_name: "PreToolUse", tool_name: "Bash", cwd: s.dir, tool_input: { command } }),
@@ -87,7 +88,7 @@ test("a branch selector is resolved with gh pr view", () => {
 });
 
 test("with no selector, asks gh for the current branch's PR", () => {
-  const r = run("cd /repo && gh pr merge --merge", { open: "1" });
+  const r = run((d) => `cd ${d} && gh pr merge --merge`, { open: "1" });
   assert.ok(denied(r));
   assert.match(r.calls, /pr view --json number/);
   assert.match(r.calls, /-F n=7/);
@@ -103,6 +104,18 @@ test("gh runs in the session's directory", () => {
   assert.match(r.calls, new RegExp(`^${r.dir}\\|api graphql`, "m"));
 });
 
+test("a cd before the merge decides which repository is queried", () => {
+  const r = run((d) => {
+    spawnSync("mkdir", ["-p", join(d, "other repo")]);
+    return `cd /tmp && cd '${join(d, "other repo")}' && gh pr merge 60 --merge`;
+  }, { open: "0" });
+  assert.match(r.calls, new RegExp(`^${r.dir}/other repo\\|api graphql`, "m"));
+  const rel = run((d) => { spawnSync("mkdir", ["-p", join(d, "rel")]); return "cd rel && gh pr merge 60 --merge"; }, { open: "0" });
+  assert.match(rel.calls, new RegExp(`^${rel.dir}/rel\\|api graphql`, "m"), "a relative cd is taken from the session cwd");
+  const chain = run((d) => { spawnSync("mkdir", ["-p", join(d, "a", "b")]); return "cd a && cd b && gh pr merge 60 --merge"; }, { open: "0" });
+  assert.match(chain.calls, new RegExp(`^${chain.dir}/a/b\\|api graphql`, "m"), "chained cds apply in order");
+});
+
 test("every merge in the command is checked", () => {
   const r = run("gh pr merge 61 --merge && gh pr merge 62 --merge", { open: "0" });
   assert.match(r.calls, /-F n=61/);
@@ -110,6 +123,8 @@ test("every merge in the command is checked", () => {
   const acked = run("REVIEW_ANSWERED=1 gh pr merge 61 --merge && gh pr merge 62 --merge", { open: "2" });
   assert.ok(denied(acked), "the unacknowledged second merge is still checked");
   assert.doesNotMatch(acked.calls, /-F n=61/);
+  const cdThenTwo = run((d) => { spawnSync("mkdir", ["-p", join(d, "a")]); return "cd a && gh pr merge 61 --merge; gh pr merge 62 --merge"; }, { open: "0" });
+  assert.match(cdThenTwo.calls, new RegExp(`^${cdThenTwo.dir}/a\\|api graphql .*-F n=62`, "m"), "the second merge is checked from the same directory");
 });
 
 test("the acknowledgement prefix lets the merge through without a query", () => {

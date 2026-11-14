@@ -15,7 +15,7 @@ jobs:
         run: node scripts/skill-lint.ts
       - name: Unit suite
         run: node --test tests/test_evolve.test.ts
-      - name: Grounding hook
-        run: node --test tests/test_grounding_hook.test.ts
+      - name: Hook tests
+        run: node --test tests/test_grounding_hook.test.ts tests/test_pr_claim_check.test.ts
       - name: Offline scenario catalog
         run: node scripts/evolve/evals.ts

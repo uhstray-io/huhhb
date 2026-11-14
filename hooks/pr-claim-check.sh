@@ -46,7 +46,8 @@ for seg in $segs; do
   fi
   # an explicit GET is a read, but only in flag position: before the first quote, not in body text
   printf '%s' "$seg" | cut -d"'" -f1 | cut -d'\' -f1 | grep -Eq '(-X|--method)[[:space:]=]*GET' && continue
-  if printf '%s' "$seg" | grep -Eq '[[:space:]]-[fF]|--(raw-)?field'; then
+  # fields and --input switch gh api to POST unless a method is given (gh api --help)
+  if printf '%s' "$seg" | grep -Eq '[[:space:]]-[fF]|--(raw-)?field|--input'; then
     fire=1; break
   fi
 done

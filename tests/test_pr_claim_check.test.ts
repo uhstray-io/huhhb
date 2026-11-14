@@ -33,6 +33,7 @@ test("denies PR text being created, edited, commented or reviewed", () => {
   denies("cd /repo && gh pr comment 59 --body-file c.md");
   denies("cat > b.md <<'EOF'\nbody\nEOF\ngh pr create --body-file b.md"); // gh at a line start
   denies('echo "$(gh pr comment 5 -b x)"');
+  denies("echo `gh pr comment 5 -b x`");
   denies("GH_REPO=o/r gh pr create --body-file body.md"); // only CLAIMS_VERIFIED=1 lets a post through
 });
 
@@ -49,6 +50,10 @@ test("denies gh api writes to comments, each write form on its own", () => {
   // a GET mentioned in the body text is not a read
   denies("gh api -X POST repos/o/r/pulls/60/comments/9/replies -f body='Fixed: an explicit -X GET is now a read'");
   denies("gh api repos/o/r/issues/60/comments -f body='use --method GET for reads'");
+  denies('gh api repos/o/r/issues/60/comments -f body="use --method GET for reads"');
+  // a \ line continuation keeps the call together
+  denies("gh api repos/o/r/pulls/60/comments/123/replies \\\n  -f body='Fixed in abc'");
+  denies("gh api \\\n  -X POST \\\n  repos/o/r/issues/5/comments \\\n  --input b.json");
 });
 
 test("the acknowledgement only counts as the gh call's own prefix", () => {

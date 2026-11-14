@@ -24,7 +24,8 @@ payload=$(cat)
 
 start='("command"[[:space:]]*:[[:space:]]*"|[;&|`]|\$\()[[:space:]]*'
 envs='([A-Za-z_][A-Za-z0-9_]*=[^[:space:]]*[[:space:]]+)*'
-segs=$(printf '%s' "$payload" | sed 's/\\n/;/g' \
+# A \ line continuation (JSON: \\\n) joins lines; any other line break ends a command.
+segs=$(printf '%s' "$payload" | sed -e 's/\\\\\\n/ /g' -e 's/\\n/;/g' \
   | grep -Eo "${start}${envs}gh[[:space:]]+(pr[[:space:]]+(create|edit|comment|review)|api[[:space:]][^;&|]*)" 2>/dev/null)
 [ -n "$segs" ] || exit 0
 

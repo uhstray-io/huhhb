@@ -46,6 +46,9 @@ test("denies gh api writes to comments, each write form on its own", () => {
   denies("gh api repos/o/r/issues/59/comments --raw-field body=hi");
   denies('gh api -X POST "repos/o/r/issues/59/comments" --input b.json');
   denies('gh api -H "Accept: application/vnd.github+json" -X POST repos/o/r/issues/59/comments --input b.json');
+  // a GET mentioned in the body text is not a read
+  denies("gh api -X POST repos/o/r/pulls/60/comments/9/replies -f body='Fixed: an explicit -X GET is now a read'");
+  denies("gh api repos/o/r/issues/60/comments -f body='use --method GET for reads'");
 });
 
 test("the acknowledgement only counts as the gh call's own prefix", () => {
@@ -54,6 +57,12 @@ test("the acknowledgement only counts as the gh call's own prefix", () => {
   denies("gh pr create --body 'Fixes the CLAIMS_VERIFIED=1 typo'");
   denies("gh api repos/o/r/issues/59/comments -f body='re-run with CLAIMS_VERIFIED=1'");
   denies("gh pr create -b x", "Open PR (CLAIMS_VERIFIED=1 next)");
+  denies("NOT_CLAIMS_VERIFIED=1 gh pr create -b x");
+  denies("CLAIMS_VERIFIED=10 gh pr create -b x");
+  // each line is its own gh call: acknowledging one does not cover the next
+  denies("CLAIMS_VERIFIED=1 gh api repos/o/r/pulls/5 --jq .head.sha\ngh pr comment 5 -b x");
+  denies("CLAIMS_VERIFIED=1 gh api -X POST repos/o/r/issues/5/comments -f body=a\ngh api -X POST repos/o/r/issues/6/comments -f body=b");
+  allows("gh api repos/o/r/pulls/5 --jq .head.sha\nCLAIMS_VERIFIED=1 gh pr comment 5 -b x");
 });
 
 test("allows reads, unrelated commands, and mentions inside text", () => {
@@ -61,6 +70,7 @@ test("allows reads, unrelated commands, and mentions inside text", () => {
   allows('gh api "repos/o/r/pulls/59/comments" --jq ".[].body"');
   allows("gh api repos/o/r/pulls/5/comments --method GET -f per_page=100");
   allows("gh api repos/o/r/pulls/5/comments > c.json && grep -F 'x' c.json");
+  allows("gh api -X POST repos/o/r/pulls/5/requested_reviewers -f reviewers[]=x"); // not a comments endpoint
   allows("gh pr view 59 --json body");
   allows("gh pr checks 59");
   allows("git status --short");

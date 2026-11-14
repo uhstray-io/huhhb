@@ -13,16 +13,18 @@
 #
 # A gh call only counts at a command start: right after "command":", after ; & |
 # $( or a backtick, or at a line start, optionally behind NAME=value prefixes.
-# So a commit message that mentions `gh pr create` mid-line passes; one with a
-# line that starts with `gh pr create` is denied (rephrase it).
-# ponytail: regex over the JSON payload, not a shell parser; wrappers such as
-# `bash -c`, `xargs gh` or `gh -R o/r pr …` are not caught.
+# Each line is its own command. So a commit message that mentions `gh pr create`
+# mid-line passes; one with a line that starts with `gh pr create` is denied
+# (rephrase it).
+# ponytail: regex over the JSON payload, not a shell parser. Not caught: wrappers
+# (`bash -c`, `xargs gh`, `gh -R o/r pr …`), subshells `( gh … )`, and a gh api
+# call whose ; & | inside a quoted value comes before the endpoint or write flag.
 
 payload=$(cat)
 
-start='("command"[[:space:]]*:[[:space:]]*"|[;&|`]|\$\(|\\n)[[:space:]]*'
+start='("command"[[:space:]]*:[[:space:]]*"|[;&|`]|\$\()[[:space:]]*'
 envs='([A-Za-z_][A-Za-z0-9_]*=[^[:space:]]*[[:space:]]+)*'
-segs=$(printf '%s' "$payload" \
+segs=$(printf '%s' "$payload" | sed 's/\\n/;/g' \
   | grep -Eo "${start}${envs}gh[[:space:]]+(pr[[:space:]]+(create|edit|comment|review)|api[[:space:]][^;&|]*)" 2>/dev/null)
 [ -n "$segs" ] || exit 0
 
@@ -32,14 +34,18 @@ IFS='
 '
 for seg in $segs; do
   pre=${seg%%gh[[:space:]]*}                 # the env prefix in front of this gh call
-  case "$pre" in *CLAIMS_VERIFIED=1*) continue ;; esac
+  case "$pre" in CLAIMS_VERIFIED=1' '*|*[!A-Za-z0-9_]CLAIMS_VERIFIED=1' '*) continue ;; esac
   if printf '%s' "$seg" | grep -Eq 'gh[[:space:]]+pr[[:space:]]'; then
     fire=1; break
   fi
-  # gh api: only writes to a comments endpoint (an explicit GET is a read)
+  # gh api: only writes to a comments endpoint
   printf '%s' "$seg" | grep -q '/comments' || continue
-  printf '%s' "$seg" | grep -Eq '(-X|--method)[[:space:]=]*GET' && continue
-  if printf '%s' "$seg" | grep -Eq '(-X|--method)[[:space:]=]*(POST|PATCH|PUT)|[[:space:]]-[fF]|--(raw-)?field'; then
+  if printf '%s' "$seg" | grep -Eq '(-X|--method)[[:space:]=]*(POST|PATCH|PUT)'; then
+    fire=1; break
+  fi
+  # an explicit GET is a read, but only in flag position: before the first quote, not in body text
+  printf '%s' "$seg" | cut -d"'" -f1 | cut -d'\' -f1 | grep -Eq '(-X|--method)[[:space:]=]*GET' && continue
+  if printf '%s' "$seg" | grep -Eq '[[:space:]]-[fF]|--(raw-)?field'; then
     fire=1; break
   fi
 done

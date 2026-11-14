@@ -20,7 +20,7 @@ entry's `Occurrences` count and adds a dated note; it never opens a second entry
 
 | # | Summary | Class | Count | Enforced by |
 |---|---|---|---|---|
-| 1.1 | PR body listed test cases and lockfiles from memory; both lists were wrong | Unverified claim | 3 | `hooks/pr-claim-check.sh` (PreToolUse, advisory) |
+| 1.1 | PR body listed test cases and lockfiles from memory; both lists were wrong | Unverified claim | 3 | `hooks/pr-claim-check.sh` (PreToolUse, deny until acknowledged) |
 
 ## 1. Asserting something without verifying it
 
@@ -48,7 +48,7 @@ names, file lists, flags, counts — is generated from or checked against the
 source (`grep`, `git diff --stat`, `node --test` output) before `gh pr create`,
 not after.
 
-**Enforced by.** `hooks/pr-claim-check.sh` — a PreToolUse (Bash) hook, advisory. Tested by `tests/test_pr_claim_check.test.ts`.
+**Enforced by.** `hooks/pr-claim-check.sh` — a PreToolUse (Bash) hook that denies the post until it is re-run with `CLAIMS_VERIFIED=1`. Tested by `tests/test_pr_claim_check.test.ts`.
 
 **Occurrence 2 — 2026-11-13.** Same PR, about 40 minutes later: a reply to a
 CodeRabbit finding said `hooks/` held "14 `.sh` scripts". `git ls-files` shows
@@ -76,6 +76,9 @@ Convention.
 **Guard built — 2026-11-13.** The proposed hook shipped as `hooks/pr-claim-check.sh`
 (HUHHB-157). It fires on `gh pr create|edit|comment|review`, and on `gh api` calls
 to a comments endpoint only when they write (`-X POST|PATCH|PUT`, `--method`, or
-`-f`/`-F` fields), so reading comments stays quiet. It reminds rather than blocks:
-a hook cannot check the text's claims, only make the check happen at the moment
-the rule kept failing.
+`-f`/`-F` fields), so reading comments stays quiet. It denies the call, with the
+check as the reason, until the same command is re-run prefixed with
+`CLAIMS_VERIFIED=1`. A first, advisory version was dropped in review: PreToolUse
+`additionalContext` is added alongside the tool result, so the reminder arrived
+only after the text had been posted. A hook cannot check the text's claims; it
+can only force the check to happen before posting.

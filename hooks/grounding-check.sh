@@ -18,7 +18,10 @@
 # Idle threshold: HUHHB_GROUNDING_IDLE_MIN (default 30). Anti-nag cooldown:
 # HUHHB_GROUNDING_COOLDOWN_MIN (default 15).
 #
-# Reads the UserPromptSubmit JSON payload on stdin. Never blocks; always exits 0.
+# Also registered on SessionStart: on a resume it only marks the session so the next prompt, usually
+# work handed to the session, gets no idle nudge. Prints nothing there.
+#
+# Reads the hook JSON payload on stdin. Never blocks; always exits 0.
 
 set -u
 payload=$(cat 2>/dev/null || printf '')
@@ -58,6 +61,15 @@ cwd=$(field cwd)
 [ -n "$cwd" ] || cwd=$PWD
 state="${TMPDIR:-/tmp}/huhhb-grounding-$sid"
 
+# --- session resume: skip the idle nudge on the next prompt (a new session has no state, so no idle gap) ---
+# Only resume/fork: a compaction before a break must not silence the nudge for the return.
+if [ "$(field hook_event_name)" = "SessionStart" ]; then
+  case "$(field source)" in
+    resume|fork) [ -f "$state" ] && ! grep -q '^fresh=1' "$state" 2>/dev/null && printf 'fresh=1\n' >> "$state" 2>/dev/null ;;
+  esac
+  exit 0
+fi
+
 # --- read state ---
 get() { [ -f "$state" ] && sed -n "s/^$1=//p" "$state" | head -n1; }
 num() { case "$1" in ''|*[!0-9]*) echo 0 ;; *) echo "$1" ;; esac; }
@@ -68,6 +80,8 @@ base_commit=$(get base_commit)
 base_lines=$(num "$(get base_lines)")
 reset=0
 [ -f "$state" ] && grep -q '^reset=1' "$state" 2>/dev/null && reset=1
+fresh=0   # set by SessionStart; consumed (not rewritten) by this prompt's state write
+[ -f "$state" ] && grep -q '^fresh=1' "$state" 2>/dev/null && fresh=1
 
 # Lines changed vs a commit: tracked added+deleted (binary "-" rows skipped) + untracked text lines.
 # ponytail: counts every untracked non-ignored file each prompt; a huge un-ignored tree could near the 5 s hook timeout.
@@ -107,7 +121,7 @@ if [ -n "$head" ]; then
 fi
 
 # --- idle-return trigger ---
-if [ "$nudge" = "0" ] && [ "$last_prompt" -gt 0 ] && [ $((now - last_prompt)) -ge "$idle_s" ]; then
+if [ "$nudge" = "0" ] && [ "$fresh" = "0" ] && [ "$last_prompt" -gt 0 ] && [ $((now - last_prompt)) -ge "$idle_s" ]; then
   nudge=1; reason="you returned after a long idle gap (>= ${idle_min} min)"
 fi
 

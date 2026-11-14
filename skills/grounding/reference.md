@@ -11,7 +11,9 @@ Heavy detail for the `grounding` skill, kept out of `SKILL.md` to keep it lean.
   The first-run menu offers **1000 / 2500 (default) / 5000 / 10000 / custom number** and writes the choice to
   the marker as `lines=<n>`. A legacy `interval_min=` line is ignored without error.
 - **Idle return.** The hook also nudges when the user returns after `HUHHB_GROUNDING_IDLE_MIN` minutes away
-  (default 30). After any nudge, the hook stays quiet for `HUHHB_GROUNDING_COOLDOWN_MIN` minutes (default 15).
+  (default 30). The first prompt after a session start or resume is exempt: the hook also runs on
+  SessionStart and marks the state file `fresh=1`, because that prompt is usually work handed to the session
+  and a checkpoint nudge would compete with it. After any nudge, the hook stays quiet for `HUHHB_GROUNDING_COOLDOWN_MIN` minutes (default 15).
 - **Per-session state.** The hook keeps `${TMPDIR:-/tmp}/huhhb-grounding-<session_id>` with these keys, and
   passes this exact path in its nudge:
   - `last_prompt` — the time of the last prompt, in Unix seconds, used by the idle check.

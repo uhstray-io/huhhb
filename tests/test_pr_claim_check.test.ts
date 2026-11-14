@@ -45,6 +45,7 @@ test("denies gh api writes to comments, each write form on its own", () => {
   denies("gh api repos/o/r/issues/59/comments -F body=@c.md");
   denies("gh api repos/o/r/issues/59/comments --field body=hi");
   denies("gh api repos/o/r/issues/59/comments --raw-field body=hi");
+  denies("gh api repos/o/r/issues/59/comments --input body.json"); // --input alone is an implicit POST
   denies('gh api -X POST "repos/o/r/issues/59/comments" --input b.json');
   denies('gh api -H "Accept: application/vnd.github+json" -X POST repos/o/r/issues/59/comments --input b.json');
   // a GET mentioned in the body text is not a read

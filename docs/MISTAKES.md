@@ -21,6 +21,7 @@ entry's `Occurrences` count and adds a dated note; it never opens a second entry
 | # | Summary | Class | Count | Enforced by |
 |---|---|---|---|---|
 | 1.1 | PR body listed test cases and lockfiles from memory; both lists were wrong | Unverified claim | 4 | `hooks/pr-claim-check.sh` (Bash `gh` path only; deny until acknowledged) |
+| 2.1 | PR #60 merged with 4 CodeRabbit findings unanswered | Process | 1 | `hooks/pr-merge-guard.sh` (deny until acknowledged; fails open) |
 
 ## 1. Asserting something without verifying it
 
@@ -91,3 +92,32 @@ later, before the PR was opened. The guard did not apply, because it only
 watches `gh` commands; the rule did not fire because the second session was
 assumed to match the first without reading its transcript. Any tracked text,
 Plane included, falls under the rule.
+
+## 2. Merging before the review was finished
+
+### 2.1 PR #60 merged with four review findings unanswered
+
+**Occurrences: 1** — 2026-11-14
+
+**What happened.** CodeRabbit reviewed PR #60 at `3e3c434b` and posted four
+inline findings. Before merging `1d3437e0` I checked only the comments on the
+final commit and CodeRabbit's check-run there, which said "Review rate limited",
+and I treated the independent reviewer's approval as the whole review. The PR
+merged as `0da180d5` with those four threads unanswered. One was a real gap that
+shipped in v0.8.29: `gh api …/comments --input body.json` posts without an
+explicit method and passed the claim-check hook. A GraphQL query run during the
+merge printed `4` unresolved threads, and nothing stopped on it.
+
+**Root cause.** "Every finding answered" was checked per commit, not per PR.
+Findings posted on an intermediate commit are invisible to a check scoped to the
+final commit, and a rate-limited status on the final commit hid the fact that
+the reviewer had run on an earlier one.
+
+**The rule.** Before merging, list every unresolved review thread on the PR,
+whatever commit it was posted on, and confirm each has a fix pushed or a reply
+with the reason. A count printed in the same command as the merge is not a check.
+
+**Enforced by.** `hooks/pr-merge-guard.sh`, a PreToolUse (Bash) hook that denies
+`gh pr merge` while any unresolved thread's last comment is not the merging
+user's, until re-run with `REVIEW_ANSWERED=1`. Tested by
+`tests/test_pr_merge_guard.test.ts`. Fails open when `gh` cannot answer.

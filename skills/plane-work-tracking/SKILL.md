@@ -126,7 +126,9 @@ label to the user first. Label and state names are permanent keys — never rena
 
 **Milestone = release.** Title is the exact tag the work ships in (`v0.15.0`); `-dev.N`
 prereleases are not milestones. No milestone fits → propose the next version from the latest tag
-(`gh release list`) and **ask before creating it**. Name it after the tag the work will actually ship as: work out the bump from the repo's own version rule (in huhhb, the AGENTS.md Release Checklist) before naming the milestone. A batch of fixes is a patch, not a minor.
+(`gh release list`) and **ask before creating it**. Name it after the tag the work will actually ship as: work out the bump from the repo's own version rule (in huhhb, the AGENTS.md Release Checklist) before naming the milestone. A batch of fixes is a patch, not a minor. If the merge gate re-bumps
+the PR to a different version, move the item to the milestone named after the final tag (remove,
+then add, then read back); never rename a milestone that other items share.
 
 ## Gotchas
 

@@ -126,12 +126,15 @@ label to the user first. Label and state names are permanent keys — never rena
 
 **Milestone = release.** Title is the exact tag the work ships in (`v0.15.0`); `-dev.N`
 prereleases are not milestones. No milestone fits → propose the next version from the latest tag
-(`gh release list`) and **ask before creating it**.
+(`gh release list`) and **ask before creating it**. Name it after the tag the work will actually ship as: work out the bump from the repo's own version rule (in huhhb, the AGENTS.md Release Checklist) before naming the milestone. A batch of fixes is a patch, not a minor.
 
 ## Gotchas
 
 - `module`/`milestone manage_workitems` return `null` on success and there is no module or
   milestone field on `workitem update` — membership is only provable with `list_workitems`.
+- An item holds one milestone, and adding it to a second one does not move it (observed in agent-cloud, 2026-11-13). A move is: `milestone manage_workitems` `remove_ids` on the old milestone, then `add_ids` on the new one, then `list_workitems` on both.
+- Before moving many items, list them first, subtract what has already shipped, and move only the remainder. Read each move back.
+- For a Plane write another session or a subagent made, run your own independent read before you rely on it or repeat it. A worker's read-back, or its account of how a tool behaves, is a claim, not verification.
 - Plane Releases return HTTP 402 on our plan; milestones stand in for releases.
 - `work_log create` returning HTTP 404 "Worklog is not enabled for the project" means the
   project's time tracking is off. Turn it on with `project update` `is_time_tracking_enabled=true`,
@@ -154,4 +157,5 @@ prereleases are not milestones. No milestone fits → propose the next version f
 | "It's not part of this item, so no parent" | Found while working this item → sub-item of it. Scope doesn't change that. |
 | "While I'm here, let me fix every item in the module" | One item at a time. Conform only the item you claimed. |
 | "No milestone fits, I'll create v0.16.0" | Propose and ask. Release scope is the owner's call. |
+| "The worker said it moved the items, so they're moved" | Read them back yourself. A worker's report is a claim. |
 | "The update call succeeded, so it's set" | `manage_workitems` returns nothing. Read back. |

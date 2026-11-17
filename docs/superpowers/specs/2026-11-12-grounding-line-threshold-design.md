@@ -93,3 +93,59 @@ and the state-file path.
 
 `hooks/grounding-check.ps1` mirrors the shell logic; `pwsh` is not installed on the authoring machine,
 so it is reviewed, not executed, by these tests.
+
+## Revision 2026-11-17 — own-commit count, no idle rule, once per crossing
+
+Decided by Joseph A. Wisneski IV on 2026-11-16, after an audit of the 1,870 nudges the hook fired between
+2026-06-25 and 2026-11-17 (UTC). The audit report, `grounding-trigger-audit-2026-11-17.md`, is kept in the
+handoffs folder outside this repository. The audit found the following.
+
+- **The count included other branches' work.** The one line-threshold nudge reported 17,456 changed lines. The
+  session had written 103 of them. A `merge dev` brought in the other 17,353.
+- **The idle-return rule fired on machine prompts.** 41 of the 84 idle nudges arrived on machine prompts, such as
+  a finished background task, with no person returning to the session.
+- **Most nudges arrived on machine prompts.** About 74% did. They arrived on `<task-notification>`,
+  `<cross-session-message`, `<ci-monitor-event>` and similar tags.
+- **Most nudges came from the old timer.** 1,785 of the 1,870 (95%) came from the elapsed-time trigger, which
+  huhhb 0.8.27 retired.
+- **A pending checkpoint kept re-firing.** The 15-minute cooldown let a pending nudge repeat on every prompt once
+  it expired, until a checkpoint was recorded as complete. Only 45 grounding skill runs appear across all
+  transcripts, against 1,870 nudges.
+
+### Decisions
+
+1. **Count only this session's own commits.** The count is the added and deleted lines of this session's own
+   non-merge commits since `base_commit`, plus uncommitted changes against `HEAD`, plus lines in untracked text
+   files, minus `base_lines`. A commit is this session's own when no other local or remote branch reaches it.
+   Commits that another branch reaches do not count, including those a merge or pull brings in from it.
+   Committing does not change the count. The lockfile, binary and `-diff` exclusions are unchanged. The command
+   and formula are in [skills/grounding/reference.md](../../../skills/grounding/reference.md). Own commits stop
+   counting once another branch reaches them, for example after a PR merges to `dev` and `dev` is merged back.
+   That limit is accepted because the nudge is advisory.
+2. **Remove the idle-return rule.** The hook is no longer registered on `SessionStart`, and
+   `HUHHB_GROUNDING_IDLE_MIN` is gone. Outside a git repository, or in a repository with no commits, the hook
+   does nothing.
+3. **Remove the cooldown and nudge once per crossing.** `HUHHB_GROUNDING_COOLDOWN_MIN` is gone. The hook nudges
+   when the count reaches `nudged_lines` plus the threshold, then waits for another full threshold of lines. If
+   the count falls below `nudged_lines`, `nudged_lines` drops to that count. A re-baseline or a `reset=1` line
+   sets `nudged_lines` to `0`.
+4. **Nudge on typed prompts only.** A prompt that starts with `<task-notification>`, `<cross-session-message` or
+   `<ci-monitor-event>`, and an empty prompt, never nudges. The count still updates on those prompts, so the next
+   typed prompt can nudge.
+5. **Trim the state keys.** The state file keeps `base_repo`, `base_commit`, `base_lines` and `nudged_lines`, plus
+   a pending `reset=1` line when a checkpoint completes. `last_prompt`, `last_nudge` and `fresh` are gone.
+
+### Supersedes
+
+This revision replaces the following parts of the decisions above. The rest of the spec stands.
+
+- The idle-return half of the timer decision on line 19.
+- The `last_prompt` and `last_nudge` keys on lines 33 and 34.
+- The count formula on line 43.
+- The known limit on lines 61 and 62 about a `git pull` or `git merge` of others' commits.
+- The sentence on line 66 that says only the idle check runs outside a git repository.
+- The cooldown on line 68.
+- The review scope `git diff <base_commit>` on lines 69 and 70 and on lines 75 and 76.
+
+The Testing section above is not revised here. It does not list cases for the own-commit count, the typed-prompt
+gate or the once-per-crossing rule.

@@ -2,13 +2,13 @@
 # huhhb UserPromptSubmit hook (PowerShell) — volume-of-work nudge for the grounding skill.
 # Mirrors grounding-check.sh. Opt-in only; silent no-op otherwise. Never blocks; always exits 0.
 #
-# Lines changed = tracked added+deleted (baseline commit -> working tree; lockfiles and binary files
-# skipped) plus lines in untracked non-ignored text files, minus what was already there at the baseline.
-# Committing does not change the count. Outside a git repo only the idle check runs.
+# Lines changed = own commits since the baseline (baseline..HEAD commits no other local branch or
+# remote-tracking ref reaches) + uncommitted work vs HEAD (tracked added+deleted plus untracked text lines),
+# minus what was already uncommitted at the baseline. Lockfiles and binary files skipped. Merged-in or
+# fast-forwarded work from other branches does not count. Outside a git repo nothing is counted.
+# Only typed prompts nudge, once per threshold crossing: the next nudge waits for another full threshold.
 #
 # Config (precedence high->low): env HUHHB_GROUNDING_LINES > lines=<n> in the marker file > 2500.
-# Idle: HUHHB_GROUNDING_IDLE_MIN (default 30). Anti-nag cooldown: HUHHB_GROUNDING_COOLDOWN_MIN (default 15).
-# Epoch seconds come from [DateTimeOffset] (NOT Get-Date -UFormat %s, which is float + locale-dependent).
 
 $ErrorActionPreference = 'SilentlyContinue'
 try { $payload = [Console]::In.ReadToEnd() } catch { $payload = '' }
@@ -21,8 +21,6 @@ $on = $false
 if ($env:HUHHB_GROUNDING -and ($env:HUHHB_GROUNDING.ToLower() -in @('1','true','on','yes'))) { $on = $true }
 if (Test-Path -LiteralPath $marker) { $on = $true }
 if (-not $on) { exit 0 }
-
-$now = [DateTimeOffset]::UtcNow.ToUnixTimeSeconds()
 
 # pathspecs left out of the count (lockfiles): same 11 as grounding-check.sh
 $excl = @(
@@ -88,6 +86,24 @@ function Get-ChangedLineCount([string]$top, [string]$base) {
   return $total
 }
 
+# added+deleted lines of own non-merge commits in $base..HEAD: commits no other local branch or remote-tracking
+# ref reaches ($cur and its same-name remotes stay in; origin/HEAD excluded). Detached HEAD: no branch excludes.
+# ponytail: own commits stop counting once another branch reaches them; a pull while ON main/dev still counts. Accepted.
+function Get-OwnChurn([string]$top, [string]$base, [string]$cur) {
+  [int64]$total = 0
+  $a = @('-C', $top, 'log', '--no-merges', '--numstat', '--format=', "$base..HEAD", '--not')
+  if ($cur) { $a += "--exclude=$cur" }
+  $a += '--branches'
+  if ($cur) { $a += "--exclude=*/$cur" }
+  $a += @('--exclude=*/HEAD', '--remotes', '--', '.')
+  $rows = Invoke-Git ($a + $excl)
+  foreach ($row in $rows) {
+    $f = $row -split '\t'
+    if ($f.Count -ge 2 -and $f[0] -ne '-' -and $f[0] -match '^[0-9]+$') { $total += [int64]($f[0]) + [int64]($f[1]) }
+  }
+  return $total
+}
+
 # --- threshold (lines): env > marker > 2500; below 1 -> 2500 ---
 $thrRaw = $env:HUHHB_GROUNDING_LINES
 if ([string]::IsNullOrEmpty($thrRaw) -and (Test-Path -LiteralPath $marker)) {
@@ -97,12 +113,6 @@ if ([string]::IsNullOrEmpty($thrRaw) -and (Test-Path -LiteralPath $marker)) {
 }
 $threshold = Get-DigitsOr $thrRaw 2500
 if ($threshold -lt 1) { $threshold = 2500 }
-
-$idleMin = Get-DigitsOr $env:HUHHB_GROUNDING_IDLE_MIN 30
-$idleS = $idleMin * 60
-
-$cooldownMin = Get-DigitsOr $env:HUHHB_GROUNDING_COOLDOWN_MIN 15
-$cooldownS = $cooldownMin * 60
 
 # --- payload fields ---
 $sid = 'nosession'
@@ -118,25 +128,25 @@ if (-not $cwd) { $cwd = (Get-Location).Path }
 $tmpDir = if ($env:TMPDIR) { $env:TMPDIR } else { [System.IO.Path]::GetTempPath() }
 $state = Join-Path $tmpDir ('huhhb-grounding-' + $sid)
 
-# --- session resume: skip the idle nudge on the next prompt (a new session has no state, so no idle gap) ---
-# Only resume/fork: a compaction before a break must not silence the nudge for the return.
-if ([regex]::IsMatch($payload, '"hook_event_name"\s*:\s*"SessionStart"')) {
-  if ([regex]::IsMatch($payload, '"source"\s*:\s*"(resume|fork)"') -and (Test-Path -LiteralPath $state) -and -not [regex]::IsMatch([string](Get-Content -LiteralPath $state -Raw), '(?m)^fresh=1')) {
-    try { Add-Content -LiteralPath $state -Value 'fresh=1' } catch { }
-  }
-  exit 0
-}
+# SessionStart is no longer registered; a stray one only exits, printing nothing.
+if ([regex]::IsMatch($payload, '"hook_event_name"\s*:\s*"SessionStart"')) { exit 0 }
+
+# --- typed prompt? Raw JSON value to the end of the payload; skip leading whitespace and \n \r \t escapes.
+# A leading bare quote is the closing quote of an empty value. Harness-injected turns are not the user typing.
+$typed = $true
+$pm = [regex]::Match($payload, '"prompt"\s*:\s*"(.*)', 'Singleline')
+$pv = if ($pm.Success) { $pm.Groups[1].Value } else { '' }
+$pv = [regex]::Replace($pv, '\A(?:[ \t]|\\[nrt])+', '')
+if ($pv -eq '' -or [regex]::IsMatch($pv, '\A(?:"|<task-notification|<cross-session-message|<ci-monitor-event)')) { $typed = $false }
 
 # --- read state ---
 $txt = ''
 if (Test-Path -LiteralPath $state) { $txt = [string](Get-Content -LiteralPath $state -Raw) }
-$lastPrompt = Get-DigitsOr (Get-StateValue 'last_prompt') 0
-$lastNudge  = Get-DigitsOr (Get-StateValue 'last_nudge') 0
 $baseRepo   = Get-StateValue 'base_repo'
 $baseCommit = Get-StateValue 'base_commit'
 $baseLines  = Get-DigitsOr (Get-StateValue 'base_lines') 0
+$nudged     = Get-DigitsOr (Get-StateValue 'nudged_lines') 0
 $reset = [regex]::IsMatch($txt, '(?m)^reset=1')
-$fresh = [regex]::IsMatch($txt, '(?m)^fresh=1')   # set by SessionStart; consumed by this prompt's state write
 
 # --- git: repo top and HEAD (line trigger runs only in a repo with at least one commit) ---
 $top = ''
@@ -149,8 +159,10 @@ if ($top) {
 }
 
 # --- line trigger ---
-$nudge = $false; $reason = ''; [int64]$lines = 0
+$nudge = $false; $reason = ''; [int64]$lines = 0; $cur = ''
 if ($head) {
+  $curOut = Invoke-Git @('-C', $top, 'branch', '--show-current')   # empty on a detached HEAD
+  if ($curOut) { $cur = ([string]($curOut | Select-Object -First 1)).Trim() }
   # Re-baseline (no nudge) on: first prompt, skill reset, other repo, or a baseline HEAD no longer
   # descending from (branch switch / rebase / amend): a merge-base diff would count others' commits.
   $rebase = $reset -or (-not $baseCommit) -or ($baseRepo -ne $top)
@@ -160,34 +172,25 @@ if ($head) {
     if ($LASTEXITCODE -ne 0) { $rebase = $true }
   }
   if ($rebase) {
-    $baseRepo = $top; $baseCommit = $head; $baseLines = Get-ChangedLineCount $top $head; $reset = $false
+    $baseRepo = $top; $baseCommit = $head; $baseLines = Get-ChangedLineCount $top $head; $reset = $false; $nudged = 0
   } else {
-    $lines = (Get-ChangedLineCount $top $baseCommit) - $baseLines
+    $lines = (Get-OwnChurn $top $baseCommit $cur) + (Get-ChangedLineCount $top 'HEAD') - $baseLines
     if ($lines -lt 0) { $lines = 0 }
-    if ($lines -ge $threshold) {
+    if ($lines -lt $nudged) { $nudged = $lines }   # the count fell: re-arm from the lower figure
+    if ($typed -and $lines -ge ($nudged + $threshold)) {   # once per crossing
       $nudge = $true; $reason = "$lines lines changed since the last checkpoint (threshold $threshold)"
+      $nudged = $lines
     }
   }
 }
 
-# --- idle-return trigger ---
-if (-not $nudge -and -not $fresh -and $lastPrompt -gt 0 -and ($now - $lastPrompt) -ge $idleS) {
-  $nudge = $true; $reason = "you returned after a long idle gap (>= $idleMin min)"
-}
-
-# anti-nag cooldown: don't re-nudge within cooldown of the last nudge
-if ($nudge -and $lastNudge -gt 0 -and ($now - $lastNudge) -lt $cooldownS) { $nudge = $false }
-
 # --- persist state atomically (temp + move); reset=1 is kept until a re-baseline consumes it ---
-$newNudge = $lastNudge
-if ($nudge) { $newNudge = $now }
 $tmp = "$state.tmp.$PID"
 $out = @(
-  "last_prompt=$now",
-  "last_nudge=$newNudge",
   "base_repo=$baseRepo",
   "base_commit=$baseCommit",
-  "base_lines=$baseLines"
+  "base_lines=$baseLines",
+  "nudged_lines=$nudged"
 )
 if ($reset) { $out += 'reset=1' }
 try {
@@ -199,8 +202,11 @@ if (-not $nudge) { exit 0 }
 
 # --- emit the advisory nudge; name the review scope and the state file so the skill can reset it ---
 $scope = ''
-if ($baseCommit) { $scope = ' Review scope: `git diff ' + $baseCommit + '` in ' + $baseRepo + ' (committed + uncommitted since the checkpoint) plus untracked files.' }
-$ctx = "Grounding checkpoint due — $reason. Finish the user's current request first, then at the next natural pause run the /grounding skill: offer the check menu (default all), run the selected checks (work snapshot, /simplify + /security-review, test/build/lint health, repo conformance, goal/scope, gaps & next steps), report (naming any skipped), and propose any edits confirm-first.$scope State file for this session: $state — when the checkpoint genuinely completes, append the line reset=1 there (see the grounding skill's reference.md). Advisory only: 'not now' snoozes, 'skip' skips once, 'stop grounding' disables for the session."
+if ($baseCommit) {
+  $notArgs = if ($cur) { "--not --exclude=$cur --branches --exclude='*/$cur' --exclude='*/HEAD' --remotes" } else { "--not --branches --exclude='*/HEAD' --remotes" }
+  $scope = " Review scope: this session's own work since $baseCommit in $baseRepo — ``git log -p --no-merges $baseCommit..HEAD $notArgs`` plus uncommitted (``git diff HEAD``) and untracked files."
+}
+$ctx = "Grounding checkpoint due — $reason. Finish the user's current request first, then at the next natural pause run the /grounding skill: offer the check menu (default all), run the selected checks (work snapshot, /simplify + /security-review, test/build/lint health, repo conformance, goal/scope, gaps & next steps), report (naming any skipped), and propose any edits confirm-first.$scope State file for this session: $state — when the checkpoint genuinely completes, append the line reset=1 there (see the grounding skill's reference.md). Advisory and sent once: the next nudge comes only after another $threshold changed lines. 'not now' or 'skip' needs no action; 'stop grounding' disables for the session."
 
 # JSON-escape backslashes then double quotes
 $esc = $ctx.Replace('\', '\\').Replace('"', '\"')

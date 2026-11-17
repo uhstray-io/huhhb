@@ -2,8 +2,8 @@
 name: grounding
 description: >
   Use when a long working session should pause for a grounding checkpoint — fired by the huhhb
-  grounding hook after the configured volume of changed lines (default 2500) or on returning from
-  a long break, or run manually to re-engage with in-flight work before it drifts. Triggers on
+  grounding hook after the configured volume of changed lines (default 2500) or run manually to
+  re-engage with in-flight work before it drifts. Triggers on
   "grounding", "/grounding", "grounding checkpoint", "ground the session", "are we still on track",
   "checkpoint the session". Opt-in via huhhb; off by default.
 ---
@@ -23,9 +23,10 @@ Mechanics, report template, rationalization table, and red-flags live in **`refe
    that file. A legacy `interval_min=` line is ignored. Skip once configured; manual runs proceed regardless.
 2. **Don't hijack** — if the user has a pending request (bug, incident, question), handle it first and
    offer the checkpoint at the next pause.
-3. **Read state, skip no-ops** — gather the work since the baseline the hook named: `git diff <base_commit>`
-   (committed and uncommitted changes) plus untracked files. A manual run with no nudge has no baseline,
-   so use the uncommitted work plus recent commits on the branch. See `reference.md` for the exact scope.
+3. **Read state, skip no-ops** — gather the work since the baseline the hook named: this session's own commits
+   since `base_commit`, uncommitted changes against `HEAD` (`git diff HEAD`), and untracked files. A manual run
+   with no nudge has no baseline, so use the uncommitted work plus recent commits on the branch. See
+   `reference.md` for the exact commands and scope.
    Nothing meaningful changed? say "still grounded — nothing to do" and stop. Never invent findings.
 4. **Offer the menu** — list the six checks; the user picks (**default all**, a subset, or "skip"). Run
    **only** what they pick; name any skipped — never a silent omission or a fabricated result.
@@ -51,5 +52,6 @@ findings into a short **prioritized "Recommended actions" list** — concrete, r
 first), each tied to its finding — and **offer to carry them out (confirm-first)**. Recommend only what a
 real finding supports; a clean checkpoint recommends nothing — never invent work. Propose any edits as a
 confirm-first diff; never write or commit unprompted. Ask ≤3 questions. When the checkpoint genuinely
-completes, append `reset=1` to the state-file path the hook named (only you know it finished). "stop
-grounding" disables, "not now" snoozes, "skip" skips once.
+completes, append `reset=1` to the state-file path the hook named (only you know it finished).
+"not now" and "skip" need no action: the hook does not repeat the nudge until the next crossing.
+"stop grounding" disables grounding for the session.

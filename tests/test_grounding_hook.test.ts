@@ -25,6 +25,8 @@ function git(cwd: string, ...args: string[]) {
 }
 
 const lines = (n: number, tag = "x") => Array.from({ length: n }, (_, i) => `${tag}${i}`).join("\n") + "\n";
+// " 12 lines changed": the leading space keeps "112 lines changed" from satisfying it.
+const changed = (n: number) => new RegExp(` ${n} lines changed`);
 
 // One sandbox per test: isolated HOME (no real marker), isolated TMPDIR (state file), a repo.
 function sandbox(threshold = 10) {
@@ -37,11 +39,13 @@ function sandbox(threshold = 10) {
   const env = {
     PATH: process.env.PATH ?? "", HOME: home, TMPDIR: tmp, ...GIT_ENV,
     HUHHB_GROUNDING: "1", HUHHB_GROUNDING_LINES: String(threshold),
-    HUHHB_GROUNDING_IDLE_MIN: "99999", HUHHB_GROUNDING_COOLDOWN_MIN: "0",
   };
-  const run = (cwd = repo, extra: Record<string, string> = {}, event = "UserPromptSubmit", source = "resume") => {
+  // prompt: the text the user sent; null omits the key entirely.
+  const run = (cwd = repo, extra: Record<string, string> = {}, prompt: string | null = "hi", event = "UserPromptSubmit") => {
+    const payload: Record<string, string> = { session_id: SID, cwd, hook_event_name: event };
+    if (prompt !== null) payload.prompt = prompt;
     const r = spawnSync("sh", [HOOK], {
-      input: JSON.stringify({ session_id: SID, cwd, hook_event_name: event, source, prompt: "hi" }),
+      input: JSON.stringify(payload),
       env: { ...env, ...extra },
     });
     assert.equal(r.status, 0, r.stderr.toString());
@@ -50,6 +54,15 @@ function sandbox(threshold = 10) {
     return out;
   };
   return { root, repo, run, state: join(tmp, `huhhb-grounding-${SID}`) };
+}
+
+// A bare remote "origin" with main pushed and origin/HEAD set, the way a clone leaves it.
+function addOrigin(s: { root: string; repo: string }) {
+  const bare = join(s.root, "origin.git");
+  git(s.root, "init", "-q", "--bare", bare);
+  git(s.repo, "remote", "add", "origin", bare);
+  git(s.repo, "push", "-q", "-u", "origin", "main");
+  git(s.repo, "remote", "set-head", "origin", "main");
 }
 
 test("nudge stays valid JSON when the state path holds quotes and backslashes", () => {
@@ -139,6 +152,8 @@ test("reset=1 from the skill restarts the count", () => {
   assert.equal(s.run(), "", "reset re-baselines");
   writeFileSync(join(s.repo, "c.txt"), lines(5));
   assert.equal(s.run(), "", "only 5 since reset");
+  writeFileSync(join(s.repo, "d.txt"), lines(5));
+  assert.match(s.run(), changed(10), "the once-per-crossing counter restarted too");
 });
 
 test("reset=1 survives a prompt outside git until a baseline is set", () => {
@@ -164,33 +179,136 @@ test("switching to a non-descendant commit re-baselines instead of nudging", () 
   assert.match(s.run(), /10 lines changed/);
 });
 
-test("idle-return nudge still fires", () => {
-  const s = sandbox(10000);
+test("merging a local branch's work does not count; own lines after it do", () => {
+  const s = sandbox(10);
   s.run();
-  assert.match(s.run(s.repo, { HUHHB_GROUNDING_IDLE_MIN: "0" }), /idle gap/);
+  git(s.repo, "checkout", "-qb", "dev");
+  writeFileSync(join(s.repo, "dev.txt"), lines(100));
+  git(s.repo, "add", "-A"); git(s.repo, "commit", "-qm", "dev work");
+  git(s.repo, "checkout", "-q", "main");
+  git(s.repo, "merge", "--no-ff", "-q", "-m", "merge dev", "dev");
+  assert.equal(s.run(), "", "others' merged lines are not ours");
+  writeFileSync(join(s.repo, "own.txt"), lines(10));
+  assert.match(s.run(), changed(10));
 });
 
-test("the first prompt after a resume gets no idle nudge", () => {
-  const s = sandbox(10000);
+test("fast-forwarding onto another branch's tip does not count", () => {
+  const s = sandbox(10);
   s.run();
-  assert.equal(s.run(s.repo, {}, "SessionStart"), "", "SessionStart itself prints nothing");
-  assert.equal(s.run(s.repo, { HUHHB_GROUNDING_IDLE_MIN: "0" }), "", "handed-off work is not interrupted");
-  assert.match(s.run(s.repo, { HUHHB_GROUNDING_IDLE_MIN: "0" }), /idle gap/, "later idle gaps still nudge");
+  git(s.repo, "checkout", "-qb", "dev");
+  writeFileSync(join(s.repo, "dev.txt"), lines(100));
+  git(s.repo, "add", "-A"); git(s.repo, "commit", "-qm", "dev work");
+  git(s.repo, "checkout", "-q", "main");
+  git(s.repo, "merge", "--ff-only", "-q", "dev");
+  assert.equal(s.run(), "");
 });
 
-test("compaction does not suppress the idle nudge", () => {
-  const s = sandbox(10000);
+test("work merged from a remote-only branch does not count", () => {
+  const s = sandbox(10);
+  addOrigin(s);
   s.run();
-  assert.equal(s.run(s.repo, {}, "SessionStart", "compact"), "");
-  assert.match(s.run(s.repo, { HUHHB_GROUNDING_IDLE_MIN: "0" }), /idle gap/, "a break after /compact still nudges");
+  git(s.repo, "checkout", "-qb", "dev");
+  writeFileSync(join(s.repo, "dev.txt"), lines(100));
+  git(s.repo, "add", "-A"); git(s.repo, "commit", "-qm", "dev work");
+  git(s.repo, "push", "-q", "origin", "dev");
+  git(s.repo, "checkout", "-q", "main");
+  git(s.repo, "branch", "-qD", "dev");
+  git(s.repo, "merge", "--no-ff", "-q", "-m", "merge origin dev", "origin/dev");
+  assert.equal(s.run(), "", "origin/dev is someone else's work");
+  writeFileSync(join(s.repo, "own.txt"), lines(10));
+  assert.match(s.run(), changed(10));
 });
 
-test("a session start does not suppress the line trigger", () => {
+test("own commits pushed to the same-name remote still count, origin/HEAD included", () => {
+  const s = sandbox(10);
+  addOrigin(s);
+  s.run();
+  writeFileSync(join(s.repo, "b.txt"), lines(12));
+  writeFileSync(join(s.repo, "package-lock.json"), lines(500));
+  git(s.repo, "add", "-A"); git(s.repo, "commit", "-qm", "own");
+  git(s.repo, "push", "-q", "origin", "main");
+  assert.match(s.run(), changed(12), "lockfile in the commit stays out; origin/HEAD does not hide own work");
+});
+
+test("detached HEAD counts its own commits", () => {
+  const s = sandbox(10);
+  s.run();
+  git(s.repo, "checkout", "-q", "--detach");
+  writeFileSync(join(s.repo, "b.txt"), lines(12));
+  git(s.repo, "add", "-A"); git(s.repo, "commit", "-qm", "detached work");
+  assert.match(s.run(), changed(12));
+});
+
+test("once per crossing: the next nudge waits for another full threshold", () => {
   const s = sandbox(10);
   s.run();
   writeFileSync(join(s.repo, "b.txt"), lines(12));
-  s.run(s.repo, {}, "SessionStart");
-  assert.match(s.run(), /12 lines changed/);
+  assert.match(s.run(), changed(12));
+  writeFileSync(join(s.repo, "c.txt"), lines(3));
+  assert.equal(s.run(), "", "15 is inside the window");
+  writeFileSync(join(s.repo, "d.txt"), lines(7));
+  assert.match(s.run(), changed(22));
+});
+
+test("the count falling re-arms the nudge", () => {
+  const s = sandbox(10);
+  s.run();
+  writeFileSync(join(s.repo, "b.txt"), lines(12));
+  assert.match(s.run(), changed(12));
+  git(s.repo, "add", "-A"); git(s.repo, "commit", "-qm", "own");
+  git(s.repo, "branch", "dev"); // own commits now reachable from another branch: count drops to 0
+  assert.equal(s.run(), "", "count fell to 0");
+  writeFileSync(join(s.repo, "c.txt"), lines(10));
+  assert.match(s.run(), changed(10));
+});
+
+test("harness-injected turns never nudge; the next typed prompt does", () => {
+  const s = sandbox(10);
+  s.run();
+  writeFileSync(join(s.repo, "b.txt"), lines(12));
+  for (const p of [
+    "<task-notification>\n<task-id>x</task-id>",
+    "\n<task-notification>x",
+    '<cross-session-message from="a">hi',
+    "<ci-monitor-event>x",
+  ]) assert.equal(s.run(s.repo, {}, p), "", p);
+  assert.match(s.run(), changed(12));
+});
+
+test("a typed prompt with quotes and backslashes still nudges", () => {
+  const s = sandbox(10);
+  s.run();
+  writeFileSync(join(s.repo, "b.txt"), lines(12));
+  assert.match(s.run(s.repo, {}, 'say "hi" \\ ok'), changed(12));
+});
+
+test("an empty prompt or a payload without one does not nudge", () => {
+  const s = sandbox(10);
+  s.run();
+  writeFileSync(join(s.repo, "b.txt"), lines(12));
+  assert.equal(s.run(s.repo, {}, ""), "", "empty prompt");
+  assert.equal(s.run(s.repo, {}, null), "", "no prompt key");
+  assert.match(s.run(), changed(12), "the typed prompt still gets the nudge");
+});
+
+test("a SessionStart payload prints nothing and does not use up the nudge", () => {
+  const s = sandbox(10);
+  s.run();
+  writeFileSync(join(s.repo, "b.txt"), lines(12));
+  assert.equal(s.run(s.repo, {}, "hi", "SessionStart"), "", "SessionStart prints nothing");
+  assert.match(s.run(), changed(12));
+});
+
+test("a slashed branch name (as in jestyr27/...) still counts its own pushed commits", () => {
+  const s = sandbox(10);
+  addOrigin(s);
+  git(s.repo, "checkout", "-qb", "feat/x/y");
+  git(s.repo, "push", "-q", "-u", "origin", "feat/x/y");
+  s.run();
+  writeFileSync(join(s.repo, "b.txt"), lines(12));
+  git(s.repo, "add", "-A"); git(s.repo, "commit", "-qm", "own");
+  git(s.repo, "push", "-q", "origin", "feat/x/y");
+  assert.match(s.run(), changed(12));
 });
 
 test("lines= in the marker file sets the threshold", () => {

@@ -160,7 +160,9 @@ rm -f "$tmp" 2>/dev/null
 scope=""
 if [ -n "$base_commit" ]; then
   if [ -n "$cur" ]; then
-    not_args="--not --exclude=${cur} --branches --exclude='*/${cur}' --exclude='*/HEAD' --remotes"
+    # Branch names may hold $( ) ` ; | ' — single-quote for the shell (' -> '\'') so the model never runs them.
+    cur_q=$(printf '%s' "$cur" | sed "s/'/'\\\\''/g")
+    not_args="--not --exclude='${cur_q}' --branches --exclude='*/${cur_q}' --exclude='*/HEAD' --remotes"
   else
     not_args="--not --branches --exclude='*/HEAD' --remotes"
   fi

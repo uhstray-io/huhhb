@@ -203,7 +203,9 @@ if (-not $nudge) { exit 0 }
 # --- emit the advisory nudge; name the review scope and the state file so the skill can reset it ---
 $scope = ''
 if ($baseCommit) {
-  $notArgs = if ($cur) { "--not --exclude=$cur --branches --exclude='*/$cur' --exclude='*/HEAD' --remotes" } else { "--not --branches --exclude='*/HEAD' --remotes" }
+  # Branch names may hold $( ) ` ; | ' — single-quote for the shell (' -> '\'') so the model never runs them.
+  $curQ = $cur.Replace("'", "'\''")
+  $notArgs = if ($cur) { "--not --exclude='$curQ' --branches --exclude='*/$curQ' --exclude='*/HEAD' --remotes" } else { "--not --branches --exclude='*/HEAD' --remotes" }
   $scope = " Review scope: this session's own work since $baseCommit in $baseRepo — ``git log -p --no-merges $baseCommit..HEAD $notArgs`` plus uncommitted (``git diff HEAD``) and untracked files."
 }
 $ctx = "Grounding checkpoint due — $reason. Finish the user's current request first, then at the next natural pause run the /grounding skill: offer the check menu (default all), run the selected checks (work snapshot, /simplify + /security-review, test/build/lint health, repo conformance, goal/scope, gaps & next steps), report (naming any skipped), and propose any edits confirm-first.$scope State file for this session: $state — when the checkpoint genuinely completes, append the line reset=1 there (see the grounding skill's reference.md). Advisory and sent once: the next nudge comes only after another $threshold changed lines. 'not now' or 'skip' needs no action; 'stop grounding' disables for the session."

@@ -4,7 +4,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { appendFileSync, mkdtempSync, writeFileSync } from "node:fs";
+import { appendFileSync, existsSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 
@@ -318,4 +318,20 @@ test("lines= in the marker file sets the threshold", () => {
   s.run(s.repo, { HUHHB_GROUNDING_LINES: "" });
   writeFileSync(join(s.repo, "b.txt"), lines(3));
   assert.match(s.run(s.repo, { HUHHB_GROUNDING_LINES: "" }), /threshold 3/);
+});
+
+test("a hostile branch name in the suggested review command stays inert", () => {
+  const s = sandbox(10);
+  const name = "x$(touch${IFS}PWNED)'q";
+  git(s.repo, "checkout", "-qb", name);
+  s.run();
+  writeFileSync(join(s.repo, "b.txt"), lines(12));
+  git(s.repo, "add", "-A"); git(s.repo, "commit", "-qm", "b");
+  const ctx = JSON.parse(s.run()).hookSpecificOutput.additionalContext as string;
+  const cmd = ctx.match(/`(git log -p [^`]*)`/)?.[1];
+  assert.ok(cmd, "scope names a git log command");
+  const r = spawnSync("sh", ["-c", cmd], { cwd: s.repo, env: { ...process.env, ...GIT_ENV } });
+  assert.equal(r.status, 0, r.stderr.toString());
+  assert.ok(!existsSync(join(s.repo, "PWNED")), "branch name was not executed");
+  assert.match(r.stdout.toString(), /b\.txt/, "the command still selects this session's commit");
 });

@@ -159,14 +159,21 @@ rm -f "$tmp" 2>/dev/null
 # --- emit the advisory nudge; name the review scope and the state file so the skill can reset it ---
 scope=""
 if [ -n "$base_commit" ]; then
-  if [ -n "$cur" ]; then
-    # Branch names may hold $( ) ` ; | ' — single-quote for the shell (' -> '\'') so the model never runs them.
-    cur_q=$(printf '%s' "$cur" | sed "s/'/'\\\\''/g")
-    not_args="--not --exclude='${cur_q}' --branches --exclude='*/${cur_q}' --exclude='*/HEAD' --remotes"
+  # The model may run this command in sh or PowerShell, and git allows $( ) ` ; | ' in branch names. Name the
+  # branch only when it is plain [A-Za-z0-9._/-]: single-quoted, that reads the same in both shells.
+  safe=1
+  case "$base_commit" in *[!0-9a-f]*) safe=0 ;; esac
+  case "$cur" in *[!A-Za-z0-9._/-]*) safe=0 ;; esac
+  if [ "$safe" = "0" ]; then
+    scope=" Review scope: this session's own commits since the checkpoint in ${base_repo} (no command suggested: the branch name holds shell-special characters) plus uncommitted and untracked files."
   else
-    not_args="--not --branches --exclude='*/HEAD' --remotes"
+    if [ -n "$cur" ]; then
+      not_args="--not --exclude='${cur}' --branches --exclude='*/${cur}' --exclude='*/HEAD' --remotes"
+    else
+      not_args="--not --branches --exclude='*/HEAD' --remotes"
+    fi
+    scope=" Review scope: this session's own work since ${base_commit} in ${base_repo} — \`git log -p --no-merges ${base_commit}..HEAD ${not_args}\` plus uncommitted (\`git diff HEAD\`) and untracked files."
   fi
-  scope=" Review scope: this session's own work since ${base_commit} in ${base_repo} — \`git log -p --no-merges ${base_commit}..HEAD ${not_args}\` plus uncommitted (\`git diff HEAD\`) and untracked files."
 fi
 ctx="Grounding checkpoint due — ${reason}. Finish the user's current request first, then at the next natural pause run the /grounding skill: offer the check menu (default all), run the selected checks (work snapshot, /simplify + /security-review, test/build/lint health, repo conformance, goal/scope, gaps & next steps), report (naming any skipped), and propose any edits confirm-first.${scope} State file for this session: ${state} — when the checkpoint genuinely completes, append the line reset=1 there (see the grounding skill's reference.md). Advisory and sent once: the next nudge comes only after another ${threshold} changed lines. 'not now' or 'skip' needs no action; 'stop grounding' disables for the session."
 

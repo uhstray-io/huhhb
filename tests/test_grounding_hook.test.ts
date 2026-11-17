@@ -4,7 +4,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { appendFileSync, existsSync, mkdtempSync, writeFileSync } from "node:fs";
+import { appendFileSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 
@@ -320,10 +320,21 @@ test("lines= in the marker file sets the threshold", () => {
   assert.match(s.run(s.repo, { HUHHB_GROUNDING_LINES: "" }), /threshold 3/);
 });
 
-test("a hostile branch name in the suggested review command stays inert", () => {
+test("a hostile branch name gets no runnable review command", () => {
   const s = sandbox(10);
-  const name = "x$(touch${IFS}PWNED)'q";
-  git(s.repo, "checkout", "-qb", name);
+  git(s.repo, "checkout", "-qb", "x$(touch${IFS}PWNED)'q");
+  s.run();
+  writeFileSync(join(s.repo, "b.txt"), lines(12));
+  const ctx = JSON.parse(s.run()).hookSpecificOutput.additionalContext as string;
+  assert.match(ctx, /12 lines changed/);
+  assert.doesNotMatch(ctx, /git log -p/, "no command is suggested");
+  assert.doesNotMatch(ctx, /PWNED/, "the branch name is not echoed");
+  assert.match(ctx, /no command suggested/);
+});
+
+test("a plain branch name gets a review command that runs and selects own commits", () => {
+  const s = sandbox(10);
+  git(s.repo, "checkout", "-qb", "feat/x.y_z-1");
   s.run();
   writeFileSync(join(s.repo, "b.txt"), lines(12));
   git(s.repo, "add", "-A"); git(s.repo, "commit", "-qm", "b");
@@ -332,6 +343,5 @@ test("a hostile branch name in the suggested review command stays inert", () => 
   assert.ok(cmd, "scope names a git log command");
   const r = spawnSync("sh", ["-c", cmd], { cwd: s.repo, env: { ...process.env, ...GIT_ENV } });
   assert.equal(r.status, 0, r.stderr.toString());
-  assert.ok(!existsSync(join(s.repo, "PWNED")), "branch name was not executed");
-  assert.match(r.stdout.toString(), /b\.txt/, "the command still selects this session's commit");
+  assert.match(r.stdout.toString(), /b\.txt/);
 });

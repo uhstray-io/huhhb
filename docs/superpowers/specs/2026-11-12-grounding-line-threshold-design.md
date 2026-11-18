@@ -118,8 +118,9 @@ handoffs folder outside this repository. The audit found the following.
    non-merge commits since `base_commit`, plus uncommitted changes against `HEAD`, plus lines in untracked text
    files, minus `base_lines`. A commit is this session's own when no other local or remote branch reaches it.
    Commits that another branch reaches do not count, including those a merge or pull brings in from it.
-   Committing a change does not change the count, except when a line was staged, edited again, and only the
-   staged part committed: commits count every line they change, so that line then counts twice. The lockfile, binary and `-diff` exclusions are unchanged. The command
+   Committing all of the uncommitted work does not change the count. Committing only part of it can raise the
+   count, because the commit and the changes left in the working tree are counted separately and the same
+   lines can appear in both; a line staged, edited again, and committed from the stage is one example. The lockfile, binary and `-diff` exclusions are unchanged. The command
    and formula are in [skills/grounding/reference.md](../../../skills/grounding/reference.md). Own commits stop
    counting once another branch reaches them, for example after a PR merges to `dev` and `dev` is merged back.
    That limit is accepted because the nudge is advisory.
@@ -143,8 +144,8 @@ This revision replaces the following parts of the decisions above. The rest of t
 - The idle-return half of the timer decision on line 19.
 - The `last_prompt` and `last_nudge` keys on lines 33 and 34.
 - The count formula on line 43.
-- The claim on lines 46 and 47 that committing never changes the count. Commits now count every line they
-  change, so a line staged, edited again, and committed from the stage counts twice (decision 1).
+- The claim on lines 46 and 47 that committing never changes the count. Committing only part of the
+  uncommitted work can now raise the count (decision 1).
 - The known limit on lines 61 and 62 about a `git pull` or `git merge` of others' commits.
 - The sentence on line 66 that says only the idle check runs outside a git repository.
 - The cooldown on line 68.

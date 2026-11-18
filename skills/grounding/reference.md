@@ -42,10 +42,10 @@ Heavy detail for the `grounding` skill, kept out of `SKILL.md` to keep it lean.
 
   The remote-tracking branch with the same name as the current branch does not count as another branch, so
   pushing the session's own commits does not remove them from the count. Commits that another branch reaches do
-  not count, including the commits a merge or pull brings in from that branch. Committing a change
-  does not change the count, with one exception: commits count every line they change, so a line edited
-  again after it was staged counts in both the commit and the working tree once the staged part is
-  committed. The count can rise at that commit. Accepted, because the nudge is advisory and an exact net
+  not count, including the commits a merge or pull brings in from that branch. Committing all of
+  the uncommitted work does not change the count. Committing only part of it can raise the count: the
+  commit and the changes left in the working tree are counted separately, and the same lines can show up
+  in both. For example, a line staged, edited again, and committed from the stage counts twice. Accepted, because the nudge is advisory and an exact net
   count of only this session's work is not computable once other branches have been merged in. Subtracting `base_lines` keeps
   uncommitted work that already existed at the baseline from counting. Lockfiles (`package-lock.json`,
   `yarn.lock`, `pnpm-lock.yaml`, `bun.lock`, `bun.lockb`, `Cargo.lock`, `poetry.lock`, `uv.lock`, `go.sum`,

@@ -14,7 +14,8 @@
 # lines in untracked non-ignored files), minus whatever was already uncommitted at the baseline.
 # Own commits are baseline..HEAD commits that no other local branch or remote-tracking ref contains, so
 # merging or fast-forwarding in someone else's work does not count. Lockfiles and binary files do not
-# count. Committing your own work does not change the count. Outside a git repo nothing is counted.
+# count. Committing does not change the count, except that a line staged, edited again, and then committed
+# from the stage counts in both the commit and the working tree. Outside a git repo nothing is counted.
 #
 # Only typed prompts nudge. Turns the harness injects (task notifications, cross-session messages,
 # CI monitor events) still update the baseline and state, but never nudge.

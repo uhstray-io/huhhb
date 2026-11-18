@@ -2,8 +2,8 @@
 name: grounding
 description: >
   Use when a long working session should pause for a grounding checkpoint — fired by the huhhb
-  grounding hook after the configured volume of changed lines (default 2500) or run manually to
-  re-engage with in-flight work before it drifts. Triggers on
+  grounding hook after the configured volume of changed lines (default 2500), or run manually to
+  re-engage with in-flight work before it drifts, such as on returning from a long break. Triggers on
   "grounding", "/grounding", "grounding checkpoint", "ground the session", "are we still on track",
   "checkpoint the session". Opt-in via huhhb; off by default.
 ---

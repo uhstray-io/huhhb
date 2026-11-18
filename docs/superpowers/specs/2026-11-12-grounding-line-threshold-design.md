@@ -118,7 +118,8 @@ handoffs folder outside this repository. The audit found the following.
    non-merge commits since `base_commit`, plus uncommitted changes against `HEAD`, plus lines in untracked text
    files, minus `base_lines`. A commit is this session's own when no other local or remote branch reaches it.
    Commits that another branch reaches do not count, including those a merge or pull brings in from it.
-   Committing does not change the count. The lockfile, binary and `-diff` exclusions are unchanged. The command
+   Committing a change does not change the count, except when a line was staged, edited again, and only the
+   staged part committed: commits count every line they change, so that line then counts twice. The lockfile, binary and `-diff` exclusions are unchanged. The command
    and formula are in [skills/grounding/reference.md](../../../skills/grounding/reference.md). Own commits stop
    counting once another branch reaches them, for example after a PR merges to `dev` and `dev` is merged back.
    That limit is accepted because the nudge is advisory.

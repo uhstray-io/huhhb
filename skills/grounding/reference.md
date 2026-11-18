@@ -37,13 +37,16 @@ Heavy detail for the `grounding` skill, kept out of `SKILL.md` to keep it lean.
   commits with this command, where `<base>` is `base_commit` and `<cur>` is the current branch name:
 
   ```bash
-  git log --no-merges <base>..HEAD --not --exclude=<cur> --branches --exclude='*/<cur>' --remotes
+  git log --no-merges <base>..HEAD --not --exclude=<cur> --branches --exclude='*/<cur>' --exclude='*/HEAD' --remotes
   ```
 
   The remote-tracking branch with the same name as the current branch does not count as another branch, so
   pushing the session's own commits does not remove them from the count. Commits that another branch reaches do
-  not count, including the commits a merge or pull brings in from that branch. Committing does not change the
-  count, so a change counts once whether it is staged, committed, or neither. Subtracting `base_lines` keeps
+  not count, including the commits a merge or pull brings in from that branch. Committing a change
+  does not change the count, with one exception: commits count every line they change, so a line edited
+  again after it was staged counts in both the commit and the working tree once the staged part is
+  committed. The count can rise at that commit. Accepted, because the nudge is advisory and an exact net
+  count of only this session's work is not computable once other branches have been merged in. Subtracting `base_lines` keeps
   uncommitted work that already existed at the baseline from counting. Lockfiles (`package-lock.json`,
   `yarn.lock`, `pnpm-lock.yaml`, `bun.lock`, `bun.lockb`, `Cargo.lock`, `poetry.lock`, `uv.lock`, `go.sum`,
   `composer.lock`, `Gemfile.lock`) are excluded, and neither binary files nor files marked `-diff` in
@@ -79,7 +82,7 @@ Heavy detail for the `grounding` skill, kept out of `SKILL.md` to keep it lean.
   commits with their patches, using the same placeholders as the count command:
 
   ```bash
-  git log -p --no-merges <base>..HEAD --not --exclude=<cur> --branches --exclude='*/<cur>' --remotes
+  git log -p --no-merges <base>..HEAD --not --exclude=<cur> --branches --exclude='*/<cur>' --exclude='*/HEAD' --remotes
   git diff HEAD
   ```
 

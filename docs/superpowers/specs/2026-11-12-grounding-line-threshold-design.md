@@ -143,6 +143,8 @@ This revision replaces the following parts of the decisions above. The rest of t
 - The idle-return half of the timer decision on line 19.
 - The `last_prompt` and `last_nudge` keys on lines 33 and 34.
 - The count formula on line 43.
+- The claim on lines 46 and 47 that committing never changes the count. Commits now count every line they
+  change, so a line staged, edited again, and committed from the stage counts twice (decision 1).
 - The known limit on lines 61 and 62 about a `git pull` or `git merge` of others' commits.
 - The sentence on line 66 that says only the idle check runs outside a git repository.
 - The cooldown on line 68.

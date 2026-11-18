@@ -22,6 +22,7 @@ entry's `Occurrences` count and adds a dated note; it never opens a second entry
 |---|---|---|---|---|
 | 1.1 | PR body listed test cases and lockfiles from memory; both lists were wrong | Unverified claim | 4 | `hooks/pr-claim-check.sh` (Bash `gh` path only; deny until acknowledged) |
 | 2.1 | PR #60 merged with 4 CodeRabbit findings unanswered | Process | 1 | `hooks/pr-merge-guard.sh` (deny until acknowledged; fails open) |
+| 3.1 | Grounding spec accepted "merges count as work" as rare; merging `dev` is routine, so the only line nudge was a false positive | Design assumption | 1 | `tests/test_grounding_hook.test.ts` (merge and fast-forward cases) |
 
 ## 1. Asserting something without verifying it
 
@@ -121,3 +122,33 @@ with the reason. A count printed in the same command as the merge is not a check
 `gh pr merge` while any unresolved thread's last comment is not the merging
 user's, until re-run with `REVIEW_ANSWERED=1`. Tested by
 `tests/test_pr_merge_guard.test.ts`. Fails open when `gh` cannot answer.
+
+## 3. Accepting a limit without measuring how often it happens
+
+### 3.1 Grounding hook counted merged-in work as the session's own
+
+**Occurrences: 1** — 2026-11-16
+
+**What happened.** The line-threshold spec
+(`docs/superpowers/specs/2026-11-12-grounding-line-threshold-design.md:61-62`)
+listed "a `git pull` or `git merge` of others' commits keeps the baseline an
+ancestor, so those lines count" as a known limit, accepted because the nudge is
+advisory. The first and only line-count nudge it produced, on 2026-11-16 in
+`agent-cloud/local-mode-1b`, reported 17,456 changed lines. The session's own
+work was one 103-line commit. The other 17,353 lines came from
+`3fcf1baf Merge dev into fix/local-mode-from-inventory-1b`, measured with
+`git diff --shortstat 3fcf1baf^1 3fcf1baf`.
+
+**Root cause.** The limit was judged rare without checking the workflow it
+would run in. Merging `dev` into a feature branch is routine here:
+`git log --all --merges --since=2026-11-01` in agent-cloud shows 32
+"Merge (origin/)dev into <branch>" commits, so the "rare" case is on the main path.
+
+**The rule.** Before accepting a known limit as rare, check how often the
+repo's own workflow hits it, with a command or the transcripts, and write
+that number next to the limit. If the case is on the normal path, it is a
+bug, not a limit.
+
+**Enforced by.** For this instance: `tests/test_grounding_hook.test.ts` cases
+that merge and fast-forward another branch's commits and expect no nudge. The
+general rule: `Convention`.

@@ -201,6 +201,14 @@ worktrees → branches → PRs → human-authorized merge:
   re-running it would have overwritten those sections, and it anchored its
   insert on an H1 the sync never produces.
 
+- **`prune-tests`**: forked from `caldoai/skills` (`skills/prune-tests/SKILL.md`
+  at commit `d5b68dac`, MIT, notice kept in `skills/prune-tests/LICENSE`).
+  Edited directly; there is no sync script. The body is upstream's, unchanged.
+  The frontmatter is ours: lint S2 allows only `name` and `description`, so
+  upstream's `argument-hint` is dropped and the description is rewritten as
+  trigger conditions. To take an upstream change, diff the body against
+  upstream and re-bench.
+
 After syncing, review the diff, bump versions, cut a release if changed.
 
 ## Commit & PR Conventions

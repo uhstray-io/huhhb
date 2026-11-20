@@ -30,7 +30,9 @@ A session that plans work reads this file and the `docs/MISTAKES.md` Index befor
   `prune-tests`, the clean baseline on `claude-opus-5-5` passed both prompts that only asked for
   tests to be classified (a duplicate, a guard on removed code, a mocked unit, a derived expected
   value, a private-state assert). On the two prompts that also need production code removed
-  because it existed only for a pruned test, it passed 1 of 4 runs (bench at `9dca0501`). A
-  scenario copied from the skill's own worked example is the likeliest to pass at baseline.
+  because it existed only for a pruned test, the baseline passed 3 of 6 runs over two bench runs
+  (`9dca0501`, `55f605c2`) and the skill arm 12 of 12; one unchanged prompt's baseline went from
+  0 of 2 to 2 of 2. A scenario copied from the skill's own worked example is the likeliest to
+  pass at baseline.
 - **APPLIES TO:** `tests/bench/<skill>.json` for any new or imported skill, and any plan that
   estimates what a skill adds.

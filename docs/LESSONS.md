@@ -29,9 +29,8 @@ A session that plans work reads this file and the `docs/MISTAKES.md` Index befor
   empty working directory, the skill not installed) and keep the ones that fail. For
   `prune-tests`, the clean baseline on `claude-opus-5-5` passed both prompts that only asked for
   tests to be classified (a duplicate, a guard on removed code, a mocked unit, a derived expected
-  value, a private-state assert). Of the two prompts that also needed production code removed
-  because it existed only for a pruned test, it passed the one that said the files were the whole
-  project and failed the other in 2 of 3 runs. A scenario copied from the skill's own worked
-  example is the likeliest to pass at baseline.
+  value, a private-state assert). On the two prompts that also need production code removed
+  because it existed only for a pruned test, it passed 1 of 4 runs (bench at `9dca0501`). A
+  scenario copied from the skill's own worked example is the likeliest to pass at baseline.
 - **APPLIES TO:** `tests/bench/<skill>.json` for any new or imported skill, and any plan that
   estimates what a skill adds.

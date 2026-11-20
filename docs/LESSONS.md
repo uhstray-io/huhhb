@@ -19,3 +19,19 @@ A session that plans work reads this file and the `docs/MISTAKES.md` Index befor
   person is present, and the time since the previous prompt does not say they came back.
 - **APPLIES TO:** any `UserPromptSubmit` hook under `hooks/`, and any rule keyed to prompt
   timing or prompt count.
+
+### L-002 · 2026-11-20 · skill bench
+
+- **ACCEPTED:** the `prune-tests` skill, forked from `caldoai/skills`, with its bench scenarios
+  (HUHHB-167).
+- **DERIVED:** Write a bench scenario only for a rule the model does not already follow, and find
+  that out before writing the rest. Run each candidate prompt once with the skill unreachable (an
+  empty working directory, the skill not installed) and keep the ones that fail. For
+  `prune-tests`, the clean baseline on `claude-opus-5-5` passed both prompts that only asked for
+  tests to be classified (a duplicate, a guard on removed code, a mocked unit, a derived expected
+  value, a private-state assert). Of the two prompts that also needed production code removed
+  because it existed only for a pruned test, it passed the one that said the files were the whole
+  project and failed the other in 2 of 3 runs. A scenario copied from the skill's own worked
+  example is the likeliest to pass at baseline.
+- **APPLIES TO:** `tests/bench/<skill>.json` for any new or imported skill, and any plan that
+  estimates what a skill adds.

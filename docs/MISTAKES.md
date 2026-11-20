@@ -23,6 +23,7 @@ entry's `Occurrences` count and adds a dated note; it never opens a second entry
 | 1.1 | PR body listed test cases and lockfiles from memory; both lists were wrong | Unverified claim | 4 | `hooks/pr-claim-check.sh` (Bash `gh` path only; deny until acknowledged) |
 | 2.1 | PR #60 merged with 4 CodeRabbit findings unanswered | Process | 1 | `hooks/pr-merge-guard.sh` (deny until acknowledged; fails open) |
 | 3.1 | Grounding spec accepted "merges count as work" as rare; merging `dev` is routine, so the only line nudge was a false positive | Design assumption | 1 | `tests/test_grounding_hook.test.ts` (merge and fast-forward cases) |
+| 4.1 | Skill-disabled baseline read the skill file from disk, so a failing baseline was reported as passing | Test passed for the wrong reason | 1 | `Convention` (bench fix: HUHHB-168) |
 
 ## 1. Asserting something without verifying it
 
@@ -152,3 +153,38 @@ bug, not a limit.
 **Enforced by.** For this instance: `tests/test_grounding_hook.test.ts` cases
 that merge and fast-forward another branch's commits and expect no nudge. The
 general rule: `Convention`.
+
+## 4. A test that passed for the wrong reason
+
+### 4.1 The skill-disabled baseline read the skill file from disk
+
+**Occurrences: 1** — 2026-11-20
+
+**What happened.** Adding `prune-tests`, the RED step ran each scenario in
+`tests/bench/prune-tests.json` once the way `scripts/skill-bench.ts` runs its
+baseline arm: `claude -p <prompt> --disallowedTools Skill`, from the repo root,
+with the branch loaded as a plugin. All three asserts passed, and the session
+reported "the baseline passed all three scenarios". A second round with
+`--output-format stream-json` showed why: in 3 of 3 runs the baseline's only
+tool call was `ls skills/prune-tests/ && cat skills/prune-tests/SKILL.md`.
+Re-run from an empty directory with the skill not installed, the baseline
+failed the scenario that asks for test-only production code to be removed
+(its last line named `tests/session.test.ts` and not `src/session.ts`) and
+passed the other two.
+
+**Root cause.** `--disallowedTools Skill` removes the tool, not the skill. The
+skill stays in the session's catalog, and the bench starts `claude` in its own
+working directory, which is this repo, so `skills/<name>/SKILL.md` is one
+`cat` away. A session that sees a matching skill it cannot invoke reads the
+file instead. The baseline arm then measures the skill, and a skill that works
+looks obsolete (standard C4, E3).
+
+**The rule.** A baseline counts only if the skill is unreachable in it: not
+listed in the catalog and not on disk under the working directory. Before
+reading a baseline verdict, look at the baseline run's tool calls; one that
+opens the skill's own files voids the run. Until the bench does this itself,
+run both arms from an empty directory and load the skill arm with
+`--plugin-dir`.
+
+**Enforced by.** `Convention`. The bench does not check it (HUHHB-168). The note on the
+first scenario in `tests/bench/prune-tests.json` records the measurement.

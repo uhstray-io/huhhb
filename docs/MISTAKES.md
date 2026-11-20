@@ -21,6 +21,7 @@ entry's `Occurrences` count and adds a dated note; it never opens a second entry
 | # | Summary | Class | Count | Enforced by |
 |---|---|---|---|---|
 | 1.1 | PR body listed test cases and lockfiles from memory; both lists were wrong | Unverified claim | 4 | `hooks/pr-claim-check.sh` (Bash `gh` path only; deny until acknowledged) |
+| 1.2 | Scenario note gave a cause for a baseline difference that no run had isolated; a controlled run contradicted it | Unverified claim | 1 | `Convention` |
 | 2.1 | PR #60 merged with 4 CodeRabbit findings unanswered | Process | 1 | `hooks/pr-merge-guard.sh` (deny until acknowledged; fails open) |
 | 3.1 | Grounding spec accepted "merges count as work" as rare; merging `dev` is routine, so the only line nudge was a false positive | Design assumption | 1 | `tests/test_grounding_hook.test.ts` (merge and fast-forward cases) |
 | 4.1 | Skill-disabled baseline read the skill file from disk, so a failing baseline was reported as passing | Test passed for the wrong reason | 1 | `Convention` (bench fix: HUHHB-168) |
@@ -94,6 +95,30 @@ later, before the PR was opened. The guard did not apply, because it only
 watches `gh` commands; the rule did not fire because the second session was
 assumed to match the first without reading its transcript. Any tracked text,
 Plane included, falls under the rule.
+
+### 1.2 A scenario note stated why two baselines differed, from runs that isolated nothing
+
+**Occurrences: 1** — 2026-11-20
+
+**What happened.** In `tests/bench/prune-tests.json` at `b0ea909d`, the note on
+the second scenario said its baseline passed because the prompt calls the two
+files "the whole project", "which tells the baseline the methods have no other
+caller; the first scenario does not say that, and its baseline leaves the
+exports in". That was pushed in PR #65. The two scenarios also differ in
+language, in helper names and in how the request is scoped. A review comment
+then asked for the first scenario to say "the whole project" too. Run that
+way, with nothing else changed, its clean baseline still named only
+`tests/session.test.ts` in 3 of 3 runs, so the wording was not the cause.
+
+**Root cause.** Two measurements that differed in several ways were explained
+by the one difference that came to mind first, and the explanation was written
+into a committed file as fact.
+
+**The rule.** A note or PR text gives a cause for a bench difference only
+after a run that changes that one factor and nothing else. Without that run,
+write the measurements and "not known why".
+
+**Enforced by.** `Convention`.
 
 ## 2. Merging before the review was finished
 

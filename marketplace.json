@@ -3,7 +3,7 @@
   "publisher": "uhstray-io",
   "displayName": "Uhstray Skills Hub",
   "description": "Uhstray.io's curated Claude Code skills marketplace — workflows and automation for engineering teams.",
-  "version": "0.8.32",
+  "version": "0.8.33",
   "homepage": "https://github.com/uhstray-io/huhhb",
   "license": "MIT",
   "skills": [
@@ -693,6 +693,19 @@
         "adr",
         "hindsight",
         "triage"
+      ],
+      "version": "0.1.0"
+    },
+    {
+      "name": "prune-tests",
+      "path": "skills/prune-tests/SKILL.md",
+      "description": "Use when a test suite carries tests that guard no behavior and should be cut down — \"prune the tests\", \"delete useless tests\", \"clean up the test suite\", \"which of these tests are worth keeping\", \"the tests go red on every refactor\". Not for writing new tests (use test-driven-development) or diagnosing a failing or flaky one (use systematic-debugging).",
+      "category": "review",
+      "tags": [
+        "review",
+        "testing",
+        "tests",
+        "cleanup"
       ],
       "version": "0.1.0"
     }

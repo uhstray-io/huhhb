@@ -247,6 +247,7 @@ The day-to-day craft. These run many times a session and act on whatever is in f
 |-------|---------|---------|
 | `requesting-code-review` | `/requesting-code-review` | Request review on completed work before merging |
 | `receiving-code-review` | `/receiving-code-review` | Verify review feedback technically instead of agreeing performatively |
+| `prune-tests` | `/prune-tests` | Delete or rewrite tests that guard no behavior |
 | `strict-simplify` | `/strict-simplify` | Simplify without changing behavior |
 | `strict-refactor` | `/strict-refactor` | Restructure without changing behavior |
 

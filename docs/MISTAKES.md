@@ -20,15 +20,18 @@ entry's `Occurrences` count and adds a dated note; it never opens a second entry
 
 | # | Summary | Class | Count | Enforced by |
 |---|---|---|---|---|
-| 1.1 | PR body listed test cases and lockfiles from memory; both lists were wrong | Unverified claim | 4 | `hooks/pr-claim-check.sh` (Bash `gh` path only; deny until acknowledged) |
+| 1.1 | PR body listed test cases and lockfiles from memory; both lists were wrong | Unverified claim | 5 | `hooks/pr-claim-check.sh` (Bash `gh` path only; deny until acknowledged) |
+| 1.2 | Scenario note gave a cause for a baseline difference that no run had isolated; a controlled run contradicted it | Unverified claim | 2 | `Convention` |
 | 2.1 | PR #60 merged with 4 CodeRabbit findings unanswered | Process | 1 | `hooks/pr-merge-guard.sh` (deny until acknowledged; fails open) |
 | 3.1 | Grounding spec accepted "merges count as work" as rare; merging `dev` is routine, so the only line nudge was a false positive | Design assumption | 1 | `tests/test_grounding_hook.test.ts` (merge and fast-forward cases) |
+| 4.1 | Skill-disabled baseline read the skill file from disk, so a failing baseline was reported as passing | Test passed for the wrong reason | 1 | `Convention` (bench fix: HUHHB-168) |
+| 5.1 | PR #65 was returned four times: its bench asserts and written claims were settled during review, not before it | Process | 1 | `Convention` |
 
 ## 1. Asserting something without verifying it
 
 ### 1.1 PR body described the test suite and lockfile list from memory
 
-**Occurrences: 4** — 2026-11-13, 2026-11-13, 2026-11-13, 2026-11-13
+**Occurrences: 5** — 2026-11-13, 2026-11-13, 2026-11-13, 2026-11-13, 2026-11-20
 
 **What happened.** Opening PR #59 (grounding line threshold, HUHHB-156), the
 body listed the 10 cases in `tests/test_grounding_hook.test.ts` and the
@@ -94,6 +97,53 @@ watches `gh` commands; the rule did not fire because the second session was
 assumed to match the first without reading its transcript. Any tracked text,
 Plane included, falls under the rule.
 
+**Occurrence 5 — 2026-11-20.** PR #65's body and Plane item HUHHB-169 said the
+body of `onboarding/skills-list.md` was 11,999 characters on `main` and 11,956
+after the change. `node scripts/skill-lint.ts`
+reports 12000 at `fceb9829` and 11957 at `cba5172f`. The numbers came from a
+one-line script written in the session that stripped the frontmatter its own
+way, one character differently from the lint. The guard fired and was
+acknowledged: the counts were re-run before posting, with the same script. A
+count is verified by the tool that enforces the limit, not by a re-run of the
+script that produced it. The PR body and the Plane item are corrected. The
+commit message of `8934ee20` says "one character under the 12,000 character S6
+cap", from the same count, and stands as written.
+
+### 1.2 A scenario note stated why two baselines differed, from runs that isolated nothing
+
+**Occurrences: 2** — 2026-11-20, 2026-11-20
+
+**What happened.** In `tests/bench/prune-tests.json` at `b0ea909d`, the note on
+the second scenario said its baseline passed because the prompt calls the two
+files "the whole project", "which tells the baseline the methods have no other
+caller; the first scenario does not say that, and its baseline leaves the
+exports in". That was pushed in PR #65. The two scenarios also differ in
+language, in helper names and in how the request is scoped. A review comment
+then asked for the first scenario to say "the whole project" too. Run that
+way, with nothing else changed, its clean baseline still named only
+`tests/session.test.ts` in 3 of 3 runs, so the wording was not the cause.
+
+**Root cause.** Two measurements that differed in several ways were explained
+by the one difference that came to mind first, and the explanation was written
+into a committed file as fact.
+
+**The rule.** A note or PR text gives a cause for a bench difference only
+after a run that changes that one factor and nothing else. Without that run,
+write the measurements and "not known why".
+
+**Enforced by.** `Convention`.
+
+**Occurrence 2 — 2026-11-20.** Same PR and same commit (`b0ea909d`), in
+`docs/LESSONS.md` L-002: "A scenario copied from the skill's own worked example
+is the likeliest to pass at baseline." The first scenario is that worked
+example, and its clean baseline has the worst record in the PR (1 of 2 in each
+bench run that measured it). The same entry said, one sentence earlier, that
+this scenario's baseline had failed in 2 of 3 runs. The rule did not fire
+because it was framed around a cause for one difference, and a general
+statement about which scenarios pass did not register as the same thing. It
+is: a generalisation from bench results needs the same isolating run, or it
+is left out. An independent review found it before merge, and it is removed.
+
 ## 2. Merging before the review was finished
 
 ### 2.1 PR #60 merged with four review findings unanswered
@@ -152,3 +202,77 @@ bug, not a limit.
 **Enforced by.** For this instance: `tests/test_grounding_hook.test.ts` cases
 that merge and fast-forward another branch's commits and expect no nudge. The
 general rule: `Convention`.
+
+## 4. A test that passed for the wrong reason
+
+### 4.1 The skill-disabled baseline read the skill file from disk
+
+**Occurrences: 1** — 2026-11-20
+
+**What happened.** Adding `prune-tests`, the RED step ran each scenario in
+`tests/bench/prune-tests.json` once the way `scripts/skill-bench.ts` runs its
+baseline arm: `claude -p <prompt> --disallowedTools Skill`, from the repo root,
+with the branch loaded as a plugin. All three asserts passed, and the session
+reported "the baseline passed all three scenarios". A second round with
+`--output-format stream-json` showed why: in 3 of 3 runs the baseline's only
+tool call was `ls skills/prune-tests/ && cat skills/prune-tests/SKILL.md`.
+Re-run from an empty directory with the skill not installed, the baseline
+failed the scenario that asks for test-only production code to be removed
+(its last line named `tests/session.test.ts` and not `src/session.ts`) and
+passed the other two.
+
+**Root cause.** `--disallowedTools Skill` removes the tool, not the skill. The
+skill stays in the session's catalog, and the bench starts `claude` in its own
+working directory, which is this repo, so `skills/<name>/SKILL.md` is one
+`cat` away. A session that sees a matching skill it cannot invoke reads the
+file instead. The baseline arm then measures the skill, and a skill that works
+looks obsolete (standard C4, E3).
+
+**The rule.** A baseline counts only if the skill is unreachable in it: not
+listed in the catalog and not on disk under the working directory. Before
+reading a baseline verdict, look at the baseline run's tool calls; one that
+opens the skill's own files voids the run. Until the bench does this itself,
+run both arms from an empty directory and load the skill arm with
+`--plugin-dir`.
+
+**Enforced by.** `Convention`. The bench does not check it (HUHHB-168). The note on the
+first scenario in `tests/bench/prune-tests.json` records the measurement.
+
+## 5. Opening a PR before its checks were settled
+
+### 5.1 PR #65 was returned four times over its bench scenarios and its claims
+
+**Occurrences: 1** — 2026-11-20
+
+**What happened.** PR #65 (`prune-tests`, HUHHB-167) was returned by review
+four times. Round 1 (CodeRabbit, `b0ea909d`): bench gate B8 failing, the
+asserts passed an answer that deleted nothing, and the first prompt lacked a
+premise its rubric used. Round 2 (CodeRabbit, `b0adffdc`): the second assert
+accepted an answer that deleted a parameter the kept tests need. Round 3 (the
+`pr-reviewer` agent, `cba5172f`, CodeRabbit being rate limited): a wrong
+sentence in L-002 and a missing PR number there, counts off by one in the PR
+body, a stale line in `AGENTS.md`, rubrics grading text the judge never sees,
+and two more gaps in the same assert. Round 4 (`2782b34f`): the `pr-reviewer`
+agent found four errors in the prose the round 3 correction had added, and
+CodeRabbit found one more gap in the same assert. The bench ran three times,
+at `8934ee20`, `9dca0501` and `55f605c2`, 23 to 25 paid sessions each; the
+second and third runs were needed because an assert had changed. Joseph
+approved a fourth and then a fifth correction, each limited to prose.
+
+**Root cause.** The scenarios were designed while the PR was open. An assert
+that greps a free-text answer was written, benched, and only then tested
+against answers built to defeat it, and that last step was done by the
+reviewers. The written claims had the same order: explanations and counts went
+into the notes, the lesson and the PR body as the runs came in, and were not
+re-read against the final numbers.
+
+**The rule.** Before a PR that adds bench scenarios is opened: replay each
+assert against answers written to defeat it (keeps everything, deletes too
+much, names the right things in other words, annotates what it keeps), fix
+what that finds, and only then run the bench, once. Before the PR is opened
+and after every later bench run, re-read each claim in the notes, the lesson
+and the PR body against the history rows. A correction made after a return
+removes or shortens text where it can; a sentence it adds is checked like any
+new claim.
+
+**Enforced by.** `Convention`.

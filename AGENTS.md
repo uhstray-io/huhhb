@@ -201,6 +201,14 @@ worktrees → branches → PRs → human-authorized merge:
   re-running it would have overwritten those sections, and it anchored its
   insert on an H1 the sync never produces.
 
+- **`prune-tests`**: forked from `caldoai/skills` (`skills/prune-tests/SKILL.md`
+  at commit `d5b68dac`, MIT, notice kept in `skills/prune-tests/LICENSE`).
+  Edited directly; there is no sync script. The body is upstream's, unchanged.
+  The frontmatter is ours: lint S2 allows only `name` and `description`, so
+  upstream's `argument-hint` is dropped and the description is rewritten as
+  trigger conditions. To take an upstream change, diff the body against
+  upstream and re-bench.
+
 After syncing, review the diff, bump versions, cut a release if changed.
 
 ## Commit & PR Conventions
@@ -241,7 +249,7 @@ After syncing, review the diff, bump versions, cut a release if changed.
 - `.claude-plugin/plugin.json` — plugin version read by Claude Code for update detection (keep in sync with `marketplace.json`)
 - `scripts/skill-lint.ts`, `scripts/skill-bench.ts`, `scripts/skill-trends.ts` — the skill quality gates (see Skill Quality Bar)
 - `scripts/evolve/` — the `evolve` self-learning suite (TypeScript, MIT; optional integrations load dynamically, never vendored)
-- `scripts/sync-caveman.sh` — upstream sync for the vendored caveman family (the only vendored skills left)
+- `scripts/sync-caveman.sh` — upstream sync for the vendored caveman family (the only skills with a sync script; `prune-tests` is a fork edited directly)
 - `tests/` — `test_evolve.test.ts` + `test_openspec_conformance.test.ts` (offline, `node --test`) and `bench/` scenarios
 - `docs/evolve-plan.md` — the evolve living plan (architecture, guardrails, gates, roadmap; every evolve change recorded in its change log)
 - `CONTEXT.md` — project context for AI assistants

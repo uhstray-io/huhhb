@@ -25,7 +25,7 @@ entry's `Occurrences` count and adds a dated note; it never opens a second entry
 | 2.1 | PR #60 merged with 4 CodeRabbit findings unanswered | Process | 1 | `hooks/pr-merge-guard.sh` (deny until acknowledged; fails open) |
 | 3.1 | Grounding spec accepted "merges count as work" as rare; merging `dev` is routine, so the only line nudge was a false positive | Design assumption | 1 | `tests/test_grounding_hook.test.ts` (merge and fast-forward cases) |
 | 4.1 | Skill-disabled baseline read the skill file from disk, so a failing baseline was reported as passing | Test passed for the wrong reason | 1 | `Convention` (bench fix: HUHHB-168) |
-| 5.1 | PR #65 was returned three times: its bench asserts and written claims were settled during review, not before it | Process | 1 | `Convention` |
+| 5.1 | PR #65 was returned four times: its bench asserts and written claims were settled during review, not before it | Process | 1 | `Convention` |
 
 ## 1. Asserting something without verifying it
 
@@ -97,16 +97,17 @@ watches `gh` commands; the rule did not fire because the second session was
 assumed to match the first without reading its transcript. Any tracked text,
 Plane included, falls under the rule.
 
-**Occurrence 5 — 2026-11-20.** PR #65's body, the commit message of `8934ee20`
-and Plane item HUHHB-169 said the body of `onboarding/skills-list.md` was 11,999
-characters on `main` and 11,956 after the change. `node scripts/skill-lint.ts`
+**Occurrence 5 — 2026-11-20.** PR #65's body and Plane item HUHHB-169 said the
+body of `onboarding/skills-list.md` was 11,999 characters on `main` and 11,956
+after the change. `node scripts/skill-lint.ts`
 reports 12000 at `fceb9829` and 11957 at `cba5172f`. The numbers came from a
 one-line script written in the session that stripped the frontmatter its own
 way, one character differently from the lint. The guard fired and was
 acknowledged: the counts were re-run before posting, with the same script. A
 count is verified by the tool that enforces the limit, not by a re-run of the
-script that produced it. The PR body and the Plane item are corrected; the
-commit message stands as written.
+script that produced it. The PR body and the Plane item are corrected. The
+commit message of `8934ee20` says "one character under the 12,000 character S6
+cap", from the same count, and stands as written.
 
 ### 1.2 A scenario note stated why two baselines differed, from runs that isolated nothing
 
@@ -136,9 +137,8 @@ write the measurements and "not known why".
 `docs/LESSONS.md` L-002: "A scenario copied from the skill's own worked example
 is the likeliest to pass at baseline." The first scenario is that worked
 example, and its clean baseline has the worst record in the PR (1 of 2 in each
-bench run that measured it). The sentence was written after two dropped
-scenarios, also taken from the example, passed at baseline, and it was not
-re-read when the kept scenario's numbers came in. The rule did not fire
+bench run that measured it). The same entry said, one sentence earlier, that
+this scenario's baseline had failed in 2 of 3 runs. The rule did not fire
 because it was framed around a cause for one difference, and a general
 statement about which scenarios pass did not register as the same thing. It
 is: a generalisation from bench results needs the same isolating run, or it
@@ -240,20 +240,24 @@ first scenario in `tests/bench/prune-tests.json` records the measurement.
 
 ## 5. Opening a PR before its checks were settled
 
-### 5.1 PR #65 was returned three times over its bench scenarios and its claims
+### 5.1 PR #65 was returned four times over its bench scenarios and its claims
 
 **Occurrences: 1** — 2026-11-20
 
 **What happened.** PR #65 (`prune-tests`, HUHHB-167) was returned by review
-three times. Round 1 (CodeRabbit, `b0ea909d`): the asserts passed an answer
-that deleted nothing, and the first prompt lacked a premise its rubric used.
-Round 2 (CodeRabbit, `b0adffdc`): the second assert accepted an answer that
-deleted a parameter the kept tests need. Round 3 (the `pr-reviewer` agent,
-`cba5172f`, CodeRabbit being rate limited): a wrong sentence in L-002, counts
-off by one in the PR body, a stale line in `AGENTS.md`, rubrics grading text
-the judge never sees, and two more gaps in the same assert. Each assert change
-altered the scenario's hash and cost a new bench run of 23 to 25 paid sessions;
-there were three. Joseph approved a fourth correction limited to prose.
+four times. Round 1 (CodeRabbit, `b0ea909d`): bench gate B8 failing, the
+asserts passed an answer that deleted nothing, and the first prompt lacked a
+premise its rubric used. Round 2 (CodeRabbit, `b0adffdc`): the second assert
+accepted an answer that deleted a parameter the kept tests need. Round 3 (the
+`pr-reviewer` agent, `cba5172f`, CodeRabbit being rate limited): a wrong
+sentence in L-002 and a missing PR number there, counts off by one in the PR
+body, a stale line in `AGENTS.md`, rubrics grading text the judge never sees,
+and two more gaps in the same assert. Round 4 (`2782b34f`): the `pr-reviewer`
+agent found four errors in the prose the round 3 correction had added, and
+CodeRabbit found one more gap in the same assert. The bench ran three times,
+at `8934ee20`, `9dca0501` and `55f605c2`, 23 to 25 paid sessions each; the
+second and third runs were needed because an assert had changed. Joseph
+approved a fourth and then a fifth correction, each limited to prose.
 
 **Root cause.** The scenarios were designed while the PR was open. An assert
 that greps a free-text answer was written, benched, and only then tested
@@ -267,6 +271,8 @@ assert against answers written to defeat it (keeps everything, deletes too
 much, names the right things in other words, annotates what it keeps), fix
 what that finds, and only then run the bench, once. Before the PR is opened
 and after every later bench run, re-read each claim in the notes, the lesson
-and the PR body against the history rows.
+and the PR body against the history rows. A correction made after a return
+removes or shortens text where it can; a sentence it adds is checked like any
+new claim.
 
 **Enforced by.** `Convention`.

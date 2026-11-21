@@ -249,7 +249,7 @@ After syncing, review the diff, bump versions, cut a release if changed.
 - `.claude-plugin/plugin.json` — plugin version read by Claude Code for update detection (keep in sync with `marketplace.json`)
 - `scripts/skill-lint.ts`, `scripts/skill-bench.ts`, `scripts/skill-trends.ts` — the skill quality gates (see Skill Quality Bar)
 - `scripts/evolve/` — the `evolve` self-learning suite (TypeScript, MIT; optional integrations load dynamically, never vendored)
-- `scripts/sync-caveman.sh` — upstream sync for the vendored caveman family (the only vendored skills left)
+- `scripts/sync-caveman.sh` — upstream sync for the vendored caveman family (the only skills with a sync script; `prune-tests` is a fork edited directly)
 - `tests/` — `test_evolve.test.ts` + `test_openspec_conformance.test.ts` (offline, `node --test`) and `bench/` scenarios
 - `docs/evolve-plan.md` — the evolve living plan (architecture, guardrails, gates, roadmap; every evolve change recorded in its change log)
 - `CONTEXT.md` — project context for AI assistants

@@ -22,8 +22,8 @@ A session that plans work reads this file and the `docs/MISTAKES.md` Index befor
 
 ### L-002 · 2026-11-20 · skill bench
 
-- **ACCEPTED:** the `prune-tests` skill, forked from `caldoai/skills`, with its bench scenarios
-  (HUHHB-167).
+- **ACCEPTED:** PR #65, the `prune-tests` skill, forked from `caldoai/skills`, with its bench
+  scenarios (HUHHB-167).
 - **DERIVED:** Write a bench scenario only for a rule the model does not already follow, and find
   that out before writing the rest. Run each candidate prompt once with the skill unreachable (an
   empty working directory, the skill not installed) and keep the ones that fail. For
@@ -32,7 +32,6 @@ A session that plans work reads this file and the `docs/MISTAKES.md` Index befor
   value, a private-state assert). On the two prompts that also need production code removed
   because it existed only for a pruned test, the baseline passed 3 of 6 runs over two bench runs
   (`9dca0501`, `55f605c2`) and the skill arm 12 of 12; one unchanged prompt's baseline went from
-  0 of 2 to 2 of 2. A scenario copied from the skill's own worked example is the likeliest to
-  pass at baseline.
+  0 of 2 to 2 of 2.
 - **APPLIES TO:** `tests/bench/<skill>.json` for any new or imported skill, and any plan that
   estimates what a skill adds.

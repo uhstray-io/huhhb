@@ -1,6 +1,6 @@
 ---
 name: humanizer
-description: Use when prose reads as AI-generated and should sound like its writer without changing what it says: "humanize this", "this sounds like ChatGPT wrote it", "remove the AI tells", "make this sound less like AI", or a review of a draft, PR body or commit message for tells such as not-X-but-Y contrasts, one-line closers, forced triads, dashes everywhere, inflated claims or chatbot filler. Not for setting how Claude writes to the user across projects (use user-kickstart) or for fixing typos only.
+description: 'Use when prose reads as AI-generated and should sound like its writer without changing what it says: "humanize this", "this sounds like ChatGPT wrote it", "remove the AI tells", "make this sound less like AI", or a review of a draft, PR body or commit message for tells such as not-X-but-Y contrasts, one-line closers, forced triads, dashes everywhere, inflated claims or chatbot filler. Not for setting how Claude writes to the user across projects (use user-kickstart) or for fixing typos only.'
 ---
 
 # Humanizer: remove AI writing patterns

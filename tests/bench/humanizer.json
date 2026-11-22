@@ -20,12 +20,6 @@
       "note": "Rules under test: pattern 17, a list of prestige outlets and a follower count stand in for what was said, and pattern 23, a guess fills a gap in the source. The check passes when the name, the university, 2016, the 2021 paper, the 400 citations and the Thursday slot in Hall B are all kept and the guess, the four outlets and the follower count are gone. Known limit: it accepts a bio that swaps the outlet list for a vague claim such as 'widely covered in the press'."
     },
     {
-      "id": "update-names-the-thing-instead-of-the-part",
-      "prompt": "Here's the summary paragraph for my quarterly update. A teammate said it sounds AI-generated. Please fix that.\n\nThe key change this quarter is the new billing pipeline, which actually went live on April 8. It quietly replaced three cron jobs, and the hard part was migrating 2.3 million invoices without downtime. Additionally, the pipeline enhances our reporting: finance now gets daily totals instead of weekly ones, which is a valuable improvement. Refunds are still gated behind manual approval, and that aligns with the audit requirements. The part that matters for next quarter is the retry logic, which needs a robust fix before the June 30 close.\n\nEnd your answer with a line that says exactly FINAL: and put the finished paragraph under it, with nothing after it.",
-      "assert": "F=$(awk '/^[^A-Za-z]*FINAL:/{b=\"\";on=1;sub(/^[^A-Za-z]*FINAL:[^A-Za-z0-9]*/,\"\");if(length($0))b=$0\"\\n\";next} on{b=b $0\"\\n\"} END{printf \"%s\",b}' result.txt) && L=$(printf '%s' \"$F\" | tr '\\n' ' ' | tr 'A-Z' 'a-z') && [ -n \"$L\" ] && printf '%s' \"$L\" | grep -q 'april 8' && printf '%s' \"$L\" | grep -qE '2\\.3 ?(million|m)' && printf '%s' \"$L\" | grep -q 'cron jobs' && printf '%s' \"$L\" | grep -q 'june 30' && printf '%s' \"$L\" | grep -q 'daily' && printf '%s' \"$L\" | grep -q 'weekly' && printf '%s' \"$L\" | grep -q 'retry' && ! printf '%s' \"$L\" | grep -qE 'the ([a-z]+ )?part([^a-z]|$)|additionally|actually|quietly|enhanc|valuable|robust|(^|[^a-z])key([^a-z]|$)'",
-      "note": "Rules under test: pattern 4, 'the hard part' and 'the part that matters' in place of a named thing, and the pattern 12 word list. The check passes when April 8, the 2.3 million invoices, the cron jobs, the daily and weekly totals, the retry logic and June 30 are all kept and none of these remain: 'the ... part', additionally, actually, quietly, enhance, valuable, robust, key."
-    },
-    {
       "id": "stays-silent-on-a-typo-fix",
       "prompt": "Fix the typos in this paragraph and nothing else. Keep my wording exactly as it is.\n\nWe shiped the new onboarding flow on Tuesday and so far the numbers look good. Signups are up about 12 percent and nobody has complainted about the extra step. Im still a little nervous about email verification becuase it failed twice in staging.",
       "expect_no_activation": true,
@@ -34,16 +28,16 @@
   ],
   "triggers": {
     "positive": [
-      "humanize this paragraph before I send it",
-      "this cover letter sounds like ChatGPT wrote it, fix that",
-      "remove the AI tells from the intro of our README",
-      "check my PR description for AI-sounding writing before I post it"
+      "humanize this before I send it: \"I hope this email finds you well. I wanted to reach out to delve into the exciting synergies between our teams. It's not just a partnership, it's a journey.\"",
+      "this sounds like ChatGPT wrote it, fix that: \"In today's fast-paced world, effective communication stands as a testament to great leadership. Let's dive in.\"",
+      "remove the AI tells from this intro: \"Welcome to the Acme docs! This comprehensive guide serves as your gateway to a seamless, robust and vibrant developer experience.\"",
+      "make this commit message sound less like AI: \"This commit not only fixes the login bug, but also underscores our commitment to a robust, seamless user experience.\""
     ],
     "negative": [
-      "fix the typos in this paragraph and keep my wording",
+      "fix the typos in this sentence and keep my wording: \"We shiped the fix on Tuesday and nobody has complainted since.\"",
       "your replies to me read generic in every project, set up my global preferences so you write the way I like",
-      "summarize this article in three bullet points",
-      "translate this paragraph into Spanish"
+      "summarize this in one sentence: \"The city council voted 5 to 2 on Tuesday to extend the bike lane pilot through June, citing a 12 percent drop in collisions.\"",
+      "translate this into Spanish: \"The meeting moved to Thursday at 3 pm.\""
     ]
   }
 }

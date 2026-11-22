@@ -35,3 +35,14 @@ A session that plans work reads this file and the `docs/MISTAKES.md` Index befor
   0 of 2 to 2 of 2.
 - **APPLIES TO:** `tests/bench/<skill>.json` for any new or imported skill, and any plan that
   estimates what a skill adds.
+
+### L-003 · 2026-11-22 · skill bench
+
+- **ACCEPTED:** PR #66, the `humanizer` skill, forked from `blader/humanizer`, with its bench
+  scenarios (HUHHB-170).
+- **DERIVED:** One failing baseline run does not show that a scenario separates the two arms.
+  Three `humanizer` prompts each failed their one clean baseline run before the bench. In the
+  bench's two baseline runs at `981c65cd`, one prompt then passed 2 of 2, one passed 1 of 2 and
+  one passed 0 of 2. Run each candidate's clean baseline three times before the bench, and keep
+  a prompt only when all three fail. This narrows L-002, which says to run each candidate once.
+- **APPLIES TO:** `tests/bench/<skill>.json` for any new or imported skill.

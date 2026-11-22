@@ -20,18 +20,19 @@ entry's `Occurrences` count and adds a dated note; it never opens a second entry
 
 | # | Summary | Class | Count | Enforced by |
 |---|---|---|---|---|
-| 1.1 | PR body listed test cases and lockfiles from memory; both lists were wrong | Unverified claim | 5 | `hooks/pr-claim-check.sh` (Bash `gh` path only; deny until acknowledged) |
+| 1.1 | PR body listed test cases and lockfiles from memory; both lists were wrong | Unverified claim | 6 | `hooks/pr-claim-check.sh` (Bash `gh` path only; deny until acknowledged) |
 | 1.2 | Scenario note gave a cause for a baseline difference that no run had isolated; a controlled run contradicted it | Unverified claim | 2 | `Convention` |
 | 2.1 | PR #60 merged with 4 CodeRabbit findings unanswered | Process | 1 | `hooks/pr-merge-guard.sh` (deny until acknowledged; fails open) |
 | 3.1 | Grounding spec accepted "merges count as work" as rare; merging `dev` is routine, so the only line nudge was a false positive | Design assumption | 1 | `tests/test_grounding_hook.test.ts` (merge and fast-forward cases) |
-| 4.1 | Skill-disabled baseline read the skill file from disk, so a failing baseline was reported as passing | Test passed for the wrong reason | 1 | `Convention` (bench fix: HUHHB-168) |
+| 4.1 | Skill-disabled baseline read the skill file from disk, so a failing baseline was reported as passing | Test passed for the wrong reason | 2 | `Convention` (bench fix: HUHHB-168) |
 | 5.1 | PR #65 was returned four times: its bench asserts and written claims were settled during review, not before it | Process | 1 | `Convention` |
+| 6.1 | A bench trigger probe named the README, and its session rewrote the file's first paragraph in the working tree | Test wrote outside its own folder | 1 | `Convention` |
 
 ## 1. Asserting something without verifying it
 
 ### 1.1 PR body described the test suite and lockfile list from memory
 
-**Occurrences: 5** — 2026-11-13, 2026-11-13, 2026-11-13, 2026-11-13, 2026-11-20
+**Occurrences: 6** — 2026-11-13, 2026-11-13, 2026-11-13, 2026-11-13, 2026-11-20, 2026-11-22
 
 **What happened.** Opening PR #59 (grounding line threshold, HUHHB-156), the
 body listed the 10 cases in `tests/test_grounding_hook.test.ts` and the
@@ -108,6 +109,16 @@ count is verified by the tool that enforces the limit, not by a re-run of the
 script that produced it. The PR body and the Plane item are corrected. The
 commit message of `8934ee20` says "one character under the 12,000 character S6
 cap", from the same count, and stands as written.
+
+**Occurrence 6 — 2026-11-22.** PR #66's body said the lint line for `humanizer`
+read "body 6,988 characters". That was true at `5be8400e`. Commit `bec09ca0`
+then shortened one sentence of the skill by 19 characters, and the body was
+edited and posted again without the lint being run again:
+`node scripts/skill-lint.ts` reports 6969 at `bec09ca0`. The guard fired and
+was acknowledged for the section being added; the Verification list written at
+the earlier head was carried over unread. Every number in a PR body is run
+again at the head the body is posted against, not only the lines being added.
+The body is corrected.
 
 ### 1.2 A scenario note stated why two baselines differed, from runs that isolated nothing
 
@@ -207,7 +218,7 @@ general rule: `Convention`.
 
 ### 4.1 The skill-disabled baseline read the skill file from disk
 
-**Occurrences: 1** — 2026-11-20
+**Occurrences: 2** — 2026-11-20, 2026-11-22
 
 **What happened.** Adding `prune-tests`, the RED step ran each scenario in
 `tests/bench/prune-tests.json` once the way `scripts/skill-bench.ts` runs its
@@ -237,6 +248,19 @@ run both arms from an empty directory and load the skill arm with
 
 **Enforced by.** `Convention`. The bench does not check it (HUHHB-168). The note on the
 first scenario in `tests/bench/prune-tests.json` records the measurement.
+
+**Occurrence 2 — 2026-11-22.** Adding `humanizer`, three candidate prompts were
+each run twice as a baseline: from an empty directory, with
+`--disallowedTools Skill`, before the skill existed in this repo. The `init`
+event of all six runs listed `humanizer:humanizer`. The upstream skill was
+installed on the machine as its own plugin (`humanizer@humanizer`, 4.0.0), so
+it was in the catalog under another plugin's name. No run opened a skill file
+(each made no tool call), but all six were voided, and the prompts were run
+again with that plugin switched off for the session:
+`--settings '{"enabledPlugins":{"humanizer@humanizer":false}}'`. The rule did
+not fire because its catalog check was made after the runs, not before them,
+and because this repo not shipping the skill yet was taken to mean no
+installed plugin did.
 
 ## 5. Opening a PR before its checks were settled
 
@@ -274,5 +298,36 @@ and after every later bench run, re-read each claim in the notes, the lesson
 and the PR body against the history rows. A correction made after a return
 removes or shortens text where it can; a sentence it adds is checked like any
 new claim.
+
+**Enforced by.** `Convention`.
+
+## 6. A test that wrote outside its own folder
+
+### 6.1 A bench trigger probe rewrote the first paragraph of the README
+
+**Occurrences: 1** — 2026-11-22
+
+**What happened.** The first `humanizer` bench run (at `981c65cd`) had four
+positive trigger prompts that carried no text of their own. One was "remove the
+AI tells from the intro of our README". The bench runs each trigger prompt as a
+full `claude -p` session. A wrapper started those sessions in an empty scratch
+directory and loaded the branch with `--plugin-dir` set to this worktree. After
+the run, `git status` showed `README.md` modified: its first paragraph had been
+rewritten. `git restore README.md` put it back before anything was committed.
+`~/.claude/CLAUDE.md` kept its earlier modification time, and no open PR had
+been updated. Trigger recall on that run was 2 of 4.
+
+**Root cause.** A trigger probe is a real session with write tools, and the
+prompt named a file that the session's own directory did not have. Two things
+pointed the session at this worktree: the `--plugin-dir` argument, and the
+scratch directory's own path, which spells out the worktree's path with dashes
+for slashes. Which one it followed is not known, because the bench keeps no
+transcript of a probe.
+
+**The rule.** A bench prompt names nothing outside itself: the text to work on
+is in the prompt. The plugin under test is loaded from a throwaway copy
+(`git archive HEAD` into a scratch directory), never from the working tree.
+After every bench run, `git status` must show `tests/bench/history.jsonl` as the
+only file the run changed, and that is checked before the rows are read.
 
 **Enforced by.** `Convention`.

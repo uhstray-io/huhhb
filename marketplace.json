@@ -3,7 +3,7 @@
   "publisher": "uhstray-io",
   "displayName": "Uhstray Skills Hub",
   "description": "Uhstray.io's curated Claude Code skills marketplace — workflows and automation for engineering teams.",
-  "version": "0.8.33",
+  "version": "0.8.34",
   "homepage": "https://github.com/uhstray-io/huhhb",
   "license": "MIT",
   "skills": [
@@ -706,6 +706,19 @@
         "testing",
         "tests",
         "cleanup"
+      ],
+      "version": "0.1.0"
+    },
+    {
+      "name": "humanizer",
+      "path": "skills/humanizer/SKILL.md",
+      "description": "Use when prose reads as AI-generated and should sound like its writer without changing what it says: \"humanize this\", \"this sounds like ChatGPT wrote it\", \"remove the AI tells\", \"make this sound less like AI\", or a review of a draft, PR body or commit message for tells such as not-X-but-Y contrasts, one-line closers, forced triads, dashes everywhere, inflated claims or chatbot filler. Not for setting how Claude writes to the user across projects (use user-kickstart) or for fixing typos only.",
+      "category": "review",
+      "tags": [
+        "review",
+        "writing",
+        "prose",
+        "editing"
       ],
       "version": "0.1.0"
     }

@@ -49,7 +49,7 @@ Informal text (chat messages, comments, rants, angry reviews) is often human alr
 
 ## The patterns
 
-Read [references/patterns.md](references/patterns.md) before step 1 of every run. It holds the 26 numbered patterns, §1 to §26, in six groups (A to F), each with its watch list, the reason it is a tell, and before and after examples. The steps above and the section below cite patterns by those numbers.
+Read [references/patterns.md](references/patterns.md) before step 1 of every run. It holds the 26 numbered patterns, §1 to §26, in six groups (A to F), each with its watch list, the reason it is a tell, and before and after examples. The sections above cite patterns by those numbers.
 
 ## When not to act
 

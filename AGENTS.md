@@ -209,6 +209,20 @@ worktrees → branches → PRs → human-authorized merge:
   trigger conditions. To take an upstream change, diff the body against
   upstream and re-bench.
 
+- **`humanizer`**: forked from `blader/humanizer` (`SKILL.md` at commit
+  `a32f2440`, upstream version 4.0.0, MIT, notice kept in
+  `skills/humanizer/LICENSE`). Edited directly; there is no sync script. The
+  text is upstream's, unchanged, but split across two files: lint S6 fails a
+  body over 12,000 characters, and upstream's is over 33,000. Upstream lines 13-56
+  and 490-504 are `skills/humanizer/SKILL.md`; lines 57-488, the 26 patterns,
+  are `skills/humanizer/references/patterns.md`. Three things are ours: the
+  frontmatter (lint S2 allows only `name` and `description`, so upstream's
+  `license` and `metadata` are dropped and the description is rewritten as
+  trigger conditions), the "The patterns" section of `SKILL.md` that says when
+  to read the reference, and the title and contents list at the top of
+  `patterns.md`. To take an upstream change, diff those line ranges against
+  upstream and re-bench.
+
 After syncing, review the diff, bump versions, cut a release if changed.
 
 ## Commit & PR Conventions
@@ -249,7 +263,7 @@ After syncing, review the diff, bump versions, cut a release if changed.
 - `.claude-plugin/plugin.json` — plugin version read by Claude Code for update detection (keep in sync with `marketplace.json`)
 - `scripts/skill-lint.ts`, `scripts/skill-bench.ts`, `scripts/skill-trends.ts` — the skill quality gates (see Skill Quality Bar)
 - `scripts/evolve/` — the `evolve` self-learning suite (TypeScript, MIT; optional integrations load dynamically, never vendored)
-- `scripts/sync-caveman.sh` — upstream sync for the vendored caveman family (the only skills with a sync script; `prune-tests` is a fork edited directly)
+- `scripts/sync-caveman.sh` — upstream sync for the vendored caveman family (the only skills with a sync script; `prune-tests` and `humanizer` are forks edited directly)
 - `tests/` — `test_evolve.test.ts` + `test_openspec_conformance.test.ts` (offline, `node --test`) and `bench/` scenarios
 - `docs/evolve-plan.md` — the evolve living plan (architecture, guardrails, gates, roadmap; every evolve change recorded in its change log)
 - `CONTEXT.md` — project context for AI assistants

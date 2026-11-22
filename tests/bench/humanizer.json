@@ -1,0 +1,49 @@
+{
+  "skill": "humanizer",
+  "budget": {
+    "max_tokens": 90000,
+    "max_cost_usd": 1.5,
+    "max_duration_ms": 360000
+  },
+  "scenarios": [
+    {
+      "id": "reply-leads-with-the-decision",
+      "prompt": "I'm about to post this reply in our PR thread. It sounds like AI wrote it. Clean it up.\n\nContext: Mara's review comment, which I'm replying to: \"This retry wrapper only hides the timeout. Shouldn't we fix the connection pool instead?\"\n\nMy draft reply:\nGreat point, Mara! You're absolutely right that this retry wrapper hides the timeout rather than fixing it. The underlying issue is that the connection pool in `db/pool.go` is capped at 10 connections, so under load requests queue up and eventually time out. I ran the load test again to confirm: at 200 requests per second, 14% of calls waited more than 5 seconds for a connection, and raising the cap to 40 brought that down to zero. I also checked the dashboards, and the timeouts line up with the nightly export job, which holds 8 connections for about 20 minutes. So the real fix is to raise the pool cap and move the export job to its own pool. Since the pool config is shared by four services, I'd rather do that in a separate PR and keep this one as a stopgap.\n\nEnd your answer with a line that says exactly FINAL: and put the reply I should post under it, with nothing after it.",
+      "assert": "F=$(awk '/^[^A-Za-z]*FINAL:/{b=\"\";on=1;sub(/^[^A-Za-z]*FINAL:[^A-Za-z0-9]*/,\"\");if(length($0))b=$0\"\\n\";next} on{b=b $0\"\\n\"} END{printf \"%s\",b}' result.txt) && L=$(printf '%s' \"$F\" | tr '\\n' ' ' | tr 'A-Z' 'a-z') && [ -n \"$L\" ] && printf '%s' \"$L\" | sed -E 's/(14 ?%|14 percent|200 req|load test|dashboard).*//' | grep -qE 'separate (pr|pull request|change|ticket|issue)|separately|follow-up|followup|(another|own|different|later|next|new) (pr|pull request)' && printf '%s' \"$L\" | grep -qE 'four services|4 services|shared' && ! printf '%s' \"$L\" | grep -qE 'great point|absolutely right'",
+      "note": "Rule under test: pattern 26, a reply leads with the decision. The check takes the text after the last FINAL: line and passes when a separate PR (or a follow-up) is named before any of the proof (the 14% figure, the load test, the dashboards), the reason (the config is shared by four services) is kept, and the chatbot opener is gone. Known limits: it accepts a reply that names the decision first and then keeps the whole diagnosis, and it fails a correct reply that words the decision without 'separate', 'follow-up' or 'another/own/different/later/next/new PR'."
+    },
+    {
+      "id": "bio-drops-the-guess-and-the-outlet-list",
+      "prompt": "This bio for our conference program came back from an AI tool. Make it not sound like that.\n\nDr. Lena Okafor is a marine biologist at the University of Cape Town, where she has led the kelp forest monitoring program since 2016. Information about her early life is not widely documented, but she likely grew up near the coast, which shaped her lifelong passion for the ocean. Her 2021 paper on kelp die-off after marine heatwaves has been cited more than 400 times. Her work has been featured in The Guardian, BBC, National Geographic, and Nature, and she maintains an active social media presence with over 80,000 followers. She will speak on Thursday at 2 pm in Hall B.\n\nEnd your answer with a line that says exactly FINAL: and put the finished bio under it, with nothing after it.",
+      "phrasing": true,
+      "assert": "F=$(awk '/^[^A-Za-z]*FINAL:/{b=\"\";on=1;sub(/^[^A-Za-z]*FINAL:[^A-Za-z0-9]*/,\"\");if(length($0))b=$0\"\\n\";next} on{b=b $0\"\\n\"} END{printf \"%s\",b}' result.txt) && L=$(printf '%s' \"$F\" | tr '\\n' ' ' | tr 'A-Z' 'a-z') && [ -n \"$L\" ] && printf '%s' \"$L\" | grep -q 'okafor' && printf '%s' \"$L\" | grep -q 'cape town' && printf '%s' \"$L\" | grep -q '2016' && printf '%s' \"$L\" | grep -q '2021' && printf '%s' \"$L\" | grep -q '400' && printf '%s' \"$L\" | grep -q 'thursday' && printf '%s' \"$L\" | grep -q 'hall b' && ! printf '%s' \"$L\" | grep -qE 'bbc|guardian|national geographic|followers|social media|80,000|80k|likely|grew up|early life|documented|passion' && ! printf '%s' \"$F\" | grep -qw 'Nature'",
+      "note": "Rules under test: pattern 17, a list of prestige outlets and a follower count stand in for what was said, and pattern 23, a guess fills a gap in the source. The check passes when the name, the university, 2016, the 2021 paper, the 400 citations and the Thursday slot in Hall B are all kept and the guess, the four outlets and the follower count are gone. Known limit: it accepts a bio that swaps the outlet list for a vague claim such as 'widely covered in the press'."
+    },
+    {
+      "id": "update-names-the-thing-instead-of-the-part",
+      "prompt": "Here's the summary paragraph for my quarterly update. A teammate said it sounds AI-generated. Please fix that.\n\nThe key change this quarter is the new billing pipeline, which actually went live on April 8. It quietly replaced three cron jobs, and the hard part was migrating 2.3 million invoices without downtime. Additionally, the pipeline enhances our reporting: finance now gets daily totals instead of weekly ones, which is a valuable improvement. Refunds are still gated behind manual approval, and that aligns with the audit requirements. The part that matters for next quarter is the retry logic, which needs a robust fix before the June 30 close.\n\nEnd your answer with a line that says exactly FINAL: and put the finished paragraph under it, with nothing after it.",
+      "assert": "F=$(awk '/^[^A-Za-z]*FINAL:/{b=\"\";on=1;sub(/^[^A-Za-z]*FINAL:[^A-Za-z0-9]*/,\"\");if(length($0))b=$0\"\\n\";next} on{b=b $0\"\\n\"} END{printf \"%s\",b}' result.txt) && L=$(printf '%s' \"$F\" | tr '\\n' ' ' | tr 'A-Z' 'a-z') && [ -n \"$L\" ] && printf '%s' \"$L\" | grep -q 'april 8' && printf '%s' \"$L\" | grep -qE '2\\.3 ?(million|m)' && printf '%s' \"$L\" | grep -q 'cron jobs' && printf '%s' \"$L\" | grep -q 'june 30' && printf '%s' \"$L\" | grep -q 'daily' && printf '%s' \"$L\" | grep -q 'weekly' && printf '%s' \"$L\" | grep -q 'retry' && ! printf '%s' \"$L\" | grep -qE 'the ([a-z]+ )?part([^a-z]|$)|additionally|actually|quietly|enhanc|valuable|robust|(^|[^a-z])key([^a-z]|$)'",
+      "note": "Rules under test: pattern 4, 'the hard part' and 'the part that matters' in place of a named thing, and the pattern 12 word list. The check passes when April 8, the 2.3 million invoices, the cron jobs, the daily and weekly totals, the retry logic and June 30 are all kept and none of these remain: 'the ... part', additionally, actually, quietly, enhance, valuable, robust, key."
+    },
+    {
+      "id": "stays-silent-on-a-typo-fix",
+      "prompt": "Fix the typos in this paragraph and nothing else. Keep my wording exactly as it is.\n\nWe shiped the new onboarding flow on Tuesday and so far the numbers look good. Signups are up about 12 percent and nobody has complainted about the extra step. Im still a little nervous about email verification becuase it failed twice in staging.",
+      "expect_no_activation": true,
+      "note": "A typo fix on a paragraph a person wrote is proofreading, not a rewrite. The collision is a request to edit prose; a skill that fires here rewrites wording the user asked to keep."
+    }
+  ],
+  "triggers": {
+    "positive": [
+      "humanize this paragraph before I send it",
+      "this cover letter sounds like ChatGPT wrote it, fix that",
+      "remove the AI tells from the intro of our README",
+      "check my PR description for AI-sounding writing before I post it"
+    ],
+    "negative": [
+      "fix the typos in this paragraph and keep my wording",
+      "your replies to me read generic in every project, set up my global preferences so you write the way I like",
+      "summarize this article in three bullet points",
+      "translate this paragraph into Spanish"
+    ]
+  }
+}

@@ -20,7 +20,7 @@ entry's `Occurrences` count and adds a dated note; it never opens a second entry
 
 | # | Summary | Class | Count | Enforced by |
 |---|---|---|---|---|
-| 1.1 | PR body listed test cases and lockfiles from memory; both lists were wrong | Unverified claim | 6 | `hooks/pr-claim-check.sh` (Bash `gh` path only; deny until acknowledged) |
+| 1.1 | PR body listed test cases and lockfiles from memory; both lists were wrong | Unverified claim | 7 | `hooks/pr-claim-check.sh` (Bash `gh` path only; deny until acknowledged) |
 | 1.2 | Scenario note gave a cause for a baseline difference that no run had isolated; a controlled run contradicted it | Unverified claim | 2 | `Convention` |
 | 2.1 | PR #60 merged with 4 CodeRabbit findings unanswered | Process | 1 | `hooks/pr-merge-guard.sh` (deny until acknowledged; fails open) |
 | 3.1 | Grounding spec accepted "merges count as work" as rare; merging `dev` is routine, so the only line nudge was a false positive | Design assumption | 1 | `tests/test_grounding_hook.test.ts` (merge and fast-forward cases) |
@@ -33,7 +33,7 @@ entry's `Occurrences` count and adds a dated note; it never opens a second entry
 
 ### 1.1 PR body described the test suite and lockfile list from memory
 
-**Occurrences: 6** — 2026-11-13, 2026-11-13, 2026-11-13, 2026-11-13, 2026-11-20, 2026-11-22
+**Occurrences: 7** — 2026-11-13, 2026-11-13, 2026-11-13, 2026-11-13, 2026-11-20, 2026-11-22, 2026-11-26
 
 **What happened.** Opening PR #59 (grounding line threshold, HUHHB-156), the
 body listed the 10 cases in `tests/test_grounding_hook.test.ts` and the
@@ -120,6 +120,17 @@ was acknowledged for the section being added; the Verification list written at
 the earlier head was carried over unread. Every number in a PR body is run
 again at the head the body is posted against, not only the lines being added.
 The body is corrected.
+
+**Occurrence 7 — 2026-11-26.** PR #70's lesson L-007 and its body cited
+`skills/repo-kickstart/reference.md:44` for the preflight line that names
+`index_repository`. The line is 45; line 44 is blank. The number came from a
+`sed -n 44,46p` whose output began with the blank line, which went unnoticed,
+and was written into a committed file without a `grep -n` for the line itself.
+The guard fired on the body and was acknowledged; the citation was taken as
+already checked because a command had shown the text nearby. The `pr-reviewer`
+round on `a15eb780` found it. A cited line number is read from a command that
+prints the number beside the text, such as `grep -n`, not counted from a
+printed range. L-007 and the body are corrected before merge.
 
 ### 1.2 A scenario note stated why two baselines differed, from runs that isolated nothing
 

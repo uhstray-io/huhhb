@@ -296,7 +296,7 @@ here.
 Product-inception artifacts, one directory per initiative:
 `<initiative-slug>/{brief.md,prd.md,architecture.md}` (huhhb's
 `product-inception` skill — opt-in, rare). The PRD's
-Epic Queue feeds Workflow 1; architecture `## Decisions` promote into
+Epic Queue is filed in Plane by `product-inception`; architecture `## Decisions` promote into
 `plans/architecture/`'s monthly file on approval. Empty is normal — most repos never
 run inception.
 ```
@@ -698,7 +698,7 @@ repo-kickstart — <owner>/<repo> (<greenfield|brownfield>, <stack>)
   branch protection            ✅ ruleset <id> | ✅ classic | ❌ absent — commands emitted + gap recorded | N/A no remote yet
 
   store ownership stated:  <yes>          (§3.5 — which skill owns which store)
-  gaps recorded in index:  <list | none>
+  gaps reported in summary: <list | none>
   second-run no-op:        <yes | n/a first run>
 ```
 `❌ branch protection` with emitted commands (or `N/A` when the repo has no

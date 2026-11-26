@@ -89,7 +89,7 @@ A session that plans work reads this file and the `docs/MISTAKES.md` Index befor
   its bench scenario `cbmignore-before-index` (HUHHB-174).
 - **DERIVED:** An assert that checks the order of two steps keys on a word only the step under
   test carries, not on the step's name. The skill's own preflight names `index_repository` in
-  section 0 (`skills/repo-kickstart/reference.md:44`), well before the `.cbmignore` step in
+  section 0 (`skills/repo-kickstart/reference.md:45`), well before the `.cbmignore` step in
   section 3.1 (`:319`), so an answer that follows the skill mentions indexing before it writes
   `.cbmignore`. An assert keyed on the first mention of "index" fails that correct answer. The
   assert that shipped keys on `persistence`, which only the real index call carries. Before a

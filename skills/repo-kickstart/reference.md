@@ -656,7 +656,13 @@ gh api -X POST "repos/$OWNER_REPO/rulesets" --input - <<JSON
   "enforcement": "active",
   "conditions": { "ref_name": { "include": ["~DEFAULT_BRANCH"], "exclude": [] } },
   "rules": [
-    { "type": "pull_request", "parameters": { "required_approving_review_count": 1 } },
+    { "type": "pull_request", "parameters": {
+        "required_approving_review_count": 1,
+        "dismiss_stale_reviews_on_push": false,
+        "require_code_owner_review": false,
+        "require_last_push_approval": false,
+        "required_review_thread_resolution": false
+    } },
     { "type": "non_fast_forward" },
     { "type": "deletion" }
   ]

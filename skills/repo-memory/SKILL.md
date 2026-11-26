@@ -37,6 +37,10 @@ A reversible implementation choice is not an ADR. Neither is a preference, a con
 or a bug fix. When it does not qualify but is still worth keeping, say where it goes
 instead — usually the bank — rather than writing a record nobody will read.
 
+When it does not qualify, do not draft the record, not even as an optional extra under
+"if you still want one". Draft it only if the user asks again after hearing why it does
+not qualify.
+
 ## The layout
 
 ```

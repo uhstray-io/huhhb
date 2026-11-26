@@ -833,8 +833,8 @@ function benchSkill(spec: Spec, runs: number, dryRun: boolean,
 
     let judgeScore: number | null = null;
     if (scenario.judge && skilled.length) {
-      // clip here: the rubric judge only needs the head of the response
-      const scores = skilled.map((r) => judge(scenario.judge!, r.result.slice(0, 2000)));
+      // the rubric judge scores the whole answer, not a clipped head of it
+      const scores = skilled.map((r) => judge(scenario.judge!, r.result));
       judgeScore = median(scores);
       gate(sid, "B3 quality", judgeScore >= 4, `judge median ${judgeScore}/5`);
     }

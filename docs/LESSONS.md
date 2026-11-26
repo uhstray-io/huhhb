@@ -97,3 +97,17 @@ A session that plans work reads this file and the `docs/MISTAKES.md` Index befor
   keys on.
 - **APPLIES TO:** any `tests/bench/<skill>.json` assert that checks the order of steps in a
   free-text answer.
+
+### L-008 · 2026-11-26 · skill bench
+
+- **ACCEPTED:** PR #72, the B3 rubric judge in `scripts/skill-bench.ts` scores the whole answer
+  instead of its first 2,000 characters (HUHHB-195).
+- **DERIVED:** A change to what the bench sends to a judge, or to any other `claude` call, is
+  tested by running the real `scripts/skill-bench.ts` against a fake `claude` placed first on
+  `PATH`, because `claudeProc` spawns `claude` by `PATH` lookup. The fake logs the prompts it
+  receives and returns canned JSON. The run uses `--no-record` and points `SKILL_BENCH_HISTORY`,
+  `SKILL_BENCH_OUTPUTS`, `SKILL_BENCH_BATTLES` and `TMPDIR` into the test's temp directory, so
+  it spends no tokens and writes nothing outside that directory. A brief for such a change names
+  this seam and adds no new export or environment variable to the script for testing.
+- **APPLIES TO:** changes to judge inputs, prompts or call arguments in `scripts/skill-bench.ts`,
+  and their tests in `tests/test_evolve.test.ts`.

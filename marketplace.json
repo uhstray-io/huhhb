@@ -177,13 +177,13 @@
     {
       "name": "finishing-a-development-branch",
       "path": "skills/finishing-a-development-branch/SKILL.md",
-      "description": "Use when implementation is complete, all tests pass, and you need to decide how to integrate the work - guides completion of development work by presenting structured options for merge, PR, or cleanup",
+      "description": "Use when implementation is complete and the branch needs finishing, such as \"finish this branch\" or \"I'm done implementing\". Verifies tests, then opens or updates a pull request, keeps the branch, or discards it. It never merges locally, and it closes out the Plane item before any branch or worktree cleanup.",
       "category": "dev",
       "tags": [
         "superpowers",
         "git"
       ],
-      "version": "0.1.0"
+      "version": "0.1.1"
     },
     {
       "name": "subagent-driven-development",

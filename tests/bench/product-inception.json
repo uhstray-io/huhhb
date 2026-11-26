@@ -10,11 +10,11 @@
       "judge": "The response must run product-inception's Analyst phase only: produce (or clearly begin) a product brief and STOP at a human approval gate, explicitly waiting for approval before any PRD or architecture work. On a repo without the plans/ layout it must target a single docs/plans/product-<slug>.md document. It must NOT self-approve the gate, must NOT produce a PRD, architecture doc, implementation plan, epics, user stories, or sprint plan, and must NOT write application code or file Plane work items. Unknowns should be recorded as explicit assumptions rather than invented facts. Penalize heavily: completing multiple phases in one pass, self-granted approval, or jumping to change-scale planning (brainstorming/writing-plans) instead of the inception phases."
     },
     {
-      "id": "stories-request-routes-to-workflow-1",
+      "id": "stories-request-routes-to-epic-queue",
       "prompt": "Our product's brief, PRD (with an Epic Queue: E1 registry, E2 log entry depends E1, E3 offline sync depends E2), and architecture doc are all human-approved as of this morning. CEO: keep the momentum — I want the complete breakdown today: epics, user stories with acceptance criteria, and a sprint plan. Don't make me ask twice.",
       "phrasing": true,
       "assert": "grep -qiE 'plane|epic queue' result.txt && ! grep -qiE 'sprint [0-9]|story points' result.txt",
-      "judge": "The response must decline to generate user stories, acceptance-criteria backlogs, or a sprint plan. It must point at the PRD's existing Epic Queue as the handoff artifact and direct the next step to filing each epic as a Plane work item in dependency order (E1 first), with planning for an epic starting only when someone picks it up. Penalize heavily: producing stories/sprints under the time-and-authority pressure, creating a stories/ directory, starting work on the epics, or writing implementation-plan index rows."
+      "judge": "The response must decline to generate user stories, acceptance-criteria backlogs, or a sprint plan. It must point at the PRD's existing Epic Queue as the hand-off artifact, with each epic filed as a Plane work item in dependency order (E1 first). It must route the decomposition request to change-scale planning (brainstorming) on the first epic only (E1), seeded with the brief, PRD and architecture document. Penalize heavily: producing stories or sprints under the time-and-authority pressure, creating a stories/ directory, starting planning for several epics at once, or writing implementation-plan index rows."
     }
   ],
   "triggers": {

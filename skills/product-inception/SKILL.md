@@ -15,7 +15,8 @@ implementing an epic happen later, when someone picks up its Plane item,
 through change-scale planning — never in this skill (ADR-0008).
 
 **Announce at start:** "I'm using the product-inception skill — three
-human-gated phases, ending at the architecture document."
+human-gated phases, ending at the architecture document and the Epic
+Queue hand-off."
 
 <HARD-GATE>
 One human approval gate per phase, sequential. Do NOT start a phase until
@@ -44,9 +45,11 @@ A change-scale task through `brainstorming` → `writing-plans` costs
 ## Checklist
 
 Create a task per item; complete in order (single-phase entry: if the user
-explicitly asked for just one phase, run only that row plus steps 0 and 4+,
-same gates). A phase run in a chat app, with its artifact pasted back into
-the repo, passes the same per-phase gate.
+explicitly asked for just one phase, run only step 0 and that phase, same
+gates; steps 4 and 5 run only after architecture.md is approved, and a run
+that stops earlier presents its artifact and files nothing in Plane). A
+phase run in a chat app, with its artifact pasted back into the repo,
+passes the same per-phase gate.
 
 0. **Layout probe** — `plans/architecture/DECISIONS.md` exists → artifacts
    go to `plans/product/<initiative-slug>/`. Otherwise ALL phases write one
@@ -72,11 +75,13 @@ the repo, passes the same per-phase gate.
 5. **Hand off and STOP** — file the Epic Queue in Plane. For each epic, in
    dependency order, file a work item with the `plane-work-tracking` skill
    in the repo's Plane project (as an Epic work-item type where the project
-   has one); each `depends-on` becomes a blocked-by relation. Nothing is
-   dispatched or started by the filing. When someone picks up an epic's
-   Plane item, its change-scale planning starts at `brainstorming`, seeded
-   with brief/PRD/architecture. If the repo has no Plane project, present
-   the Epic Queue as the hand-off and say so in one line.
+   has one: resolve that type with the Plane MCP `workitem_type` tool, action
+   `resolve`, given the project id and the name `Epic`); each `depends-on`
+   becomes a blocked-by relation. Nothing is dispatched or started by the
+   filing. When someone picks up an epic's Plane item, its change-scale
+   planning starts at `brainstorming`, seeded with brief/PRD/architecture.
+   If the repo has no Plane project, present the Epic Queue as the hand-off
+   and say so in one line.
 
 ## The termination rule
 

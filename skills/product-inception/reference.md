@@ -116,7 +116,7 @@ AD-n block, with repo-memory.>
 <explicitly not decided yet, and what would force the decision>
 ```
 
-## Non-conforming repos
+## Repos without the plans/architecture layout
 
 All three phases write into one `docs/plans/product-<slug>.md` with `## Brief`
 / `## PRD` / `## Architecture` top sections (same content, same gates).

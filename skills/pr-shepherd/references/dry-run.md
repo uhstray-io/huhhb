@@ -3,55 +3,42 @@
 Worked example demonstrating the pr-shepherd contract end to end. Referenced
 from `../SKILL.md`.
 
-Workflow 2 left three PRs open: **#41, #42** (implementer PRs, worktrees
-`.worktrees/t-41`, `.worktrees/t-42`) and **#43** (buhhdy's docs PR).
+An orchestrating session left three PRs open into an integration branch:
+**#41, #42** (implementer PRs on `agent/t-41`, `agent/t-42`, worktrees
+`.worktrees/t-41`, `.worktrees/t-42`) and **#43** (the orchestrator's own docs PR).
 
-1. **Preflight.** Branch protection on `main` requires 1 review → passes.
-   `.coderabbit.yaml` present; GitHub auto-delete-head-branches is OFF. Stage-1 cross-review records exist for all
-   three branches. Shepherd all three concurrently.
+1. **Preflight.** `main`'s ruleset has a `pull_request` rule → passes.
+   `.coderabbit.yaml` present; GitHub auto-delete-head-branches is OFF.
+   Shepherd all three concurrently.
 2. **Monitor.** Set timers; end the turn. Wakes: #41 CI red (1 test);
-   CodeRabbit leaves 2 findings on #42; #43 clean, no findings.
-3. **#41 — fix attempt 1.** Re-dispatch the original implementer (same model,
-   `title=t-41`) to fix the failing test. It pushes; CI still red. **Attempt
-   2** (same model): CI green. Fix diff cross-reviewed by the opposite vendor
-   → clean.
-4. **#42 — fixes.** Both CodeRabbit findings dispatched to #42's original
-   implementer; cross-reviewed clean. CI green.
+   CodeRabbit leaves 2 findings on #42; #43 clean, CodeRabbit asked for no changes.
+3. **#41 — fix attempt 1.** Re-dispatch the original implementer (same
+   worktree and PR) to fix the failing test. It pushes; CI still red. **Attempt
+   2** (same implementer): CI green. The new head gets a new CodeRabbit round →
+   no changes asked.
+4. **#42 — fixes.** Both CodeRabbit findings go to #42's original
+   implementer; it pushes and answers both threads. CI green.
 5. **Merge gate.**
-   - #43: checks green, no CHANGES_REQUESTED, **but no human approval yet** →
-     **merge blocked.** Report "waiting on human review," wait.
-   - #41/#42: green and no CHANGES_REQUESTED, but no human approval → also
-     blocked.
-   Human approves #43 (a GitHub review on the current head) and says "merge
-   #43." Now (a)+(b)+(c)+(d) all hold → buhhdy executes the merge of #43.
-   #41/#42 stay blocked until each gets BOTH a current-head human approval and
-   an explicit instruction.
-6. **Post-merge (#43).** Close `Closes #38`; the conformance probe finds all
-   three — `plans/development/openspec/config.yaml`, `.openspec-store/store.yaml`,
-   and the store id in `openspec store list --json` — so `openspec archive` +
-   `promote-adr.ts` (one ADR lands in `plans/architecture/` with both index
-   rows, if #38's design had a `## Decisions`); write the
-   outcome via `repo-memory` to `.claude/memory/` (CI 0 / CodeRabbit 0 /
-   human 0; escalations 0). No `git worktree remove` is needed — #43 is
-   buhhdy's own docs commit with no task worktree.
-7. **Janitor.** `for-each-ref refs/heads/buhhdy/` lists `buhhdy/t-41`,
-   `buhhdy/t-42`, and an old `buhhdy/t-12` (merged into `main` 120 days ago,
+   - #43: checks green, no unanswered thread, one round on the current head
+     that asked for no changes, docs only so no bump →
+     `gh pr merge 43 --merge --match-head-commit <head sha>`.
+   - #41: (a)–(e) hold on its current head → merged the same way.
+   - #42: green, threads answered, but its only round is on the commit before
+     the fix → **merge blocked** until a new round on the current head asks
+     for no changes; then merged the same way.
+6. **Post-merge (#43).** Close `Closes #38`; close out the Plane item with
+   `plane-work-tracking`; write the outcome as close-out step 3 says (CI 0 /
+   CodeRabbit 0; escalations 0). No `git worktree remove` is needed — #43 is
+   the orchestrator's own docs commit with no task worktree.
+7. **Janitor.** `for-each-ref refs/heads/agent/` lists `agent/t-41`,
+   `agent/t-42`, and an old `agent/t-12` (merged into `main` 120 days ago,
    no commits since). Only `t-12` is >90d **and merged** → deleted and logged.
-   `t-41`/`t-42` are recent → **retained**. An old-but-**unmerged** `buhhdy/t-05`
+   `t-41`/`t-42` are recent → **retained**. An old-but-**unmerged** `agent/t-05`
    would be **skipped and reported**, not force-deleted. A `feature/other`
    branch never enters the loop.
 
 Demonstrated: correct ordering; 2-attempts-then-human escalation shape; merge
-blocked until a current-head human approval **and** an explicit instruction
-exist; post-merge checklist executed in order; worktree removed; only
+blocked until a review round on the current head asks for no changes; merge
+commits only; post-merge checklist executed in order; worktree removed; only
 merged+inactive branches deleted (unmerged stale ones skipped); janitor
-structurally confined to `buhhdy/*`.
-
-**Not-yet-adopted variant:** on a repo missing any of the three probe results —
-`plans/development/openspec/config.yaml`, `.openspec-store/store.yaml`, or its
-store id in `openspec store list --json` — step 6's archive/promote work is
-skipped with the note "archive/ADR skipped — conventions not
-yet adopted"; issue closing, the repo-memory outcome record, worktree
-removal, and the janitor all still run. A non-adopted repo never fails the
-archive/ADR handling — other steps (the branch-protection hard gate, CI,
-merge conditions) can still fail on their own terms.
+structurally confined to `agent/*`.

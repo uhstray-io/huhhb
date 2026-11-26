@@ -52,9 +52,10 @@ A session that plans work reads this file and the `docs/MISTAKES.md` Index befor
 - **ACCEPTED:** PR #69, `pr-shepherd` made independent of buhhdy and OpenSpec before both are
   deleted (HUHHB-172).
 - **DERIVED:** A search for a retired subsystem's name does not find everything that depends on
-  it. `pr-shepherd` also used buhhdy-only tools and policies without the word buhhdy: the
-  `cross-review` stage, `sys_os_*`, `sys_session_send`, omnigent timers, and a provider-tier routing
-  table. A brief that removes a dependency lists the subsystem's own skills, tools and policy names,
+  it. `pr-shepherd` also used buhhdy-only tools and policies whose names do not contain the word
+  buhhdy: the `cross-review` stage and its Cross-Review Rule, `sys_session_send`, and a
+  provider-tier routing table. Once the surrounding wording changed, a search for the name passed
+  with them still in place. A brief that removes a dependency lists the subsystem's own skills, tools and policy names,
   found by reading the subsystem itself, and its DONE WHEN greps for those as well as the name.
 - **APPLIES TO:** any unit that removes a skill's dependency on a skill, plugin or directory that
   is being deleted.

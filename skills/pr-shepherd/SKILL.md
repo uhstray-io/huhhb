@@ -28,12 +28,15 @@ Check all three before shepherding anything. The first is a hard gate
 third are warn-and-continue.
 
 1. **The default branch requires a pull request.** This is the mechanism-layer backstop: if the branch accepts direct pushes, the skill's own gate is not enough.
+   `gh` fills `{branch}` from the current checkout, not the default branch, so
+   read the default branch first:
    ```bash
-   gh api repos/{owner}/{repo}/rules/branches/{branch} \
+   default=$(gh api repos/{owner}/{repo} --jq .default_branch)
+   gh api "repos/{owner}/{repo}/rules/branches/$default" \
      --jq '[.[] | select(.type=="pull_request")] | length'
    ```
    A non-zero count passes. Zero or an error: check classic protection with
-   `gh api repos/{owner}/{repo}/branches/{branch}/protection --jq '.required_pull_request_reviews != null'`,
+   `gh api "repos/{owner}/{repo}/branches/$default/protection" --jq '.required_pull_request_reviews != null'`,
    which passes on `true`. Neither passes: **STOP**, tell the human the default
    branch does not require a PR, and do not shepherd. Changing branch rules is
    the human's call.
@@ -56,7 +59,7 @@ per-PR, in order.
 | 2 | **Monitor** | Orchestrator | Watch `gh pr checks <pr>`, review rounds and review threads through the orchestrator's wake mechanism (a timer, a monitor or a notification) — **never busy-poll**. End the turn; wake on the notification |
 | 3 | **Triage findings** | Orchestrator | Turn each CI failure and each review finding into a scoped fix task. Two reviewers contradict each other → decide before dispatching |
 | 4 | **Fix** | Dispatched | Send it to the **original implementer** (same worktree, branch and PR) so it updates its existing PR. A fresh worker has no memory of the task — never do that |
-| 5 | **Re-review** | Reviewer | A push makes a new head, and the new head needs a new review round (Merge gate (c)). The reviewer surfaces findings, never edits |
+| 5 | **Re-review** | Orchestrator | A push makes a new head, and the new head needs a new review round (Merge gate (c)): request it and wait. The reviewer surfaces findings, never edits |
 | 6 | **Escalation gate** | Orchestrator | 2-attempts-then-human (below). No autonomous attempt #3 |
 | 7 | **Merge gate** | Orchestrator | All five conditions below hold |
 | 8 | **Post-merge close-out** | Orchestrator | The ordered checklist below |

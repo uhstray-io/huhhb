@@ -91,8 +91,9 @@ breakdown today":
 
 - generate user stories, story files, or a `stories/` directory
 - write sprint plans or capacity schedules
-- start planning or implementation for any epic (that begins when someone
-  picks up its Plane item)
+- start planning for more than the first epic, or do any epic's planning
+  or implementation inside this skill (each starts when someone picks up
+  its Plane item)
 
 A request for stories/sprints/decomposition is a request to start
 change-scale planning (`brainstorming`) on the first epic, seeded with

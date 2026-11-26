@@ -42,7 +42,7 @@ third are warn-and-continue.
    `false`; UI: Settings → General → Pull requests). Else the retention
    policy below is void. `true` → warn with that path and continue.
 3. **`.coderabbit.yaml` present.** If absent, warn that PR coverage is reduced
-   (stage 2 above is weakened) and continue.
+   (stage 1 above is weakened) and continue.
 
 ## Lifecycle per PR
 

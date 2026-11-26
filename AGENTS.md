@@ -313,7 +313,8 @@ repo's Hindsight bank, which is the only copy of them.
 
 `.claude/memory/` holds pre-2026-08 records and is **retired for new writes**, except
 the branch wip journal `.claude/memory/wip/`, which `.githooks/post-commit` appends to on
-every commit. At PR creation that journal is consolidated into one paragraph, stored with
+each commit except merge commits, commits on a detached HEAD, commits that change no file,
+and commits that touch only `.claude/memory/`. At PR creation that journal is consolidated into one paragraph, stored with
 `sync_retain` in the Hindsight bank, and deleted only after the sync completes; it is kept
 if the sync fails. Legacy records are not deleted and not bulk-migrated; they are triaged
 individually by `fix-memory`.

@@ -20,9 +20,9 @@ entry's `Occurrences` count and adds a dated note; it never opens a second entry
 
 | # | Summary | Class | Count | Enforced by |
 |---|---|---|---|---|
-| 1.1 | PR body listed test cases and lockfiles from memory; both lists were wrong | Unverified claim | 7 | `hooks/pr-claim-check.sh` (Bash `gh` path only; deny until acknowledged) |
+| 1.1 | PR body listed test cases and lockfiles from memory; both lists were wrong | Unverified claim | 8 | `hooks/pr-claim-check.sh` (Bash `gh` path only; deny until acknowledged) |
 | 1.2 | Scenario note gave a cause for a baseline difference that no run had isolated; a controlled run contradicted it | Unverified claim | 2 | `Convention` |
-| 1.3 | A re-judge reported as the bench's judge scored whole answers; the bench judges only the first 2,000 characters | Unverified claim | 1 | `Convention` (judge clip fix: HUHHB-195) |
+| 1.3 | A re-judge reported as the bench's judge scored whole answers; the bench judged only the first 2,000 characters | Unverified claim | 1 | `Convention` (this case: `tests/test_evolve.test.ts`, PR #72) |
 | 2.1 | PR #60 merged with 4 CodeRabbit findings unanswered | Process | 1 | `hooks/pr-merge-guard.sh` (deny until acknowledged; fails open) |
 | 3.1 | Grounding spec accepted "merges count as work" as rare; merging `dev` is routine, so the only line nudge was a false positive | Design assumption | 1 | `tests/test_grounding_hook.test.ts` (merge and fast-forward cases) |
 | 4.1 | Skill-disabled baseline read the skill file from disk, so a failing baseline was reported as passing | Test passed for the wrong reason | 3 | `Convention` (bench fix: HUHHB-168) |
@@ -34,7 +34,7 @@ entry's `Occurrences` count and adds a dated note; it never opens a second entry
 
 ### 1.1 PR body described the test suite and lockfile list from memory
 
-**Occurrences: 7** — 2026-11-13, 2026-11-13, 2026-11-13, 2026-11-13, 2026-11-20, 2026-11-22, 2026-11-26
+**Occurrences: 8** — 2026-11-13, 2026-11-13, 2026-11-13, 2026-11-13, 2026-11-20, 2026-11-22, 2026-11-26, 2026-11-26
 
 **What happened.** Opening PR #59 (grounding line threshold, HUHHB-156), the
 body listed the 10 cases in `tests/test_grounding_hook.test.ts` and the
@@ -133,6 +133,17 @@ round on `a15eb780` found it. A cited line number is read from a command that
 prints the number beside the text, such as `grep -n`, not counted from a
 printed range. L-007 and the body are corrected before merge.
 
+**Occurrence 8 — 2026-11-26.** PR #72's body said the fake `claude` in the new
+test returns an answer of 2,071 characters. It is 2,094 (`tests/test_evolve.test.ts:1702`,
+23 + 2,050 + 21). The owner did count 2,094 before posting, and put the `sed`
+that corrected the draft in the same Bash command as the call that opened the
+PR. The guard denies the whole command, so the `sed` never ran. The command was
+re-run with `CLAIMS_VERIFIED=1` in front of the posting call only, and the
+uncorrected draft went out; the later body edit posted the same file. The
+`pr-reviewer` round on `e9121595` found it. A fix to a draft is a command of its
+own, and the draft is read back (a `grep` for the corrected text) before the
+guarded call posts it. The body is corrected before merge.
+
 ### 1.2 A scenario note stated why two baselines differed, from runs that isolated nothing
 
 **Occurrences: 2** — 2026-11-20, 2026-11-20
@@ -201,8 +212,9 @@ the report which of them the check applied. A check that differs in any input
 is reported as a different measurement, never as the bench's. A session that
 relays such a check to Joseph reads that path itself first.
 
-**Enforced by.** `Convention`. HUHHB-195 makes the B3 judge score the whole
-answer, which closes this case only.
+**Enforced by.** `Convention`. Since PR #72 (HUHHB-195) the B3 judge scores the
+whole answer, and `test_the_b3_judge_receives_the_whole_answer` in
+`tests/test_evolve.test.ts` checks it. That closes this case only.
 
 ## 2. Merging before the review was finished
 

@@ -20,7 +20,7 @@ entry's `Occurrences` count and adds a dated note; it never opens a second entry
 
 | # | Summary | Class | Count | Enforced by |
 |---|---|---|---|---|
-| 1.1 | PR body listed test cases and lockfiles from memory; both lists were wrong | Unverified claim | 8 | `hooks/pr-claim-check.sh` (Bash `gh` path only; deny until acknowledged) |
+| 1.1 | PR body listed test cases and lockfiles from memory; both lists were wrong | Unverified claim | 9 | `hooks/pr-claim-check.sh` (Bash `gh` path only; deny until acknowledged) |
 | 1.2 | Scenario note gave a cause for a baseline difference that no run had isolated; a controlled run contradicted it | Unverified claim | 2 | `Convention` |
 | 1.3 | A re-judge reported as the bench's judge scored whole answers; the bench judged only the first 2,000 characters | Unverified claim | 1 | `Convention` (this case: `tests/test_evolve.test.ts`, PR #72) |
 | 2.1 | PR #60 merged with 4 CodeRabbit findings unanswered | Process | 1 | `hooks/pr-merge-guard.sh` (deny until acknowledged; fails open) |
@@ -28,13 +28,14 @@ entry's `Occurrences` count and adds a dated note; it never opens a second entry
 | 4.1 | Skill-disabled baseline read the skill file from disk, so a failing baseline was reported as passing | Test passed for the wrong reason | 3 | `Convention` (bench fix: HUHHB-168) |
 | 4.2 | A baseline started in an empty directory still read the skill by absolute path; supersedes the working-directory clause of 4.1 | Test passed for the wrong reason | 1 | `Convention` (bench fix: HUHHB-168) |
 | 5.1 | PR #65 was returned four times: its bench asserts and written claims were settled during review, not before it | Process | 1 | `Convention` |
+| 5.2 | PR #67 was returned three times; each return found another state the skill acted on without reading it | Process | 2 | `Convention` |
 | 6.1 | A bench trigger probe named the README, and its session rewrote the file's first paragraph in the working tree | Test wrote outside its own folder | 1 | `Convention` |
 
 ## 1. Asserting something without verifying it
 
 ### 1.1 PR body described the test suite and lockfile list from memory
 
-**Occurrences: 8** — 2026-11-13, 2026-11-13, 2026-11-13, 2026-11-13, 2026-11-20, 2026-11-22, 2026-11-26, 2026-11-26
+**Occurrences: 9** — 2026-11-13, 2026-11-13, 2026-11-13, 2026-11-13, 2026-11-20, 2026-11-22, 2026-11-26, 2026-11-26, 2026-11-26
 
 **What happened.** Opening PR #59 (grounding line threshold, HUHHB-156), the
 body listed the 10 cases in `tests/test_grounding_hook.test.ts` and the
@@ -143,6 +144,17 @@ uncorrected draft went out; the later body edit posted the same file. The
 `pr-reviewer` round on `e9121595` found it. A fix to a draft is a command of its
 own, and the draft is read back (a `grep` for the corrected text) before the
 guarded call posts it. The body is corrected before merge.
+
+**Occurrence 9 — 2026-11-26.** On PR #73, the owner's reply to CodeRabbit's
+bench comment said this skill "has no scenario file under `tests/bench/`". The
+sentence was written while composing the four thread replies, and the call that
+posted them carried `CLAIMS_VERIFIED=1` for the other three, which had been
+checked. The claim was checked only after it was posted (`ls tests/bench/ | grep
+-i finishing` printed nothing), so it happened to be true. The guard denies a
+command, not a sentence: one acknowledgement covered several texts, and a claim
+added while writing them was never put to the check. Each posting call carries
+text whose every claim was checked before that call, and a reply written in the
+same command as others is checked on its own.
 
 ### 1.2 A scenario note stated why two baselines differed, from runs that isolated nothing
 
@@ -403,6 +415,58 @@ removes or shortens text where it can; a sentence it adds is checked like any
 new claim.
 
 **Enforced by.** `Convention`.
+
+### 5.2 PR #67 was returned three times because the skill acted on state it had not read
+
+**Occurrences: 2** — 2026-11-26, 2026-11-26
+
+**What happened.** PR #67 (`finishing-a-development-branch`, HUHHB-176) was
+returned three times, each time for a state the skill's text assumed. Return 1
+(an owner correction before the PR opened, on `73efff5e`): the discard path did
+not handle an open pull request or a worktree with uncommitted changes, and the
+brief's own targets raised two lint warnings. Return 2 (CodeRabbit review
+6077397952 on `b21398bb`): a push with an upstream already set did not check
+`@{u}`, a `CLOSED` pull request was not handled, a `MERGED` one went to cleanup
+without checking that `HEAD` was in the base, and cleanup failed on the main
+checkout. Return 3 (the `pr-reviewer` agent on `6d63e9f9`): Option 1 pushed
+before it read the pull request state, which recreates a branch GitHub deletes
+on merge (`gh api repos/uhstray-io/huhhb --jq .delete_branch_on_merge` prints
+`true`), and the checkout test read the current directory while its step said
+to run from outside the worktree. Each fix patched the path its return named.
+Joseph recut the unit (batch decision 28), and #67 was closed unmerged.
+
+**Root cause.** Brief 05 listed the actions for each option but not the state
+each action depends on, so the executor wrote actions and the reviewers
+supplied the states one return at a time. The unit also rebuilt a post-merge
+cleanup that `pr-shepherd` already owns, which doubled the paths whose state
+could be wrong. As in 5.1, the replay against hostile states (a deleted remote
+branch, a closed pull request, the main checkout, a run from another
+directory) was done by the reviewers instead of before the PR opened.
+
+**The rule.** Before a brief for a skill that runs git or gh commands is
+dispatched, list for each command the state it depends on (the upstream, the
+pull request state, which checkout it runs in, whether the remote branch
+exists) and the read that establishes it, and order the skill so every read
+comes before the first write. Before the PR opens, replay the text against each
+hostile state and record the line that answers it. A step another skill already
+owns is pointed to, not rewritten. This widens the rule of 5.1 (replay before
+review) from bench asserts to skill instructions.
+
+**Enforced by.** `Convention`.
+
+**Occurrence 2 — 2026-11-26.** The recut, PR #73, was returned twice for the
+same kind of fault. Return 1 (CodeRabbit review 6081463266 on `68034cc9`):
+discard ran `orca worktree rm --force` without first reading or showing the
+worktree's uncommitted, untracked and ignored files. Return 2 (the
+`pr-reviewer` agent on `414566e2`): after the worktree was removed from outside
+it, the branch check `git show-ref --verify --quiet refs/heads/<branch>` named
+no directory; run outside a repository it exits 128, which the text read as
+"branch not found", so `git branch -D` was skipped. The rule did not prevent
+either. The recut's brief listed the state reads for pushing and for the pull
+request, but not for deleting, and no replay ran a step from the directory the
+previous step leaves it in. A step that runs after its checkout is gone names
+the directory it runs in (`git -C <path>`), and an exit code that means "error"
+is never read as "absent".
 
 ## 6. A test that wrote outside its own folder
 

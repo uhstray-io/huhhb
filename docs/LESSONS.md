@@ -129,3 +129,18 @@ A session that plans work reads this file and the `docs/MISTAKES.md` Index befor
   the skill.
 - **APPLIES TO:** `tests/bench/<skill>.json` for any skill whose rules overlap the maintainer's
   global instructions or a user-level skill.
+
+### L-010 · 2026-11-26 · skill lint
+
+- **ACCEPTED:** PR #73, `finishing-a-development-branch` rewritten to read the pull request
+  state before it acts (HUHHB-176), after PR #67 was closed unmerged.
+- **DERIVED:** A skill rewrite can pass with `0 FAIL` and still add warnings, and the summary's
+  FAIL count hides them. The first commit on #67 raised the WARN count from 24 to 26. S6 warns
+  on a body over 6,000 characters (`BODY_WARN_CHARS`, `scripts/skill-lint.ts:18`), and the brief
+  had set an 8,000 target against the 12,000 FAIL limit. S11 warns when the marketplace
+  description matches the case-sensitive pronoun pattern at `scripts/skill-lint.ts:28`, and a
+  quoted trigger phrase such as "I'm done implementing" matches it. A brief that rewrites a skill
+  sets its body target under 6,000 characters and writes trigger phrases without first-person
+  pronouns. Its DONE WHEN checks that no lint line names the skill and that the WARN count is no
+  higher than the base's.
+- **APPLIES TO:** any unit that rewrites a `skills/<name>/SKILL.md` body or its description.

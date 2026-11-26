@@ -9,12 +9,14 @@ placeholder through.
 
 ## 0. Derived names & prerequisite probes
 
-### The three names — different strings, from different inputs
+### The two names — different strings, from different inputs
+
+Mixing them up is the most common failure here, and the graph one needs an
+identity check **before you index**, not just before you delete.
 
 | Name | Derivation | Example |
 |------|------------|---------|
 | Hindsight `bank_id` | `<dir>-<8 hex of sha256(canonical identity)>` | `huhhb-da43e85b` |
-| OpenSpec store id | repo **directory** name | `huhhb` |
 | graph project | the tool's own: repo **path**, leading `/` dropped, `/` → `-` | `Users-you-Documents-GitHub-huhhb` |
 
 **Why the bank id carries a hash — a bare directory name collides, silently.**
@@ -29,7 +31,6 @@ canon=$(git remote get-url origin 2>/dev/null \
   | sed -E 's#^git@([^:]+):#\1/#; s#^[a-z]+://##; s#^[^@/]+@##; s#\.git$##' | tr 'A-Z' 'a-z')
 [ -n "$canon" ] || canon=$(cd "$REPO_ROOT" && pwd -P)   # no remote → canonical path
 BANK_ID="$(basename "$REPO_ROOT")-$(printf '%s' "$canon" | shasum -a 256 | cut -c1-8)"
-STORE_ID=$(basename "$REPO_ROOT")                        # OpenSpec, machine-local
 ```
 
 Verified: `/tmp/app` and `/srv/app` both yield bank `app` under the old rule and
@@ -59,29 +60,14 @@ belongs to this repo before writing.
 (and the global routing policy still documents that form). Do **not** silently
 create a second bank alongside it. Detect the bare-name bank, report both ids, and
 ask: migrate (create the new id, re-retain, delete the old) or keep the old id
-recorded in `AGENTS.md` as an explicit exception. `OpenSpec store id` stays the
-directory name — it is machine-local and human-typed; if `openspec store register`
-reports that id taken by a different path, disambiguate then and record it.
+recorded in `AGENTS.md` as an explicit exception.
 
 ### Probe every prerequisite — none of them is fatal
 Each missing prerequisite reports `skipped — <reason>` in the closing checklist
 **and** reports it in the run's summary. A missing prerequisite is never a
-silent pass and never a hard failure of the whole run — the same graceful-degradation contract Honcho already has here.
+silent pass and never a hard failure of the whole run.
 
 ```bash
-# OpenSpec is RESOLVED, not skipped: an absent CLI leaves the store steps
-# undone, so the closing checklist must not report the repo as conformed.
-# Never install it here — a global package touches state outside the repo,
-# binds to whichever Node is active, and fails in ways a scaffolder cannot
-# recover from. Name the command; the operator decides.
-# Version policy: install latest, record what was exercised. The store layout
-# and `store register` are the surfaces a release could move, so state a verified
-# floor rather than pinning — a pin goes stale silently, @latest fails loudly.
-# Verified against 1.6.0, exercised on 1.8.0. Re-verify when the major moves.
-command -v openspec >/dev/null 2>&1 \
-  || echo "UNRESOLVED — openspec CLI absent; OpenSpec steps not run. \
-Install: npm install -g @fission-ai/openspec@latest (verified 1.6.0+, then re-run)"
-
 # Graph tool — containment FIRST: indexing refuses a path outside the allowed
 # root, so an out-of-root repo is a skip to report, not an error to debug.
 if [ -z "${CBM_ALLOWED_ROOT:-}" ]; then
@@ -101,7 +87,7 @@ curl -fsS -m 3 -o /dev/null "$HS/v1/default/banks" \
 ```
 
 The graph MCP server not being installed at all is likewise a skip — report
-`skipped — graph tool not installed` and carry on with OpenSpec and the rest.
+`skipped — graph tool not installed` and carry on with the rest.
 
 **Name the remedy, don't just shrug.** Installing and binding the two servers is
 **machine scope and not this skill's job** — it belongs to huhhb's
@@ -111,13 +97,16 @@ re-run` rather than a bare skip. This skill is repo scope: it assumes the machin
 is set up and never installs, binds or configures a server itself.
 
 ### Detect existing state — conforming ≠ initializing
-- **OpenSpec root.** House convention puts it at `plans/development`, *not* the
-  repo root. Check `plans/development/openspec/config.yaml` **and** `openspec
-  store list`. Either one already present means you are **conforming, not
-  initializing** — never re-init, never overwrite an existing `config.yaml`.
+- **An existing index or bank** means you are **conforming, not initializing** —
+  never re-create, never overwrite.
+- **Conformance is per artifact, never per repo.** One artifact already present
+  does **not** mean the run is done — an adopted repo can be missing
+  `plans/product/README.md` or the AGENTS.md memory block forever if you
+  short-circuit on the first thing you find. Check each artifact independently:
+  present → ✅ and leave it **exactly** as it is; **missing → create it**.
 - **Every memory store already on disk**, reported with roughly how much it holds
   and whether that data is regenerable from source: `.claude/memory/` (retired
-  from routing — §4), `.remember/`, `graphify-out/`, `.codebase-memory/`, and any
+  from routing — §3), `.remember/`, `graphify-out/`, `.codebase-memory/`, and any
   project-scope MCP memory server. Report them; delete none of them.
 
 ---
@@ -158,7 +147,7 @@ single source of truth.
 - Source: <dirs>  ·  Tests: <dirs>  ·  Docs: `docs/`, `plans/`
 
 ## Development lifecycle
-worktrees (recommended, toggleable — see huhhb's `using-git-worktrees`) →
+worktrees (recommended, toggleable) →
 branches (`feat/ fix/ docs/ chore/ refactor/` for human-reviewed work;
 `<agent>/<task-id>` for orchestrator tasks — only `<agent>/*` is ever
 janitored) → one PR per deliverable (stacking sanctioned: base on the
@@ -169,7 +158,7 @@ parent, declare it, parents merge first) → human-authorized merge.
 - Cross-review by a different-vendor agent before requesting human review.
 - Required reviews on `<default-branch>` (see branch protection).
 
-## Memory & specs — which store owns a fact
+## Repo Memory
 This block is self-contained on purpose: it has to work in this repo without
 reaching for a file that lives in some other repo.
 
@@ -181,19 +170,11 @@ reaching for a file that lives in some other repo.
   lost, failures with their root cause, outcomes. Bank id: `<bank-id>`. The bank
   is in `verbatim` mode — what you send is stored unchanged, so keeping code
   structure out of it is the writer's job, not the store's.
-- **OpenSpec** — `specs/` is what the system *should* do; `changes/` is what
-  we are changing now, with its public rationale. Store `<store-id>`, rooted at
-  `plans/development`; from the repo root every command needs
-  `--store <store-id>`.
-  **Public rationale vs deliberation:** the change proposal carries the ratified
-  "why"; what did *not* make it — what was feared, tried first, abandoned, and
-  why the rejected option lost — belongs in the bank.
-- **`docs/adr/NNN-title.md`** — ratified decisions with **no capability
-  surface** (infra, tooling, process). Capability decisions live in the spec or
-  the change; never write the same decision in both. Do **not** use the graph
-  tool's own ADR store — it writes into the disposable index and any code change
-  deletes it.
-- **Honcho workspace** — cross-session team memory (env-scoped; no creds in repo).
+- **`plans/architecture/`** (written via the `repo-memory` skill) — ratified
+  architecture decisions. The deliberation behind them — what was feared, tried
+  first, abandoned, and why the rejected option lost — belongs in the bank. Do
+  **not** use the graph tool's own ADR store — it writes into the disposable
+  index and any code change deletes it — and keep no second ADR directory.
 - **`.claude/memory/`** — retired from routing. Kept as history; not the write
   target for new knowledge.
 
@@ -212,23 +193,10 @@ direction wrong and every cross-store query silently returns nothing useful.
 Either order is legal; concepts survive refactors that rename functions, which is
 what makes them the better join key.
 
-### On archive, retain the outcome
-`openspec archive <change>` records that a change completed. It does **not**
-record whether it *worked* — and that gap is this repo's highest-value memory.
-So when you archive, retain ONE memory into bank `<bank-id>`: the outcome labelled
-plainly **worked / dead end / corrected**, the root cause of anything that
-failed, and any constraint discovered along the way. One self-contained
-paragraph, in domain language.
-
-### Drift check — a deliberate practice, not an aside
-`openspec list --specs --store <store-id>` is intent; the graph's architecture
-summary is reality. Compare them on purpose, periodically. Divergence is
-**information, not a conflict to reconcile** — it means the specs or the code
-moved and nobody wrote it down.
-
 ## Conventions
 - Conventional Commits; concise subjects. No AI attribution in commits/PRs.
-- Plans live in `plans/`; specs validate through OpenSpec (`openspec validate`).
+- Plans live in `plans/`: dated plans in `plans/development/`, ratified
+  decisions in `plans/architecture/`.
 ```
 
 ### CLAUDE.md — one-line pointer
@@ -254,8 +222,8 @@ Onboarding for humans and agents.
 
 ## Develop here
 - Read **AGENTS.md** first (conventions), then **ARCHITECTURE.md**.
-- Plans live in `plans/development/`; change status comes from the store
-  (`openspec list --store <store-id>`), not from a file.
+- Plans live in `plans/development/`; work status lives in the work tracker
+  and the PRs, not in a file.
 - Branch → PR → CodeRabbit + cross-review → human review.
 ```
 
@@ -277,36 +245,31 @@ Current-state architecture. Proposals and deltas live in
 
 ## 2. Planning tree
 
+Three homes under `plans/` — the house name; `plan/` is not a synonym for it.
+Where a repo already keeps planning documents under a different name, **report
+the divergence and create no second tree**: an empty tree beside a real one is
+the two-sources problem, not a fix for it.
+
+- `plans/development/` — dated plan Markdown files, `YYYY-MM-DD-<slug>.md`.
+- `plans/architecture/` — architecture decision records in the `repo-memory`
+  layout. The kickstart seeds only its `README.md`; `repo-memory` authors
+  `DECISIONS.md`, `TEMPLATE.md` and the year files.
+- `plans/product/` — optional; inception artifacts land here only when the
+  `product-inception` skill is explicitly run. Seeding the README is standard,
+  using the directory is opt-in, never a mandate.
+
 ### No change index is seeded
-Change status, task counts and identity come from the store — `openspec list`.
-A hand-maintained register of the same facts is a second source that drifts:
-measured here, one read `proposed` for six days on a change that was merged and
-24 of 25 tasks done. `promote-adr.ts` owns decision records only and reads no
-such file.
-```markdown
-# Implementation Plan — living index
-
-The index over ALL OpenSpec changes under `openspec/changes/` — including
-archived history: a row is never removed, its Status flips to `archived`
-so `promote-adr.ts` can find and update it. One row per change. Who
-writes it: see `openspec-conformance`'s "Index writers" —
-the canonical four-role enumeration; never restate it, never hand-edit
-the status/ADR cells.
-
-| Change | Title | Status | Owner | Links |
-|--------|-------|--------|-------|-------|
-| <slug> | <one-line title> | proposed | @<owner> | [tasks](openspec/changes/<slug>/tasks.md) · #<issue> |
-
-_Status: proposed · in-progress · in-review · archived._
-```
+Work status, task counts and identity live in the work tracker and the PRs, not
+in a hand-kept file. A hand-maintained register of the same facts is a second
+source that drifts: measured here, one read `proposed` for six days on a change
+that was merged and 24 of 25 tasks done.
 
 ### plans/development/README.md
 ```markdown
 # plans/development
 
-Implementation plans. Change status lives in the store, not in a file here.
-This dir is the **OpenSpec store root** — `openspec/` lives here (registered as
-store `<store-id>`), so active changes are `openspec/changes/<slug>/`.
+Implementation plans, one dated Markdown file each: `YYYY-MM-DD-<slug>.md`.
+Work status lives in the work tracker and the PRs, not in a file here.
 ```
 
 ### plans/architecture/README.md
@@ -323,9 +286,7 @@ Architecture decision records, owned by the `repo-memory` skill:
 **The rules live in `DECISIONS.md` — that file is canonical.** This README does not
 restate them; a second copy is a second thing to keep in sync. `ARCHITECTURE.md` at
 the repo root summarizes current state; the decisions that produced it live
-here. Current-state capability specs live in the store at
-`plans/development/openspec/specs/` — OpenSpec writes specifications, not
-decisions.
+here.
 ```
 
 ### plans/product/README.md
@@ -334,82 +295,26 @@ decisions.
 
 Product-inception artifacts, one directory per initiative:
 `<initiative-slug>/{brief.md,prd.md,architecture.md}` (huhhb's
-`product-inception` skill / buhhdy Workflow 0 — opt-in, rare). The PRD's
-Epic Queue feeds Workflow 1; architecture `## Decisions` promote into
+`product-inception` skill — opt-in, rare). The PRD's
+Epic Queue is filed in Plane by `product-inception`; architecture `## Decisions` promote into
 `plans/architecture/`'s monthly file on approval. Empty is normal — most repos never
 run inception.
 ```
 
 ---
 
-## 3. OpenSpec — store registration (mechanism owned by `openspec-conformance`)
-
-OpenSpec's native **store registration** makes `plans/development` a standalone
-OpenSpec root — no symlinks, no config-key hack. `openspec-conformance` (a
-sibling huhhb skill) owns the full mechanism, the house `config.yaml` rules, and
-the `/opsx:*` per-tool notes; run its **Setup** section. Summary + the caveat:
-
-```bash
-mkdir -p plans/development plans/architecture plans/product
-
-# 1. Create the root. store register requires an existing openspec/ dir, so init
-#    FIRST. --tools none = just openspec/config.yaml, no tool dirs to commit.
-[ -f plans/development/openspec/config.yaml ] \
-  || ( cd plans/development && openspec init --tools none )
-
-# 2. Register plans/development as the OpenSpec root, id = repo name.
-#    Once per MACHINE (registry is ~/.local/share/openspec/stores/registry.yaml);
-#    idempotent — re-run prints "already registered". Commit the resulting
-#    plans/development/.openspec-store/store.yaml to keep the id stable.
-openspec store register plans/development --id <repo> --yes
-
-# 3. Report health (not a gate). A fresh store with no changes is a status.
-openspec validate --all --store <repo> --no-interactive || true
-```
-
-Then edit `plans/development/openspec/config.yaml` `context:` for the real
-`<stack>` and add the house `rules:` (block in `openspec-conformance/reference.md`).
-
-**Also put the memory routing in `context:` — this is the wiring, not a nicety.**
-That field is injected into the model's context whenever OpenSpec creates an
-artifact, which makes it the one place that gets proposals *authored* with both
-stores in view. Append to the `context:` prose:
-
-> Memory routing for this repo: structural questions — what calls what, blast
-> radius, where something is defined — go to the codebase-memory graph;
-> rationale, rejected alternatives and outcomes go to the Hindsight bank
-> `<bank-id>`. On `openspec archive`, retain one memory into that bank recording
-> whether the change worked, labelled worked / dead end / corrected, with the
-> root cause of anything that failed. Write memories in domain language, not
-> identifiers.
-
-Keep it to prose the model can act on; don't restate the whole store map there —
-§5 and the emitted `AGENTS.md` carry that.
-
-**Caveats — state these in the checklist, don't hide them:**
-- Everything lands under `plans/development/openspec/` (`changes/<slug>/`,
-  `specs/`, `changes/archive/`). From the repo root, OpenSpec commands need
-  `--store <repo>` — ancestor-only root resolution won't find the nested root
-  without it.
-- `openspec validate` enforces the **spec** layer only (every requirement needs a
-  `#### Scenario:`); it does **not** parse `tasks.md`. A fresh store with no
-  changes yet is not a conformance failure — report the real result.
-
----
-
-
-## 4. Memory — two routed stores + Honcho (owned by THIS skill; registry-free)
+## 3. Memory — two routed stores (owned by THIS skill; registry-free)
 
 `repo-kickstart` performs this setup itself and no longer seeds
 `.claude/memory/`. **Ownership is stated
-in §4.6 — put that answer in the run's report** so no reader has to guess which
+in §3.5 — put that answer in the run's report** so no reader has to guess which
 skill is authoritative for which store.
 
-Order matters throughout. **Steps 4.1.1–4.1.4 and 4.2.2 each work around a
+Order matters throughout. **Steps 3.1.1–3.1.4 and 3.2.2 each work around a
 verified defect, not a preference.** The failure each prevents is stated with it,
 because every one of them fails *silently*.
 
-### 4.1 codebase-memory-mcp — the structure store
+### 3.1 codebase-memory-mcp — the structure store
 
 **Step 1 — write `.cbmignore` BEFORE indexing.** Indexing first wastes work on
 vendored trees. Seed from the detected `<stack>`, plus these always:
@@ -521,7 +426,7 @@ Never report this row ✅ on anything but the passing output. Then ensure
 `graph.db.zst`, `.gitattributes` and `artifact.json` are committed — teammates
 bootstrap from the artifact instead of paying a full re-index.
 
-### 4.2 Hindsight — the experience store
+### 3.2 Hindsight — the experience store
 
 Base URL from §0's probe (`$HS`) — never a hardcoded literal. One bank per repo,
 `bank_id` derived per §0 — never a bare directory name.
@@ -600,35 +505,7 @@ this run actually did (stack detected, created vs already-conforming, gaps
 recorded). **A re-run that changed nothing retains nothing** — an unchanged run
 is a no-op here too.
 
-### 4.3 Honcho — team memory (env-scoped; a server in one mode only)
-Scope the repo's workspace through the evolve-suite skills (`/evolve` / the evolve
-setup). **`repo-kickstart` never configures Honcho** — it reads the existing
-configuration and reports on it, so this step adds no server setup of its own.
-Config comes from the environment or evolve's own user-scope config file, never
-from the repo: `HONCHO_URL`, `HONCHO_API_KEY`, `HONCHO_WORKSPACE`. **Never write a
-URL, key, or workspace into the repo.**
-
-There are **three** states. Collapsing them into "configured / not configured" is
-the mistake to avoid, because one of them is configured *and* serverless:
-
-| State | Server | Report |
-|-------|--------|--------|
-| `honcho` mode | Yes — self-hosted `HONCHO_URL` or managed `HONCHO_API_KEY` | scope the workspace; name it |
-| `local` mode | **None** — blank endpoint selects it | `local mode (no server; nothing to scope)` — a *configured* state, not a missing one |
-| unconfigured | — | `skipped — not configured` |
-
-**`honcho` mode has a second prerequisite beyond credentials: the `@honcho-ai/sdk`
-package must be installed** — an optional runtime dependency, deliberately never
-vendored. A machine can hold a valid endpoint, key and workspace and still be
-unable to talk to the server. Probe for it, and report `skipped — endpoint
-configured, @honcho-ai/sdk not installed` with the one-line install hint rather
-than a bare ✅. Local mode also has **no deriver**, so recall-synthesis features
-are absent there by design; that is not a gap for this skill to fix.
-
-Whatever the state, this stratum **never fails the run**, and `repo-kickstart`
-never installs the SDK or runs an `init` — those are the human's, in a terminal.
-
-### 4.4 Capture hooks — still seeded, now feeding the bank
+### 3.3 Capture hooks — still seeded, now feeding the bank
 Seed `.githooks/` (post-commit capture + pre-commit record lint, templates from
 huhhb) and run `git config core.hooksPath .githooks`.
 
@@ -638,7 +515,7 @@ The two-store move changed the **terminal write**, not the capture:
   facts.
 - That journal is a **staging buffer, not a store** — nothing routes to it, it
   holds nothing durable, and it is deleted on consolidation. It is now the draft
-  material for the PR/archive retain, and consolidating a branch's journal into
+  material for the PR retain, and consolidating a branch's journal into
   one paragraph is most of the work of writing a good outcome memory.
 - **PR consolidation** now folds the journal into ONE `sync_retain` into the
   repo's bank, then deletes the journal in the same commit.
@@ -646,16 +523,17 @@ The two-store move changed the **terminal write**, not the capture:
   its records are *kept*, and in-place edits to them still need blocking. The
   lint ignores `wip/` by construction, so journals are unaffected.
 
-### 4.5 `.claude/memory/` — retired from routing, data kept
+### 3.4 `.claude/memory/` — retired from routing, data kept
 **Never delete it.** This skill no longer seeds the store and no longer writes
 records into it. Existing records stay exactly where they are, as history.
 
-### 4.6 Who owns what now — state this in the report
+### 3.5 Who owns what now — state this in the report
 - **`memory-setup`** owns **machine scope**: installing, binding and
   configuring both servers plus the global routing policy. This skill *depends on*
   that having been done and never does it — see §0's remedy line.
 - **`repo-kickstart`** (this skill) owns **repo scope**: the two routed stores in
-  *this* repo, Honcho, OpenSpec, and the wiring between them.
+  *this* repo, the convention files that teach the repo to use them, and the
+  planning tree.
 - **`memory-init`** (a user-scope command that `memory-setup` installs)
   performs the same per-repo bootstrap standalone. Both are idempotent and take
   the same steps, so running both is redundant rather than harmful — but for a
@@ -672,40 +550,30 @@ records into it. Existing records stay exactly where they are, as history.
 
 ---
 
-## 5. The store map — which store owns a fact
+## 4. The store map — which store owns a fact
 
-After a kickstart a repo has **six** candidate homes for a fact, plus a retired
-seventh still on disk. Getting this wrong is the whole risk of this setup: every
+After a kickstart a repo has **three** candidate homes for a fact, plus a retired
+fourth still on disk. Getting this wrong is the whole risk of this setup: every
 failure in building it came from ambiguity about which store owned a fact, never
 from a broken command.
 
 | Store | Holds | Tense | Never holds |
 |-------|-------|-------|-------------|
 | **codebase-memory-mcp** graph | What the code **is** | Present, derived from source | Why anything was done |
-| **OpenSpec `specs/`** | What the system **should do** — ratified capability specs | Present, intended | What the code currently is; deliberation |
-| **OpenSpec `changes/`** | What we are **changing now**, with tasks and public rationale | In-flight | Whether it worked afterwards |
-| **`docs/adr/`** | Ratified decisions with **no capability surface** — infra, tooling, process | Permanent record | Deliberation; anything a spec already states |
+| **`plans/architecture/`** (repo-memory) | Ratified architecture decisions | Permanent record | Deliberation |
 | **Hindsight** bank | **Why**, what was rejected and why it lost, failures with root cause, **outcomes** | Historical, experiential | Code structure; credential values |
-| **Honcho** workspace | Cross-session, cross-repo team context | Accruing | Repo-local structure; anything credential-shaped |
 | ~~`.claude/memory/`~~ | Retired from routing — kept as history | — | New knowledge (nothing routes here) |
 
 `.claude/memory/wip/<branch-slug>.md` is not in this table on purpose: it is a
 staging buffer, deleted on consolidation, never a store.
 
-### The four overlap rules
+### The overlap rules
 
-- **Intent vs reality.** OpenSpec `specs/` is what the system *should* do; the
-  graph is what it *does*. Divergence is a **signal, not a conflict** — comparing
-  `openspec list --specs` against the graph's architecture summary is a drift
-  check worth running deliberately, not a contradiction to reconcile.
-- **Public rationale vs deliberation.** A change proposal carries the ratified,
-  public "why". Hindsight carries what did **not** make the proposal: what was
-  feared, what was tried first and abandoned, and why the rejected option lost.
-- **ADR only for what OpenSpec does not cover.** In an OpenSpec repo, capability
-  decisions live in the spec or the change. Reserve `docs/adr/NNN-title.md` for
-  decisions with no capability surface. **Never write the same decision in both.**
-  Create `docs/adr/` only when there is actually something to put in it — don't
-  scaffold an empty directory.
+- **Ratified decision vs deliberation.** A ratified decision goes to
+  `plans/architecture/`, written via `repo-memory`. The deliberation behind it —
+  what was feared, what was tried first and abandoned, and why the rejected
+  option lost — goes to the Hindsight bank. Keep no second ADR directory beside
+  `plans/architecture/`.
 - **Never use the graph tool's ADR store.** It writes into the disposable index,
   the content never reaches the shareable artifact, and any change to the codebase
   **hard-deletes it on the next index**. Verified: one added file moved node count
@@ -722,7 +590,7 @@ emitted `AGENTS.md`; never restate one there, and never require one to exist.
 
 ---
 
-## 6. Review tooling
+## 5. Review tooling
 
 ### .coderabbit.yaml — author from schema (no repo config to copy)
 ```yaml
@@ -753,62 +621,84 @@ reviews:
 Enable only the language tools the stack actually uses. Verify keys against the
 schema URL — CodeRabbit's schema evolves.
 
-### Branch protection — check, then hand off (never configure silently)
+### Branch protection — ruleset first, then hand off (never configure silently)
 ```bash
-# No GitHub remote yet (fresh local repo)? Nothing to check — report N/A and
-# note that the check + the commands below apply once the repo is on GitHub.
 # No GitHub remote yet? report N/A and STOP — otherwise the calls below run with
-# empty vars and hit an invalid `repos//branches//protection`.
+# empty vars and hit an invalid `repos//rules/branches/`.
 if ! gh repo view --json nameWithOwner >/dev/null 2>&1; then
-  echo "N/A — no GitHub remote yet; re-run after pushing (then emit the commands below)."
+  echo "N/A — no GitHub remote yet; re-run after pushing (then run this check)."
 else
   OWNER_REPO=$(gh repo view --json nameWithOwner -q .nameWithOwner)
   BR=$(gh repo view --json defaultBranchRef -q .defaultBranchRef.name)
-  gh api "repos/$OWNER_REPO/branches/$BR/protection"   # 200 = protected; 404 = absent
+  # 1. Rulesets first. Any rule of type pull_request = protected by a ruleset.
+  gh api "repos/$OWNER_REPO/rules/branches/$BR"
+  # 2. Only if no pull_request rule came back: classic protection.
+  gh api "repos/$OWNER_REPO/branches/$BR/protection"   # 200 = present; 404 = absent
 fi
 ```
-If **404**, do NOT enable it yourself. Emit these commands for the human (needs
-admin) and report the gap in the run's summary:
+
+Read the results in this order:
+
+1. **A rule of type `pull_request` in the ruleset response** → protected by a
+   ruleset. Report ✅ with the `ruleset_id`. Never recommend classic protection
+   on top of a ruleset.
+2. **Otherwise, classic protection returns 200** → classic protection is
+   present. Report it; suggest no change.
+3. **Otherwise (404)** → absent. Do NOT configure it yourself. Emit this
+   command for the human (it needs admin) and report the gap in the run's
+   summary:
+
 ```bash
-gh api -X PUT "repos/$OWNER_REPO/branches/$BR/protection" --input - <<'JSON'
+gh api -X POST "repos/$OWNER_REPO/rulesets" --input - <<JSON
 {
-  "required_pull_request_reviews": { "required_approving_review_count": 1 },
-  "required_status_checks": null,
-  "enforce_admins": true,
-  "restrictions": null
+  "name": "protect-$BR",
+  "target": "branch",
+  "enforcement": "active",
+  "conditions": { "ref_name": { "include": ["~DEFAULT_BRANCH"], "exclude": [] } },
+  "rules": [
+    { "type": "pull_request", "parameters": {
+        "required_approving_review_count": 1,
+        "dismiss_stale_reviews_on_push": false,
+        "require_code_owner_review": false,
+        "require_last_push_approval": false,
+        "required_review_thread_resolution": false
+    } },
+    { "type": "non_fast_forward" },
+    { "type": "deletion" }
+  ]
 }
 JSON
 ```
-Required reviews on the default branch are a precondition for pr-shepherd.
+
+Required reviews on the default branch are a precondition for pr-shepherd. A
+ruleset `pull_request` rule with `required_approving_review_count: 0` is
+therefore a **reportable gap**, not a failure: report it alongside the ✅.
 
 ---
 
-## 7. Verification checklist — the closing report
+## 6. Verification checklist — the closing report
 ```text
 repo-kickstart — <owner>/<repo> (<greenfield|brownfield>, <stack>)
 
   item                         status
   ---------------------------  --------------------------------------
   README links doc set         ✅ present | ➕ created | ⚠ merge proposed
-  AGENTS.md (canonical)        ✅ | ➕   (memory + specs sections present)
+  AGENTS.md (canonical)        ✅ | ➕   (Repo Memory section present)
   CLAUDE.md (pointer)          ✅ | ➕ | ⚠ full file kept
   KICKSTART.md                 ✅ | ➕
   ARCHITECTURE.md              ✅ | ➕
-  plans/ tree + index          ✅ | ➕
-  OpenSpec init + registration ✅ | ➕  (validate: <pass | N pending>) | ⚠ skipped — <reason>
-  OpenSpec context: → routing  ✅ | ➕ | ⚠ skipped — no OpenSpec
+  plans/ tree                  ✅ | ➕
   .cbmignore + secrets pass    ✅ | ➕  (line drawn: <what was excluded vs kept>)
   graph indexed + artifact     ✅ | ➕  (<nodes> nodes / <edges> edges) | ⚠ skipped — <reason>
   graph.db.zst merge=ours      ✅ verified | ➕ repaired | ⚠ skipped — <reason>
   Hindsight bank (verbatim)    ✅ | ➕  (bank <id>, verbatim re-applied) | ⚠ skipped — <reason>
   charter in bank              ✅ present | ➕ retained | ⚠ skipped — <reason>
   capture hooks → bank         ✅ | ➕  (core.hooksPath=.githooks)
-  Honcho workspace scoped      ✅ <workspace> | ⚠ local mode (no server) | ⚠ skipped (unconfigured | sdk missing)
   .coderabbit.yaml             ✅ | ➕
-  branch protection            ✅ present | ❌ absent — commands emitted + gap recorded | N/A no remote yet
+  branch protection            ✅ ruleset <id> | ✅ classic | ❌ absent — commands emitted + gap recorded | N/A no remote yet
 
-  store ownership stated:  <yes>          (§4.6 — which skill owns which store)
-  gaps recorded in index:  <list | none>
+  store ownership stated:  <yes>          (§3.5 — which skill owns which store)
+  gaps reported in summary: <list | none>
   second-run no-op:        <yes | n/a first run>
 ```
 `❌ branch protection` with emitted commands (or `N/A` when the repo has no
@@ -830,21 +720,18 @@ alternative back, and a domain-language recall that actually returned the charte
 | AGENTS.md | file exists |
 | CLAUDE.md pointer | file exists and references AGENTS.md |
 | KICKSTART / ARCHITECTURE | file exists |
-| plans tree | `plans/development/`, `plans/architecture/` and `plans/product/` exist, each with its README, and **no *active* change-index file** is present. Brownfield: a repo that had one before adopting the store may keep it as a **retired artifact** — its first heading says so, nothing writes to it, and it carries no instruction to maintain it. That passes, because the failure this row guards is two live registers of one fact, not the existence of history. An index that still reads as current, or that any tool still writes, is a **fail**; migrate it by retiring it in place (status now comes from `openspec list`) rather than by deleting rows that link to archived changes |
+| plans tree | `plans/development/`, `plans/architecture/` and `plans/product/` exist, each with its README, and **no *active* change-index file** is present. Brownfield: a repo that had one before may keep it as a **retired artifact** — its first heading says so, nothing writes to it, and it carries no instruction to maintain it. That passes, because the failure this row guards is two live registers of one fact, not the existence of history. An index that still reads as current, or that any tool still writes, is a **fail**; migrate it by retiring it in place (status now lives in the work tracker and the PRs) rather than by deleting rows that link to past work |
 | plans/product | `plans/product/README.md` exists (content optional — inception is opt-in, never mandatory) |
 | ADR structure | `plans/architecture/DECISIONS.md` and `TEMPLATE.md` exist; the record set and the index sets match **both ways** — every ADR in a `YYYY/YYYY-MM.md` has a row in that year's `INDEX.md` AND a line in `DECISIONS.md`, **and** every index row and master line resolves to an existing record. An index that omits a record is a **fail**; so is an index row pointing at a record that does not exist, because an orphaned row reads as a decision that was never made |
-| OpenSpec | `plans/development/openspec/config.yaml` + `.openspec-store/store.yaml` (id `<store-id>`) exist; `openspec store list` includes `<store-id>` (else re-run `register` — it no-ops) |
-| OpenSpec context | `config.yaml` `context:` already names the bank id and the graph/rationale split |
-| AGENTS.md memory block | AGENTS.md carries the `## Memory & specs` heading and it names this repo's bank id |
+| AGENTS.md memory block | AGENTS.md carries the `## Repo Memory` heading and it names this repo's bank id |
 | `.cbmignore` | file exists and already contains the always-list, the `<stack>` entries and the secrets entries — append-only, so a re-run adds no line |
 | graph index | `index_status` reports the project indexed; `.codebase-memory/graph.db.zst` exists and is committed |
 | graph merge attr | `git check-attr merge -- .codebase-memory/graph.db.zst` prints `merge: ours` |
 | Hindsight bank | bank `<bank-id>` exists (derived per §0, **not** a bare directory name). The mode is **not readable**, so re-apply the `verbatim` PATCH every run — idempotent, and it changes no content. "Bank exists" alone is never evidence the mode is right |
 | charter | a domain-language recall against the bank returns a charter-like memory |
 | capture hooks | `.githooks/` present and `git config core.hooksPath` = `.githooks` |
-| Honcho | evolve reports the workspace scoped. `local` mode, unconfigured, and endpoint-without-SDK are **terminal states, not gaps to fix here** — report which one and move on |
 | .coderabbit.yaml | file exists |
-| branch protection | `gh api …/protection` returns 200 |
+| branch protection | `gh api "repos/$OWNER_REPO/rules/branches/$BR"` includes a `pull_request` rule, or `gh api "repos/$OWNER_REPO/branches/$BR/protection"` returns 200 |
 
 Any "present-and-conforming" → report ✅ and change nothing. A second
 consecutive run must produce **no diff**.
@@ -857,32 +744,27 @@ consecutive run must produce **no diff**.
 |--------|---------|
 | "The repo has a README, I'll rewrite it cleanly" | It's theirs. Merge a links block; never overwrite. |
 | "CLAUDE.md should hold the full instructions" | AGENTS.md is canonical; CLAUDE.md is a one-line pointer. Two sources drift. |
-| "Symlink openspec/specs + changes into plans/" | Obsolete — that was the rejected pre-1.6 hack. Use `openspec store register plans/development` (native). No symlinks. |
-| "openspec validate failed → the kickstart failed" | A fresh index isn't a conforming change yet. Report "pending"; don't fail the run. |
 | "I'll drop a memory log under plans/" | plans/ holds DOCUMENTS only. Experience goes to the Hindsight bank, structure to the graph, instructions to AGENTS.md. No memory of any kind under plans/, ever. |
-| "`.claude/memory/` is retired, so I'll delete/migrate it" | Retired from **routing**. The data is kept, in place. Deleting someone's history is not a kickstart — §4.5. |
-| "The re-index says it's `excluded` / the node count didn't move, so the secret is out" | Neither is evidence — `excluded` never lists the ignored path and counts drift for unrelated reasons. `.cbmignore` never retracts indexed nodes: delete_project + remove the artifact + re-index, then prove it with the file list — §4.1 step 3. |
-| "Honcho has no URL set, so it's unconfigured" | A blank endpoint selects **local mode**, which is configured and needs no server. Report local mode — §4.3. |
-| "Endpoint and key are set, so Honcho is ✅" | `honcho` mode also needs `@honcho-ai/sdk` installed. Probe it; valid credentials with no SDK cannot reach the server. |
-| "`graph.db.zst merge=ours binary` is what the tool wrote, so it works" | It doesn't. `binary` is a macro that unsets `merge=ours`. Reverse the order and require `merge: ours` from check-attr — §4.1 step 4. |
-| "`retain` returned `accepted`, so the memory is saved" | `accepted` is a receipt, not a write. Use `sync_retain`, or verify with `get_operation` — §4.2 step 4. |
+| "`.claude/memory/` is retired, so I'll delete/migrate it" | Retired from **routing**. The data is kept, in place. Deleting someone's history is not a kickstart — §3.4. |
+| "The re-index says it's `excluded` / the node count didn't move, so the secret is out" | Neither is evidence — `excluded` never lists the ignored path and counts drift for unrelated reasons. `.cbmignore` never retracts indexed nodes: delete_project + remove the artifact + re-index, then prove it with the file list — §3.1 step 3. |
+| "`graph.db.zst merge=ours binary` is what the tool wrote, so it works" | It doesn't. `binary` is a macro that unsets `merge=ours`. Reverse the order and require `merge: ours` from check-attr — §3.1 step 4. |
+| "`retain` returned `accepted`, so the memory is saved" | `accepted` is a receipt, not a write. Use `sync_retain`, or verify with `get_operation` — §3.2 step 4. |
 | "The bank's `retain_mission` will keep code structure out" | Advisory only — verified being ignored on structure-only input. The writer is the filter, not the store. |
 | "The bank already exists, so that row is ✅" | Existing ≠ conforming, and the mode is write-only so you cannot check it. Re-apply the `verbatim` PATCH every run; a `concise` bank silently drops the content the store exists for. |
 | "Hindsight/the graph is unreachable, so the run failed" | Report `skipped — <reason>`, record the gap, and finish every other stratum. A missing prerequisite never fails the whole run. |
-| "I'll record this decision with the graph tool's ADR store" | Never — disposable index, hard-deleted on the next index, absent from the artifact. Committed file at `docs/adr/`. |
-| "This capability decision deserves an ADR *and* a spec" | Pick one. In an OpenSpec repo the spec or the change IS the record; ADRs are for decisions with no capability surface. |
+| "I'll record this decision with the graph tool's ADR store" | Never — disposable index, hard-deleted on the next index, absent from the artifact. Write it to `plans/architecture/` via `repo-memory`. |
+| "This decision deserves its own ADR folder" | No second ADR directory. Ratified decisions go to `plans/architecture/` via `repo-memory`; the deliberation goes to the bank. |
 | "I'll put the memory block in CLAUDE.md" | AGENTS.md is canonical; CLAUDE.md stays a one-line pointer. Two sources drift. |
-| "I'll commit the Honcho key so it's reproducible" | Never. Creds are env-only; a committed key is a leak. |
-| "Branch protection is missing, I'll just enable it" | Don't configure silently — emit the commands for the human and record the gap. |
+| "Branch protection is missing, I'll just enable it" | Don't configure silently — emit the ruleset command for the human and record the gap. |
+| "There's a ruleset, but I'll add classic protection to be safe" | Never recommend classic protection on top of a ruleset. A ruleset `pull_request` rule is ✅. |
 | "Second run — I'll just recreate everything" | Re-run must be a no-op. Detect, report ✅, change nothing. |
 
 ## Red flags — STOP and correct
 - Overwriting a file you did not just create.
 - A `.coderabbit.yaml`, config, or committed file containing a real token/URL/workspace.
-- Reporting "OpenSpec validates" (or any ✅) without running the check.
+- Reporting any ✅ without running the check.
 - Enabling branch protection without the human.
 - A second run that produces a diff.
-- Inventing a value for Honcho (URL/key/workspace) when none is configured.
 - Reporting the graph, merge-attr, bank or charter rows ✅ without the evidence in
   hand — node/edge counts, the passing `check-attr` output, a verbatim round-trip,
   a recall that returned the charter.

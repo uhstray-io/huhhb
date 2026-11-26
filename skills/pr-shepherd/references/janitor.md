@@ -1,8 +1,8 @@
 # Branch janitor script
 
 Run once per pr-shepherd pass. Confined to the orchestrator's own branch
-prefix via ONE validated variable — `ORCHESTRATOR_PREFIX` (buhhdy's is
-`buhhdy`; never empty, never a bare `refs/heads/`). Fails CLOSED: if the
+prefix via ONE validated variable — `ORCHESTRATOR_PREFIX` (default
+`agent`; never empty, never a bare `refs/heads/`). Fails CLOSED: if the
 remote default branch cannot be resolved from `origin/HEAD`, nothing is
 deleted. Deletes only branches that are BOTH >90 days inactive AND already
 merged into the default branch — and deletes them atomically
@@ -11,7 +11,7 @@ advanced between inspection and deletion survives). Success is logged only
 when the deletion actually succeeded.
 
 ```bash
-prefix="${ORCHESTRATOR_PREFIX:-buhhdy}"
+prefix="${ORCHESTRATOR_PREFIX:-agent}"
 case "$prefix" in ''|*/*|*' '*) echo "janitor: invalid prefix '$prefix' — aborting"; exit 1;; esac
 
 # Fail closed: no resolvable default branch => no deletions at all.

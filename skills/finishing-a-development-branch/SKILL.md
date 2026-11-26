@@ -61,7 +61,7 @@ Which option?
 
 1. **Read the upstream first.** Run `git rev-parse --abbrev-ref @{u}`.
    - Prints `origin/<branch>`: run `git push origin <branch>`.
-   - Fails (no upstream): run `git push -u origin <branch>`, then run the check again. It must print `origin/<branch>`.
+   - Fails (no upstream): run `git push -u origin <branch>`, then run the check again. It must print `origin/<branch>`; otherwise stop and report it.
    - Prints anything else, including `origin/main`: stop and report it. Do not push.
 2. **Read the pull request state.** Run `gh pr view --json number,url,state,baseRefName`.
    - `OPEN`: the push updated it. Report its URL.
@@ -121,10 +121,10 @@ Run cleanup only when (a) the pull request has merged, or (b) the user confirmed
    - A pull request whose title carries `[ID]` owns the state.
 2. **Remove the worktree**, from outside it.
    - Read which checkout this is: compare `git rev-parse --show-toplevel` with the path on the first `worktree` line of `git worktree list --porcelain` (the main checkout is listed first). If they match, this is the main checkout: never remove it. If `git status --porcelain` prints anything, stop and ask. Otherwise run `git switch <base-branch>` and go to step 3. If they differ, this is a linked worktree, and the next two bullets apply.
-   - If `orca worktree current` finds this worktree, run `orca worktree rm --worktree path:<worktree-path>`. Add `--delete-branch` for merged work. For a discard, add `--force` instead, since a discard also drops uncommitted changes.
+   - If `orca worktree current` finds this worktree, run `orca worktree rm --worktree path:<worktree-path>`, without `--delete-branch` (step 3 deletes the branch). For a discard, add `--force`, since a discard also drops uncommitted changes.
    - Otherwise run `git worktree remove <worktree-path>`, and only in the session that created the worktree. For a discard, use `git worktree remove --force <worktree-path>`.
 3. **Delete the branch**, if it still exists, from outside the worktree.
-   - Merged work: if `git show-ref --verify --quiet refs/heads/<branch>` finds nothing, Orca already deleted it via `--delete-branch`, so this step is done. Otherwise run `git merge-base --is-ancestor <branch> origin/<base-branch>`. Non-zero exit: stop and ask. Then run `git branch -d <branch>`.
+   - Merged work: run `git merge-base --is-ancestor <branch> origin/<base-branch>`. Non-zero exit: stop and ask. Then run `git branch -d <branch>`.
    - Discarded work: `git branch -D <branch>`.
 
 Never remove a worktree or branch that another session owns.

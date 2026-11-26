@@ -20,11 +20,12 @@ entry's `Occurrences` count and adds a dated note; it never opens a second entry
 
 | # | Summary | Class | Count | Enforced by |
 |---|---|---|---|---|
-| 1.1 | PR body listed test cases and lockfiles from memory; both lists were wrong | Unverified claim | 6 | `hooks/pr-claim-check.sh` (Bash `gh` path only; deny until acknowledged) |
+| 1.1 | PR body listed test cases and lockfiles from memory; both lists were wrong | Unverified claim | 7 | `hooks/pr-claim-check.sh` (Bash `gh` path only; deny until acknowledged) |
 | 1.2 | Scenario note gave a cause for a baseline difference that no run had isolated; a controlled run contradicted it | Unverified claim | 2 | `Convention` |
 | 2.1 | PR #60 merged with 4 CodeRabbit findings unanswered | Process | 1 | `hooks/pr-merge-guard.sh` (deny until acknowledged; fails open) |
 | 3.1 | Grounding spec accepted "merges count as work" as rare; merging `dev` is routine, so the only line nudge was a false positive | Design assumption | 1 | `tests/test_grounding_hook.test.ts` (merge and fast-forward cases) |
-| 4.1 | Skill-disabled baseline read the skill file from disk, so a failing baseline was reported as passing | Test passed for the wrong reason | 2 | `Convention` (bench fix: HUHHB-168) |
+| 4.1 | Skill-disabled baseline read the skill file from disk, so a failing baseline was reported as passing | Test passed for the wrong reason | 3 | `Convention` (bench fix: HUHHB-168) |
+| 4.2 | A baseline started in an empty directory still read the skill by absolute path; supersedes the working-directory clause of 4.1 | Test passed for the wrong reason | 1 | `Convention` (bench fix: HUHHB-168) |
 | 5.1 | PR #65 was returned four times: its bench asserts and written claims were settled during review, not before it | Process | 1 | `Convention` |
 | 6.1 | A bench trigger probe named the README, and its session rewrote the file's first paragraph in the working tree | Test wrote outside its own folder | 1 | `Convention` |
 
@@ -32,7 +33,7 @@ entry's `Occurrences` count and adds a dated note; it never opens a second entry
 
 ### 1.1 PR body described the test suite and lockfile list from memory
 
-**Occurrences: 6** — 2026-11-13, 2026-11-13, 2026-11-13, 2026-11-13, 2026-11-20, 2026-11-22
+**Occurrences: 7** — 2026-11-13, 2026-11-13, 2026-11-13, 2026-11-13, 2026-11-20, 2026-11-22, 2026-11-26
 
 **What happened.** Opening PR #59 (grounding line threshold, HUHHB-156), the
 body listed the 10 cases in `tests/test_grounding_hook.test.ts` and the
@@ -119,6 +120,17 @@ was acknowledged for the section being added; the Verification list written at
 the earlier head was carried over unread. Every number in a PR body is run
 again at the head the body is posted against, not only the lines being added.
 The body is corrected.
+
+**Occurrence 7 — 2026-11-26.** PR #70's lesson L-007 and its body cited
+`skills/repo-kickstart/reference.md:44` for the preflight line that names
+`index_repository`. The line is 45; line 44 is blank. The number came from a
+`sed -n 44,46p` whose output began with the blank line, which went unnoticed,
+and was written into a committed file without a `grep -n` for the line itself.
+The guard fired on the body and was acknowledged; the citation was taken as
+already checked because a command had shown the text nearby. The `pr-reviewer`
+round on `a15eb780` found it. A cited line number is read from a command that
+prints the number beside the text, such as `grep -n`, not counted from a
+printed range. L-007 and the body are corrected before merge.
 
 ### 1.2 A scenario note stated why two baselines differed, from runs that isolated nothing
 
@@ -218,7 +230,7 @@ general rule: `Convention`.
 
 ### 4.1 The skill-disabled baseline read the skill file from disk
 
-**Occurrences: 2** — 2026-11-20, 2026-11-22
+**Occurrences: 3** — 2026-11-20, 2026-11-22, 2026-11-26
 
 **What happened.** Adding `prune-tests`, the RED step ran each scenario in
 `tests/bench/prune-tests.json` once the way `scripts/skill-bench.ts` runs its
@@ -261,6 +273,48 @@ again with that plugin switched off for the session:
 not fire because its catalog check was made after the runs, not before them,
 and because this repo not shipping the skill yet was taken to mean no
 installed plugin did.
+
+**Occurrence 3 — 2026-11-26.** Rewriting the `repo-kickstart` bench
+(HUHHB-174), the baseline pre-check ran each of two candidate prompts three
+times through a throwaway `claude` wrapper that started every session in an
+empty scratch directory, with `--disallowedTools Skill` and the installed
+`huhhb@huhhb` plugin switched off. A probe through the same wrapper found no
+kickstart skill in the baseline's catalog. The baseline still passed 5 of the 6
+runs, and its answers cited `skills/repo-kickstart/SKILL.md:101-109` and
+`reference.md:624-669`, read from this worktree by absolute path, and the
+installed 0.8.34 copy in the plugin cache. The prompts name the skill, and the
+session went looking for it. The rule did not prevent it because its "not on
+disk under the working directory" clause was taken to mean that an empty
+working directory was enough. The void step did fire: the answers were read
+before any verdict was used, all six runs were voided, and they were repeated
+under the rule in 4.2.
+
+### 4.2 A baseline started in an empty directory still read the skill by absolute path
+
+**Occurrences: 1** — 2026-11-26
+
+**What happened.** Recorded as occurrence 3 of 4.1: the `repo-kickstart`
+baseline started in an empty directory, with the skill out of its catalog,
+read `skills/repo-kickstart/` from a worktree elsewhere on disk and from the
+plugin cache, and passed 5 of 6 runs. With no way to read the skill, the same
+two prompts passed 2 of 6: one prompt 2 of 3, the other 0 of 3.
+
+**Root cause.** A baseline session that has Bash, Read, Glob or Grep can read
+any path the user can, and a prompt that names the skill sends it looking.
+Switching the plugin off and starting in an empty directory take the skill out
+of the catalog and out of the working directory, not off the disk, which holds
+it in every checkout of this repo and in the plugin cache. An MCP server is a
+second route: `codebase-memory-mcp` has this repo indexed.
+
+**The rule.** A baseline counts only if it cannot read the skill at all. Run
+the baseline arm with no built-in tools (`--tools ""`) and no MCP servers
+(`--strict-mcp-config`), so it answers from what the model knows, and write
+every bench prompt so that it can be answered without tools. This supersedes
+the "not on disk under the working directory" clause of the rule in 4.1; that
+entry's catalog check and its void step still apply. The note on the scenario
+in `tests/bench/repo-kickstart.json` records the method.
+
+**Enforced by.** `Convention`. The bench does not do it itself (HUHHB-168).
 
 ## 5. Opening a PR before its checks were settled
 

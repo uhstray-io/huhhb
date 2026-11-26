@@ -51,7 +51,6 @@ SIGNIFICANT=$(printf '%s\n' "$CHANGED" | grep -E \
   -e '^skills/[^/]+/SKILL\.md$' \
   -e '^hooks/' \
   -e '^scripts/[^/]+\.(ts|sh)$' \
-  -e '^plans/development/openspec/changes/[^/]+/specs/' \
   -e '(^|/)(Dockerfile|docker-compose\.ya?ml)$' \
   -e '^\.github/workflows/' \
   || true)

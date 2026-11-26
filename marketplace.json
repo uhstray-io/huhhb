@@ -85,7 +85,7 @@
     {
       "name": "repo-memory",
       "path": "skills/repo-memory/SKILL.md",
-      "description": "Use when a decision about this repository's architecture needs recording or looking up — \"record this decision\", \"write an ADR\", \"why did we choose X\", \"supersede that decision\" — or when a change alters the system's structure or is hard to reverse. Owns architecture decision records in plans/architecture/: master index by domain, a year decision log, monthly detail files. Append-only. Code structure is codebase-memory-mcp; deliberation is the Hindsight bank.",
+      "description": "Use when a decision about this repository's architecture needs recording or looking up — \"record this decision\", \"write an ADR\", \"why was X chosen\", \"what was decided about Y\", \"is there a decision about Z\", \"supersede that decision\" — or when a change alters the system's structure, trades away a quality attribute, or is hard to reverse. Owns architecture decision records in plans/architecture/. Append-only. Code structure is codebase-memory-mcp; deliberation is the Hindsight bank.",
       "category": "memory",
       "tags": [
         "memory",
@@ -94,7 +94,7 @@
         "decisions",
         "git"
       ],
-      "version": "0.3.0"
+      "version": "0.3.1"
     },
     {
       "name": "huhhb-welcome",

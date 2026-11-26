@@ -5,7 +5,7 @@ Role prompts and artifact templates for the three phases.
 **Attribution:** phase structure, template outlines, and the FR/AD/UJ/SM ID
 conventions are adapted from **BMad Method v6.x** (github.com/bmad-code-org/
 BMAD-METHOD, MIT), rewritten house-style. Nothing is vendored; the
-story/sprint layer is deliberately not adapted (LD-3). The Epic Queue section
+story/sprint layer is deliberately not adapted. The Epic Queue section
 is a house addition — upstream BMAD sequences epics downstream of the PRD, in
 the story layer we cut.
 

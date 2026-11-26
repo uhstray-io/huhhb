@@ -12,7 +12,7 @@ major initiative. **Terminates at the architecture document and the Epic
 Queue**: each epic is filed as a Plane work item (the hand-off), and each
 approved `AD-N` decision is recorded with `repo-memory`. Decomposing and
 implementing an epic happen later, when someone picks up its Plane item,
-through change-scale planning — never in this skill (LD-3).
+through change-scale planning — never in this skill (ADR-0008).
 
 **Announce at start:** "I'm using the product-inception skill — three
 human-gated phases, ending at the architecture document."

@@ -20,8 +20,9 @@ entry's `Occurrences` count and adds a dated note; it never opens a second entry
 
 | # | Summary | Class | Count | Enforced by |
 |---|---|---|---|---|
-| 1.1 | PR body listed test cases and lockfiles from memory; both lists were wrong | Unverified claim | 7 | `hooks/pr-claim-check.sh` (Bash `gh` path only; deny until acknowledged) |
+| 1.1 | PR body listed test cases and lockfiles from memory; both lists were wrong | Unverified claim | 8 | `hooks/pr-claim-check.sh` (Bash `gh` path only; deny until acknowledged) |
 | 1.2 | Scenario note gave a cause for a baseline difference that no run had isolated; a controlled run contradicted it | Unverified claim | 2 | `Convention` |
+| 1.3 | A re-judge reported as the bench's judge scored whole answers; the bench judged only the first 2,000 characters | Unverified claim | 1 | `Convention` (this case: `tests/test_evolve.test.ts`, PR #72) |
 | 2.1 | PR #60 merged with 4 CodeRabbit findings unanswered | Process | 1 | `hooks/pr-merge-guard.sh` (deny until acknowledged; fails open) |
 | 3.1 | Grounding spec accepted "merges count as work" as rare; merging `dev` is routine, so the only line nudge was a false positive | Design assumption | 1 | `tests/test_grounding_hook.test.ts` (merge and fast-forward cases) |
 | 4.1 | Skill-disabled baseline read the skill file from disk, so a failing baseline was reported as passing | Test passed for the wrong reason | 3 | `Convention` (bench fix: HUHHB-168) |
@@ -34,7 +35,7 @@ entry's `Occurrences` count and adds a dated note; it never opens a second entry
 
 ### 1.1 PR body described the test suite and lockfile list from memory
 
-**Occurrences: 7** — 2026-11-13, 2026-11-13, 2026-11-13, 2026-11-13, 2026-11-20, 2026-11-22, 2026-11-26
+**Occurrences: 8** — 2026-11-13, 2026-11-13, 2026-11-13, 2026-11-13, 2026-11-20, 2026-11-22, 2026-11-26, 2026-11-26
 
 **What happened.** Opening PR #59 (grounding line threshold, HUHHB-156), the
 body listed the 10 cases in `tests/test_grounding_hook.test.ts` and the
@@ -133,6 +134,17 @@ round on `a15eb780` found it. A cited line number is read from a command that
 prints the number beside the text, such as `grep -n`, not counted from a
 printed range. L-007 and the body are corrected before merge.
 
+**Occurrence 8 — 2026-11-26.** PR #72's body said the fake `claude` in the new
+test returns an answer of 2,071 characters. It is 2,094 (`tests/test_evolve.test.ts:1702`,
+23 + 2,050 + 21). The owner did count 2,094 before posting, and put the `sed`
+that corrected the draft in the same Bash command as the call that opened the
+PR. The guard denies the whole command, so the `sed` never ran. The command was
+re-run with `CLAIMS_VERIFIED=1` in front of the posting call only, and the
+uncorrected draft went out; the later body edit posted the same file. The
+`pr-reviewer` round on `e9121595` found it. A fix to a draft is a command of its
+own, and the draft is read back (a `grep` for the corrected text) before the
+guarded call posts it. The body is corrected before merge.
+
 ### 1.2 A scenario note stated why two baselines differed, from runs that isolated nothing
 
 **Occurrences: 2** — 2026-11-20, 2026-11-20
@@ -167,6 +179,43 @@ because it was framed around a cause for one difference, and a general
 statement about which scenarios pass did not register as the same thing. It
 is: a generalisation from bench results needs the same isolating run, or it
 is left out. An independent review found it before merge, and it is removed.
+
+### 1.3 A re-judge reported as the bench's judge scored text the bench's judge never saw
+
+**Occurrences: 1** — 2026-11-26
+
+**What happened.** The `repo-memory` bench at `6787edac` (PR #71, HUHHB-175)
+gave the write scenario a judge median of 3 of 5, below the gate of 4. For
+evidence, the owner session took the judge prompt from
+`scripts/skill-bench.ts`, filled it with the scenario's rubric and each kept
+answer, and ran it three times per answer: both kept answers scored 5, 5 and
+5. The owner reported this to the batch coordinator as a re-run of "the
+bench's own judge template". The coordinator relayed it to Joseph without
+checking it, and Joseph accepted the failing gate as measured on that evidence
+(batch decision 24). The final-head review of PR #71 then found that the bench
+judges `r.result.slice(0, 2000)` (`scripts/skill-bench.ts:837`), while the
+re-judge passed each answer whole. In the kept answer for the shipped skill,
+the consequences start at character 2138, the first "Negative" at 2335,
+`INDEX.md` at 2919 and `DECISIONS.md` at 3318. Everything the rubric
+penalises an answer for leaving out lies past the cut. Joseph revisited the
+decision (batch decision 25).
+
+**Root cause.** The owner copied the template and the call in `judge()`
+(`scripts/skill-bench.ts:221`) and did not read its caller at line 837, which
+clips the answer before it reaches `judge()`. Reproducing the measurement was
+taken to mean reproducing the function that scores, not the input that reaches
+it. The coordinator took the owner's description of the method as the check.
+
+**The rule.** A check offered as a reproduction of a bench gate feeds the
+scorer exactly what the bench feeds it. Read the whole path from a run's
+output to the scorer, every slice, filter and transform included, and say in
+the report which of them the check applied. A check that differs in any input
+is reported as a different measurement, never as the bench's. A session that
+relays such a check to Joseph reads that path itself first.
+
+**Enforced by.** `Convention`. Since PR #72 (HUHHB-195) the B3 judge scores the
+whole answer, and `test_the_b3_judge_receives_the_whole_answer` in
+`tests/test_evolve.test.ts` checks it. That closes this case only.
 
 ## 2. Merging before the review was finished
 

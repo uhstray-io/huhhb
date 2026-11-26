@@ -1681,6 +1681,90 @@ describe("BenchTests", () => {
       fs.rmSync(tmp, { recursive: true, force: true });
     }
   });
+
+  test("test_the_b3_judge_receives_the_whole_answer", () => {
+    /* B3 used to hand the rubric judge r.result.slice(0, 2000), so a defect past
+       the 2000th character could never fail the quality gate, while battle has
+       always judged whole answers. This runs the real bench with a fake `claude`
+       first on PATH. The scenario answer is longer than 2000 characters and
+       carries a head marker and a tail marker. The judge's prompt, read from the
+       fake's log, must contain the entire answer verbatim. */
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "bench-b3-whole-"));
+    try {
+      const bin = path.join(tmp, "bin");
+      const scratch = path.join(tmp, "scratch");
+      const outs = path.join(tmp, "outputs");
+      const judgeLog = path.join(tmp, "judge-prompts.log");
+      fs.mkdirSync(bin);
+      fs.mkdirSync(scratch);
+      const HEAD = "HEAD-MARKER-before-2000";
+      const TAIL = "TAIL-MARKER-past-2000";
+      const ANSWER = HEAD + "x".repeat(2050) + TAIL;
+      const JUDGE_CUE = "Score 1-5 how well this response satisfies the rubric";
+      // The fake answers the bench's three kinds of call. A judge call (its
+      // prompt carries JUDGE_CUE) is logged in full and scored 5. A stream-json
+      // trigger probe reports no Skill use. Any other call returns ANSWER.
+      const impl = path.join(tmp, "fake-claude.cjs");
+      fs.writeFileSync(impl, [
+        `const fs = require("node:fs");`,
+        `const argv = process.argv.slice(2);`,
+        `const fmt = argv[argv.indexOf("--output-format") + 1];`,
+        `const prompt = argv[argv.indexOf("-p") + 1] ?? "";`,
+        `const emit = (o) => process.stdout.write(JSON.stringify(o) + "\\n");`,
+        `if (fmt === "stream-json") {`,
+        `  emit({ type: "result", result: "no skill" });`,
+        `} else if (prompt.includes(${JSON.stringify(JUDGE_CUE)})) {`,
+        `  fs.appendFileSync(process.env.FAKE_CLAUDE_JUDGE_LOG, prompt + "\\n<<END>>\\n");`,
+        `  emit({ result: "NONE\\n5" });`,
+        `} else {`,
+        `  emit({ result: ${JSON.stringify(ANSWER)}, num_turns: 1, duration_ms: 100,`,
+        `    duration_api_ms: 80, usage: { input_tokens: 10, output_tokens: 10 } });`,
+        `}`,
+      ].join("\n") + "\n");
+      // A sh wrapper named claude, so PATH finds it like the real CLI. Quoting
+      // keeps a node path with spaces intact.
+      const claude = path.join(bin, "claude");
+      fs.writeFileSync(claude,
+        `#!/bin/sh\nexec '${process.execPath}' '${impl}' "$@"\n`);
+      fs.chmodSync(claude, 0o755);
+
+      // evolve-skills is the smallest spec with a judge rubric. --no-record
+      // and the private history, outputs and battles paths keep every write
+      // inside tmp. TMPDIR moves the per-run workdirs there too.
+      const r = spawnSync(process.execPath,
+        [path.join(REPO, "scripts", "skill-bench.ts"),
+          "evolve-skills", "--runs", "1", "--no-record"],
+        {
+          encoding: "utf-8", cwd: tmp, timeout: 120_000,
+          env: {
+            ...process.env,
+            PATH: `${bin}:${process.env.PATH}`,
+            TMPDIR: scratch,
+            SKILL_BENCH_HISTORY: path.join(tmp, "history.jsonl"),
+            SKILL_BENCH_OUTPUTS: outs,
+            SKILL_BENCH_BATTLES: path.join(tmp, "battles.jsonl"),
+            FAKE_CLAUDE_JUDGE_LOG: judgeLog,
+          },
+        });
+      assert.equal(r.error, undefined, String(r.error));
+      assert.match(r.stdout, /GATE (PASS|FAIL)/,
+        `the bench must reach its final gate line\n${r.stderr}`);
+      assert.match(r.stdout, /PASS B3 quality: judge median 5\/5/,
+        `the B3 gate must run and take the fake judge's score\n${r.stderr}`);
+      assert.ok(fs.existsSync(path.join(outs, "evolve-skills")),
+        "the bank must land in the private SKILL_BENCH_OUTPUTS, which proves the override took effect");
+
+      const seen = fs.existsSync(judgeLog) ? fs.readFileSync(judgeLog, "utf-8") : "";
+      assert.ok(seen.includes(JUDGE_CUE), "the rubric judge must have been called");
+      assert.ok(seen.includes(HEAD), "the judge's prompt must carry the head of the answer");
+      assert.ok(seen.includes(TAIL),
+        "the judge's prompt must carry the answer past character 2000, not a clipped head");
+      assert.ok(seen.includes(ANSWER),
+        "the judge must receive the entire answer verbatim");
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true });
+    }
+  });
 });
 
 // ------------------------------------------------------------ E5 battle mode

@@ -52,8 +52,6 @@ Implementation complete. What would you like to do?
 Which option?
 ```
 
-**Don't add explanation** - keep options concise.
-
 ## Step 4: Execute Choice
 
 ### Option 1: Open or Update a Pull Request
@@ -86,12 +84,12 @@ Report: "Keeping branch <name>. Worktree preserved at <path>." Then stop.
 
 ### Option 3: Discard
 
-1. **Read what is there.** This checkout: `git rev-parse --show-toplevel`. The main checkout: the first `worktree` line of `git worktree list --porcelain` (it is listed first). Orca: `orca worktree current`. Remote branch: `git ls-remote --branches origin <branch>`. Pull request: Step 2. If this checkout is the main checkout, remove nothing: report that the branch is checked out there, ask the user to move it, and stop.
-2. **Show exactly what will be removed and wait for the word `discard`:**
+1. **Read what is there.** This checkout: `git rev-parse --show-toplevel`. The main checkout: the first `worktree` line of `git worktree list --porcelain` (it is listed first). Orca: `orca worktree current`. Remote branch: `git ls-remote --branches origin <branch>`. Pull request: Step 2. Commits not in the base: `git log --oneline origin/<base-branch>..<branch>`. Files: `git status --porcelain --ignored` in the worktree (modified, staged, untracked and ignored). If this checkout is the main checkout, remove nothing: report that the branch is checked out there, ask the user to move it, and stop.
+2. **Show everything that would be lost and wait for the word `discard`:**
 ```
 This will permanently delete:
 - Local branch <name> and its commits: <commit-list>
-- Worktree at <path> (a linked worktree only; the main checkout is never removed)
+- Worktree at <path>, with these files: <git status --porcelain --ignored output>
 It will not close pull request <url> or delete origin/<name> unless you ask.
 
 Type 'discard' to confirm.
@@ -99,7 +97,7 @@ Type 'discard' to confirm.
    Anything else cancels. If a pull request is open or a remote branch exists, ask separately whether to close the pull request (`gh pr close <n>`) or delete the remote branch (`git push origin --delete <branch>`). Do only what the user says yes to.
 3. **Close out the Plane item** with the `plane-work-tracking` skill (no pull request: Cancelled). `git branch -D` deletes the branch's `planeItem` and `planeItemStart` git config, so this comes first.
 4. **Remove the linked worktree, then the branch:**
-   - Orca manages it: from outside it, run `orca worktree rm --worktree path:<worktree-path> --force`.
+   - Orca manages it: from outside it, run `orca worktree rm --worktree path:<worktree-path> --force`. Use `--force` only when the file list in step 2 was shown and confirmed; if the files changed since, show the list again first.
    - Orca does not manage it: do not remove it. Report its path, ask the user to remove it, and wait for them to confirm.
    - Then, if `git show-ref --verify --quiet refs/heads/<branch>` finds the branch, run `git branch -D <branch>`.
 
@@ -115,14 +113,9 @@ This skill never merges. A pull request merges only after its review rounds are 
 - Push when `@{u}` is anything but `origin/<branch>`
 - Reopen a closed pull request
 - Merge locally, or merge a pull request from this skill
-- Delete work without typed `discard` confirmation
+- Delete work without typed `discard` confirmation against the full list of what would be lost
 - Close a pull request or delete a remote branch the user did not ask to remove
 - Remove the main checkout, or run `git switch` in any checkout
 - Delete a branch before the Plane close-out
 - Clean up after a merge yourself; that is the `pr-shepherd` post-merge close-out
 - Assume the base branch is `main`
-
-## Integration
-
-- **pr-shepherd**: drives review and the merge, and owns the post-merge close-out.
-- **plane-work-tracking**: close-out runs before any branch deletion.

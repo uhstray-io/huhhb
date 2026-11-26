@@ -70,3 +70,15 @@ A session that plans work reads this file and the `docs/MISTAKES.md` Index befor
   `stale-round-does-not-merge`. A brief that changes a rule names each scenario whose judge states
   that rule.
 - **APPLIES TO:** `tests/bench/<skill>.json` for any skill whose rules a unit changes.
+
+### L-006 · 2026-11-26 · repo hooks
+
+- **ACCEPTED:** PR #68, `product-inception` hands epics to Plane and decisions to `repo-memory`
+  (HUHHB-173).
+- **DERIVED:** Every commit in a huhhb checkout makes `.githooks/post-commit` append to an
+  untracked, unignored journal, `.claude/memory/wip/<branch with / as ->.md`. The owned-paths
+  scope check counts untracked files, so it fails on that journal after the first commit even
+  when every committed path is owned. The repo-memory PR consolidation retains the journal in
+  the Hindsight bank and then deletes it. Run that consolidation before the scope check, and
+  never add the journal to a brief's OWNS or commit it.
+- **APPLIES TO:** any unit in huhhb whose DONE WHEN runs `~/.claude/docs/scope-check`.

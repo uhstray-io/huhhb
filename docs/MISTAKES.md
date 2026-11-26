@@ -28,7 +28,7 @@ entry's `Occurrences` count and adds a dated note; it never opens a second entry
 | 4.1 | Skill-disabled baseline read the skill file from disk, so a failing baseline was reported as passing | Test passed for the wrong reason | 3 | `Convention` (bench fix: HUHHB-168) |
 | 4.2 | A baseline started in an empty directory still read the skill by absolute path; supersedes the working-directory clause of 4.1 | Test passed for the wrong reason | 1 | `Convention` (bench fix: HUHHB-168) |
 | 5.1 | PR #65 was returned four times: its bench asserts and written claims were settled during review, not before it | Process | 1 | `Convention` |
-| 5.2 | PR #67 was returned three times; each return found another state the skill acted on without reading it | Process | 1 | `Convention` |
+| 5.2 | PR #67 was returned three times; each return found another state the skill acted on without reading it | Process | 2 | `Convention` |
 | 6.1 | A bench trigger probe named the README, and its session rewrote the file's first paragraph in the working tree | Test wrote outside its own folder | 1 | `Convention` |
 
 ## 1. Asserting something without verifying it
@@ -418,7 +418,7 @@ new claim.
 
 ### 5.2 PR #67 was returned three times because the skill acted on state it had not read
 
-**Occurrences: 1** — 2026-11-26
+**Occurrences: 2** — 2026-11-26, 2026-11-26
 
 **What happened.** PR #67 (`finishing-a-development-branch`, HUHHB-176) was
 returned three times, each time for a state the skill's text assumed. Return 1
@@ -453,6 +453,20 @@ owns is pointed to, not rewritten. This widens the rule of 5.1 (replay before
 review) from bench asserts to skill instructions.
 
 **Enforced by.** `Convention`.
+
+**Occurrence 2 — 2026-11-26.** The recut, PR #73, was returned twice for the
+same kind of fault. Return 1 (CodeRabbit review 6081463266 on `68034cc9`):
+discard ran `orca worktree rm --force` without first reading or showing the
+worktree's uncommitted, untracked and ignored files. Return 2 (the
+`pr-reviewer` agent on `414566e2`): after the worktree was removed from outside
+it, the branch check `git show-ref --verify --quiet refs/heads/<branch>` named
+no directory; run outside a repository it exits 128, which the text read as
+"branch not found", so `git branch -D` was skipped. The rule did not prevent
+either. The recut's brief listed the state reads for pushing and for the pull
+request, but not for deleting, and no replay ran a step from the directory the
+previous step leaves it in. A step that runs after its checkout is gone names
+the directory it runs in (`git -C <path>`), and an exit code that means "error"
+is never read as "absent".
 
 ## 6. A test that wrote outside its own folder
 

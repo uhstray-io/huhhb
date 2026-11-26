@@ -76,7 +76,7 @@ EOF
 
 The title carries the Plane identifier in brackets when the repository tracks work in Plane, for example `feat(dns): handle AAAA [AC-123]`.
 
-The worktree and branch stay. After the pull request merges, run this skill again: Step 2 reads `MERGED` and hands off to `pr-shepherd`.
+After the merge, run this skill again; Step 2 hands off to `pr-shepherd`.
 
 ### Option 2: Keep As-Is
 
@@ -90,6 +90,7 @@ Report: "Keeping branch <name>. Worktree preserved at <path>." Then stop.
 This will permanently delete:
 - Local branch <name> and its commits: <commit-list>
 - Worktree at <path>, with these files: <git status --porcelain --ignored output>
+  (Orca manages it: removed with the branch. Otherwise: you remove it.)
 It will not close pull request <url> or delete origin/<name> unless you ask.
 
 Type 'discard' to confirm.
@@ -99,23 +100,20 @@ Type 'discard' to confirm.
 4. **Remove the linked worktree, then the branch:**
    - Orca manages it: from outside it, run `orca worktree rm --worktree path:<worktree-path> --force`. Use `--force` only when the file list in step 2 was shown and confirmed; if the files changed since, show the list again first.
    - Orca does not manage it: do not remove it. Report its path, ask the user to remove it, and wait for them to confirm.
-   - Then, if `git show-ref --verify --quiet refs/heads/<branch>` finds the branch, run `git branch -D <branch>`.
+   - Then, in the main checkout read in step 1, run `git -C <main-checkout> show-ref --verify --quiet refs/heads/<branch>`. Exit 0: run `git -C <main-checkout> branch -D <branch>`. Exit 1: the branch is already gone. Any other exit is an error: report it and stop; never read it as "branch not found".
 
 ## Merge Rule
 
-This skill never merges. A pull request merges only after its review rounds are done, every finding is fixed or answered, and its required checks are green, with `gh pr merge <n> --merge` (never `--squash` or `--rebase`), by the pull request owner or `pr-shepherd`.
+This skill never merges. Its owner or `pr-shepherd` merges a pull request once review rounds are done, every finding is fixed or answered and required checks are green: `gh pr merge <n> --merge`, never `--squash` or `--rebase`.
 
 ## Red Flags
 
 **Never:**
 - Proceed with failing tests
 - Push before reading the pull request state, or push for a `MERGED` or `CLOSED` pull request
-- Push when `@{u}` is anything but `origin/<branch>`
-- Reopen a closed pull request
-- Merge locally, or merge a pull request from this skill
+- Push when `@{u}` is set to anything but `origin/<branch>` (no upstream: only `git push -u origin <branch>`)
+- Merge locally or from this skill
 - Delete work without typed `discard` confirmation against the full list of what would be lost
-- Close a pull request or delete a remote branch the user did not ask to remove
 - Remove the main checkout, or run `git switch` in any checkout
-- Delete a branch before the Plane close-out
 - Clean up after a merge yourself; that is the `pr-shepherd` post-merge close-out
 - Assume the base branch is `main`

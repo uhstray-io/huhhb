@@ -302,16 +302,21 @@ saved/retrieved via the `/repo-memory`
 skill: a master `DECISIONS.md`
 indexed by domain, a per-year `INDEX.md` decision log, and one detail file
 per month. **Before answering a question about why this repo is built the way
-it is, check `DECISIONS.md` first.** Records are append-only — never edit an
-accepted one; supersede it and link the two (ADR-0003, ADR-0004).
+it is, check `DECISIONS.md` first.**
+The decision is in the ADR; the deliberation behind it is in the Hindsight bank.
+Records are append-only — never edit an accepted one; supersede it and link the
+two (ADR-0003, ADR-0004).
 
 Everything else routes away: code structure to the code graph, which
 regenerates it for free, and deliberation, outcomes and preferences to this
 repo's Hindsight bank, which is the only copy of them.
 
-`.claude/memory/` holds pre-2026-08 records and is **retired for new writes**.
-It is not deleted and not bulk-migrated; records are triaged individually by
-`fix-memory`.
+`.claude/memory/` holds pre-2026-08 records and is **retired for new writes**, except
+the branch wip journal `.claude/memory/wip/`, which `.githooks/post-commit` appends to on
+every commit. At PR creation that journal is consolidated into one paragraph, stored with
+`sync_retain` in the Hindsight bank, and deleted only after the sync completes; it is kept
+if the sync fails. Legacy records are not deleted and not bulk-migrated; they are triaged
+individually by `fix-memory`.
 
 ### When to save
 
@@ -335,7 +340,11 @@ A reversible implementation choice is not an ADR. Neither is a convention or a b
   behind it belongs in the bank.
 - Credential values, tokens, or real addresses — name the variable, never the value.
 
-Legacy `.claude/memory/` records are **repo-scoped** and retired for new writes.
+Legacy `.claude/memory/` records are **repo-scoped** and retired for new writes, except
+the branch wip journal `.claude/memory/wip/`, which `.githooks/post-commit` appends to on
+every commit. At PR creation that journal is consolidated into one paragraph, stored with
+`sync_retain` in the Hindsight bank, and deleted only after the sync completes; it is kept
+if the sync fails.
 Cross-project preferences and cross-session decisions belong to the device-level stores
 below. The MemPalace and Honcho strata are **retired from routing** as of 2026-08-01 —
 their skills still ship and their data is intact, invoked only when asked for by name,

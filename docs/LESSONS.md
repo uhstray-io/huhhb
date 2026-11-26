@@ -97,3 +97,21 @@ A session that plans work reads this file and the `docs/MISTAKES.md` Index befor
   keys on.
 - **APPLIES TO:** any `tests/bench/<skill>.json` assert that checks the order of steps in a
   free-text answer.
+
+### L-008 · 2026-11-26 · skill bench
+
+- **ACCEPTED:** PR #71, `repo-memory` given one answer for where a why question goes, with its
+  bench re-measured against a clean baseline (HUHHB-175).
+- **DERIVED:** A bench baseline loads the user's global `~/.claude/CLAUDE.md`, user-level skills
+  under `~/.claude/skills/` and installed plugins unless the session is told not to, and any of
+  them can teach the baseline what the skill teaches. Here the global `CLAUDE.md` describes the
+  same ADR layout as `repo-memory`, and `~/.claude/skills/repo-memory` put a second copy of the
+  skill in the baseline's catalog with the huhhb plugin switched off. `--setting-sources
+  project,local` kept all three out while auth still worked; `CLAUDE_CODE_DISABLE_CLAUDE_MDS=1`
+  kept the `CLAUDE.md` out; `--safe-mode` kept everything out but also dropped a plugin loaded
+  with `--plugin-dir`, so it cannot run the skill arm. Before a bench, give both arms the same
+  isolation and run a positive control: a bare session must find a line of the global
+  `CLAUDE.md` and the isolated one must not, and the baseline's `init` event must list no copy of
+  the skill.
+- **APPLIES TO:** `tests/bench/<skill>.json` for any skill whose rules overlap the maintainer's
+  global instructions or a user-level skill.

@@ -27,6 +27,7 @@ entry's `Occurrences` count and adds a dated note; it never opens a second entry
 | 4.1 | Skill-disabled baseline read the skill file from disk, so a failing baseline was reported as passing | Test passed for the wrong reason | 3 | `Convention` (bench fix: HUHHB-168) |
 | 4.2 | A baseline started in an empty directory still read the skill by absolute path; supersedes the working-directory clause of 4.1 | Test passed for the wrong reason | 1 | `Convention` (bench fix: HUHHB-168) |
 | 5.1 | PR #65 was returned four times: its bench asserts and written claims were settled during review, not before it | Process | 1 | `Convention` |
+| 5.2 | PR #67 was returned three times; each return found another state the skill acted on without reading it | Process | 1 | `Convention` |
 | 6.1 | A bench trigger probe named the README, and its session rewrote the file's first paragraph in the working tree | Test wrote outside its own folder | 1 | `Convention` |
 
 ## 1. Asserting something without verifying it
@@ -352,6 +353,44 @@ and after every later bench run, re-read each claim in the notes, the lesson
 and the PR body against the history rows. A correction made after a return
 removes or shortens text where it can; a sentence it adds is checked like any
 new claim.
+
+**Enforced by.** `Convention`.
+
+### 5.2 PR #67 was returned three times because the skill acted on state it had not read
+
+**Occurrences: 1** — 2026-11-26
+
+**What happened.** PR #67 (`finishing-a-development-branch`, HUHHB-176) was
+returned three times, each time for a state the skill's text assumed. Return 1
+(an owner correction before the PR opened, on `73efff5e`): the discard path did
+not handle an open pull request or a worktree with uncommitted changes, and the
+brief's own targets raised two lint warnings. Return 2 (CodeRabbit review
+6077397952 on `b21398bb`): a push with an upstream already set did not check
+`@{u}`, a `CLOSED` pull request was not handled, a `MERGED` one went to cleanup
+without checking that `HEAD` was in the base, and cleanup failed on the main
+checkout. Return 3 (the `pr-reviewer` agent on `6d63e9f9`): Option 1 pushed
+before it read the pull request state, which recreates a branch GitHub deletes
+on merge (`gh api repos/uhstray-io/huhhb --jq .delete_branch_on_merge` prints
+`true`), and the checkout test read the current directory while its step said
+to run from outside the worktree. Each fix patched the path its return named.
+Joseph recut the unit (batch decision 28), and #67 was closed unmerged.
+
+**Root cause.** Brief 05 listed the actions for each option but not the state
+each action depends on, so the executor wrote actions and the reviewers
+supplied the states one return at a time. The unit also rebuilt a post-merge
+cleanup that `pr-shepherd` already owns, which doubled the paths whose state
+could be wrong. As in 5.1, the replay against hostile states (a deleted remote
+branch, a closed pull request, the main checkout, a run from another
+directory) was done by the reviewers instead of before the PR opened.
+
+**The rule.** Before a brief for a skill that runs git or gh commands is
+dispatched, list for each command the state it depends on (the upstream, the
+pull request state, which checkout it runs in, whether the remote branch
+exists) and the read that establishes it, and order the skill so every read
+comes before the first write. Before the PR opens, replay the text against each
+hostile state and record the line that answers it. A step another skill already
+owns is pointed to, not rewritten. This widens the rule of 5.1 (replay before
+review) from bench asserts to skill instructions.
 
 **Enforced by.** `Convention`.
 

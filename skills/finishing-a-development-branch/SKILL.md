@@ -90,7 +90,7 @@ Report: "Keeping branch <name>. Worktree preserved at <path>." Then stop.
 This will permanently delete:
 - Local branch <name> and its commits: <commit-list>
 - Worktree at <path>, with these files: <git status --porcelain --ignored output>
-  (Orca manages it: removed with the branch. Otherwise: you remove it.)
+  (Orca manages it: this skill removes it. Otherwise: you remove it.)
 It will not close pull request <url> or delete origin/<name> unless you ask.
 
 Type 'discard' to confirm.
@@ -104,7 +104,7 @@ Type 'discard' to confirm.
 
 ## Merge Rule
 
-This skill never merges. Its owner or `pr-shepherd` merges a pull request once review rounds are done, every finding is fixed or answered and required checks are green: `gh pr merge <n> --merge`, never `--squash` or `--rebase`.
+This skill never merges. The pull request's owner or `pr-shepherd` merges it once review rounds are done, every finding is fixed or answered and required checks are green: `gh pr merge <n> --merge`, never `--squash` or `--rebase`.
 
 ## Red Flags
 

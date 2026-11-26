@@ -20,7 +20,7 @@ entry's `Occurrences` count and adds a dated note; it never opens a second entry
 
 | # | Summary | Class | Count | Enforced by |
 |---|---|---|---|---|
-| 1.1 | PR body listed test cases and lockfiles from memory; both lists were wrong | Unverified claim | 8 | `hooks/pr-claim-check.sh` (Bash `gh` path only; deny until acknowledged) |
+| 1.1 | PR body listed test cases and lockfiles from memory; both lists were wrong | Unverified claim | 9 | `hooks/pr-claim-check.sh` (Bash `gh` path only; deny until acknowledged) |
 | 1.2 | Scenario note gave a cause for a baseline difference that no run had isolated; a controlled run contradicted it | Unverified claim | 2 | `Convention` |
 | 1.3 | A re-judge reported as the bench's judge scored whole answers; the bench judged only the first 2,000 characters | Unverified claim | 1 | `Convention` (this case: `tests/test_evolve.test.ts`, PR #72) |
 | 2.1 | PR #60 merged with 4 CodeRabbit findings unanswered | Process | 1 | `hooks/pr-merge-guard.sh` (deny until acknowledged; fails open) |
@@ -35,7 +35,7 @@ entry's `Occurrences` count and adds a dated note; it never opens a second entry
 
 ### 1.1 PR body described the test suite and lockfile list from memory
 
-**Occurrences: 8** — 2026-11-13, 2026-11-13, 2026-11-13, 2026-11-13, 2026-11-20, 2026-11-22, 2026-11-26, 2026-11-26
+**Occurrences: 9** — 2026-11-13, 2026-11-13, 2026-11-13, 2026-11-13, 2026-11-20, 2026-11-22, 2026-11-26, 2026-11-26, 2026-11-26
 
 **What happened.** Opening PR #59 (grounding line threshold, HUHHB-156), the
 body listed the 10 cases in `tests/test_grounding_hook.test.ts` and the
@@ -144,6 +144,17 @@ uncorrected draft went out; the later body edit posted the same file. The
 `pr-reviewer` round on `e9121595` found it. A fix to a draft is a command of its
 own, and the draft is read back (a `grep` for the corrected text) before the
 guarded call posts it. The body is corrected before merge.
+
+**Occurrence 9 — 2026-11-26.** On PR #73, the owner's reply to CodeRabbit's
+bench comment said this skill "has no scenario file under `tests/bench/`". The
+sentence was written while composing the four thread replies, and the call that
+posted them carried `CLAIMS_VERIFIED=1` for the other three, which had been
+checked. The claim was checked only after it was posted (`ls tests/bench/ | grep
+-i finishing` printed nothing), so it happened to be true. The guard denies a
+command, not a sentence: one acknowledgement covered several texts, and a claim
+added while writing them was never put to the check. Each posting call carries
+text whose every claim was checked before that call, and a reply written in the
+same command as others is checked on its own.
 
 ### 1.2 A scenario note stated why two baselines differed, from runs that isolated nothing
 

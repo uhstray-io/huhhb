@@ -19,7 +19,7 @@ Template: [../TEMPLATE.md](../TEMPLATE.md).
 
 | Month | Decisions | File |
 |-------|-----------|------|
-| 2026-08 | 5 | [2026-08.md](2026-08.md) |
+| 2026-08 | 6 | [2026-08.md](2026-08.md) |
 
 ## Adding a row
 

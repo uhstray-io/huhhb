@@ -83,4 +83,4 @@ Find a decision three ways: **by domain** (the tables below), **by date** (the y
 
 | Year | Decisions | Index |
 |------|-----------|-------|
-| 2026 | 5 | [2026/INDEX.md](2026/INDEX.md) |
+| 2026 | 6 | [2026/INDEX.md](2026/INDEX.md) |

@@ -340,11 +340,7 @@ A reversible implementation choice is not an ADR. Neither is a convention or a b
   behind it belongs in the bank.
 - Credential values, tokens, or real addresses — name the variable, never the value.
 
-Legacy `.claude/memory/` records are **repo-scoped** and retired for new writes, except
-the branch wip journal `.claude/memory/wip/`, which `.githooks/post-commit` appends to on
-every commit. At PR creation that journal is consolidated into one paragraph, stored with
-`sync_retain` in the Hindsight bank, and deleted only after the sync completes; it is kept
-if the sync fails.
+Legacy `.claude/memory/` records are **repo-scoped** and retired for new writes, except the branch wip journal described above.
 Cross-project preferences and cross-session decisions belong to the device-level stores
 below. The MemPalace and Honcho strata are **retired from routing** as of 2026-08-01 —
 their skills still ship and their data is intact, invoked only when asked for by name,

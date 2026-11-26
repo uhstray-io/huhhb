@@ -9,7 +9,7 @@ Owns this repository's **architecture decision records** — their format, numbe
 indexes and lifecycle — at `plans/architecture/`. Committed to git, reviewable in the PR
 that changes them, readable by anyone who clones with no service running.
 
-**This skill is the only writer of ADRs in this repo.** ADRs are written only through this skill: no script and no other skill writes a record.
+**Write ADRs only through this skill.** No script and no other skill may write a record.
 
 **Scope: ratified decisions only.** Everything else has a better home:
 

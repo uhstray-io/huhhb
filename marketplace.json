@@ -177,7 +177,7 @@
     {
       "name": "finishing-a-development-branch",
       "path": "skills/finishing-a-development-branch/SKILL.md",
-      "description": "Use when implementation is complete and the branch needs finishing, such as \"finish this branch\" or \"I'm done implementing\". Verifies tests, then opens or updates a pull request, keeps the branch, or discards it. It never merges locally, and it closes out the Plane item before any branch or worktree cleanup.",
+      "description": "Use when implementation is complete and the branch needs finishing, such as \"finish this branch\" or \"done implementing\". Verifies tests, then opens or updates a pull request, keeps the branch, or discards it. It never merges locally, and it closes out the Plane item before any branch or worktree cleanup.",
       "category": "dev",
       "tags": [
         "superpowers",

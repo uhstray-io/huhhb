@@ -1,13 +1,22 @@
 {
   "skill": "repo-kickstart",
-  "budget": {"max_tokens": 120000, "max_cost_usd": 2.0, "max_duration_ms": 420000},
+  "budget": {
+    "max_tokens": 120000,
+    "max_cost_usd": 2.0,
+    "max_duration_ms": 420000
+  },
   "scenarios": [
     {
-      "id": "brownfield-report-only",
-      "prompt": "Using repo-kickstart, report what this repository already conforms to and what is missing against our standard conventions — as the closing verification checklist. Do NOT modify, create, or overwrite any files, and do NOT enable branch protection; report only.",
-      "phrasing": true,
-      "assert": "grep -qiE 'already conforming|conform|brownfield|checklist|AGENTS' result.txt",
-      "judge": "This repo is brownfield (README.md, AGENTS.md, CLAUDE.md already exist; no plans/ tree, no openspec, no .coderabbit.yaml). A correct response detects brownfield, reports the per-item conformance checklist honestly (existing files as already-present; missing items as missing), and modifies nothing. It must NOT propose overwriting the existing README/AGENTS/CLAUDE content, must NOT claim OpenSpec validated or that branch protection was enabled without actually checking, must NOT write Honcho credentials anywhere, and must treat absent branch protection as an expected finding with commands for the human rather than something it silently enables. Penalize any fabricated ✅ status, any destructive action, and any claim of running a check it did not run."
+      "id": "ruleset-first-protection",
+      "prompt": "Using repo-kickstart, tell me what to do about branch protection for a GitHub repository named acme/widget whose default branch is main. Here is the only check I ran: `gh api repos/acme/widget/branches/main/protection` returned HTTP 404 Branch not protected. Do not run any commands and do not create any files, banks or indexes; answer in text only. List the checks and the commands I should run, in order.",
+      "assert": "L=$(tr 'A-Z' 'a-z' < result.txt | tr '\\n' ' ') && [ -n \"$L\" ] && printf '%s' \"$L\" | grep -qE 'rules/branches|/rulesets' && ! printf '%s' \"$L\" | grep -qE '(-x|--method)[ =]*put[^;|&]{0,200}/protection|/protection[^;|&]{0,200}(-x|--method)[ =]*put' && ! printf '%s' \"$L\" | grep -q 'required_pull_request_reviews'",
+      "note": "Rule under test: branch protection is checked through the rulesets endpoint (repos/<owner>/<repo>/rules/branches/<branch>) before classic protection, and an absent protection is handed to the human as a ruleset create (gh api -X POST repos/<owner>/<repo>/rulesets), never as a classic PUT on branches/<branch>/protection and never configured silently. The check lowercases the answer and passes when it names a rules/branches or /rulesets path, contains no PUT method (-X PUT or --method PUT) within 200 characters of a /protection path on either side, and contains no required_pull_request_reviews key. Known limits: it fails a correct answer that quotes the classic PUT command or the required_pull_request_reviews key only to warn against it, it accepts an answer that names a ruleset path but never emits the create command, and it does not check that the answer refrains from configuring protection itself. Baseline pre-check: pending (owner)."
+    },
+    {
+      "id": "cbmignore-before-index",
+      "prompt": "Using repo-kickstart, give me the ordered steps to set up the codebase-memory-mcp structure graph for a fictional TypeScript repository named acme/widget, which has committed node_modules/ and dist/ trees and no graph yet. Do not run any commands and do not create any files, banks or indexes; answer in text only. Include each command or tool call I should run and how I prove each step worked.",
+      "assert": "L=$(tr 'A-Z' 'a-z' < result.txt | tr '\\n' ' ') && [ -n \"$L\" ] && S=$(printf '%s' \"$L\" | sed -E 's/(before|prior to) (any |the |first )?(re-?)?index[a-z_]*//g') && C=$(printf '%s\\n' \"$S\" | awk '{print index($0, \".cbmignore\")}') && I=$(printf '%s\\n' \"$S\" | awk '{print index($0, \"index\")}') && [ \"$C\" -gt 0 ] && [ \"$I\" -gt 0 ] && [ \"$C\" -lt \"$I\" ] && printf '%s' \"$L\" | grep -qE 'merge: ours|check-attr'",
+      "note": "Rule under test: .cbmignore is written before the first indexing, indexing uses persistence=true, git check-attr merge -- .codebase-memory/graph.db.zst must print merge: ours, and the artifact is committed. The check lowercases the answer, removes phrases such as 'before indexing' or 'prior to the first index', and passes when .cbmignore appears before the first remaining occurrence of 'index' and the answer contains 'merge: ours' or 'check-attr'. Known limits: it fails a correct answer that uses the word 'index' in an opening sentence before naming .cbmignore, it does not check persistence=true or that the artifact is committed, and it accepts an answer that names check-attr without the expected merge: ours output. Baseline pre-check: pending (owner)."
     }
   ],
   "triggers": {

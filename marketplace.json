@@ -480,7 +480,7 @@
     {
       "name": "pr-shepherd",
       "path": "skills/pr-shepherd/SKILL.md",
-      "description": "Use when buhhdy's Development workflow has open PRs that need driving from creation to merge and cleaned-up afterward — the terminal step once PRs are open. Monitors CI and CodeRabbit/human review, routes findings back to the original implementer, gates the merge on a human approval (never merges autonomously), then runs post-merge close-out: closes issues, updates the plan, archives the change, removes the worktree, and janitors stale buhhdy/* branches.",
+      "description": "Use when an orchestrating session has open PRs that need driving from creation to merge and cleanup afterward, the terminal step once PRs are open. Monitors CI and review rounds, routes findings back to the original implementer, merges only when the review rounds on the final head ask for no changes (merge commits only), then closes linked issues, closes out the Plane item, removes the worktree, and janitors stale branches in its own prefix.",
       "category": "review",
       "tags": [
         "review",
@@ -488,10 +488,9 @@
         "ci",
         "coderabbit",
         "merge",
-        "cleanup",
-        "buhhdy"
+        "cleanup"
       ],
-      "version": "0.2.1"
+      "version": "0.2.2"
     },
     {
       "name": "plane-work-tracking",
@@ -650,7 +649,7 @@
     {
       "name": "product-inception",
       "path": "skills/product-inception/SKILL.md",
-      "description": "Use when the user EXPLICITLY requests product inception — \"new product\", \"product inception\", \"new major initiative\", \"greenfield product planning\" — or explicitly asks for a BMAD-style phase (product brief, PRD, product architecture) for a major initiative. Never inferred from task size — for a feature, change, or bug (even \"use our full planning process\"), use core-workflows Workflow 1 instead.",
+      "description": "Use when the user EXPLICITLY requests product inception — \"new product\", \"product inception\", \"new major initiative\", \"greenfield product planning\" — or explicitly asks for a BMAD-style phase (product brief, PRD, product architecture) for a major initiative. Never inferred from task size — for a feature, change, or bug (even \"use our full planning process\"), use change-scale planning (brainstorming, then writing-plans) instead.",
       "category": "dev",
       "tags": [
         "dev",
@@ -662,7 +661,7 @@
         "architecture",
         "bmad"
       ],
-      "version": "0.1.0"
+      "version": "0.1.1"
     },
     {
       "name": "user-kickstart",

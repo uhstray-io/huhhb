@@ -46,3 +46,39 @@ A session that plans work reads this file and the `docs/MISTAKES.md` Index befor
   one passed 0 of 2. Run each candidate's clean baseline three times before the bench, and keep
   a prompt only when all three fail. This narrows L-002, which says to run each candidate once.
 - **APPLIES TO:** `tests/bench/<skill>.json` for any new or imported skill.
+
+### L-004 · 2026-11-26 · skill dependencies
+
+- **ACCEPTED:** PR #69, `pr-shepherd` made independent of buhhdy and OpenSpec before both are
+  deleted (HUHHB-172).
+- **DERIVED:** A search for a retired subsystem's name does not find everything that depends on
+  it. `pr-shepherd` also used buhhdy-only tools and policies whose names do not contain the word
+  buhhdy: the `cross-review` stage and its Cross-Review Rule, `sys_session_send`, and a
+  provider-tier routing table. Once the surrounding wording changed, a search for the name passed
+  with them still in place. A brief that removes a dependency lists the subsystem's own skills, tools and policy names,
+  found by reading the subsystem itself, and its DONE WHEN greps for those as well as the name.
+- **APPLIES TO:** any unit that removes a skill's dependency on a skill, plugin or directory that
+  is being deleted.
+
+### L-005 · 2026-11-26 · skill bench
+
+- **ACCEPTED:** PR #69, the `pr-shepherd` merge gate changed from a human approval to review
+  rounds on the final head (HUHHB-172).
+- **DERIVED:** When a skill's rule changes, every bench scenario that asserts the old rule changes
+  in the same PR, in its prompt, assert and judge, not only its fixture names. Scenario
+  `bot-approval-does-not-merge` judged a correct answer under the new gate as wrong, and became
+  `stale-round-does-not-merge`. A brief that changes a rule names each scenario whose judge states
+  that rule.
+- **APPLIES TO:** `tests/bench/<skill>.json` for any skill whose rules a unit changes.
+
+### L-006 · 2026-11-26 · repo hooks
+
+- **ACCEPTED:** PR #68, `product-inception` hands epics to Plane and decisions to `repo-memory`
+  (HUHHB-173).
+- **DERIVED:** Every commit in a huhhb checkout makes `.githooks/post-commit` append to an
+  untracked, unignored journal, `.claude/memory/wip/<branch with / as ->.md`. The owned-paths
+  scope check counts untracked files, so it fails on that journal after the first commit even
+  when every committed path is owned. The repo-memory PR consolidation retains the journal in
+  the Hindsight bank and then deletes it. Run that consolidation before the scope check, and
+  never add the journal to a brief's OWNS or commit it.
+- **APPLIES TO:** any unit in huhhb whose DONE WHEN runs `~/.claude/docs/scope-check`.

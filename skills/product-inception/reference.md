@@ -5,14 +5,14 @@ Role prompts and artifact templates for the three phases.
 **Attribution:** phase structure, template outlines, and the FR/AD/UJ/SM ID
 conventions are adapted from **BMad Method v6.x** (github.com/bmad-code-org/
 BMAD-METHOD, MIT), rewritten house-style. Nothing is vendored; the
-story/sprint layer is deliberately not adapted (LD-3). The Epic Queue section
-is a house addition — upstream BMAD sequences epics downstream of the PRD, in
-the story layer we cut.
+story/sprint layer is deliberately not adapted (ADR-0008). The Epic
+Queue section is a house addition — upstream BMAD sequences epics downstream
+of the PRD, in the story layer we cut.
 
 ## Role prompts
 
-Terse, checklist-driven, announce-at-start. Each is one dispatchable step
-(claude_code, COMPLEX, codex reviewer — see core-workflows Workflow 0).
+Terse, checklist-driven, announce-at-start. Each is one phase: a single
+session drafts the artifact, then presents it at the human gate.
 
 ### Analyst
 
@@ -40,7 +40,8 @@ Terse, checklist-driven, announce-at-start. Each is one dispatchable step
 > Answer with trade-offs, not verdicts; boring technology wins ties; no
 > abstraction before the Rule of Three. Every load-bearing choice is an AD-N
 > block (rule + rationale + what it prevents) under the literal `## Decisions`
-> heading — that section is extracted verbatim into ADRs. Map every PRD
+> heading — that section is recorded as one architecture decision per block on
+> approval. Map every PRD
 > capability to a structural element; park what you're not deciding in
 > Deferred. Terminate by presenting architecture.md for human approval. Do
 > not decompose into stories or changes.
@@ -89,8 +90,8 @@ numbered, testable consequences)>
 ## Epic Queue
 <E1..En, value-grouped, dependency-ordered. Per epic: goal, FRs covered,
 depends-on. Close with the FR coverage map: every FR-N → exactly one epic.
-This section is Workflow 1's input queue — one OpenSpec change per epic,
-proposal.md linking back here.>
+This section is the hand-off queue — each epic is filed as a Plane work item
+on approval, with depends-on as blocked-by relations.>
 ## Open Questions
 ```
 
@@ -103,7 +104,8 @@ proposal.md linking back here.>
 <the shape of the system and why>
 ## Decisions
 <AD-1..N blocks — **AD-n: <title>.** rule + rationale + prevents. This exact
-section promotes to plans/architecture/ ADRs on approval.>
+section is recorded as architecture decisions on approval, one record per
+AD-n block, with repo-memory.>
 ## Consistency Conventions
 <naming / data / state rules that hold everywhere>
 ## Stack
@@ -114,9 +116,10 @@ section promotes to plans/architecture/ ADRs on approval.>
 <explicitly not decided yet, and what would force the decision>
 ```
 
-## Non-conforming repos
+## Repos without the plans/architecture layout
 
 All three phases write into one `docs/plans/product-<slug>.md` with `## Brief`
 / `## PRD` / `## Architecture` top sections (same content, same gates).
-Promotion: skipped — note "ADR promotion skipped (layout not adopted; see
-repo-kickstart)". Suggest repo-kickstart once per session.
+On approval, each `AD-N` block is still recorded as its own architecture
+decision with `repo-memory`, which discovers where this repo keeps decisions.
+Suggest repo-kickstart once per session.

@@ -1,28 +1,19 @@
 ---
 name: finishing-a-development-branch
-description: Use when implementation is complete, all tests pass, and you need to decide how to integrate the work - guides completion of development work by presenting structured options for merge, PR, or cleanup
+description: Use when implementation is complete and the branch needs finishing, such as "finish this branch" or "done implementing". Verifies tests and reads the pull request state before any push, then opens or updates a pull request, keeps the branch, or discards it. After a merge it hands off to the pr-shepherd post-merge close-out.
 ---
 
 # Finishing a Development Branch
 
-## Overview
-
-Guide completion of development work by presenting clear options and handling chosen workflow.
-
-**Core principle:** Verify tests → Present options → Execute choice → Clean up.
+**Core principle:** verify tests, read the real state, then act. Never push, remove or delete anything before reading what is there.
 
 **Announce at start:** "I'm using the finishing-a-development-branch skill to complete this work."
 
-## The Process
+Run every read below inside the checkout being finished.
 
-### Step 1: Verify Tests
+## Step 1: Verify Tests
 
-**Before presenting options, verify tests pass:**
-
-```bash
-# Run project's test suite
-npm test / cargo test / pytest / go test ./...
-```
+**Before anything else, verify the test suite passes.** Run the project's test command, for example `npm test`, `cargo test`, `pytest`, or `go test ./...`.
 
 **If tests fail:**
 ```
@@ -30,70 +21,50 @@ Tests failing (<N> failures). Must fix before completing:
 
 [Show failures]
 
-Cannot proceed with merge/PR until tests pass.
+Cannot proceed until tests pass.
 ```
 
 Stop. Don't proceed to Step 2.
 
-**If tests pass:** Continue to Step 2.
-
-### Step 2: Determine Base Branch
+## Step 2: Read the Pull Request State
 
 ```bash
-# Try common base branches
-git merge-base HEAD main 2>/dev/null || git merge-base HEAD master 2>/dev/null
+gh pr view <branch> --json number,url,state,baseRefName
 ```
 
-Or ask: "This branch split from main - is that correct?"
+Name the branch: it still finds a merged pull request after GitHub deleted the remote branch. No pull request is a valid answer: it prints `no pull requests found for branch "<branch>"` and exits 1. The base branch is the pull request's `baseRefName`. With no pull request, ask the user which branch the work was cut from. Never assume `main`.
 
-### Step 3: Present Options
+- `MERGED`: do not push. Run `git fetch origin`, then `git merge-base --is-ancestor HEAD origin/<base-branch>`.
+  - Exit 0: the work is merged. Hand off to the post-merge close-out in `pr-shepherd` (Plane close-out, worktree removal, branch cleanup) and stop.
+  - Non-zero: commits came after the merge. Report them (`git log --oneline origin/<base-branch>..HEAD`) and ask the user before doing anything else.
+- `CLOSED`: do not push. Report its URL and ask the user what to do. Never reopen it; it may have been closed on purpose.
+- `OPEN`, or no pull request: go to Step 3.
 
-Present exactly these 4 options:
+## Step 3: Present Options
 
 ```
 Implementation complete. What would you like to do?
 
-1. Merge back to <base-branch> locally
-2. Push and create a Pull Request
-3. Keep the branch as-is (I'll handle it later)
-4. Discard this work
+1. Open or update a pull request
+2. Keep the branch as-is
+3. Discard this work
 
 Which option?
 ```
 
-**Don't add explanation** - keep options concise.
+## Step 4: Execute Choice
 
-### Step 4: Execute Choice
+### Option 1: Open or Update a Pull Request
 
-#### Option 1: Merge Locally
-
-```bash
-# Switch to base branch
-git checkout <base-branch>
-
-# Pull latest
-git pull
-
-# Merge feature branch
-git merge <feature-branch>
-
-# Verify tests on merged result
-<test command>
-
-# If tests pass
-git branch -d <feature-branch>
-```
-
-Then: Cleanup worktree (Step 5)
-
-#### Option 2: Push and Create PR
+1. **Read the upstream:** `git rev-parse --abbrev-ref @{u}`.
+   - Prints `origin/<branch>`: run `git push origin <branch>`.
+   - Fails (no upstream): run `git push -u origin <branch>`, then read it again. It must print `origin/<branch>`; otherwise stop and report it.
+   - Prints anything else, including `origin/main`: stop and report it. Do not push.
+2. **Pull request open:** the push updated it. Report its URL.
+3. **No pull request:** create one against the base branch from Step 2:
 
 ```bash
-# Push branch
-git push -u origin <feature-branch>
-
-# Create PR
-gh pr create --title "<title>" --body "$(cat <<'EOF'
+gh pr create --base <base-branch> --title "<title>" --body "$(cat <<'EOF'
 ## Summary
 <2-3 bullets of what changed>
 
@@ -103,98 +74,46 @@ EOF
 )"
 ```
 
-Then: Cleanup worktree (Step 5)
+The title carries the Plane identifier in brackets when the repository tracks work in Plane, for example `feat(dns): handle AAAA [AC-123]`.
 
-#### Option 3: Keep As-Is
+After the merge, run this skill again; Step 2 hands off to `pr-shepherd`.
 
-Report: "Keeping branch <name>. Worktree preserved at <path>."
+### Option 2: Keep As-Is
 
-**Don't cleanup worktree.**
+Report: "Keeping branch <name>. Worktree preserved at <path>." Then stop.
 
-#### Option 4: Discard
+### Option 3: Discard
 
-**Confirm first:**
+1. **Read what is there.** This checkout: `git rev-parse --show-toplevel`. The main checkout: the first `worktree` line of `git worktree list --porcelain` (it is listed first). Orca: `orca worktree current`. Remote branch: `git ls-remote --branches origin <branch>`. Pull request: Step 2. Commits not in the base: `git log --oneline origin/<base-branch>..<branch>`. Files: `git status --porcelain --ignored` in the worktree (modified, staged, untracked and ignored). If this checkout is the main checkout, remove nothing: report that the branch is checked out there, ask the user to move it, and stop.
+2. **Show everything that would be lost and wait for the word `discard`:**
 ```
 This will permanently delete:
-- Branch <name>
-- All commits: <commit-list>
-- Worktree at <path>
+- Local branch <name> and its commits: <commit-list>
+- Worktree at <path>, with these files: <git status --porcelain --ignored output>
+  (Orca manages it: this skill removes it. Otherwise: you remove it.)
+It will not close pull request <url> or delete origin/<name> unless you ask.
 
 Type 'discard' to confirm.
 ```
+   Anything else cancels. If a pull request is open or a remote branch exists, ask separately whether to close the pull request (`gh pr close <n>`) or delete the remote branch (`git push origin --delete <branch>`). Do only what the user says yes to.
+3. **Close out the Plane item** with the `plane-work-tracking` skill (no pull request: Cancelled). `git branch -D` deletes the branch's `planeItem` and `planeItemStart` git config, so this comes first.
+4. **Remove the linked worktree, then the branch:**
+   - Orca manages it: from outside it, run `orca worktree rm --worktree path:<worktree-path> --force`. Use `--force` only when the file list in step 2 was shown and confirmed; if the files changed since, show the list again first.
+   - Orca does not manage it: do not remove it. Report its path, ask the user to remove it, and wait for them to confirm.
+   - Then, in the main checkout read in step 1, run `git -C <main-checkout> show-ref --verify --quiet refs/heads/<branch>`. Exit 0: run `git -C <main-checkout> branch -D <branch>`. Exit 1: the branch is already gone. Any other exit is an error: report it and stop; never read it as "branch not found".
 
-Wait for exact confirmation.
+## Merge Rule
 
-If confirmed:
-```bash
-git checkout <base-branch>
-git branch -D <feature-branch>
-```
-
-Then: Cleanup worktree (Step 5)
-
-### Step 5: Cleanup Worktree
-
-**For Options 1, 2, 4:**
-
-Check if in worktree:
-```bash
-git worktree list | grep $(git branch --show-current)
-```
-
-If yes:
-```bash
-git worktree remove <worktree-path>
-```
-
-**For Option 3:** Keep worktree.
-
-## Quick Reference
-
-| Option | Merge | Push | Keep Worktree | Cleanup Branch |
-|--------|-------|------|---------------|----------------|
-| 1. Merge locally | ✓ | - | - | ✓ |
-| 2. Create PR | - | ✓ | ✓ | - |
-| 3. Keep as-is | - | - | ✓ | - |
-| 4. Discard | - | - | - | ✓ (force) |
-
-## Common Mistakes
-
-**Skipping test verification**
-- **Problem:** Merge broken code, create failing PR
-- **Fix:** Always verify tests before offering options
-
-**Open-ended questions**
-- **Problem:** "What should I do next?" → ambiguous
-- **Fix:** Present exactly 4 structured options
-
-**Automatic worktree cleanup**
-- **Problem:** Remove worktree when might need it (Option 2, 3)
-- **Fix:** Only cleanup for Options 1 and 4
-
-**No confirmation for discard**
-- **Problem:** Accidentally delete work
-- **Fix:** Require typed "discard" confirmation
+This skill never merges. The pull request's owner or `pr-shepherd` merges it once review rounds are done, every finding is fixed or answered and required checks are green: `gh pr merge <n> --merge`, never `--squash` or `--rebase`.
 
 ## Red Flags
 
 **Never:**
 - Proceed with failing tests
-- Merge without verifying tests on result
-- Delete work without confirmation
-- Force-push without explicit request
-
-**Always:**
-- Verify tests before offering options
-- Present exactly 4 options
-- Get typed confirmation for Option 4
-- Clean up worktree for Options 1 & 4 only
-
-## Integration
-
-**Called by:**
-- **subagent-driven-development** (Step 7) - After all tasks complete
-- **executing-plans** (Step 5) - After all batches complete
-
-**Pairs with:**
-- **using-git-worktrees** - Cleans up worktree created by that skill
+- Push before reading the pull request state, or push for a `MERGED` or `CLOSED` pull request
+- Push when `@{u}` is set to anything but `origin/<branch>` (no upstream: only `git push -u origin <branch>`)
+- Merge locally or from this skill
+- Delete work without typed `discard` confirmation against the full list of what would be lost
+- Remove the main checkout, or run `git switch` in any checkout
+- Clean up after a merge yourself; that is the `pr-shepherd` post-merge close-out
+- Assume the base branch is `main`

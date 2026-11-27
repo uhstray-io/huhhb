@@ -13,7 +13,7 @@ Onboarding for humans and agents working on **huhhb**.
   - [codebase-memory-mcp](https://github.com/DeusData/codebase-memory-mcp) — the code
     graph. Structural truth, regenerated from source, zero write cost.
   - [Hindsight](https://github.com/vectorize-io/hindsight) — the experience store.
-    Decisions, rationale and outcomes; the only copy of them.
+    Deliberation, outcomes and preferences; the only copy of them. Ratified decisions are ADRs in `plans/architecture/` (ADR-0001).
 - **`mempalace`** (legacy, optional) — **retired from routing 2026-08-01, and its MCP
   server is now opt-in rather than shipped.** huhhb used to register it for every
   installer; now you add it yourself if you want it, which is the only way to reach the
@@ -42,41 +42,14 @@ node --test tests/test_evolve.test.ts      # offline evolve suite
 - Branch → PR → CodeRabbit + cross-review → human review. Never push non-trivial
   changes directly to `main`.
 
-## Branch protection (one-time, admin)
+## Branch protection
 
-`main` is covered by the **`protect-main` ruleset** (active since 2026-07-18):
-a PR is required, force-pushes and deletion are blocked. Do **not** add classic
-branch protection on top — two overlapping mechanisms is how the
-worktree/GUI-push hazard got missed the first time.
+`main` is covered by the **`protect-main` ruleset** (active): a PR is required,
+force-pushes and deletion are blocked. Do **not** add classic branch protection
+on top — two overlapping mechanisms is how the worktree/GUI-push hazard got
+missed the first time.
 
-One gap remains: `required_approving_review_count` is `0`, so a PR can be
-self-merged with no approval. Required reviews are a precondition for the
-pr-shepherd lifecycle. An admin raises it once — via
-[repo rules](https://github.com/uhstray-io/huhhb/rules/19158566), or:
-
-```bash
-gh api -X PUT repos/uhstray-io/huhhb/rulesets/19158566 --input - <<'JSON'
-{
-  "name": "protect-main",
-  "target": "branch",
-  "enforcement": "active",
-  "conditions": { "ref_name": { "include": ["~DEFAULT_BRANCH"], "exclude": [] } },
-  "rules": [
-    { "type": "pull_request",
-      "parameters": {
-        "required_approving_review_count": 1,
-        "dismiss_stale_reviews_on_push": false,
-        "require_code_owner_review": false,
-        "require_last_push_approval": false,
-        "required_review_thread_resolution": false,
-        "allowed_merge_methods": ["merge", "squash", "rebase"]
-      } },
-    { "type": "non_fast_forward" },
-    { "type": "deletion" }
-  ]
-}
-JSON
-```
-
-The `rules` array is replaced wholesale on `PUT` — send all three rules, not
-just the changed one.
+pr-shepherd's hard gate is only that the default branch requires a pull request
+(`skills/pr-shepherd/SKILL.md`, precondition 1). Its precondition 2 warns when
+`delete_branch_on_merge` is true, and this repo has it true (read 2026-11-26).
+Recommendation: no ruleset, protection or setting change.

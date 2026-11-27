@@ -70,11 +70,11 @@ run the server and deriver worker with your own LLM keys (see honcho.dev
 docs), then `init --url http://your-host:8000` and `smoke`.
 
 **uhstray self-hosted instance** (agent-cloud, 2026-07-07): deployed at
-**`https://memory.uhstray.io`** — rootless podman (api + deriver + postgres/pgvector
+**the org-hosted Honcho instance (address kept in site-config)** — rootless podman (api + deriver + postgres/pgvector
 + redis), LLM via Gemini interim → skynet later, **JWT auth on `/v3`** with
 Authentik forward_auth only on `/docs`. Spec:
 `agent-cloud/plan/development/11-tududi-honcho-deployment.md`. Point evolve at it
-with `HONCHO_URL=https://memory.uhstray.io`, `HONCHO_WORKSPACE=uhstray`, and a
+with `HONCHO_URL` set to the org-hosted Honcho instance (address kept in site-config), `HONCHO_WORKSPACE=uhstray`, and a
 workspace-scoped `HONCHO_API_KEY` (JWT — **not** OIDC; API callers are
 non-interactive). **Team collaboration:** one shared workspace (`uhstray`), each
 member a **peer** (stable id), a **session** per thread. Mint each member a
@@ -518,7 +518,7 @@ provenance.
   Journal replay hydrated `uhstray`: 220 observations across 163 sessions
   delivered, 21 GR2-quarantined held, re-run idempotent (0). Storage verified
   by round-trip read; **deriver is not consuming** (queue stuck at 222
-  pending / 0 completed — server-side, .190 deriver worker or its Gemini
+  pending / 0 completed — server-side, the org-hosted Honcho instance's deriver worker or its Gemini
   config). First real /evolve-distill pass: 16 healthy skill-usage classes
   (correctly no create), one friction class (superpowers:executing-plans, 2
   sessions → future review patch), and one genuine gap distilled —
@@ -538,7 +538,7 @@ provenance.
   --replay-journal` shipped — the cutover bootstrap that delivers the
   pre-existing local journal to a new Honcho once (GR2-screened,
   cursor-idempotent, evidence invariant intact). Live smoke is blocked on
-  infra, not code: Cloudflare challenges API clients on memory.uhstray.io
+  infra, not code: Cloudflare challenges API clients on the org-hosted Honcho instance
   (403 before Honcho is reached — /health proves the service healthy via
   Caddy-direct) and the phase-4 team JWT is not yet minted. R10 added:
   Hindsight as a complementary analytical layer (who-layer/what-layer split,

@@ -184,6 +184,9 @@ A session that plans work reads this file and the `docs/MISTAKES.md` Index befor
   `skills/using-superpowers/references/codex-tools.md:36` cited
   `code-quality-reviewer-prompt.md` from the deleted `subagent-driven-development`. The planner's
   `git grep -l` listed that file for another match, and the second reference was found only by
-  the executor. A deletion brief greps with `-n` for the skill name and for the name of every
-  file the skill ships, and lists every matching line, not every matching file.
+  the executor. Review then found `skills/requesting-code-review/SKILL.md:15` and `:79-87`
+  naming the deleted workflows as "subagent-driven development" and "Executing Plans", which a
+  hyphenated-name grep does not match. A deletion brief greps with `git grep -n -i` for the skill
+  name with `[- ]` between its words and for the name of every file the skill ships, and lists
+  every matching line, not every matching file.
 - **APPLIES TO:** any unit that deletes a skill or a file other skills can cite.

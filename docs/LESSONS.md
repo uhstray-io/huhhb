@@ -168,7 +168,7 @@ A session that plans work reads this file and the `docs/MISTAKES.md` Index befor
 
 ### L-013 · 2026-11-26 · skill lint
 
-- **ACCEPTED:** PR for HUHHB-178, six development and session skills removed and the survivors
+- **ACCEPTED:** PR #75 (HUHHB-178), six development and session skills removed and the survivors
   that named them corrected (batch decision 35).
 - **DERIVED:** L-010's check "no lint line names the skill" cannot pass when the base lint already
   names a skill the unit must edit: on `714aa97d`, `writing-skills` (S6 grandfathered, S12) and
@@ -179,7 +179,7 @@ A session that plans work reads this file and the `docs/MISTAKES.md` Index befor
 
 ### L-014 · 2026-11-26 · skill dependencies
 
-- **ACCEPTED:** PR for HUHHB-178, six development and session skills removed (batch decision 10).
+- **ACCEPTED:** PR #75 (HUHHB-178), six development and session skills removed (batch decision 10).
 - **DERIVED:** A deleted skill's support files are names a survivor can depend on too:
   `skills/using-superpowers/references/codex-tools.md:36` cited
   `code-quality-reviewer-prompt.md` from the deleted `subagent-driven-development`. The planner's

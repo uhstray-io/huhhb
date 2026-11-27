@@ -39,8 +39,10 @@ node --test tests/test_evolve.test.ts      # offline evolve suite
   `onboarding/skills-list.md` + one real `tests/bench/<skill>.json` scenario.
 - Plans are dated Markdown files in `plans/development/` (`YYYY-MM-DD-<slug>.md`).
   Architecture decisions are ADRs in `plans/architecture/`. Work is tracked in Plane.
-- Branch → PR → CodeRabbit + cross-review → human review. Never push non-trivial
-  changes directly to `main`.
+- Branch → PR → review rounds (one for a PR into a feature or integration branch,
+  two for a promotion into `main`) → merge commit, once every finding is fixed or
+  answered and the required checks pass. Never push non-trivial changes directly
+  to `main`.
 
 ## Branch protection
 

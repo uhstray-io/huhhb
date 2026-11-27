@@ -153,7 +153,15 @@ A session that plans work reads this file and the `docs/MISTAKES.md` Index befor
   slash (its header, line 26). An OWNS list written as `buhhdy` instead of `buhhdy/` reports every
   file under it as outside OWNS, so a deletion unit's scope check fails on a correct diff. A brief
   that owns a directory writes it with the trailing slash in OWNS and in the scope-check command.
-  Its DONE WHEN grep also lists every match outside OWNS before dispatch, because a whole-tree grep
-  finds files no step was going to touch: on this unit, four.
-- **APPLIES TO:** any batch brief whose OWNS names a directory, and any DONE WHEN that greps the
-  whole tree.
+- **APPLIES TO:** any batch brief whose OWNS names a directory.
+
+### L-012 · 2026-11-26 · batch briefs
+
+- **ACCEPTED:** PR #74, buhhdy, `openspec-conformance` and the repository's OpenSpec store removed
+  (HUHHB-177).
+- **DERIVED:** A DONE WHEN that greps the whole tree for a removed name also matches files that no
+  step of the brief touches and that OWNS does not list: on this unit, four. The planner runs that
+  grep against the base before dispatch, subtracts the OWNS paths, and either adds each remaining
+  file to OWNS or excludes it from the grep with a stated reason. Otherwise the executor reaches a
+  DONE WHEN it cannot pass without editing outside OWNS.
+- **APPLIES TO:** any DONE WHEN that greps the whole tree.

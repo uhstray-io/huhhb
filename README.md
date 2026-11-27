@@ -249,7 +249,14 @@ The day-to-day craft. These run many times a session and act on whatever is in f
 
 ## Plugin Hooks
 
-The hooks registered in `.claude-plugin/plugin.json` fire automatically — no invocation needed. Other scripts in `hooks/` are not registered and do not run:
+The hooks registered in `.claude-plugin/plugin.json` fire automatically — no invocation needed. The other files in `hooks/` are not registered:
+
+- `repo-memory-pr-consolidate.js` holds the logic of `repo-memory-pr-consolidate.sh`, which runs it with `node`.
+- `repo-memory-adr-check.sh` runs from the repo's own `.githooks/post-commit` after each commit once `core.hooksPath` is set to `.githooks`; it prints an ADR nudge and never blocks.
+- `explain-changes-activate.ps1`, `grounding-check.ps1` and `precommit-explain.ps1` are PowerShell reference equivalents for manual setup; `plugin.json` never selects them ([CONTEXT.md](CONTEXT.md), Design Constraints).
+- `stop-hook.sh` and `stop-hook.ps1` are not invoked by any hook, script or config, so nothing runs them.
+
+The registered hooks:
 
 | Hook | Event | Purpose |
 |------|-------|---------|

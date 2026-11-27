@@ -284,8 +284,8 @@ finished to anyone outside the batch.
 **The rule.** When a review round asks for changes, or a PR is held on a
 decision, its owner converts it to a draft (`gh pr ready <n> --undo`) and says
 in a PR comment what it is waiting for. It is marked ready (`gh pr ready <n>`)
-when the fix is pushed and no decision is pending, before the next round is
-requested. The state a merger sees on GitHub then matches the state of the
+when every requested change is pushed and no decision is pending, before the
+next round is requested. The state a merger sees on GitHub then matches the state of the
 review. A PR is not made a draft only to wait for its first round: CodeRabbit
 does not review drafts in this repo (`.coderabbit.yaml:11`), and the Plane
 GitHub integration moves a draft PR's work item to Backlog (`AGENTS.md:249`).

@@ -20,10 +20,11 @@ entry's `Occurrences` count and adds a dated note; it never opens a second entry
 
 | # | Summary | Class | Count | Enforced by |
 |---|---|---|---|---|
-| 1.1 | PR body listed test cases and lockfiles from memory; both lists were wrong | Unverified claim | 9 | `hooks/pr-claim-check.sh` (Bash `gh` path only; deny until acknowledged) |
+| 1.1 | PR body listed test cases and lockfiles from memory; both lists were wrong | Unverified claim | 10 | `hooks/pr-claim-check.sh` (Bash `gh` path only; deny until acknowledged) |
 | 1.2 | Scenario note gave a cause for a baseline difference that no run had isolated; a controlled run contradicted it | Unverified claim | 2 | `Convention` |
 | 1.3 | A re-judge reported as the bench's judge scored whole answers; the bench judged only the first 2,000 characters | Unverified claim | 1 | `Convention` (this case: `tests/test_evolve.test.ts`, PR #72) |
 | 2.1 | PR #60 merged with 4 CodeRabbit findings unanswered | Process | 1 | `hooks/pr-merge-guard.sh` (deny until acknowledged; fails open) |
+| 2.2 | PR #77 was merged by another admin before its two review rounds ran on the final head | Process | 1 | `Convention` (the `main` ruleset requires a PR with 0 approvals; any ruleset change is Joseph's) |
 | 3.1 | Grounding spec accepted "merges count as work" as rare; merging `dev` is routine, so the only line nudge was a false positive | Design assumption | 1 | `tests/test_grounding_hook.test.ts` (merge and fast-forward cases) |
 | 4.1 | Skill-disabled baseline read the skill file from disk, so a failing baseline was reported as passing | Test passed for the wrong reason | 3 | `Convention` (bench fix: HUHHB-168) |
 | 4.2 | A baseline started in an empty directory still read the skill by absolute path; supersedes the working-directory clause of 4.1 | Test passed for the wrong reason | 1 | `Convention` (bench fix: HUHHB-168) |
@@ -35,7 +36,7 @@ entry's `Occurrences` count and adds a dated note; it never opens a second entry
 
 ### 1.1 PR body described the test suite and lockfile list from memory
 
-**Occurrences: 9** — 2026-11-13, 2026-11-13, 2026-11-13, 2026-11-13, 2026-11-20, 2026-11-22, 2026-11-26, 2026-11-26, 2026-11-26
+**Occurrences: 10** — 2026-11-13, 2026-11-13, 2026-11-13, 2026-11-13, 2026-11-20, 2026-11-22, 2026-11-26, 2026-11-26, 2026-11-26, 2026-11-27
 
 **What happened.** Opening PR #59 (grounding line threshold, HUHHB-156), the
 body listed the 10 cases in `tests/test_grounding_hook.test.ts` and the
@@ -156,6 +157,17 @@ added while writing them was never put to the check. Each posting call carries
 text whose every claim was checked before that call, and a reply written in the
 same command as others is checked on its own.
 
+**Occurrence 10 — 2026-11-27.** On PR #78, the first root cause of entry 2.2
+said the hold on PR #77 lived only in the batch's handoff files and that #77's
+last comment made the PR look finished. That last comment, posted by me at
+2026-11-27T03:10:56Z, said the review rounds on the final head wait for
+Joseph's answer. The sentence was written from my account of the event, not
+from a read of #77's comments, and it reached GitHub in a commit, which
+`hooks/pr-claim-check.sh` does not inspect. Review round 3 found it. A ledger
+entry's facts about a PR are read from that PR (its comments, timeline and
+checks through `gh api`) in the session that writes the entry, before the
+commit.
+
 ### 1.2 A scenario note stated why two baselines differed, from runs that isolated nothing
 
 **Occurrences: 2** — 2026-11-20, 2026-11-20
@@ -256,6 +268,44 @@ with the reason. A count printed in the same command as the merge is not a check
 `gh pr merge` while any unresolved thread's last comment is not the merging
 user's, until re-run with `REVIEW_ANSWERED=1`. Tested by
 `tests/test_pr_merge_guard.test.ts`. Fails open when `gh` cannot answer.
+
+### 2.2 PR #77 merged before its required review rounds ran on the final head
+
+**Occurrences: 1** — 2026-11-27
+
+**What happened.** PR #77 promoted the cleanup-pass integration branch into
+`main` (v0.9.34, HUHHB-180). As a promotion it needed two review rounds on its
+final head, the last asking for no changes. The second round on `4fb601ce`
+asked for changes (PR comment, 2026-11-27T03:08:50Z). The fix was pushed as
+`e1902072` and answered in a PR comment at 03:10:56Z, which said the review
+rounds on the final head wait for Joseph's answer on whether `repo-kickstart`
+needed a new bench run. It was the last comment on the PR. During
+that hold, another repo admin merged the PR at 04:47:52Z as `316a723c`, after
+merging #48 into `main` first. No review round ran on `e1902072`. Lint, tests,
+the tag and the release all passed on `316a723c`, and Joseph accepted the merge
+as it stands, with no post-merge review and no revert (batch decision 44).
+
+**Root cause.** The hold was stated on GitHub only as prose, in the 03:10:56Z
+comment. GitHub's own state showed nothing held: the PR was open and was never
+a draft, its `test` check passed (no check is required on `main`), and the
+`main` ruleset was satisfied, since it requires a pull request with
+`required_approving_review_count: 0`. A merger acts on that state, not on the
+text of a comment.
+
+**The rule.** When a review round asks for changes, or a PR is held on a
+decision, its owner converts it to a draft (`gh pr ready <n> --undo`) and says
+in a PR comment what it is waiting for. It is marked ready (`gh pr ready <n>`)
+when every requested change is pushed and no decision is pending, before the
+next round is requested. While a PR is held, its GitHub state shows the hold.
+Between marking it ready and the next round's result it does not, so whoever
+merges first confirms on the PR that every required round on the final head has
+finished. A comment alone did not stop #77's merge: the draft state is the
+control, and the comment says why it is set. A PR is not made a draft only to wait for its first round: CodeRabbit
+does not review drafts in this repo (`.coderabbit.yaml:11`), and the Plane
+GitHub integration moves a draft PR's work item to Backlog (`AGENTS.md:249`).
+
+**Enforced by.** `Convention`. The `main` ruleset requires a pull request with
+zero approvals; changing the ruleset is Joseph's decision.
 
 ## 3. Accepting a limit without measuring how often it happens
 

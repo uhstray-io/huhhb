@@ -14,14 +14,6 @@ records, global sequential numbering, one decision per record, never delete. Thi
 does not restate them; a second copy is a second thing to keep in sync.
 
 `ARCHITECTURE.md` at the repo root summarizes current state; the decisions that produced
-it live here. Current-state capability specs live in the store at
-`plans/development/openspec/specs/` — **OpenSpec writes specifications, not decisions**
-(ADR-0003).
-
-## Promotion from an OpenSpec change
-
-`promote-adr.ts` extracts a change's `design.md` `## Decisions` section into a numbered
-ADR on archive, appending it to the monthly file and adding its row to both indexes. The
-mechanism is `openspec-conformance`'s; the **records are `repo-memory`'s**. Do not
-hand-number ADRs when promoting, and do not fold a promoted ADR in by hand — the promoter
-already did.
+it live here. Each decision is written as one record with the `repo-memory` skill and
+added to both indexes. Development plans are dated Markdown files in
+`plans/development/`, and work is tracked in Plane (ADR-0007).

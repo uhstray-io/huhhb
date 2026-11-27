@@ -7,7 +7,6 @@ Onboarding for humans and agents working on **huhhb**.
 - **Node ≥ 22.18** — first-party code is TypeScript run directly via native type
   stripping. No build step, no transpiler, zero npm runtime dependencies.
 - **`gh`** — GitHub CLI, for PRs and branch protection.
-- **`openspec` ≥ 1.6.0** — the plans store CLI (`plans/development` is store `huhhb`).
 - **Memory stores** (optional) — needed only to exercise the memory skills. Run
   `/memory-setup` rather than installing by hand; it reviews the installer,
   snapshots config before writing, and control-tests containment at each gate.
@@ -30,7 +29,6 @@ There is nothing to `npm install` for the runtime — Node stdlib only.
 node scripts/skill-lint.ts                 # G0 static lint (frontmatter, links, manifest sync)
 node scripts/skill-bench.ts <skill>        # G1 merge bench (real claude -p runs; costs tokens)
 node --test tests/test_evolve.test.ts      # offline evolve suite
-node --test tests/test_openspec_conformance.test.ts   # offline openspec-conformance suite
 ```
 
 ## Develop here
@@ -39,9 +37,8 @@ node --test tests/test_openspec_conformance.test.ts   # offline openspec-conform
   **[ARCHITECTURE.md](ARCHITECTURE.md)**.
 - Add a skill: `skills/<name>/SKILL.md` + `marketplace.json` entry +
   `onboarding/skills-list.md` + one real `tests/bench/<skill>.json` scenario.
-- Plans live in `plans/development/`; change status comes from the store
-  (`openspec list --store huhhb`), not from a file. Specs validate through
-  OpenSpec (`openspec validate --all --store huhhb`).
+- Plans are dated Markdown files in `plans/development/` (`YYYY-MM-DD-<slug>.md`).
+  Architecture decisions are ADRs in `plans/architecture/`. Work is tracked in Plane.
 - Branch → PR → CodeRabbit + cross-review → human review. Never push non-trivial
   changes directly to `main`.
 

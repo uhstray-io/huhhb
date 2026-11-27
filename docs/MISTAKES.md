@@ -296,8 +296,10 @@ text of a comment.
 decision, its owner converts it to a draft (`gh pr ready <n> --undo`) and says
 in a PR comment what it is waiting for. It is marked ready (`gh pr ready <n>`)
 when every requested change is pushed and no decision is pending, before the
-next round is requested. The state a merger sees on GitHub then matches the state of the
-review. A comment alone did not stop #77's merge: the draft state is the
+next round is requested. While a PR is held, its GitHub state shows the hold.
+Between marking it ready and the next round's result it does not, so whoever
+merges first confirms on the PR that every required round on the final head has
+finished. A comment alone did not stop #77's merge: the draft state is the
 control, and the comment says why it is set. A PR is not made a draft only to wait for its first round: CodeRabbit
 does not review drafts in this repo (`.coderabbit.yaml:11`), and the Plane
 GitHub integration moves a draft PR's work item to Backlog (`AGENTS.md:249`).

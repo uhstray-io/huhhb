@@ -11,7 +11,7 @@
 - **[AGENTS.md](AGENTS.md)** — canonical operating instructions for AI agents (`CLAUDE.md` points to it).
 - **[KICKSTART.md](KICKSTART.md)** — set up, run, and develop here.
 - **[ARCHITECTURE.md](ARCHITECTURE.md)** — current-state architecture.
-- **[plans/](plans/)** — development plans (OpenSpec store) and architecture ADRs.
+- **[plans/](plans/)** — dated development plans and architecture ADRs.
 
 ---
 
@@ -107,10 +107,12 @@ Set up and shape Claude **for you**, across every project. State lives in
 
 | Skill | Trigger | Purpose |
 |-------|---------|---------|
-| `huhhb-welcome` | `/huhhb-welcome` | First-run tour of huhhb |
-| `huhhb-skills` | `/huhhb-skills` | List every available skill |
+| `huhhb-welcome` | `onboarding/welcome.md` | First-run tour of huhhb |
+| `huhhb-skills` | `onboarding/skills-list.md` | List every available skill |
 | `onboarding` | `/onboarding` | First-time Claude Code setup — Auto Mode, Agent Teams, orientation |
 | `user-kickstart` | `/user-kickstart` | Establish how Claude writes to *you* — voice, register, standing preferences. Writes a delimited, revertible, 60-line-capped block in `~/.claude/CLAUDE.md` and routes the reasoning behind it to your personal memory bank |
+
+`onboarding/welcome.md` (first-run tour) and `onboarding/skills-list.md` (the skill list) ship with the plugin as `marketplace.json` entries `huhhb-welcome` and `huhhb-skills`; nothing runs them automatically. Open the file, or ask Claude to read it.
 
 ### Memory
 
@@ -118,7 +120,7 @@ huhhb uses **two stores that never hold the same fact**:
 
 | | [codebase-memory-mcp](https://github.com/DeusData/codebase-memory-mcp) | [Hindsight](https://github.com/vectorize-io/hindsight) |
 |---|---|---|
-| Holds | **What is** — present-tense structural truth about code | **What happened and why** — deliberation, attempts, outcomes, preferences. *Ratified* decisions are ADRs in `plans/architecture/`, not here |
+| Holds | **What is** — present-tense structural truth about code | **What happened and why** — deliberation, attempts, outcomes, preferences. *Ratified* decisions are ADRs in `plans/architecture/` (ADR-0001), not here |
 | Rebuilt from | source, deterministically, any time | nothing — it is the only copy |
 | Write cost | zero, no LLM | a model call per retain |
 | Authoritative on | call graphs, blast radius, dead code, routes, architecture | rationale, rejected alternatives, failures, what worked |
@@ -132,10 +134,11 @@ domain concepts.
 | Skill | Trigger | Purpose |
 |-------|---------|---------|
 | `memory-setup` | `/memory-setup` | Install, repair, or verify both stores on a machine — gated phases, control-test verification at each gate, a defect catalogue indexed by symptom |
+| `fix-memory` | `/fix-memory` | Move a memory artifact to the store that owns it — one at a time, ask first, never bulk. Regenerable structure is deleted, ratified decisions become ADRs, deliberation goes to the repo bank |
 
 ### Self-learning (evolve)
 
-Cross-session learning backed by [Honcho](https://honcho.dev): a Stop hook digests each
+**Experimental and untested.** Cross-session learning backed by [Honcho](https://honcho.dev): a Stop hook digests each
 session into typed observations, the deriver turns them into conclusions, and a
 SessionStart hook injects what was learned into the next session. Personalization lands
 in overlay skills (`~/.claude/skills/*-local/`) — hub skills are never edited. **Inert
@@ -191,17 +194,10 @@ Act on **one repository**. State is committed, so the whole team gets it.
 
 | Skill | Trigger | Purpose |
 |-------|---------|---------|
-| `repo-kickstart` | `/repo-kickstart` | Bootstrap any repo — greenfield or brownfield — into Uhstray conventions: the doc set, the `plans/` tree, OpenSpec, and this repo's two-store memory init. Idempotent and non-destructive |
-| `repo-memory` | `/repo-memory` | Repo-local memory in `.claude/memory/`, committed to git, no external service. Owns the agent-written Record Contract (observational lint, supersede-never-edit, quarantine, `promote:` lifecycle) |
-| `openspec-conformance` | `/openspec-conformance` | Conform OpenSpec to the `plans/development` + `plans/architecture` layout — store registration, house config rules, archive-time ADR promotion |
-| `product-inception` | `/product-inception` | Explicitly-requested product inception only — brief → PRD → architecture, three human gates, then hands Workflow 1 an epic queue and stops |
-| `pr-shepherd` | `/pr-shepherd` | Drive open PRs to merge — monitors CI, CodeRabbit and human review, routes findings back to the implementer, gates the merge on human approval, never merges autonomously |
-| `buhhdy-model-calibration-refresh` | `/buhhdy-model-calibration-refresh` | Re-verify buhhdy's provider/model/auth facts and update the calibration defaults |
-
-### buhhdy orchestration
-
-`buhhdy/` is a multi-provider orchestration layer with its own skills and config —
-routing guide, core workflows, and a model manifest. See [buhhdy/README.md](buhhdy/README.md).
+| `repo-kickstart` | `/repo-kickstart` | Bootstrap any repo — greenfield or brownfield — into Uhstray conventions: the doc set, the `plans/` tree, this repo's two-store memory init, a CodeRabbit config, and a ruleset-first branch-protection check. Idempotent and non-destructive |
+| `repo-memory` | `/repo-memory` | Architecture decision records in `plans/architecture/` — record, look up, and supersede ratified decisions. Append-only. Code structure is codebase-memory-mcp; deliberation is the Hindsight bank |
+| `product-inception` | `/product-inception` | Explicitly-requested product inception only — brief → PRD → architecture, three human gates, then files its Epic Queue as Plane work items and stops |
+| `pr-shepherd` | `/pr-shepherd` | Drive open PRs from creation to merge and cleanup — monitors CI and review rounds, routes findings back to the original implementer, merges only when the final head's review rounds ask for no changes (merge commits only), then closes out linked issues, the Plane item and the worktree |
 
 ---
 
@@ -217,9 +213,7 @@ The day-to-day craft. These run many times a session and act on whatever is in f
 | `brainstorming` | `/brainstorming` | Explore intent and design before touching code — required before implementing features |
 | `discovering-context` | `/discovering-context` | Map every piece of context a big or vague goal needs, as a dependency DAG, before planning |
 | `writing-plans` | `/writing-plans` | Write a structured implementation plan from a spec |
-| `executing-plans` | `/executing-plans` | Execute a written plan with review checkpoints |
-| `subagent-driven-development` | `/subagent-driven-development` | Execute a multi-step plan using parallel subagents |
-| `dispatching-parallel-agents` | `/dispatching-parallel-agents` | Split 2+ fully independent tasks across separate agents |
+| `plane-work-tracking` | `/plane-work-tracking` | Start, pick up, finish, or switch Plane work items in a repo that has a Plane project, and track work discovered mid-task. Not for driving a PR to merge (use `pr-shepherd`) |
 
 ### Build and verify
 
@@ -229,7 +223,6 @@ The day-to-day craft. These run many times a session and act on whatever is in f
 | `systematic-debugging` | `/systematic-debugging` | Root-cause a bug before proposing any fix |
 | `verification-before-completion` | `/verification-before-completion` | Run the verification and confirm output before claiming done |
 | `grounding` | `/grounding` | Pause a long session for a checkpoint — in-flight work, reviews, test/build/lint health, conformance, goal re-confirmation. Hook-fired (default every 2500 changed lines) or manual; opt-in |
-| `using-git-worktrees` | `/using-git-worktrees` | Isolate feature work in a separate worktree |
 | `finishing-a-development-branch` | `/finishing-a-development-branch` | Decide how to integrate completed work |
 | `writing-skills` | `/writing-skills` | Author, edit, or validate a huhhb skill before shipping — TDD for documentation |
 
@@ -252,38 +245,43 @@ The day-to-day craft. These run many times a session and act on whatever is in f
 | `strict-simplify` | `/strict-simplify` | Simplify without changing behavior |
 | `strict-refactor` | `/strict-refactor` | Restructure without changing behavior |
 
-### Session continuity
-
-| Skill | Trigger | Purpose |
-|-------|---------|---------|
-| `session-save` | `/session-save` | Write a gitignored continuation file with the exact next action |
-| `session-resume` | `/session-resume` | Verify that file against the repo, re-hydrate, brief, then act |
-
 ---
 
 ## Plugin Hooks
 
-Lifecycle hooks in `hooks/` fire automatically — no invocation needed:
+The hooks registered in `.claude-plugin/plugin.json` fire automatically — no invocation needed. Other scripts in `hooks/` are not registered and do not run:
 
 | Hook | Event | Purpose |
 |------|-------|---------|
 | `explain-changes-activate.sh` | SessionStart | Opt-in always-on narration (set `HUHHB_EXPLAIN_CHANGES=1` or create `~/.claude/explaining-changes.on`) |
-| `repo-memory-load.sh` | SessionStart | Auto-loads `.claude/memory/MEMORY.md` when present in the project |
+| `repo-memory-load.sh` | SessionStart | Points the session at `plans/architecture/DECISIONS.md` when the repo has it; otherwise at the older `.claude/memory/MEMORY.md` |
+| `evolve-inject.sh` | SessionStart | Injects the cached evolve context, with no network call, and a nudge when headless proposals wait for `/evolve-review`. Silent when nothing is cached |
+| `plane-binding.sh` | SessionStart | Opt-in (`HUHHB_PLANE` or `~/.claude/plane-tracking.on`): tells the session which Plane module the branch is bound to, and flags a claimed work item left without its close-out |
 | `precommit-explain.sh` | PreToolUse (Bash) | Nudges a change summary before every `git commit` |
 | `pr-claim-check.sh` | PreToolUse (Bash) | Denies `gh pr create/edit/comment/review` and `gh api` comment writes until every `file:line`, count and list is checked against the current head and the `gh` call is re-run with `CLAIMS_VERIFIED=1` in front of it |
 | `pr-merge-guard.sh` | PreToolUse (Bash) | Denies `gh pr merge` while the PR has an unresolved review thread whose last comment isn't yours; re-run with `REVIEW_ANSWERED=1` once every finding is answered. Fails open when `gh` can't answer |
-| `grounding-check.sh` | UserPromptSubmit | Fires a grounding checkpoint after a volume of changed lines — default 2500, configurable (1000/2500/5000/10000/custom); opt-in; counts only this session's own commits, typed prompts only, once per threshold crossing |
+| `repo-memory-lint.sh` | PreToolUse (Write or Edit) | Blocks in-place edits to an agent record under `.claude/memory/` (supersede, never edit); `status:` and `promote:` flips pass |
+| `evolve-capture.sh` | Stop | Digests the session transcript into observations and detaches a flusher. Inert until evolve is configured |
+| `grounding-check.sh` | UserPromptSubmit | Fires a grounding checkpoint once the session's changed lines reach a threshold (default 2500, set with `HUHHB_GROUNDING_LINES` or a `lines=` entry in the marker file); opt-in; counts own commits plus uncommitted work; once per threshold crossing |
+| `repo-memory-pr-consolidate.sh` | PostToolUse (Bash) | On `gh pr create`, asks Claude to consolidate the branch's `.claude/memory/wip/` journal into one outcome paragraph in the Hindsight bank, then delete the journal once it is stored |
 
 ---
 
 ## Quality gates
 
-| Gate | Command | Blocks merge |
-|------|---------|--------------|
-| G0 static lint | `node scripts/skill-lint.ts` | yes, on FAIL |
-| G1 merge bench | `node scripts/skill-bench.ts <skill>` | yes — real `claude -p` runs against `tests/bench/<skill>.json`, measured against a skill-disabled baseline |
-| Tests | `node --test tests/*.test.ts` | yes |
-| Spec validation | `openspec validate --all --store huhhb` | yes |
+| Gate | Command | Runs in CI |
+|------|---------|------------|
+| G0 static lint | `node scripts/skill-lint.ts` | yes — fails on FAIL |
+| Offline evolve suite | `node --test tests/test_evolve.test.ts` | yes |
+| Hook tests | `node --test tests/test_grounding_hook.test.ts tests/test_pr_claim_check.test.ts tests/test_pr_merge_guard.test.ts` | yes |
+| Offline scenario catalog | `node scripts/evolve/evals.ts` | yes |
+| G1 merge bench | `node scripts/skill-bench.ts <skill>` | no — run by hand; real `claude -p` runs against `tests/bench/<skill>.json`, measured against a skill-disabled baseline |
+
+CI runs on pull requests and on pushes to `main` ([`.github/workflows/test.yml`](.github/workflows/test.yml)). `tests/test_memory_docs.test.ts` and `tests/test_repo_memory_lint.test.ts` are not in CI; `node --test tests/*.test.ts` runs them locally.
+
+## What huhhb leaves to Orca and other plugins
+
+huhhb does not ship skills for worktrees, handoff or worker dispatch. Orca owns those: it creates and removes worktrees (see [AGENTS.md](AGENTS.md)), carries session handoff, and dispatches workers. Plan execution and parallel dispatch skills come from the superpowers plugin. Session continuity is Orca's handoff, so nothing in this marketplace replaces it.
 
 ---
 

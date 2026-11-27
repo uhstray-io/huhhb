@@ -154,7 +154,7 @@ Three measured gates — full criteria, thresholds, and the improvement loop in
 
 ## Development Lifecycle (adopted 2026-07-16)
 
-worktrees → branches → PRs → human-authorized merge:
+worktrees → branches → PRs → merge:
 
 - **Worktrees** — Orca creates and removes them; outside Orca, the session
   that creates a worktree removes it when its branch merges.
@@ -165,8 +165,7 @@ worktrees → branches → PRs → human-authorized merge:
 - **PRs** — one per deliverable (logical commits inside). Stacking is the
   sanctioned dependency mechanism: base on the parent branch, declare it
   in the body's first line, merge parents first.
-- **Merge** — human-authorized always (approving review + explicit
-  instruction), merge commits, GitHub delete-on-merge OFF.
+- **Merge** — A PR merges after its review rounds — one for a PR into a feature or integration branch, two for a promotion into main — once every finding is fixed or answered and the required checks pass. Merge commits only. GitHub deletes the head branch on merge (`delete_branch_on_merge: true`).
 
 ## Release Checklist
 
@@ -255,14 +254,14 @@ After syncing, review the diff, bump versions, cut a release if changed.
 
 - `skills/` — all skills, one flat subdirectory per skill (`skills/<skill-name>/SKILL.md`)
 - `.cbmignore` — paths kept out of the code graph (vendored agent trees, caches, key material); changing it needs a forced rebuild, not just a re-index
-- `onboarding/` — onboarding flow triggered on first install
-- `hooks/` — plugin lifecycle hook scripts (SessionStart, PreToolUse, Stop). They run from `${CLAUDE_PLUGIN_ROOT}` = `~/.claude/plugins/cache/huhhb/huhhb/<version>/`, never the working tree — a hook edit has no effect on the running session until reinstall (Release Checklist 4)
+- `onboarding/` — first-run tour (`welcome.md`) and skill list (`skills-list.md`); nothing runs them automatically
+- `hooks/` — plugin lifecycle hook scripts (SessionStart, PreToolUse, PostToolUse, Stop, UserPromptSubmit). They run from `${CLAUDE_PLUGIN_ROOT}` = `~/.claude/plugins/cache/huhhb/huhhb/<version>/`, never the working tree — a hook edit has no effect on the running session until reinstall (Release Checklist 4)
 - `marketplace.json` — skill manifest (name, path, description, category, tags, version per skill)
 - `.claude-plugin/plugin.json` — plugin version read by Claude Code for update detection (keep in sync with `marketplace.json`)
 - `scripts/skill-lint.ts`, `scripts/skill-bench.ts`, `scripts/skill-trends.ts` — the skill quality gates (see Skill Quality Bar)
 - `scripts/evolve/` — the `evolve` self-learning suite (TypeScript, MIT; optional integrations load dynamically, never vendored)
 - `scripts/sync-caveman.sh` — upstream sync for the vendored caveman family (the only skills with a sync script; `prune-tests` and `humanizer` are forks edited directly)
-- `tests/` — `test_evolve.test.ts` (offline, `node --test`) and `bench/` scenarios
+- `tests/` — offline tests (`test_*.test.ts`, run with `node --test`) and `bench/` scenarios. CI runs `test_evolve`, `test_grounding_hook`, `test_pr_claim_check` and `test_pr_merge_guard`; `test_memory_docs` and `test_repo_memory_lint` run only locally
 - `docs/evolve-plan.md` — the evolve living plan (architecture, guardrails, gates, roadmap; every evolve change recorded in its change log)
 - `CONTEXT.md` — project context for AI assistants
 - `CLAUDE.md` — a one-line pointer to this file (AGENTS.md is canonical)
@@ -291,7 +290,7 @@ Every skill needs an entry; bump its `version` and `.claude-plugin/plugin.json` 
 
 ## Onboarding
 
-First install runs `onboarding/welcome.md` — a short guided tour: what's installed, how to invoke (`/skill-name`), and where the full list lives (`onboarding/skills-list.md`). Keep it brief.
+`onboarding/welcome.md` (first-run tour) and `onboarding/skills-list.md` (the skill list) ship with the plugin as `marketplace.json` entries `huhhb-welcome` and `huhhb-skills`; nothing runs them automatically. Open the file, or ask Claude to read it. Keep the tour brief.
 
 ## Repo Memory
 

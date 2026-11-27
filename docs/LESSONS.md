@@ -144,3 +144,24 @@ A session that plans work reads this file and the `docs/MISTAKES.md` Index befor
   pronouns. Its DONE WHEN checks that no lint line names the skill and that the WARN count is no
   higher than the base's.
 - **APPLIES TO:** any unit that rewrites a `skills/<name>/SKILL.md` body or its description.
+
+### L-011 · 2026-11-26 · batch briefs
+
+- **ACCEPTED:** PR #74, buhhdy, `openspec-conformance` and the repository's OpenSpec store removed,
+  with ADR-0007 superseding ADR-0003 (HUHHB-177).
+- **DERIVED:** `~/.claude/docs/scope-check` owns a directory only when the OWNS argument ends in a
+  slash (its header, line 26). An OWNS list written as `buhhdy` instead of `buhhdy/` reports every
+  file under it as outside OWNS, so a deletion unit's scope check fails on a correct diff. A brief
+  that owns a directory writes it with the trailing slash in OWNS and in the scope-check command.
+- **APPLIES TO:** any batch brief whose OWNS names a directory.
+
+### L-012 · 2026-11-26 · batch briefs
+
+- **ACCEPTED:** PR #74, buhhdy, `openspec-conformance` and the repository's OpenSpec store removed
+  (HUHHB-177).
+- **DERIVED:** A DONE WHEN that greps the whole tree for a removed name also matches files that no
+  step of the brief touches and that OWNS does not list: on this unit, four. The planner runs that
+  grep against the base before dispatch, subtracts the OWNS paths, and either adds each remaining
+  file to OWNS or excludes it from the grep with a stated reason. Otherwise the executor reaches a
+  DONE WHEN it cannot pass without editing outside OWNS.
+- **APPLIES TO:** any DONE WHEN that greps the whole tree.

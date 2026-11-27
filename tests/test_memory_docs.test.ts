@@ -8,7 +8,7 @@
    Checks the store's *schema*, never a record's prose. Records are
    append-only and superseded in place (ADR-0004), so any assertion pinned to
    one record's wording fails the moment that record is superseded — which is
-   exactly what happened to the buhhdy-memory-model assertions this replaced.
+   exactly what happened to the older memory-model assertions this replaced.
 
    Run: node --test tests/test_memory_docs.test.ts
    Node stdlib only, no network. */

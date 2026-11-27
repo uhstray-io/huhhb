@@ -11,8 +11,8 @@ All available skills in the Uhstray.io marketplace.
 
 | Skill | Command | Description |
 |-|-|-|
-| huhhb-welcome | `/huhhb-welcome` | First-run tour of huhhb |
-| huhhb-skills | `/huhhb-skills` | This list |
+| huhhb-welcome | `onboarding/welcome.md` | First-run tour of huhhb |
+| huhhb-skills | `onboarding/skills-list.md` | This list |
 | onboarding | `/onboarding` | Interactive wizard to configure Auto Mode and Agent Teams |
 | user-kickstart | `/user-kickstart` | Use when establishing, changing, or reverting how Claude writes toward you personally across every project — voice, register, standing preferences at user scope. Writes a delimited, revertible, 60-line-capped block in `~/.claude/CLAUDE.md` and routes the reasoning behind it to the hindsight `personal` bank |
 
@@ -21,19 +21,19 @@ All available skills in the Uhstray.io marketplace.
 ### Two-store memory (current routing)
 
 The two stores are **codebase-memory-mcp** (code graph — structural truth,
-regenerated from source) and **Hindsight** (experience store — decisions,
-rationale and outcomes, the only copy). This is the architecture on the
+regenerated from source) and **Hindsight** (experience store — deliberation,
+outcomes and preferences, the only copy). Ratified decisions are ADRs in `plans/architecture/` (ADR-0001). This is the architecture on the
 routing path.
 
 | Skill | Command | Description |
 |-|-|-|
-| memory-setup | `/memory-setup` | Use when installing, repairing, or verifying the two-store agent-memory architecture on a machine — a code-graph store for structural truth plus an experience store for decisions and outcomes. Gated phases, control-test verification at every gate, a catalogue of verified defects indexed by symptom, and the per-repo `memory-init` command it writes |
+| memory-setup | `/memory-setup` | Use when installing, repairing, or verifying the two-store agent-memory architecture on a machine — a code-graph store for structural truth plus an experience store for deliberation, outcomes and preferences. Gated phases, control-test verification at every gate, a catalogue of verified defects indexed by symptom, and the per-repo `memory-init` command it writes |
 | repo-memory | `/repo-memory` | Architecture decision records in `plans/architecture/` — master index by domain, a per-year decision log, monthly detail files. Append-only, supersede-never-edit. Committed to git and reviewable in the PR that changes them |
 | fix-memory | `/fix-memory` | Use when a memory artifact is in the wrong store — migrates one at a time, ask-first, never bulk. Regenerable structure is deleted (the graph rebuilds it), ratified architectural decisions become ADRs, deliberation goes to the repo bank, cross-project preferences to `personal` |
 
 ### MemPalace (retired from routing)
 
-Powered by [MemPalace](https://github.com/mempalace/mempalace). Runs via the plugin's configured MCP (uvx) server, or install the CLI with `uv tool install mempalace` — either setup is valid; a configured MCP server without the CLI is not a missing install. **Retired from routing on 2026-08-01** — still shipped and installed with data intact, invoked only when asked for by name. Their manifest descriptions are now prefixed LEGACY so a generic "remember this" no longer matches them. Removal is planned in [2026-08-02-memory-skill-migration-plan.md](../plans/development/2026-08-02-memory-skill-migration-plan.md).
+Powered by [MemPalace](https://github.com/mempalace/mempalace). The plugin registers no MCP server; you can opt in to one, launched with `uvx` (see `skills/memory/reference.md`). The `mempalace` CLI (`uv tool install mempalace`) is separate, and these skills do not use it. **Retired from routing on 2026-08-01** — still shipped and installed with data intact, invoked only when asked for by name. Their manifest descriptions say they are legacy and apply only when MemPalace is named explicitly. Removal is planned in [2026-08-02-memory-skill-migration-plan.md](../plans/development/2026-08-02-memory-skill-migration-plan.md).
 
 | Skill | Command | Description |
 |-|-|-|
@@ -62,24 +62,16 @@ managed setup; unconfigured machines behave as if it were not installed.
 | Skill | Command | Description |
 |-|-|-|
 | brainstorming | `/brainstorming` | You MUST use this before any creative work - creating features, building components, adding functionality, or modifying behavior. Explores user intent, requirements and design before implementation. |
-| buhhdy-model-calibration-refresh | `/buhhdy-model-calibration-refresh` | Use when buhhdy's provider/model/auth facts need to be verified again — monthly, on a failed model ID, or on a provider announcement. Claims ledger → cheapest-first verification (cross-vendor for consequential claims) → in-place updates to the config/MODEL-MANIFEST calibration defaults, one PR per run; routing-structure changes only as a flagged human-judgment proposal |
 | discovering-context | `/discovering-context` | Use when a goal is big, vague, or dependency-heavy and you need to map every piece of context required before planning — builds a context dependency DAG (mermaid) by relentlessly interviewing with recommended answers, expanding each node until it saturates, then hands the map to writing-plans |
-| product-inception | `/product-inception` | Explicitly-requested product inception only ("new product", "new major initiative"): three human-gated phases — brief → PRD → architecture — then hands Workflow 1 an epic queue and stops. Never for feature/change-scale work. |
-| dispatching-parallel-agents | `/dispatching-parallel-agents` | Use when facing 2+ independent tasks that can be worked on without shared state or sequential dependencies |
-| executing-plans | `/executing-plans` | Use when you have a written implementation plan to execute in a separate session with review checkpoints |
-| finishing-a-development-branch | `/finishing-a-development-branch` | Use when implementation is complete, all tests pass, and you need to decide how to integrate the work |
+| product-inception | `/product-inception` | Explicitly-requested product inception only ("new product", "new major initiative"): three human-gated phases — brief → PRD → architecture — then files its Epic Queue as Plane work items and stops. Never for feature/change-scale work. |
+| finishing-a-development-branch | `/finishing-a-development-branch` | Use when implementation is complete and the branch needs finishing. Verifies tests and reads the pull request state before any push, then opens or updates a pull request, keeps the branch, or discards it. After a merge it hands off to the pr-shepherd close-out |
 | grounding | `/grounding` | Use when a long session should pause for a checkpoint — surfaces in-flight work, runs reviews + conformance, re-confirms goals (every 2500 changed lines by default, configurable; opt-in, user-selectable check menu) |
 | markdown-to-pdf | `/markdown-to-pdf` | Use when converting a Markdown file into a beautiful, print-ready PDF — styled cover page, running headers/footers, page numbers, GFM tables, syntax-highlighted code, and rendered mermaid diagrams (WeasyPrint + mermaid-cli, run via `uv`) |
-| openspec-conformance | `/openspec-conformance` | Use when making OpenSpec conform to Uhstray's plans/development + plans/architecture layout — the once-per-repo store-registration setup, the house config rules, and the archive-time ADR promotion; the source of truth that repo-kickstart and pr-shepherd both call |
-| pr-shepherd | `/pr-shepherd` | Use when buhhdy's Development workflow has open PRs to drive to merge — monitors CI + CodeRabbit + human review, routes findings back to the original implementer (2-attempts-then-human), gates the merge on a human approval (never merges autonomously), then runs post-merge close-out and a buhhdy/*-only branch janitor |
-| plane-work-tracking | `/plane-work-tracking` | Track Plane work items one at a time |
-| repo-kickstart | `/repo-kickstart` | Use when bootstrapping any repo — greenfield or brownfield — into Uhstray's standard conventions: the README/AGENTS/KICKSTART/ARCHITECTURE doc set, the plans/ tree, OpenSpec, the two-store memory init for this repo (.cbmignore + index + bank + charter) plus a Honcho probe, CodeRabbit, and a branch-protection check. Owns repo scope; machine-scope install is `memory-setup`. Idempotent, registry-free, and non-destructive |
-| session-resume | `/session-resume` | Use when picking up prior work in a fresh session — verifies the continuation file against the repo, re-hydrates context, briefs, then acts |
-| session-save | `/session-save` | Use when ending or pausing a session and you want to resume cleanly later — writes a gitignored continuation file with the exact next action and chat-only context |
-| subagent-driven-development | `/subagent-driven-development` | Use when executing implementation plans with independent tasks in the current session |
+| pr-shepherd | `/pr-shepherd` | Use when an orchestrating session has open PRs to drive from creation to merge and cleanup. Monitors CI and review rounds, routes findings back to the original implementer, merges only when the review rounds on the final head ask for no changes (merge commits only), then closes out linked issues, the Plane item and the worktree |
+| plane-work-tracking | `/plane-work-tracking` | Use when starting, picking up, finishing, or switching Plane work items in a repo that has a Plane project, or when new work is discovered mid-task and must be tracked |
+| repo-kickstart | `/repo-kickstart` | Use when bootstrapping any repo — greenfield or brownfield — into Uhstray's standard development conventions: the doc set, the plans/ tree, the two-store memory init for this repo, a CodeRabbit config, and a ruleset-first branch-protection check. Owns repo scope; machine-scope install is `memory-setup`. Idempotent and non-destructive |
 | systematic-debugging | `/systematic-debugging` | Use when encountering any bug, test failure, or unexpected behavior, before proposing fixes |
 | test-driven-development | `/test-driven-development` | Use when implementing any feature or bugfix, before writing implementation code |
-| using-git-worktrees | `/using-git-worktrees` | Use when starting feature work that needs isolation from current workspace or before executing implementation plans |
 | using-superpowers | `/using-superpowers` | Use when starting any conversation — establishes how to find and use skills, requiring Skill tool invocation before any response |
 | verification-before-completion | `/verification-before-completion` | Use when about to claim work is complete, fixed, or passing, before committing or creating PRs |
 | writing-plans | `/writing-plans` | Use when you have a spec or requirements for a multi-step task, before touching code |

@@ -9,7 +9,7 @@ You've installed **huhhb** — Uhstray.io's skills marketplace for Claude Code.
 
 ## Prerequisite: uv
 
-`uhh:memory` requires [`uv`](https://docs.astral.sh/uv/) to auto-manage Python dependencies. If you don't have it:
+The opt-in MemPalace server behind the `memory` skill runs through [`uv`](https://docs.astral.sh/uv/) (`uvx`), so install it only if you opt in. If you don't have it:
 
 ```bash
 # macOS / Linux
@@ -107,4 +107,4 @@ Once the user has confirmed their changes (or declined), remind them of the file
 
 ---
 
-*You only see this once. Run `/huhhb-welcome` anytime to see it again.*
+*Nothing shows this tour again on its own. To see it again, ask Claude to read `onboarding/welcome.md`.*

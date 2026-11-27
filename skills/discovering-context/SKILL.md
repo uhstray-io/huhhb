@@ -22,8 +22,8 @@ complete picture instead of guesses.
 **This is the upstream phase.** It composes into the existing flow:
 
 ```
-discovering-context  →  writing-plans  →  executing-plans
-   (this skill)          (the plan)        (the work)
+discovering-context  →  writing-plans  →  the work
+   (this skill)          (the plan)    (task by task)
 ```
 
 **Announce at start:** "I'm using the discovering-context skill to map the

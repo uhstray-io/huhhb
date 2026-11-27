@@ -113,7 +113,7 @@
         "superpowers",
         "meta"
       ],
-      "version": "0.1.0"
+      "version": "0.1.1"
     },
     {
       "name": "brainstorming",
@@ -190,7 +190,7 @@
         "superpowers",
         "skills"
       ],
-      "version": "0.1.0"
+      "version": "0.1.1"
     },
     {
       "name": "receiving-code-review",
@@ -574,7 +574,7 @@
         "dag",
         "discovery"
       ],
-      "version": "0.1.0"
+      "version": "0.1.1"
     },
     {
       "name": "product-inception",

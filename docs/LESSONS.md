@@ -218,3 +218,15 @@ A session that plans work reads this file and the `docs/MISTAKES.md` Index befor
   detached worktree cannot see untracked files. The journal is never committed, ignored or deleted
   to make the check pass.
 - **APPLIES TO:** any unit brief in this repo whose DONE WHEN runs the scope check.
+
+### L-017 · 2026-11-26 · address checks
+
+- **ACCEPTED:** the promotion PR for v0.9.34 (HUHHB-180), whose dated plan
+  `plans/development/2026-11-26-cleanup-pass.md` names the milestone `v0.9.34`.
+- **DERIVED:** A DONE WHEN that requires an address grep to print nothing cannot use a
+  three-octet pattern such as `[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}`: it matches every
+  `MAJOR.MINOR.PATCH` version string, so the check fails on a file that names a release. The
+  executor stopped on this before writing anything. A no-address check over a file that may name a
+  version matches four octets, `([0-9]{1,3}\.){3}[0-9]{1,3}`, and a scrub that must find a known
+  fragment (L-015) compares each match against that value instead of requiring empty output.
+- **APPLIES TO:** any brief whose DONE WHEN greps a document for IP addresses.

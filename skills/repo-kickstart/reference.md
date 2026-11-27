@@ -670,9 +670,10 @@ gh api -X POST "repos/$OWNER_REPO/rulesets" --input - <<JSON
 JSON
 ```
 
-Required reviews on the default branch are a precondition for pr-shepherd. A
-ruleset `pull_request` rule with `required_approving_review_count: 0` is
-therefore a **reportable gap**, not a failure: report it alongside the ✅.
+Any ruleset `pull_request` rule satisfies pr-shepherd's branch precondition,
+which counts the rule and does not read the approval count. Report the rule's
+`required_approving_review_count` alongside the ✅ for information; a count of
+0 is not a gap.
 
 ---
 

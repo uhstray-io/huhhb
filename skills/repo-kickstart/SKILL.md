@@ -104,9 +104,8 @@ to the graph, instructions to AGENTS.md.
   `gh api "repos/$OWNER_REPO/branches/$BR/protection"`: 200 → classic
   protection present, report it; 404 → absent. If absent, **do not configure
   it**: emit the ruleset create command from §5 for the human **and report the
-  gap in the run's summary**. A `pull_request` rule with
-  `required_approving_review_count: 0` is a reportable gap (pr-shepherd needs
-  required reviews), not a failure.
+  gap in the run's summary**. Any `pull_request` rule satisfies pr-shepherd;
+  report its `required_approving_review_count` for information, not as a gap.
 
 ### 5. Verification checklist
 End by printing the pass/fail table (`reference.md` §6): convention files, plans

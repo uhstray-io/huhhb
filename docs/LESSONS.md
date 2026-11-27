@@ -190,3 +190,27 @@ A session that plans work reads this file and the `docs/MISTAKES.md` Index befor
   name with `[- ]` between its words and for the name of every file the skill ships, and lists
   every matching line, not every matching file.
 - **APPLIES TO:** any unit that deletes a skill or a file other skills can cite.
+
+### L-015 · 2026-11-26 · address scrubs
+
+- **ACCEPTED:** PR #76 (HUHHB-179), team docs brought in line with what ships; the hosted Honcho
+  address replaced by a name in `docs/evolve-plan.md` (batch decisions 7 and 38).
+- **DERIVED:** A scrub brief that finds an address with a URL pattern (`https?://...`) misses the
+  bare host name in prose. On `00534a5d` the URL grep found lines 73 and 77; the same host stood
+  bare at line 541, found only by the executor, so DONE WHEN named three lines where four needed
+  changing. A scrub brief greps for the bare host (`[a-z0-9-]+\.<domain>`), any IPv4 address and
+  any octet fragment, compares matches against the known host without printing it, and lists every
+  matching line in STEPS and DONE WHEN.
+- **APPLIES TO:** any unit that removes a host, URL or address from committed files.
+
+### L-016 · 2026-11-26 · scope check
+
+- **ACCEPTED:** PR #76 (HUHHB-179).
+- **DERIVED:** With `core.hooksPath` set to `.githooks`, `.githooks/post-commit` writes an
+  untracked journal `.claude/memory/wip/<branch-slug>.md` on every commit, and
+  `~/.claude/docs/scope-check` counts untracked paths, so the check fails in the unit's own
+  worktree on a path the unit must not commit. The journal is by design (the PR-creation hook
+  consolidates it). A DONE WHEN that requires `scope-check: ok` runs it in a temporary detached
+  worktree of `HEAD` (`git worktree add --detach`), removed afterwards, and never commits, ignores
+  or deletes the journal to make the check pass.
+- **APPLIES TO:** any unit brief in this repo whose DONE WHEN runs the scope check.

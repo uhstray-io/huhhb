@@ -156,10 +156,8 @@ Three measured gates — full criteria, thresholds, and the improvement loop in
 
 worktrees → branches → PRs → human-authorized merge:
 
-- **Worktrees** — recommended, toggleable (user default + per-project list
-  in `~/.config/huhhb/worktrees.json`; see the `using-git-worktrees`
-  skill). Lifetime = the branch's lifetime; strays are reported, never
-  auto-removed.
+- **Worktrees** — Orca creates and removes them; outside Orca, the session
+  that creates a worktree removes it when its branch merges.
 - **Branches** — conventional prefixes (`feat/ fix/ docs/ chore/
   refactor/`) for first-class human-reviewed work; `<agent>/<task-id>`
   for orchestrator task branches. The retention janitor operates ONLY

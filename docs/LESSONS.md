@@ -221,7 +221,7 @@ A session that plans work reads this file and the `docs/MISTAKES.md` Index befor
 
 ### L-017 · 2026-11-26 · address checks
 
-- **ACCEPTED:** the promotion PR for v0.9.34 (HUHHB-180), whose dated plan
+- **ACCEPTED:** PR #77 (HUHHB-180), the promotion for v0.9.34, whose dated plan
   `plans/development/2026-11-26-cleanup-pass.md` names the milestone `v0.9.34`.
 - **DERIVED:** A DONE WHEN that requires an address grep to print nothing cannot use a
   three-octet pattern such as `[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}`: it matches every

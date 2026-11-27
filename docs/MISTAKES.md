@@ -275,16 +275,20 @@ as it stands, with no post-merge review and no revert (batch decision 44).
 
 **Root cause.** The rule that the PR was not ready lived only in the batch's
 handoff files and in the owner's session. On GitHub the PR was open and not a
-draft, its required check passed, and the `main` ruleset was satisfied: it
-requires a pull request with `required_approving_review_count: 0`. The last
+draft, its `test` check passed (no check is required on `main`), and the `main`
+ruleset was satisfied: it requires a pull request with
+`required_approving_review_count: 0`. The last
 comment on the PR was the answer to the round's findings, so the PR looked
 finished to anyone outside the batch.
 
-**The rule.** While a PR waits on a review round or on a decision, its owner
-converts it to a draft (`gh pr ready <n> --undo`) and says in a PR comment what
-it is waiting for. It is marked ready (`gh pr ready <n>`) only when the last
-required round has approved the final head. The state a merger sees on GitHub
-then matches the state of the review.
+**The rule.** When a review round asks for changes, or a PR is held on a
+decision, its owner converts it to a draft (`gh pr ready <n> --undo`) and says
+in a PR comment what it is waiting for. It is marked ready (`gh pr ready <n>`)
+when the fix is pushed and no decision is pending, before the next round is
+requested. The state a merger sees on GitHub then matches the state of the
+review. A PR is not made a draft only to wait for its first round: CodeRabbit
+does not review drafts in this repo (`.coderabbit.yaml:11`), and the Plane
+GitHub integration moves a draft PR's work item to Backlog (`AGENTS.md:249`).
 
 **Enforced by.** `Convention`. The `main` ruleset requires a pull request with
 zero approvals; changing the ruleset is Joseph's decision.

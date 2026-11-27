@@ -22,7 +22,7 @@ Add to your Codex config (`~/.codex/config.toml`):
 multi_agent = true
 ```
 
-This enables `spawn_agent`, `wait`, and `close_agent` for skills like `dispatching-parallel-agents` and `subagent-driven-development`.
+This enables `spawn_agent`, `wait`, and `close_agent` for skills that dispatch subagents.
 
 ## Named agent dispatch
 
@@ -33,7 +33,7 @@ from built-in roles (`default`, `explorer`, `worker`).
 When a skill says to dispatch a named agent type:
 
 1. Find the agent's prompt file (e.g., `agents/code-reviewer.md` or the skill's
-   local prompt template like `code-quality-reviewer-prompt.md`)
+   local prompt template like `code-reviewer.md`)
 2. Read the prompt content
 3. Fill any template placeholders (`{BASE_SHA}`, `{WHAT_WAS_IMPLEMENTED}`, etc.)
 4. Spawn a `worker` agent with the filled content as the `message`
@@ -83,9 +83,6 @@ BRANCH=$(git branch --show-current)
 
 - `GIT_DIR != GIT_COMMON` → already in a linked worktree (skip creation)
 - `BRANCH` empty → detached HEAD (cannot branch/push/PR from sandbox)
-
-See `using-git-worktrees` Step 0 and `finishing-a-development-branch`
-Step 1 for how each skill uses these signals.
 
 ## Codex App Finishing
 

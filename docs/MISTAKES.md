@@ -20,19 +20,22 @@ entry's `Occurrences` count and adds a dated note; it never opens a second entry
 
 | # | Summary | Class | Count | Enforced by |
 |---|---|---|---|---|
-| 1.1 | PR body listed test cases and lockfiles from memory; both lists were wrong | Unverified claim | 6 | `hooks/pr-claim-check.sh` (Bash `gh` path only; deny until acknowledged) |
+| 1.1 | PR body listed test cases and lockfiles from memory; both lists were wrong | Unverified claim | 9 | `hooks/pr-claim-check.sh` (Bash `gh` path only; deny until acknowledged) |
 | 1.2 | Scenario note gave a cause for a baseline difference that no run had isolated; a controlled run contradicted it | Unverified claim | 2 | `Convention` |
+| 1.3 | A re-judge reported as the bench's judge scored whole answers; the bench judged only the first 2,000 characters | Unverified claim | 1 | `Convention` (this case: `tests/test_evolve.test.ts`, PR #72) |
 | 2.1 | PR #60 merged with 4 CodeRabbit findings unanswered | Process | 1 | `hooks/pr-merge-guard.sh` (deny until acknowledged; fails open) |
 | 3.1 | Grounding spec accepted "merges count as work" as rare; merging `dev` is routine, so the only line nudge was a false positive | Design assumption | 1 | `tests/test_grounding_hook.test.ts` (merge and fast-forward cases) |
-| 4.1 | Skill-disabled baseline read the skill file from disk, so a failing baseline was reported as passing | Test passed for the wrong reason | 2 | `Convention` (bench fix: HUHHB-168) |
+| 4.1 | Skill-disabled baseline read the skill file from disk, so a failing baseline was reported as passing | Test passed for the wrong reason | 3 | `Convention` (bench fix: HUHHB-168) |
+| 4.2 | A baseline started in an empty directory still read the skill by absolute path; supersedes the working-directory clause of 4.1 | Test passed for the wrong reason | 1 | `Convention` (bench fix: HUHHB-168) |
 | 5.1 | PR #65 was returned four times: its bench asserts and written claims were settled during review, not before it | Process | 1 | `Convention` |
+| 5.2 | PR #67 was returned three times; each return found another state the skill acted on without reading it | Process | 2 | `Convention` |
 | 6.1 | A bench trigger probe named the README, and its session rewrote the file's first paragraph in the working tree | Test wrote outside its own folder | 1 | `Convention` |
 
 ## 1. Asserting something without verifying it
 
 ### 1.1 PR body described the test suite and lockfile list from memory
 
-**Occurrences: 6** — 2026-11-13, 2026-11-13, 2026-11-13, 2026-11-13, 2026-11-20, 2026-11-22
+**Occurrences: 9** — 2026-11-13, 2026-11-13, 2026-11-13, 2026-11-13, 2026-11-20, 2026-11-22, 2026-11-26, 2026-11-26, 2026-11-26
 
 **What happened.** Opening PR #59 (grounding line threshold, HUHHB-156), the
 body listed the 10 cases in `tests/test_grounding_hook.test.ts` and the
@@ -120,6 +123,39 @@ the earlier head was carried over unread. Every number in a PR body is run
 again at the head the body is posted against, not only the lines being added.
 The body is corrected.
 
+**Occurrence 7 — 2026-11-26.** PR #70's lesson L-007 and its body cited
+`skills/repo-kickstart/reference.md:44` for the preflight line that names
+`index_repository`. The line is 45; line 44 is blank. The number came from a
+`sed -n 44,46p` whose output began with the blank line, which went unnoticed,
+and was written into a committed file without a `grep -n` for the line itself.
+The guard fired on the body and was acknowledged; the citation was taken as
+already checked because a command had shown the text nearby. The `pr-reviewer`
+round on `a15eb780` found it. A cited line number is read from a command that
+prints the number beside the text, such as `grep -n`, not counted from a
+printed range. L-007 and the body are corrected before merge.
+
+**Occurrence 8 — 2026-11-26.** PR #72's body said the fake `claude` in the new
+test returns an answer of 2,071 characters. It is 2,094 (`tests/test_evolve.test.ts:1702`,
+23 + 2,050 + 21). The owner did count 2,094 before posting, and put the `sed`
+that corrected the draft in the same Bash command as the call that opened the
+PR. The guard denies the whole command, so the `sed` never ran. The command was
+re-run with `CLAIMS_VERIFIED=1` in front of the posting call only, and the
+uncorrected draft went out; the later body edit posted the same file. The
+`pr-reviewer` round on `e9121595` found it. A fix to a draft is a command of its
+own, and the draft is read back (a `grep` for the corrected text) before the
+guarded call posts it. The body is corrected before merge.
+
+**Occurrence 9 — 2026-11-26.** On PR #73, the owner's reply to CodeRabbit's
+bench comment said this skill "has no scenario file under `tests/bench/`". The
+sentence was written while composing the four thread replies, and the call that
+posted them carried `CLAIMS_VERIFIED=1` for the other three, which had been
+checked. The claim was checked only after it was posted (`ls tests/bench/ | grep
+-i finishing` printed nothing), so it happened to be true. The guard denies a
+command, not a sentence: one acknowledgement covered several texts, and a claim
+added while writing them was never put to the check. Each posting call carries
+text whose every claim was checked before that call, and a reply written in the
+same command as others is checked on its own.
+
 ### 1.2 A scenario note stated why two baselines differed, from runs that isolated nothing
 
 **Occurrences: 2** — 2026-11-20, 2026-11-20
@@ -154,6 +190,43 @@ because it was framed around a cause for one difference, and a general
 statement about which scenarios pass did not register as the same thing. It
 is: a generalisation from bench results needs the same isolating run, or it
 is left out. An independent review found it before merge, and it is removed.
+
+### 1.3 A re-judge reported as the bench's judge scored text the bench's judge never saw
+
+**Occurrences: 1** — 2026-11-26
+
+**What happened.** The `repo-memory` bench at `6787edac` (PR #71, HUHHB-175)
+gave the write scenario a judge median of 3 of 5, below the gate of 4. For
+evidence, the owner session took the judge prompt from
+`scripts/skill-bench.ts`, filled it with the scenario's rubric and each kept
+answer, and ran it three times per answer: both kept answers scored 5, 5 and
+5. The owner reported this to the batch coordinator as a re-run of "the
+bench's own judge template". The coordinator relayed it to Joseph without
+checking it, and Joseph accepted the failing gate as measured on that evidence
+(batch decision 24). The final-head review of PR #71 then found that the bench
+judges `r.result.slice(0, 2000)` (`scripts/skill-bench.ts:837`), while the
+re-judge passed each answer whole. In the kept answer for the shipped skill,
+the consequences start at character 2138, the first "Negative" at 2335,
+`INDEX.md` at 2919 and `DECISIONS.md` at 3318. Everything the rubric
+penalises an answer for leaving out lies past the cut. Joseph revisited the
+decision (batch decision 25).
+
+**Root cause.** The owner copied the template and the call in `judge()`
+(`scripts/skill-bench.ts:221`) and did not read its caller at line 837, which
+clips the answer before it reaches `judge()`. Reproducing the measurement was
+taken to mean reproducing the function that scores, not the input that reaches
+it. The coordinator took the owner's description of the method as the check.
+
+**The rule.** A check offered as a reproduction of a bench gate feeds the
+scorer exactly what the bench feeds it. Read the whole path from a run's
+output to the scorer, every slice, filter and transform included, and say in
+the report which of them the check applied. A check that differs in any input
+is reported as a different measurement, never as the bench's. A session that
+relays such a check to Joseph reads that path itself first.
+
+**Enforced by.** `Convention`. Since PR #72 (HUHHB-195) the B3 judge scores the
+whole answer, and `test_the_b3_judge_receives_the_whole_answer` in
+`tests/test_evolve.test.ts` checks it. That closes this case only.
 
 ## 2. Merging before the review was finished
 
@@ -218,7 +291,7 @@ general rule: `Convention`.
 
 ### 4.1 The skill-disabled baseline read the skill file from disk
 
-**Occurrences: 2** — 2026-11-20, 2026-11-22
+**Occurrences: 3** — 2026-11-20, 2026-11-22, 2026-11-26
 
 **What happened.** Adding `prune-tests`, the RED step ran each scenario in
 `tests/bench/prune-tests.json` once the way `scripts/skill-bench.ts` runs its
@@ -262,6 +335,48 @@ not fire because its catalog check was made after the runs, not before them,
 and because this repo not shipping the skill yet was taken to mean no
 installed plugin did.
 
+**Occurrence 3 — 2026-11-26.** Rewriting the `repo-kickstart` bench
+(HUHHB-174), the baseline pre-check ran each of two candidate prompts three
+times through a throwaway `claude` wrapper that started every session in an
+empty scratch directory, with `--disallowedTools Skill` and the installed
+`huhhb@huhhb` plugin switched off. A probe through the same wrapper found no
+kickstart skill in the baseline's catalog. The baseline still passed 5 of the 6
+runs, and its answers cited `skills/repo-kickstart/SKILL.md:101-109` and
+`reference.md:624-669`, read from this worktree by absolute path, and the
+installed 0.8.34 copy in the plugin cache. The prompts name the skill, and the
+session went looking for it. The rule did not prevent it because its "not on
+disk under the working directory" clause was taken to mean that an empty
+working directory was enough. The void step did fire: the answers were read
+before any verdict was used, all six runs were voided, and they were repeated
+under the rule in 4.2.
+
+### 4.2 A baseline started in an empty directory still read the skill by absolute path
+
+**Occurrences: 1** — 2026-11-26
+
+**What happened.** Recorded as occurrence 3 of 4.1: the `repo-kickstart`
+baseline started in an empty directory, with the skill out of its catalog,
+read `skills/repo-kickstart/` from a worktree elsewhere on disk and from the
+plugin cache, and passed 5 of 6 runs. With no way to read the skill, the same
+two prompts passed 2 of 6: one prompt 2 of 3, the other 0 of 3.
+
+**Root cause.** A baseline session that has Bash, Read, Glob or Grep can read
+any path the user can, and a prompt that names the skill sends it looking.
+Switching the plugin off and starting in an empty directory take the skill out
+of the catalog and out of the working directory, not off the disk, which holds
+it in every checkout of this repo and in the plugin cache. An MCP server is a
+second route: `codebase-memory-mcp` has this repo indexed.
+
+**The rule.** A baseline counts only if it cannot read the skill at all. Run
+the baseline arm with no built-in tools (`--tools ""`) and no MCP servers
+(`--strict-mcp-config`), so it answers from what the model knows, and write
+every bench prompt so that it can be answered without tools. This supersedes
+the "not on disk under the working directory" clause of the rule in 4.1; that
+entry's catalog check and its void step still apply. The note on the scenario
+in `tests/bench/repo-kickstart.json` records the method.
+
+**Enforced by.** `Convention`. The bench does not do it itself (HUHHB-168).
+
 ## 5. Opening a PR before its checks were settled
 
 ### 5.1 PR #65 was returned four times over its bench scenarios and its claims
@@ -300,6 +415,58 @@ removes or shortens text where it can; a sentence it adds is checked like any
 new claim.
 
 **Enforced by.** `Convention`.
+
+### 5.2 PR #67 was returned three times because the skill acted on state it had not read
+
+**Occurrences: 2** — 2026-11-26, 2026-11-26
+
+**What happened.** PR #67 (`finishing-a-development-branch`, HUHHB-176) was
+returned three times, each time for a state the skill's text assumed. Return 1
+(an owner correction before the PR opened, on `73efff5e`): the discard path did
+not handle an open pull request or a worktree with uncommitted changes, and the
+brief's own targets raised two lint warnings. Return 2 (CodeRabbit review
+6077397952 on `b21398bb`): a push with an upstream already set did not check
+`@{u}`, a `CLOSED` pull request was not handled, a `MERGED` one went to cleanup
+without checking that `HEAD` was in the base, and cleanup failed on the main
+checkout. Return 3 (the `pr-reviewer` agent on `6d63e9f9`): Option 1 pushed
+before it read the pull request state, which recreates a branch GitHub deletes
+on merge (`gh api repos/uhstray-io/huhhb --jq .delete_branch_on_merge` prints
+`true`), and the checkout test read the current directory while its step said
+to run from outside the worktree. Each fix patched the path its return named.
+Joseph recut the unit (batch decision 28), and #67 was closed unmerged.
+
+**Root cause.** Brief 05 listed the actions for each option but not the state
+each action depends on, so the executor wrote actions and the reviewers
+supplied the states one return at a time. The unit also rebuilt a post-merge
+cleanup that `pr-shepherd` already owns, which doubled the paths whose state
+could be wrong. As in 5.1, the replay against hostile states (a deleted remote
+branch, a closed pull request, the main checkout, a run from another
+directory) was done by the reviewers instead of before the PR opened.
+
+**The rule.** Before a brief for a skill that runs git or gh commands is
+dispatched, list for each command the state it depends on (the upstream, the
+pull request state, which checkout it runs in, whether the remote branch
+exists) and the read that establishes it, and order the skill so every read
+comes before the first write. Before the PR opens, replay the text against each
+hostile state and record the line that answers it. A step another skill already
+owns is pointed to, not rewritten. This widens the rule of 5.1 (replay before
+review) from bench asserts to skill instructions.
+
+**Enforced by.** `Convention`.
+
+**Occurrence 2 — 2026-11-26.** The recut, PR #73, was returned twice for the
+same kind of fault. Return 1 (CodeRabbit review 6081463266 on `68034cc9`):
+discard ran `orca worktree rm --force` without first reading or showing the
+worktree's uncommitted, untracked and ignored files. Return 2 (the
+`pr-reviewer` agent on `414566e2`): after the worktree was removed from outside
+it, the branch check `git show-ref --verify --quiet refs/heads/<branch>` named
+no directory; run outside a repository it exits 128, which the text read as
+"branch not found", so `git branch -D` was skipped. The rule did not prevent
+either. The recut's brief listed the state reads for pushing and for the pull
+request, but not for deleting, and no replay ran a step from the directory the
+previous step leaves it in. A step that runs after its checkout is gone names
+the directory it runs in (`git -C <path>`), and an exit code that means "error"
+is never read as "absent".
 
 ## 6. A test that wrote outside its own folder
 

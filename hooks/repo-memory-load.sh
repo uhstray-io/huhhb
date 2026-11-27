@@ -14,7 +14,7 @@ if [ -f "plans/architecture/DECISIONS.md" ]; then
         legacy=" Pre-ADR records remain in .claude/memory/MEMORY.md as read-only history: retired for new writes, triaged one at a time by fix-memory."
     fi
     cat <<JSON
-{"hookSpecificOutput":{"hookEventName":"SessionStart","additionalContext":"This repo's architecture decisions live in plans/architecture/. Read DECISIONS.md before answering why the repo is built the way it is, and open the records it points at. Records are append-only — supersede, never edit. Save a new ratified decision with /repo-memory.${legacy} Everything else routes away from files: code structure to the code graph, and deliberation, outcomes and preferences to this repo's Hindsight bank."}}
+{"hookSpecificOutput":{"hookEventName":"SessionStart","additionalContext":"This repo's architecture decisions live in plans/architecture/. Read DECISIONS.md before answering why the repo is built the way it is, and open the records it points at. The decision is in the ADR; the deliberation behind it is in the Hindsight bank. Records are append-only — supersede, never edit. Save a new ratified decision with /repo-memory.${legacy} Everything else routes away from files: code structure to the code graph, and deliberation, outcomes and preferences to this repo's Hindsight bank."}}
 JSON
     exit 0
 fi

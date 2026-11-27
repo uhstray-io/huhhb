@@ -154,12 +154,10 @@ Three measured gates — full criteria, thresholds, and the improvement loop in
 
 ## Development Lifecycle (adopted 2026-07-16)
 
-worktrees → branches → PRs → human-authorized merge:
+worktrees → branches → PRs → merge:
 
-- **Worktrees** — recommended, toggleable (user default + per-project list
-  in `~/.config/huhhb/worktrees.json`; see the `using-git-worktrees`
-  skill). Lifetime = the branch's lifetime; strays are reported, never
-  auto-removed.
+- **Worktrees** — Orca creates and removes them; outside Orca, the session
+  that creates a worktree removes it when its branch merges.
 - **Branches** — conventional prefixes (`feat/ fix/ docs/ chore/
   refactor/`) for first-class human-reviewed work; `<agent>/<task-id>`
   for orchestrator task branches. The retention janitor operates ONLY
@@ -167,8 +165,7 @@ worktrees → branches → PRs → human-authorized merge:
 - **PRs** — one per deliverable (logical commits inside). Stacking is the
   sanctioned dependency mechanism: base on the parent branch, declare it
   in the body's first line, merge parents first.
-- **Merge** — human-authorized always (approving review + explicit
-  instruction), merge commits, GitHub delete-on-merge OFF.
+- **Merge** — A PR merges after its review rounds — one for a PR into a feature or integration branch, two for a promotion into main — once every finding is fixed or answered and the required checks pass. Merge commits only. GitHub deletes the head branch on merge (`delete_branch_on_merge: true`).
 
 ## Release Checklist
 
@@ -282,14 +279,14 @@ the two, and it acts only on what these rules mark:
 
 - `skills/` — all skills, one flat subdirectory per skill (`skills/<skill-name>/SKILL.md`)
 - `.cbmignore` — paths kept out of the code graph (vendored agent trees, caches, key material); changing it needs a forced rebuild, not just a re-index
-- `onboarding/` — onboarding flow triggered on first install
-- `hooks/` — plugin lifecycle hook scripts (SessionStart, PreToolUse, Stop). They run from `${CLAUDE_PLUGIN_ROOT}` = `~/.claude/plugins/cache/huhhb/huhhb/<version>/`, never the working tree — a hook edit has no effect on the running session until reinstall (Release Checklist 4)
+- `onboarding/` — first-run tour (`welcome.md`) and skill list (`skills-list.md`); nothing runs them automatically
+- `hooks/` — plugin lifecycle hook scripts (SessionStart, PreToolUse, PostToolUse, Stop, UserPromptSubmit). They run from `${CLAUDE_PLUGIN_ROOT}` = `~/.claude/plugins/cache/huhhb/huhhb/<version>/`, never the working tree — a hook edit has no effect on the running session until reinstall (Release Checklist 4)
 - `marketplace.json` — skill manifest (name, path, description, category, tags, version per skill)
 - `.claude-plugin/plugin.json` — plugin version read by Claude Code for update detection (keep in sync with `marketplace.json`)
 - `scripts/skill-lint.ts`, `scripts/skill-bench.ts`, `scripts/skill-trends.ts` — the skill quality gates (see Skill Quality Bar)
 - `scripts/evolve/` — the `evolve` self-learning suite (TypeScript, MIT; optional integrations load dynamically, never vendored)
 - `scripts/sync-caveman.sh` — upstream sync for the vendored caveman family (the only skills with a sync script; `prune-tests` and `humanizer` are forks edited directly)
-- `tests/` — `test_evolve.test.ts` + `test_openspec_conformance.test.ts` (offline, `node --test`) and `bench/` scenarios
+- `tests/` — offline tests (`test_*.test.ts`, run with `node --test`) and `bench/` scenarios. CI runs `test_evolve`, `test_grounding_hook`, `test_pr_claim_check` and `test_pr_merge_guard`; `test_memory_docs` and `test_repo_memory_lint` run only locally
 - `docs/evolve-plan.md` — the evolve living plan (architecture, guardrails, gates, roadmap; every evolve change recorded in its change log)
 - `CONTEXT.md` — project context for AI assistants
 - `CLAUDE.md` — a one-line pointer to this file (AGENTS.md is canonical)
@@ -318,7 +315,7 @@ Every skill needs an entry; bump its `version` and `.claude-plugin/plugin.json` 
 
 ## Onboarding
 
-First install runs `onboarding/welcome.md` — a short guided tour: what's installed, how to invoke (`/skill-name`), and where the full list lives (`onboarding/skills-list.md`). Keep it brief.
+`onboarding/welcome.md` (first-run tour) and `onboarding/skills-list.md` (the skill list) ship with the plugin as `marketplace.json` entries `huhhb-welcome` and `huhhb-skills`; nothing runs them automatically. Open the file, or ask Claude to read it. Keep the tour brief.
 
 ## Repo Memory
 
@@ -327,16 +324,22 @@ saved/retrieved via the `/repo-memory`
 skill: a master `DECISIONS.md`
 indexed by domain, a per-year `INDEX.md` decision log, and one detail file
 per month. **Before answering a question about why this repo is built the way
-it is, check `DECISIONS.md` first.** Records are append-only — never edit an
-accepted one; supersede it and link the two (ADR-0003, ADR-0004).
+it is, check `DECISIONS.md` first.**
+The decision is in the ADR; the deliberation behind it is in the Hindsight bank.
+Records are append-only — never edit an accepted one; supersede it and link the
+two (ADR-0003, ADR-0004).
 
 Everything else routes away: code structure to the code graph, which
 regenerates it for free, and deliberation, outcomes and preferences to this
 repo's Hindsight bank, which is the only copy of them.
 
-`.claude/memory/` holds pre-2026-08 records and is **retired for new writes**.
-It is not deleted and not bulk-migrated; records are triaged individually by
-`fix-memory`.
+`.claude/memory/` holds pre-2026-08 records and is **retired for new writes**, except
+the branch wip journal `.claude/memory/wip/`, which `.githooks/post-commit` appends to on
+each commit except merge commits, commits on a detached HEAD, commits that change no file,
+and commits that touch only `.claude/memory/`. At PR creation that journal is consolidated into one paragraph, stored with
+`sync_retain` in the Hindsight bank, and deleted only after the sync completes; it is kept
+if the sync fails. Legacy records are not deleted and not bulk-migrated; they are triaged
+individually by `fix-memory`.
 
 ### When to save
 
@@ -360,7 +363,7 @@ A reversible implementation choice is not an ADR. Neither is a convention or a b
   behind it belongs in the bank.
 - Credential values, tokens, or real addresses — name the variable, never the value.
 
-Legacy `.claude/memory/` records are **repo-scoped** and retired for new writes.
+Legacy `.claude/memory/` records are **repo-scoped** and retired for new writes, except the branch wip journal described above.
 Cross-project preferences and cross-session decisions belong to the device-level stores
 below. The MemPalace and Honcho strata are **retired from routing** as of 2026-08-01 —
 their skills still ship and their data is intact, invoked only when asked for by name,
@@ -400,12 +403,6 @@ for free; experience is the only copy.
   versioned with the code it governs.
 - Do **not** use `manage_adr` — it writes into the disposable index and the
   next code change hard-deletes it.
-- **Specs** → OpenSpec store `huhhb`, rooted at `plans/development` (not the
-  repo root), so every command run from the repo root needs `--store huhhb`.
-  `openspec/specs/` is what the system *should* do; `openspec/changes/` is what
-  we are changing now, carrying the **public, ratified** "why". What did not
-  make the proposal — what was feared, tried first, abandoned, and why the
-  rejected option lost — goes to the bank instead.
 - Where the operator has a global routing policy (`CLAUDE.md`, "TWO-STORE
   MEMORY ROUTING"), it **wins**. This section is the repo-level default so the
   repo works on a machine that has none — which is most machines installing
@@ -423,21 +420,6 @@ query scored the target memory at **0.00043** against **1.10** for the same
 memory in domain language. Either order is legal; concepts survive the
 refactors that rename functions, which is what makes them the better join key.
 
-#### On archive, retain the outcome
-
-`openspec archive <change> --store huhhb` records that a change completed. It
-does **not** record whether it *worked* — and that gap is this repo's
-highest-value memory. So when you archive, retain ONE memory into bank
-`huhhb-da43e85b`: the outcome labelled plainly **worked / dead end /
-corrected**, the root cause of anything that failed, and any constraint
-discovered along the way. One self-contained paragraph, in domain language.
-
-#### Drift check — a deliberate practice, not an aside
-
-`openspec list --specs --store huhhb` is intent; the graph's architecture
-summary is reality. Compare them on purpose, periodically. Divergence is
-**information, not a conflict to reconcile** — it means the specs or the code
-moved and nobody wrote it down.
 <!-- two-store-memory:end -->
 
 ### What NOT to save

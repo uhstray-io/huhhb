@@ -1,6 +1,6 @@
 ---
 name: repo-memory
-description: Use when a decision about this repository's architecture needs recording or looking up — "record this decision", "write an ADR", "why did we choose X", "what did we decide about Y", "is there a decision about Z", "supersede that decision" — or when a change lands that alters the system's structure, trades away a quality attribute, or is hard to reverse. Owns architecture decision records in plans/architecture/. Code structure belongs to codebase-memory-mcp; deliberation and outcomes belong to the Hindsight bank.
+description: Use when a decision about this repository's architecture needs recording or looking up — "record this decision", "write an ADR", "why was X chosen", "what was decided about Y", "is there a decision about Z", "supersede that decision" — or when a change alters the system's structure, trades away a quality attribute, or is hard to reverse. Owns architecture decision records in plans/architecture/. Append-only. Code structure is codebase-memory-mcp; deliberation is the Hindsight bank.
 ---
 
 # repo-memory
@@ -8,6 +8,8 @@ description: Use when a decision about this repository's architecture needs reco
 Owns this repository's **architecture decision records** — their format, numbering,
 indexes and lifecycle — at `plans/architecture/`. Committed to git, reviewable in the PR
 that changes them, readable by anyone who clones with no service running.
+
+**Write ADRs only through this skill.** No script and no other skill may write a record.
 
 **Scope: ratified decisions only.** Everything else has a better home:
 
@@ -34,6 +36,10 @@ An ADR is for **architecturally significant** decisions. It qualifies if it:
 A reversible implementation choice is not an ADR. Neither is a preference, a convention,
 or a bug fix. When it does not qualify but is still worth keeping, say where it goes
 instead — usually the bank — rather than writing a record nobody will read.
+
+When it does not qualify, do not draft the record, not even as an optional extra under
+"if you still want one". Draft it only if the user asks again after hearing why it does
+not qualify.
 
 ## The layout
 
@@ -107,9 +113,8 @@ years. A record listing only benefits is marketing.
 Cheapest first: **by domain** in `DECISIONS.md`, **by date** in the year `INDEX.md`, **by
 number** — `ADR-NNNN` is unique forever.
 
-If the question is *why* rather than *what* — what else was considered, what failed first
-— that is the Hindsight bank. Recall in domain language, never identifiers, and always
-with an explicit `bank_id`.
+The decision is in the ADR; the deliberation behind it is in the Hindsight bank.
+Recall in domain language, never identifiers, and always with an explicit `bank_id`.
 
 ## Hooks
 
@@ -125,9 +130,10 @@ repo's hooks fire.
 - **Per-commit capture** — the same `post-commit` hook appends outcome-framed lines to
   the branch journal `.claude/memory/wip/<branch-slug>.md`. Staging material only.
 - **PR consolidation** — on `gh pr create`, the journal is consolidated into one outcome
-  paragraph and `sync_retain`ed into the repo's Hindsight bank, then deleted in the same
-  commit. Any *decision* surfaced while consolidating gets an ADR here; the narrative
-  goes to the bank. `wip/` journals are staging and exempt from the rules above.
+  paragraph and stored with `sync_retain` in the repo's Hindsight bank. The journal is
+  deleted only after `sync_retain` completes; if the sync fails or the bank is unreachable,
+  the journal is kept. Any *decision* surfaced while consolidating gets an ADR here; the
+  narrative goes to the bank. `wip/` journals are staging and exempt from the rules above.
 
 ## Legacy `.claude/memory/`
 

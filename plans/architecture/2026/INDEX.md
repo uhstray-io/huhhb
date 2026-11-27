@@ -10,16 +10,19 @@ Template: [../TEMPLATE.md](../TEMPLATE.md).
 |-----|------|----------|--------|--------|------------|--------|
 | ADR-0001 | 2026-08-02 | Adopt the two-store memory architecture as the default | Memory architecture | Accepted | High | [2026-08.md](2026-08.md) |
 | ADR-0002 | 2026-08-02 | Fold memory health into memory-setup and retire memory-onboarding | Skills and marketplace | Accepted | High | [2026-08.md](2026-08.md) |
-| ADR-0003 | 2026-08-02 | ADRs live in plans/architecture/; OpenSpec writes specifications only | Planning and specs | Accepted | High | [2026-08.md](2026-08.md) |
+| ADR-0003 | 2026-08-02 | ADRs live in plans/architecture/; OpenSpec writes specifications only | Planning and specs | Superseded by ADR-0007 | High | [2026-08.md](2026-08.md) |
 | ADR-0004 | 2026-08-02 | repo-memory owns ADRs; all other memory defers to the two stores | Memory architecture | Accepted | Medium | [2026-08.md](2026-08.md) |
 | ADR-0005 | 2026-08-02 | Prove a skill refinement pairwise against a champion, not on absolute judge scores | Tooling and CI | Accepted | Medium | [2026-08.md](2026-08.md) |
-| ADR-0006 | 2026-08-08 | product-inception-layer | Planning and specs | Accepted | Medium | [2026-08.md](2026-08.md) |
+| ADR-0006 | 2026-08-08 | product-inception-layer | Planning and specs | Superseded by ADR-0008 | Medium | [2026-08.md](2026-08.md) |
+| ADR-0007 | 2026-11-26 | Plan in dated Markdown and record decisions as ADRs, without OpenSpec | Planning and specs | Accepted | High | [2026-11.md](2026-11.md) |
+| ADR-0008 | 2026-11-26 | Product inception ends at an epic queue filed in Plane | Planning and specs | Accepted | High | [2026-11.md](2026-11.md) |
 
 ## Months
 
 | Month | Decisions | File |
 |-------|-----------|------|
-| 2026-08 | 5 | [2026-08.md](2026-08.md) |
+| 2026-08 | 6 | [2026-08.md](2026-08.md) |
+| 2026-11 | 2 | [2026-11.md](2026-11.md) |
 
 ## Adding a row
 

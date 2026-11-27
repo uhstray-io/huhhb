@@ -14,14 +14,14 @@ skills/<name>/SKILL.md   ── the skills themselves (flat, one dir each)
 marketplace.json         ── manifest Claude Code reads to list/install skills
 .claude-plugin/          ── plugin.json (version → update detection, hooks;
                             registers no MCP servers — see AGENTS.md § Memory)
-hooks/                   ── SessionStart / PreToolUse / UserPromptSubmit scripts
-onboarding/              ── first-install guided tour (welcome.md, skills-list.md)
+hooks/                   ── SessionStart / PreToolUse / PostToolUse / Stop / UserPromptSubmit scripts (registered in .claude-plugin/plugin.json)
+onboarding/              ── first-run tour (welcome.md) and skill list (skills-list.md); nothing runs them automatically
 scripts/                 ── quality gates + tooling (TypeScript, run via node)
   ├─ skill-lint.ts       ── G0: frontmatter/link/manifest checks
   ├─ skill-bench.ts      ── G1: real `claude -p` scenario runs
   └─ evolve/             ── the self-learning suite (MIT; imports only)
 tests/                   ── offline test suite + bench/ scenarios
-plans/                   ── development plans + architecture ADRs (OpenSpec store)
+plans/                   ── dated development plans + architecture ADRs
 docs/evolve-plan.md      ── evolve living plan, guardrails, roadmap
 ```
 
@@ -39,9 +39,9 @@ next session. evolve is **inert until Honcho is configured** (env-only creds).
   language that fits (e.g. Python via `uv`); see AGENTS.md.
 - **AGENTS.md is canonical**; `CLAUDE.md` mirrors it for Claude Code. Two files,
   one source of truth — they must stay consistent.
-- **MCP servers are external packages, never vendored** — the memory server runs
-  from PyPI via `uvx`; our code is MIT and only *imports* installed packages.
+- **MCP servers are external packages, never vendored** — the opt-in MemPalace
+  server runs from PyPI via `uvx`, and the plugin registers no MCP server; our code is MIT and only *imports* installed packages.
 - **Three quality gates** — G0 lint (free, every PR), G1 bench (tokens, on
   change), G2 field promotion (evolve telemetry). Detail in `docs/evolve-plan.md`.
-- **Planning via OpenSpec** — `plans/development` is the store root (id `huhhb`);
-  ADRs promote into `plans/architecture/` on archive.
+- **Planning in dated Markdown** — plans are `plans/development/YYYY-MM-DD-<slug>.md`;
+  decisions are ADRs in `plans/architecture/`, and work is tracked in Plane (ADR-0007).

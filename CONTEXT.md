@@ -17,13 +17,9 @@ huhhb/
 ├── skills/              # All skills — one flat directory per skill (no category subdirs)
 │   └── <skill-name>/    #   each holds SKILL.md (+ optional principles.md / scripts)
 │       └── SKILL.md
-├── onboarding/          # First-run experience (welcome flow, skills list)
-├── buhhdy/              # Four-provider coding orchestrator (omnigent config +
-│                        #   its own skills/ + MODEL-MANIFEST.md); huhhb ops
-│                        #   skills (pr-shepherd, repo-kickstart, openspec-
-│                        #   conformance, buhhdy-model-calibration-refresh, memory-setup)
-│                        #   serve this stack — see buhhdy/README.md
-├── .claude-plugin/      # plugin.json (version + hooks), marketplace.json, hook scripts
+├── onboarding/          # First-run tour (welcome.md) and skill list (skills-list.md)
+├── .claude-plugin/      # plugin.json (version + hook registration), marketplace.json (plugin listing)
+├── hooks/               # Hook scripts; plugin.json registers 11 (README § Plugin Hooks)
 ├── marketplace.json     # Skill manifest — source of truth for discovery
 ├── CLAUDE.md            # Instructions for Claude Code in this repo
 ├── CONTEXT.md           # This file
@@ -63,13 +59,9 @@ The `description` field is critical. Claude's `Skill` tool matches user intent a
 
 ## Onboarding Flow
 
-When a user installs huhhb, `onboarding/welcome.md` runs automatically. It:
-1. Greets the user
-2. Lists installed skills with one-line descriptions
-3. Explains how to invoke skills
-4. Points to `marketplace.json` for the full catalog
+`onboarding/welcome.md` (first-run tour) and `onboarding/skills-list.md` (the skill list) ship with the plugin as `marketplace.json` entries `huhhb-welcome` and `huhhb-skills`; nothing runs them automatically. Open the file, or ask Claude to read it.
 
-Keep the welcome flow under 30 seconds to read.
+The tour covers the optional `uv` prerequisite, what skills are, how to list the installed skills, the optional evolve setup, personal `CLAUDE.md` preferences, and where to get help. Keep the welcome flow under 30 seconds to read.
 
 ## Design Constraints
 

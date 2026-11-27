@@ -70,8 +70,10 @@ Find a decision three ways: **by domain** (the tables below), **by date** (the y
 
 | ADR | Decision | Status | Record |
 |-----|----------|--------|--------|
-| [ADR-0003](2026/2026-08.md#adr-0003--architecture-decision-records-live-in-plansarchitecture-openspec-writes-specifications-only) | ADRs live in plans/architecture/; OpenSpec writes specs only | Accepted | 2026-08 |
-| [ADR-0006](2026/2026-08.md#adr-0006--product-inception-layer) | product-inception-layer | Accepted | 2026-08 |
+| [ADR-0003](2026/2026-08.md#adr-0003--architecture-decision-records-live-in-plansarchitecture-openspec-writes-specifications-only) | ADRs live in plans/architecture/; OpenSpec writes specs only | Superseded by ADR-0007 | 2026-08 |
+| [ADR-0006](2026/2026-08.md#adr-0006--product-inception-layer) | product-inception-layer | Superseded by ADR-0008 | 2026-08 |
+| [ADR-0007](2026/2026-11.md#adr-0007--plan-in-dated-markdown-and-record-decisions-as-adrs-without-openspec) | Plan in dated Markdown and record decisions as ADRs, without OpenSpec | Accepted | 2026-11 |
+| [ADR-0008](2026/2026-11.md#adr-0008--product-inception-ends-at-an-epic-queue-filed-in-plane) | Product inception ends at an epic queue filed in Plane | Accepted | 2026-11 |
 
 ### Tooling and CI
 
@@ -83,4 +85,4 @@ Find a decision three ways: **by domain** (the tables below), **by date** (the y
 
 | Year | Decisions | Index |
 |------|-----------|-------|
-| 2026 | 5 | [2026/INDEX.md](2026/INDEX.md) |
+| 2026 | 8 | [2026/INDEX.md](2026/INDEX.md) |

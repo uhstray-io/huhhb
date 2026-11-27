@@ -165,3 +165,28 @@ A session that plans work reads this file and the `docs/MISTAKES.md` Index befor
   file to OWNS or excludes it from the grep with a stated reason. Otherwise the executor reaches a
   DONE WHEN it cannot pass without editing outside OWNS.
 - **APPLIES TO:** any DONE WHEN that greps the whole tree.
+
+### L-013 · 2026-11-26 · skill lint
+
+- **ACCEPTED:** PR #75 (HUHHB-178), six development and session skills removed and the survivors
+  that named them corrected (batch decision 35).
+- **DERIVED:** L-010's check "no lint line names the skill" cannot pass when the base lint already
+  names a skill the unit must edit: on `714aa97d`, `writing-skills` (S6 grandfathered, S12) and
+  `discovering-context` (S6). A brief that edits such a skill copies the base lint lines that name
+  it into DONE WHEN and requires: the WARN count no higher than the base's, no lint line naming a
+  changed skill except those base lines, and each of their figures no larger than on the base.
+- **APPLIES TO:** any brief that edits a skill the base lint already warns about.
+
+### L-014 · 2026-11-26 · skill dependencies
+
+- **ACCEPTED:** PR #75 (HUHHB-178), six development and session skills removed (batch decision 10).
+- **DERIVED:** A deleted skill's support files are names a survivor can depend on too:
+  `skills/using-superpowers/references/codex-tools.md:36` cited
+  `code-quality-reviewer-prompt.md` from the deleted `subagent-driven-development`. The planner's
+  `git grep -l` listed that file for another match, and the second reference was found only by
+  the executor. Review then found `skills/requesting-code-review/SKILL.md:15` and `:79-87`
+  naming the deleted workflows as "subagent-driven development" and "Executing Plans", which a
+  hyphenated-name grep does not match. A deletion brief greps with `git grep -n -i` for the skill
+  name with `[- ]` between its words and for the name of every file the skill ships, and lists
+  every matching line, not every matching file.
+- **APPLIES TO:** any unit that deletes a skill or a file other skills can cite.

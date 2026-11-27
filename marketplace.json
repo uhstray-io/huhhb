@@ -8,32 +8,6 @@
   "license": "MIT",
   "skills": [
     {
-      "name": "session-save",
-      "path": "skills/session-save/SKILL.md",
-      "description": "Use when ending or pausing a session and you want to resume cleanly later — writes a gitignored continuation file (.claude/CONTINUE.md) with the exact next action, conversation context, and working-tree state.",
-      "category": "dev",
-      "tags": [
-        "continuity",
-        "session",
-        "save",
-        "context"
-      ],
-      "version": "0.1.0"
-    },
-    {
-      "name": "session-resume",
-      "path": "skills/session-resume/SKILL.md",
-      "description": "Use when picking up prior work in a fresh session — consumes the continuation file written by session-save: verifies it against the repo, re-hydrates context, briefs, deletes the file, then acts.",
-      "category": "dev",
-      "tags": [
-        "continuity",
-        "session",
-        "resume",
-        "context"
-      ],
-      "version": "0.1.0"
-    },
-    {
       "name": "memory",
       "path": "skills/memory/SKILL.md",
       "description": "Use when MemPalace is named explicitly, or data already stored in a MemPalace nexus must be read. Legacy, retired from routing 2026-08-01. Not the current memory system — structural truth is codebase-memory-mcp and experience is Hindsight, both set up via memory-setup. The memory MCP server is opt-in. Do not use for new work.",
@@ -139,7 +113,7 @@
         "superpowers",
         "meta"
       ],
-      "version": "0.1.0"
+      "version": "0.1.1"
     },
     {
       "name": "brainstorming",
@@ -153,28 +127,6 @@
       "version": "0.1.0"
     },
     {
-      "name": "dispatching-parallel-agents",
-      "path": "skills/dispatching-parallel-agents/SKILL.md",
-      "description": "Use when facing 2+ independent tasks that can be worked on without shared state or sequential dependencies",
-      "category": "dev",
-      "tags": [
-        "superpowers",
-        "agents"
-      ],
-      "version": "0.1.0"
-    },
-    {
-      "name": "executing-plans",
-      "path": "skills/executing-plans/SKILL.md",
-      "description": "Use when you have a written implementation plan to execute in a separate session with review checkpoints",
-      "category": "dev",
-      "tags": [
-        "superpowers",
-        "planning"
-      ],
-      "version": "0.1.0"
-    },
-    {
       "name": "finishing-a-development-branch",
       "path": "skills/finishing-a-development-branch/SKILL.md",
       "description": "Use when implementation is complete and the branch needs finishing, such as \"finish this branch\" or \"done implementing\". Verifies tests and reads the pull request state before any push, then opens or updates a pull request, keeps the branch, or discards it. After a merge it hands off to the pr-shepherd post-merge close-out.",
@@ -184,17 +136,6 @@
         "git"
       ],
       "version": "0.1.1"
-    },
-    {
-      "name": "subagent-driven-development",
-      "path": "skills/subagent-driven-development/SKILL.md",
-      "description": "Use when executing implementation plans with independent tasks in the current session",
-      "category": "dev",
-      "tags": [
-        "superpowers",
-        "agents"
-      ],
-      "version": "0.1.0"
     },
     {
       "name": "systematic-debugging",
@@ -219,17 +160,6 @@
       "version": "0.1.0"
     },
     {
-      "name": "using-git-worktrees",
-      "path": "skills/using-git-worktrees/SKILL.md",
-      "description": "Use when starting feature work that needs isolation from current workspace or before executing implementation plans - creates isolated git worktrees with smart directory selection and safety verification",
-      "category": "dev",
-      "tags": [
-        "superpowers",
-        "git"
-      ],
-      "version": "0.1.0"
-    },
-    {
       "name": "verification-before-completion",
       "path": "skills/verification-before-completion/SKILL.md",
       "description": "Use when about to claim work is complete, fixed, or passing, before committing or creating PRs - requires running verification commands and confirming output before making any success claims; evidence before assertions always",
@@ -249,7 +179,7 @@
         "superpowers",
         "planning"
       ],
-      "version": "0.1.0"
+      "version": "0.1.1"
     },
     {
       "name": "writing-skills",
@@ -260,7 +190,7 @@
         "superpowers",
         "skills"
       ],
-      "version": "0.1.0"
+      "version": "0.1.1"
     },
     {
       "name": "receiving-code-review",
@@ -282,7 +212,7 @@
         "superpowers",
         "review"
       ],
-      "version": "0.1.0"
+      "version": "0.1.1"
     },
     {
       "name": "training",
@@ -614,7 +544,7 @@
         "dag",
         "discovery"
       ],
-      "version": "0.1.0"
+      "version": "0.1.1"
     },
     {
       "name": "product-inception",

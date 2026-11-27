@@ -9,7 +9,7 @@ You've installed **huhhb** — Uhstray.io's skills marketplace for Claude Code.
 
 ## Prerequisite: uv
 
-The opt-in MemPalace server behind the `memory` skill runs through [`uv`](https://docs.astral.sh/uv/) (`uvx`), so install it only if you opt in. If you don't have it:
+Install [`uv`](https://docs.astral.sh/uv/) only if you opt in to the MemPalace server (`uvx`) or use `markdown-to-pdf` (`uv run`). If you don't have it:
 
 ```bash
 # macOS / Linux

@@ -112,7 +112,7 @@ Set up and shape Claude **for you**, across every project. State lives in
 | `onboarding` | `/onboarding` | First-time Claude Code setup — Auto Mode, Agent Teams, orientation |
 | `user-kickstart` | `/user-kickstart` | Establish how Claude writes to *you* — voice, register, standing preferences. Writes a delimited, revertible, 60-line-capped block in `~/.claude/CLAUDE.md` and routes the reasoning behind it to your personal memory bank |
 
-`onboarding/welcome.md` (first-run tour) and `onboarding/skills-list.md` (the skill list) ship with the plugin as `marketplace.json` entries `huhhb-welcome` and `huhhb-skills`; nothing runs them automatically. Open the file, or ask Claude to read it.
+[onboarding/welcome.md](onboarding/welcome.md) (first-run tour) and [onboarding/skills-list.md](onboarding/skills-list.md) (the skill list) ship with the plugin as `marketplace.json` entries `huhhb-welcome` and `huhhb-skills`; nothing runs them automatically. The installed copies live under `~/.claude/plugins/cache/huhhb/huhhb/<version>/onboarding/`, where `<version>` is the installed version, so you can open them from any repository or ask Claude to read them. The links above open the same files on GitHub.
 
 ### Memory
 
